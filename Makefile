@@ -1,6 +1,7 @@
 .PHONY: all clean
 	
-CXXFLAGS := -std=c++1z -Wno-gnu-string-literal-operator-template -ftemplate-depth-1024 -ftemplate-backtrace-limit=0
+# -ftemplate-depth-1024 -ftemplate-backtrace-limit=0
+CXXFLAGS := -std=c++1z -Wno-gnu-string-literal-operator-template 
 
 all: math
 	
