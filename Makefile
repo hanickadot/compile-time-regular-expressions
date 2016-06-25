@@ -12,4 +12,4 @@ math.o: math.cpp static-parser.hpp
 	$(CXX) $(CXXFLAGS) -O3 -c math.cpp -o math.o
 
 clean:
-	rm *.o math
+	rm -f *.o math
