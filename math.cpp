@@ -1,18 +1,18 @@
 #include "static-parser.hpp"
 #include <cstdio>
 
-struct NT_E: Syntax::Symbol {};
-struct NT_E2: Syntax::Symbol {};
-struct NT_F: Syntax::Symbol {};
-struct NT_T: Syntax::Symbol {};
-struct NT_T2: Syntax::Symbol {};
-struct Symbol_OpenBrace: Syntax::Symbol {};
-struct Symbol_CloseBrace: Syntax::Symbol {};
-struct Symbol_Times: Syntax::Symbol {};
-struct Symbol_Divide: Syntax::Symbol {};
-struct Symbol_Plus: Syntax::Symbol {};
-struct Symbol_Minus: Syntax::Symbol {};
-struct Symbol_Var: Syntax::Symbol {};
+struct NT_E {};
+struct NT_E2 {};
+struct NT_F {};
+struct NT_T {};
+struct NT_T2 {};
+struct Symbol_OpenBrace {};
+struct Symbol_CloseBrace {};
+struct Symbol_Times {};
+struct Symbol_Divide {};
+struct Symbol_Plus {};
+struct Symbol_Minus {};
+struct Symbol_Var {};
 
 struct PrintMinus {
 	static void action() {
@@ -81,7 +81,7 @@ template<typename CharT, CharT ... string> constexpr auto operator""_math() {
 }
 
 int main() {
-	if ("(x-x)-x"_math.parse()) {
+	if ("x*x+x"_math.parse()) {
 		puts("\nACCEPTED");
 	} else {
 		puts("\nREJECTED");

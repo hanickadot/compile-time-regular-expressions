@@ -5,13 +5,8 @@ namespace Syntax {
 	
 template <typename... T> struct Stack;
 
-// Empty symbol
-struct Symbol {
-//	template <typename... T> static void action(T...) {}
-};
-
 // Some special symbols and/or actions
-struct EmptyStackSymbol: Symbol { };
+struct EmptyStackSymbol { };
 struct AcceptInput { };
 struct RejectInput { };
 struct ReadChar { };
