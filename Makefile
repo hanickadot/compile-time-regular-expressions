@@ -1,15 +1,15 @@
 .PHONY: all clean
 	
 # -ftemplate-depth-1024 -ftemplate-backtrace-limit=0
-CXXFLAGS := -std=c++1z -Wno-gnu-string-literal-operator-template 
+override CXXFLAGS += -std=c++1z -Wno-gnu-string-literal-operator-template -O3
 
 all: math
 	
 math: math.o
-	$(CXX) $(CXXFLAGS) -O3 math.o -o math
+	$(CXX) $(CXXFLAGS) math.o -o math
 
 math.o: math.cpp static-parser.hpp
-	$(CXX) $(CXXFLAGS) -O3 -c math.cpp -o math.o
+	$(CXX) $(CXXFLAGS) -c math.cpp -o math.o
 
 clean:
 	rm -f *.o math
