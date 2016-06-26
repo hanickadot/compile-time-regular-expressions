@@ -77,11 +77,11 @@ template <> struct Syntax::Move<Symbol_Minus, '-'> { using N = ReadChar; };
 template <> struct Syntax::Move<Symbol_Var, 'x'> { using N = ReadChar; };
 
 template<typename CharT, CharT ... string> constexpr auto operator""_math() {
-	return Syntax::Parser<Syntax::Stack<NT_E>, string...>{};
+	return Syntax::Parser<NT_E, string...>{};
 }
 
 int main() {
-	if ("x*x+x"_math.template parse<true>()) {
+	if ("x*x+x"_math.parse()) {
 		puts("\nACCEPTED");
 	} else {
 		puts("\nREJECTED");
