@@ -290,8 +290,8 @@ template<typename CharT, CharT ... string> constexpr auto operator""_regexp() {
 
 int main() {
 	if ("^(abc)+$"_regexp.checkSyntax()) {
-		puts("MATCH");
+		puts("correct");
 	} else {
-		puts("not match");
+		puts("not correct");
 	}
 }
