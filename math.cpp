@@ -81,7 +81,7 @@ template<typename CharT, CharT ... string> constexpr auto operator""_math() {
 }
 
 int main() {
-	if ("x*x+x"_math.parse()) {
+	if ("x*x+x"_math.template parse<true>()) {
 		puts("\nACCEPTED");
 	} else {
 		puts("\nREJECTED");

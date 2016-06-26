@@ -81,8 +81,8 @@ public:
 template <typename CurrentStack, char... s> struct Parser;
 
 template <typename CurrentStack, char f, char... s> struct MoveInput {
-	static constexpr bool parse() {
-		return Parser<CurrentStack, s...>::parse();
+	template <bool doActions, typename... Args> static constexpr bool parse(Args && ... args) {
+		return Parser<CurrentStack, s...>::template parse<doActions>(std::forward<Args>(args)...);
 	}
 };
 
@@ -100,41 +100,40 @@ template <typename CurrentStack, char... s> class Parser {
 protected:
 	using Move = typename DecideMove<typename CurrentStack::Top, s...>::Move;
 	static constexpr const bool haveAction = HaveAction<typename CurrentStack::Top>::value;
-	template <typename... T> static constexpr bool decide(Stack<T...> move) {
-		return Parser<decltype(CurrentStack::Pop::push(move)), s...>::parse();
+	
+	template <bool doActions, typename... T, typename... Args> static constexpr bool decide(Stack<T...> move, Args && ... args) {
+		return Parser<decltype(CurrentStack::Pop::push(move)), s...>::template parse<doActions>(std::forward<Args>(args)...);
 	}
-	static constexpr bool decide(Epsilon move) {
-		return Parser<decltype(CurrentStack::Pop::push(move)), s...>::parse();
+	template <bool doActions, typename... Args> static constexpr bool decide(Epsilon move, Args && ... args) {
+		return Parser<decltype(CurrentStack::Pop::push(move)), s...>::template parse<doActions>(std::forward<Args>(args)...);
 	}
-	static constexpr bool decide(RejectInput) {
+	template <bool, typename... Args> static constexpr bool decide(RejectInput, Args && ...) {
 		return false;
 	}
-	template <typename... T> static constexpr bool decide() {
-		return false;
-	}
-	static constexpr bool decide(AcceptInput) {
+	template <bool, typename... Args> static constexpr bool decide(AcceptInput, Args && ...) {
 		return true;
 	}
-	static constexpr bool decide(ReadChar) {
-		return MoveInput<typename CurrentStack::Pop, s...>::parse();
+	template <bool doActions, typename... Args> static constexpr bool decide(ReadChar, Args && ... args) {
+		return MoveInput<typename CurrentStack::Pop, s...>::template parse<doActions>(std::forward<Args>(args)...);
 	}
+	
 	friend class ParserActionDecider<haveAction, CurrentStack, s...>;
 public:
-	static constexpr bool parse() {
-		return ParserActionDecider<haveAction, CurrentStack, s...>::parse();
+	template <bool doActions, typename... Args> static constexpr bool parse(Args && ... args) {
+		return ParserActionDecider<haveAction, CurrentStack, s...>::template parse<doActions>(std::forward<Args>(args)...);
 	}
 };
 
 template <typename CurrentStack, char... s> struct ParserActionDecider<false,CurrentStack,s...> {
-	static constexpr bool parse() {
-		return Parser<CurrentStack,s...>::decide(typename Parser<CurrentStack,s...>::Move::N{});
+	template <bool doActions, typename... Args> static constexpr bool parse(Args && ... args) {
+		return Parser<CurrentStack,s...>::template decide<doActions>(typename Parser<CurrentStack,s...>::Move::N{}, std::forward<Args>(args)...);
 	}
 };
 
 template <typename CurrentStack, char... s> struct ParserActionDecider<true,CurrentStack,s...> {
-	static constexpr bool parse() {
-		CurrentStack::Top::action();
-		return Parser<CurrentStack,s...>::decide(Epsilon{});
+	template <bool doActions, typename... Args> static constexpr bool parse(Args && ... args) {
+		if (doActions) CurrentStack::Top::action();
+		return Parser<CurrentStack,s...>::template decide<doActions>(Epsilon{}, std::forward<Args>(args)...);
 	}
 };
 	

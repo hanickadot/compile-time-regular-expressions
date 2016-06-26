@@ -3,13 +3,18 @@
 # -ftemplate-depth-1024 -ftemplate-backtrace-limit=0
 override CXXFLAGS += -std=c++1z -Wno-gnu-string-literal-operator-template -O3
 
-all: math
-	
-math: math.o
-	$(CXX) $(CXXFLAGS) math.o -o math
+override TARGETS := math regexp
 
-math.o: math.cpp static-parser.hpp
-	$(CXX) $(CXXFLAGS) -c math.cpp -o math.o
+all: $(TARGETS)
+	
+math: math.o 
+	$(CXX) $(CXXFLAGS) $< -o $@
+	
+regexp: regexp.o 
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+%.o: %.cpp static-parser.hpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o math
+	rm -f *.o $(TARGETS)
