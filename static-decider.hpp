@@ -78,22 +78,18 @@ protected:
 	template <typename T, typename ... Args> constexpr void action(const Action<T> &&, Args && ... args) { Action<T>::template action<TapeHelper::first>(stack, std::forward<Args>(args)...); }
 	template <typename ... T> constexpr void action(T ...) const { }
 	
-	template <typename ... T> constexpr bool innerRun(const RejectInput &&, T && ... args) {
-		return false;
+	template <typename ... T> constexpr void innerRun(const RejectInput &&, T && ...) { }
+	template <typename ... T> constexpr void innerRun(const AcceptInput &&, T && ...) { }
+	template <typename ... T> constexpr void innerRun(const ReadChar &&, T && ... args) {
+		NextDecider{stack.pop()}.run(std::forward<T>(args)...);
 	}
-	template <typename ... T> constexpr bool innerRun(const AcceptInput &&, T && ... args) {
-		return false;
-	}
-	template <typename ... T> constexpr bool innerRun(const ReadChar &&, T && ... args) {
-		return NextDecider{stack.pop()}.run(std::forward<T>(args)...);
-	}
-	template <typename N, typename ... T> constexpr bool innerRun(const N &&, T && ... args) {
-		return NextDecider{stack.pop().push(CurrentMove{})}.run(std::forward<T>(args)...);
+	template <typename N, typename ... T> constexpr void innerRun(const N &&, T && ... args) {
+		NextDecider{stack.pop().push(CurrentMove{})}.run(std::forward<T>(args)...);
 	}
 public:
-	template <typename ... T> constexpr bool run(T && ... args) {
+	template <typename ... T> constexpr void run(T && ... args) {
 		action(stack.top(), std::forward<T>(args)...);
-		return innerRun(CurrentMove{}, args...);
+		innerRun(CurrentMove{}, args...);
 	}
 };
 
@@ -102,8 +98,8 @@ public:
 	using type = Decider<Stack<StartSymbol>, TapeHelper<string...>>;
 	type parser{};
 	static constexpr const bool correct = type::correct;
-	template <typename ... T> constexpr bool run(T && ... args) {
-		return parser.run(std::forward<T>(args)...);
+	template <typename ... T> constexpr void run(T && ... args) {
+		parser.run(std::forward<T>(args)...);
 	}
 };
 
