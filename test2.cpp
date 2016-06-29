@@ -115,8 +115,8 @@ struct Minus {
 	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
 		auto & se = stack.template nearest<Expression>();
 		auto & te = stack.template nearest<Term>();
-		//printf("[PLUS] %lld - %lld\n",se.value,te.value);
-		te.value = se.value + te.value;
+		//printf("[MINUS] %lld - %lld\n",se.value,te.value);
+		te.value = se.value - te.value;
 	}
 };
 
@@ -249,6 +249,8 @@ int main() {
 	static_assert("2*3+2"_expr == 8);
 	static_assert("42"_expr == 42);
 	static_assert("(((42)))"_expr == 42);
-	int64_t value = "2*(3+2)"_expr;
+	static_assert("2-1"_expr == 1);
+	
+	int64_t value = "42*(2-1)"_expr;
 	printf("%llu\n",value);
 }
