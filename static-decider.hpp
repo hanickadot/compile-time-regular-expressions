@@ -11,7 +11,7 @@ struct ReadChar { };
 
 template <typename T> struct Action {
 	static const char * identify() { return "Action<>"; }
-	template <char current, typename Stack, typename ... Args> static void action(Stack & stack, Args && ... args) { T::template action<current>(stack, std::forward<Args>(args)...); }
+	template <char current, typename Stack, typename ... Args> static constexpr void action(Stack & stack, Args && ... args) { T::template action<current>(stack, std::forward<Args>(args)...); }
 };
 
 #define SYMBOL(x) struct x { static const char * identify() { return #x; } }
@@ -49,7 +49,7 @@ template <> struct TapeHelper<> {
 };
 
 template <bool c> struct Constant {
-	static constexpr const bool value = c;
+	static constexpr const bool correct = c;
 	template <typename ... T> bool run(T && ...) {
 		return c;
 	}
@@ -67,36 +67,29 @@ public:
 protected:
 	using NextDecider = typename std::conditional<currentRejecting, Constant<false>, typename std::conditional<currentAccepting, Constant<true>, typename std::conditional<currentReading, Decider<typename Stack::Pop, typename TapeHelper::Read>, Decider<typename Stack::Pop::template Push<CurrentMove>, TapeHelper>>::type>::type>::type;
 public:
-	static constexpr const bool value = currentAccepting ? true : ( currentRejecting ? false : NextDecider::value );
+	static constexpr const bool correct = currentAccepting ? true : ( currentRejecting ? false : NextDecider::correct );
 protected:
 	Stack stack{};
 public:
-	Decider() = default;
-	Decider(const Stack && orig): stack{orig} {}
+	constexpr Decider() = default;
+	constexpr Decider(const Stack && orig): stack{orig} {}
 protected:
-	template <typename T, typename ... Args> void action(Holder<T> && holder, Args && ... args) { holder.action(stack, std::forward<Args>(args)...); }
-	template <typename T, typename ... Args> void action(const Action<T> &&, Args && ... args) { Action<T>::template action<TapeHelper::first>(stack, std::forward<Args>(args)...); }
-	template <typename ... T> void action(T ...) const { }
+	template <typename T, typename ... Args> constexpr void action(Holder<T> && holder, Args && ... args) { holder.action(stack, std::forward<Args>(args)...); }
+	template <typename T, typename ... Args> constexpr void action(const Action<T> &&, Args && ... args) { Action<T>::template action<TapeHelper::first>(stack, std::forward<Args>(args)...); }
+	template <typename ... T> constexpr void action(T ...) const { }
 	
-	template <typename ... T> bool innerRun(const RejectInput &&, T && ... args) {
+	template <typename ... T> constexpr bool innerRun(const RejectInput &&, T && ... args) {
 		return false;
 	}
-	template <typename ... T> bool innerRun(const AcceptInput &&, T && ... args) {
+	template <typename ... T> constexpr bool innerRun(const AcceptInput &&, T && ... args) {
 		return false;
 	}
-	template <typename ... T> bool innerRun(const ReadChar &&, T && ... args) {
+	template <typename ... T> constexpr bool innerRun(const ReadChar &&, T && ... args) {
 		return NextDecider{stack.pop()}.run(std::forward<T>(args)...);
 	}
-	template <typename N, typename ... T> bool innerRun(const N &&, T && ... args) {
+	template <typename N, typename ... T> constexpr bool innerRun(const N &&, T && ... args) {
 		return NextDecider{stack.pop().push(CurrentMove{})}.run(std::forward<T>(args)...);
 	}
-	
-	//template <typename ... T> bool innerRun(const Decider<typename Stack::Pop, typename TapeHelper::Read> &&, T && ... args) {
-	//	return NextDecider{stack.pop()}.run(std::forward<T>(args)...);
-	//}
-	//template <typename ... T> bool innerRun(const Decider<typename Stack::Pop::template Push<CurrentMove>, TapeHelper> &&, T && ... args) {
-	//	return NextDecider{stack.pop().push(CurrentMove{})}.run(std::forward<T>(args)...);
-	//}
 public:
 	template <typename ... T> constexpr bool run(T && ... args) {
 		action(stack.top(), std::forward<T>(args)...);
@@ -108,7 +101,7 @@ template <typename StartSymbol, char... string> class Parser {
 public:
 	using type = Decider<Stack<StartSymbol>, TapeHelper<string...>>;
 	type parser{};
-	static constexpr const bool value = type::value;
+	static constexpr const bool correct = type::correct;
 	template <typename ... T> constexpr bool run(T && ... args) {
 		return parser.run(std::forward<T>(args)...);
 	}

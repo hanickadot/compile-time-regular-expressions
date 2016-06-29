@@ -32,35 +32,70 @@ struct Operands {
 	void push(int64_t v) {
 		if (!usage) {
 			usage = true;
-			//printf("[%d] push a = %lld <- %lld\n",id,a,v);
+			////printf("[%d] push a = %lld <- %lld\n",id,a,v);
 			a = v;
 		} else {
-			//printf("[%d] push b = %lld <- %lld\n",id,b,v);
+			////printf("[%d] push b = %lld <- %lld\n",id,b,v);
 			b = v;
 		}
 	}
-	template <typename Stack, typename... T> void action(Stack & stack, T && ...) {
+	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ...) {
 		stack.template nearest<Operands>().push(a);
-		//printf("[%d] operand: %lld %lld\n",id,a,b);
+		////printf("[%d] operand: %lld %lld\n",id,a,b);
 	}
 };
+
+struct Term;
+struct Expression;
+struct Fact;
+
+
+struct Fact {
+	int64_t value{0};
+	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ...) {
+		//printf("fact: %llu\n",value);
+		stack.template nearest<Term>().value = value;
+	}
+};
+
+struct Term {
+	int64_t value{0};
+	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ...) {
+		//printf("term: %llu\n",value);
+		stack.template nearest<Expression>().value = value;
+	}
+};
+
+struct Expression {
+	int64_t value{0};
+	struct Fallback { };
+	template <typename Stack, typename... T> constexpr void found(Fallback &, Stack & stack, int64_t & output, T && ...) {
+		//printf("return: %llu\n",value);
+		output = value;
+	}
+	template <typename Stack, typename... T> constexpr void found(Fact & fact, Stack & stack, T && ...) {
+		//printf("subexpression: %llu\n",value);
+		fact.value = value;
+	}
+	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ... args) {
+		Fallback fb;
+		found(stack.template nearest<Fact>(fb), stack, std::forward<T>(args)...);
+	}
+};
+
+
 
 struct Number {
 	int64_t value{0};
-	template <typename Stack, typename... T> void action(Stack & stack, T && ...) {
-		printf("number: %lld\n",value);
-		stack.template nearest<Operands>().push(value);
+	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ...) {
+		stack.template nearest<Fact>().value = value;
 	}
 };
 
-template <char c> struct Print {
-	template <char current, typename Stack, typename... T> static void action(Stack & stack, T && ... args) {
-		printf("%c\n",c);
-	}
-};
+
 
 struct Digit {
-	template <char current, typename Stack, typename... T> static void action(Stack & stack, T && ... args) {
+	template <char current, typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
 		static_assert(current >= '0');
 		static_assert(current <= '9');
 		stack.template nearest<Number>().value = stack.template nearest<Number>().value * 10 + (current - '0');
@@ -68,69 +103,73 @@ struct Digit {
 };
 
 struct Plus {
-	template <typename Stack, typename... T> static void action(Stack & stack, T && ... args) {
-		auto & ref = stack.template nearest<Operands>();
-		printf("plus %lld + %lld => %lld\n",ref.a,ref.b,ref.a+ref.b);
-		ref.a = ref.a + ref.b;
+	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
+		auto & se = stack.template nearest<Expression>();
+		auto & te = stack.template nearest<Term>();
+		//printf("[PLUS] %lld + %lld\n",se.value,te.value);
+		te.value = se.value + te.value;
 	}
 };
 
 struct Minus {
-	template <typename Stack, typename... T> static void action(Stack & stack, T && ... args) {
-		auto & ref = stack.template nearest<Operands>();
-		printf("minus %lld - %lld => %lld\n",ref.a,ref.b,ref.a-ref.b);
-		ref.a = ref.a - ref.b;
+	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
+		auto & se = stack.template nearest<Expression>();
+		auto & te = stack.template nearest<Term>();
+		//printf("[PLUS] %lld - %lld\n",se.value,te.value);
+		te.value = se.value + te.value;
 	}
 };
 
 struct Times {
-	template <typename Stack, typename... T> static void action(Stack & stack, T && ... args) {
-		auto & ref = stack.template nearest<Operands>();
-		printf("times %lld * %lld => %lld\n",ref.a,ref.b,ref.a*ref.b);
-		ref.a = ref.a * ref.b;
+	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
+		auto & a = stack.template nearest<Term>();
+		auto & b = stack.template nearest<Fact>();
+		//printf("[TIMES] %lld * %lld\n",a.value,b.value);
+		b.value = a.value * b.value;
 	}
 };
 
 struct Divide {
-	template <typename Stack, typename... T> static void action(Stack & stack, T && ... args) {
-		auto & ref = stack.template nearest<Operands>();
-		printf("divide %lld / %lld => %lld\n",ref.a,ref.b,ref.b ? ref.a/ref.b : 0);
-		ref.a = ref.b ? ref.a / ref.b : 0;
+	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
+		auto & a = stack.template nearest<Term>();
+		auto & b = stack.template nearest<Fact>();
+		//printf("[DIVIDE] %lld / %lld\n",a.value,b.value);
+		b.value = b.value ? (a.value / b.value) : 0;
 	}
 };
 
 
 
-template <char... c> struct Static::Table<S, c...> { using Move = Static::String<E, Holder<Operands>>;};
+template <char... c> struct Static::Table<S, c...> { using Move = Static::String<E, Holder<Expression>>;};
 
-template <> struct Static::Table<E, '('> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '0'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '1'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '2'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '3'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '4'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '5'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '6'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '7'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '8'> { using Move = Static::String<T,E2>; };
-template <> struct Static::Table<E, '9'> { using Move = Static::String<T,E2>; };
+template <> struct Static::Table<E, '('> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '0'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '1'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '2'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '3'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '4'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '5'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '6'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '7'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '8'> { using Move = Static::String<T, Holder<Term>, E2>; };
+template <> struct Static::Table<E, '9'> { using Move = Static::String<T, Holder<Term>, E2>; };
 
 template <> struct Static::Table<E2, ')'> { using Move = Epsilon; };
-template <> struct Static::Table<E2, '+'> { using Move = Static::String<Char_Plus, T, Holder<Plus>, E2>; };
-template <> struct Static::Table<E2, '-'> { using Move = Static::String<Char_Minus, T, Holder<Minus>, E2>; };
+template <> struct Static::Table<E2, '+'> { using Move = Static::String<Char_Plus, T, Holder<Plus>, Holder<Term>, E2>; };
+template <> struct Static::Table<E2, '-'> { using Move = Static::String<Char_Minus, T, Holder<Minus>, Holder<Term>, E2>; };
 template <> struct Static::Table<E2> { using Move = Epsilon; };
 
-template <> struct Static::Table<F,'('> { using Move = Static::String<Char_Open, E, Char_Close>; };
-template <> struct Static::Table<F,'0'> { using Move = Num; };
-template <> struct Static::Table<F,'1'> { using Move = Num; };
-template <> struct Static::Table<F,'2'> { using Move = Num; };
-template <> struct Static::Table<F,'3'> { using Move = Num; };
-template <> struct Static::Table<F,'4'> { using Move = Num; };
-template <> struct Static::Table<F,'5'> { using Move = Num; };
-template <> struct Static::Table<F,'6'> { using Move = Num; };
-template <> struct Static::Table<F,'7'> { using Move = Num; };
-template <> struct Static::Table<F,'8'> { using Move = Num; };
-template <> struct Static::Table<F,'9'> { using Move = Num; };
+template <> struct Static::Table<F,'('> { using Move = Static::String<Char_Open, E, Holder<Expression>, Char_Close>; };
+template <> struct Static::Table<F,'0'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'1'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'2'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'3'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'4'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'5'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'6'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'7'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'8'> { using Move = Static::String<Num,Holder<Number>>; };
+template <> struct Static::Table<F,'9'> { using Move = Static::String<Num,Holder<Number>>; };
 
 template <> struct Static::Table<Num2,')'> { using Move = Epsilon; };
 template <> struct Static::Table<Num2,'*'> { using Move = Epsilon; };
@@ -149,36 +188,36 @@ template <> struct Static::Table<Num2,'8'> { using Move = Static::String<Action<
 template <> struct Static::Table<Num2,'9'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
 template <> struct Static::Table<Num2> { using Move = Epsilon; };
 
-template <> struct Static::Table<Num,'0'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'1'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'2'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'3'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'4'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'5'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'6'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'7'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'8'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
-template <> struct Static::Table<Num,'9'> { using Move = Static::String<Action<Digit>,Char_Num,Num2,Holder<Number>>; };
+template <> struct Static::Table<Num,'0'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'1'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'2'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'3'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'4'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'5'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'6'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'7'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'8'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
+template <> struct Static::Table<Num,'9'> { using Move = Static::String<Action<Digit>,Char_Num,Num2>; };
 
 
 template <> struct Static::Table<T2,')'> { using Move = Epsilon; };
 template <> struct Static::Table<T2,'+'> { using Move = Epsilon; };
 template <> struct Static::Table<T2,'-'> { using Move = Epsilon; };
-template <> struct Static::Table<T2,'*'> { using Move = Static::String<Char_Star, F, Holder<Times>, T2>; };
-template <> struct Static::Table<T2,'/'> { using Move = Static::String<Char_Slash, F, Holder<Divide>, T2>; };
+template <> struct Static::Table<T2,'*'> { using Move = Static::String<Char_Star, F, Holder<Times>, Holder<Fact>, T2>; };
+template <> struct Static::Table<T2,'/'> { using Move = Static::String<Char_Slash, F, Holder<Divide>, Holder<Fact>, T2>; };
 template <> struct Static::Table<T2> { using Move = Epsilon; };
 
-template <> struct Static::Table<T, '('> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '0'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '1'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '2'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '3'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '4'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '5'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '6'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '7'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '8'> { using Move = Static::String<F, T2>; };
-template <> struct Static::Table<T, '9'> { using Move = Static::String<F, T2>; };
+template <> struct Static::Table<T, '('> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '0'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '1'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '2'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '3'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '4'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '5'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '6'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '7'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '8'> { using Move = Static::String<F, Holder<Fact>, T2>; };
+template <> struct Static::Table<T, '9'> { using Move = Static::String<F, Holder<Fact>, T2>; };
 
 template <> struct Static::Table<Char_Open, '('> { using Move = ReadChar; };
 template <> struct Static::Table<Char_Close, ')'> { using Move = ReadChar; };
@@ -198,27 +237,19 @@ template <> struct Static::Table<Char_Num, '7'> { using Move = ReadChar; };
 template <> struct Static::Table<Char_Num, '8'> { using Move = ReadChar; };
 template <> struct Static::Table<Char_Num, '9'> { using Move = ReadChar; };
 
-template <char... string> struct PrintHelper;
-
-template <char first, char ... string> struct PrintHelper<first, string...> {
-static void print() {
-	putchar(first);
-	PrintHelper<string...>::print();
-}
-};
-
-template <> struct PrintHelper<> {
-static void print() {
-	putchar('\n');
-}
-};
 
 template<typename CharT, CharT ... string> constexpr auto operator""_expr() {
-	static_assert(Static::Parser<S,string...>::value);
-	PrintHelper<string...>::print();
-	Static::Parser<S,string...>{}.run();
+	static_assert(Static::Parser<S,string...>::correct);
+	int64_t output{0};
+	Static::Parser<S,string...>{}.run(output);
+	return output;
 }
 
 int main() {
-	"3+4*5"_expr;
+	static_assert("2*(3+2)"_expr == 10);
+	static_assert("2*3+2"_expr == 8);
+	static_assert("42"_expr == 42);
+	static_assert("(((42)))"_expr == 42);
+	int64_t value = "2*(3+2)"_expr;
+	printf("%llu\n",value);
 }

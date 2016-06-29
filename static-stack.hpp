@@ -12,10 +12,10 @@ struct EmptyStackSymbol {
 };	
 
 template <typename T> struct Holder {
-	T data;
+	T data{};
 	static const char * identify() { return "Holder<>"; }
-	template <typename Stack, typename... Args> void action(Stack & stack, Args && ... args) { data.action(stack, std::forward<Args>(args)...); }
-	Holder() = default;
+	template <typename Stack, typename... Args> constexpr void action(Stack & stack, Args && ... args) { data.action(stack, std::forward<Args>(args)...); }
+	constexpr Holder() = default;
 };
 
 template <typename ... Content> class Stack;
@@ -65,25 +65,45 @@ template <typename TopItem> struct NearestSelector<TopItem> {
 template <bool have, typename... Wanted> struct NearestReturn;
 
 template <typename... Wanted> struct NearestReturn<true, Wanted...> {
-	template <typename TopItem, typename... Content> static auto & get(Holder<TopItem> & top, Stack<Content...> &) {
+	template <typename TopItem, typename... Content> static constexpr auto & get(Holder<TopItem> & top, Stack<Content...> &) {
 		return top.data;
 	}
-	template <typename TopItem, typename... Content> static auto & get(TopItem & top, Stack<Content...> &) {
+	template <typename TopItem, typename... Content> static constexpr auto & get(TopItem & top, Stack<Content...> &) {
+		return top;
+	}
+	template <typename TopItem, typename... Content, typename Fallback> static constexpr auto & get(Holder<TopItem> & top, Stack<Content...> &, Fallback &) {
+		return top.data;
+	}
+	template <typename TopItem, typename... Content, typename Fallback> static constexpr auto & get(TopItem & top, Stack<Content...> &, Fallback &) {
 		return top;
 	}
 };
 
 template <typename... Wanted> struct NearestReturn<false, Wanted...> {
-	template <typename TopItem, typename... Content> static auto & get(TopItem &, Stack<Content...> & stack) {
+	template <typename TopItem, typename... Content> static constexpr auto & get(TopItem &, Stack<Content...> & stack) {
 		return stack.template nearest<Wanted...>();
+	}
+	template <typename TopItem, typename... Content, typename Fallback> static constexpr auto & get(TopItem &, Stack<Content...> & stack, Fallback & fallback) {
+		return stack.template nearest<Wanted...>(fallback);
 	}
 };
 
 
 template <typename... Wanted> class NearestHelper {
 public:
-	template <typename TopItem, typename... Content> static auto & get(TopItem & top, Stack<Content...> & stack) {
+	template <typename TopItem, typename... Content> static constexpr auto & get(TopItem & top, Stack<Content...> & stack) {
 		return NearestReturn<NearestSelector<TopItem, Wanted...>::have, Wanted...>::get(top, stack);
+	}
+	template <typename TopItem> static constexpr auto & get(TopItem & top, Stack<> & stack) {
+		static_assert(NearestSelector<TopItem, Wanted...>::have);
+		return NearestReturn<NearestSelector<TopItem, Wanted...>::have, Wanted...>::get(top, stack);
+	}
+	
+	template <typename TopItem, typename... Content, typename Fallback> static constexpr auto & get(TopItem & top, Stack<Content...> & stack, Fallback & fallback) {
+		return NearestReturn<NearestSelector<TopItem, Wanted...>::have, Wanted...>::get(top, stack, fallback);
+	}
+	template <typename TopItem, typename Fallback> static constexpr auto & get(TopItem & top, Stack<> & stack, Fallback & fallback) {
+		return NearestReturn<NearestSelector<TopItem, Wanted...>::have, Wanted...>::get(top, stack, fallback);
 	}
 };
 
@@ -148,6 +168,10 @@ public:
 		return NearestHelper<Wanted...>::get(topItem, content);
 	}
 	
+	template <typename... Wanted, typename Fallback> constexpr auto & nearest(Fallback & fallback) {
+		return NearestHelper<Wanted...>::get(topItem, content, fallback);
+	}
+	
 	std::ostream & operator<<(std::ostream & stream) const {
 		return stream << topItem << " [" << content << "]";
 	}
@@ -195,6 +219,10 @@ public:
 	
 	constexpr Push<> push(const Stack<> & stack) const {
 		return Push<>{};
+	}
+	
+	template <typename... Wanted, typename Fallback> constexpr auto & nearest(Fallback & fallback) {
+		return fallback;
 	}
 	
 	std::ostream & operator<<(std::ostream & stream) const {
