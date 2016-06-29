@@ -139,9 +139,6 @@ struct Divide {
 };
 
 
-
-template <char... c> struct Static::Table<S, c...> { using Move = Static::String<E, Holder<Expression>>;};
-
 template <> struct Static::Table<E, '('> { using Move = Static::String<T, Holder<Term>, E2>; };
 template <> struct Static::Table<E, '0'> { using Move = Static::String<T, Holder<Term>, E2>; };
 template <> struct Static::Table<E, '1'> { using Move = Static::String<T, Holder<Term>, E2>; };
@@ -239,9 +236,11 @@ template <> struct Static::Table<Char_Num, '9'> { using Move = ReadChar; };
 
 
 template<typename CharT, CharT ... string> constexpr auto operator""_expr() {
-	static_assert(Static::Parser<S,string...>::correct);
+	using namespace Static;
+	using Parser = Decider<Stack<E, Holder<Expression>>, Input<string...>>;
+	static_assert(Parser::correct);
 	int64_t output{0};
-	Static::Parser<S,string...>{}.run(output);
+	Parser{}.run(output);
 	return output;
 }
 

@@ -32,20 +32,20 @@ template <typename T, char... string> struct Table<Holder<T>, string...> {
 	using Move = Epsilon;
 };
 
-template <char ...> struct TapeHelper;
+template <char ...> struct Input;
 
-template <char firstCharacter, char ... rest> struct TapeHelper<firstCharacter, rest...> {
+template <char firstCharacter, char ... rest> struct Input<firstCharacter, rest...> {
 	static constexpr const size_t size = sizeof...(rest) + 1;
 	static constexpr const char first = firstCharacter;
 	static constexpr const bool empty = false;
-	using Read = TapeHelper<rest...>;
+	using Read = Input<rest...>;
 };
 
-template <> struct TapeHelper<> {
+template <> struct Input<> {
 	static constexpr const size_t size = 0;
 	static constexpr const char first = {};
 	static constexpr const bool empty = true;
-	using Read = TapeHelper<>;
+	using Read = Input<>;
 };
 
 template <bool c> struct Constant {
@@ -55,17 +55,17 @@ template <bool c> struct Constant {
 	}
 };
 
-template <typename Stack, typename TapeHelper> class Decider {
+template <typename Stack, typename Input> class Decider {
 protected:
 	using TopOfStack = typename Stack::Top;
-	using CurrentCell = typename std::conditional<TapeHelper::empty, Table<TopOfStack>, Table<TopOfStack, TapeHelper::first>>::type;
+	using CurrentCell = typename std::conditional<Input::empty, Table<TopOfStack>, Table<TopOfStack, Input::first>>::type;
 	using CurrentMove = typename CurrentCell::Move;
 public:		
 	static constexpr const bool currentRejecting = std::is_same<CurrentMove, RejectInput>::value;
 	static constexpr const bool currentAccepting = std::is_same<CurrentMove, AcceptInput>::value;
 	static constexpr const bool currentReading = std::is_same<CurrentMove, ReadChar>::value;
 protected:
-	using NextDecider = typename std::conditional<currentRejecting, Constant<false>, typename std::conditional<currentAccepting, Constant<true>, typename std::conditional<currentReading, Decider<typename Stack::Pop, typename TapeHelper::Read>, Decider<typename Stack::Pop::template Push<CurrentMove>, TapeHelper>>::type>::type>::type;
+	using NextDecider = typename std::conditional<currentRejecting, Constant<false>, typename std::conditional<currentAccepting, Constant<true>, typename std::conditional<currentReading, Decider<typename Stack::Pop, typename Input::Read>, Decider<typename Stack::Pop::template Push<CurrentMove>, Input>>::type>::type>::type;
 public:
 	static constexpr const bool correct = currentAccepting ? true : ( currentRejecting ? false : NextDecider::correct );
 protected:
@@ -75,7 +75,7 @@ public:
 	constexpr Decider(const Stack && orig): stack{orig} {}
 protected:
 	template <typename T, typename ... Args> constexpr void action(Holder<T> && holder, Args && ... args) { holder.action(stack, std::forward<Args>(args)...); }
-	template <typename T, typename ... Args> constexpr void action(const Action<T> &&, Args && ... args) { Action<T>::template action<TapeHelper::first>(stack, std::forward<Args>(args)...); }
+	template <typename T, typename ... Args> constexpr void action(const Action<T> &&, Args && ... args) { Action<T>::template action<Input::first>(stack, std::forward<Args>(args)...); }
 	template <typename ... T> constexpr void action(T ...) const { }
 	
 	template <typename ... T> constexpr void innerRun(const RejectInput &&, T && ...) { }
@@ -95,7 +95,7 @@ public:
 
 template <typename StartSymbol, char... string> class Parser {
 public:
-	using type = Decider<Stack<StartSymbol>, TapeHelper<string...>>;
+	using type = Decider<Stack<StartSymbol>, Input<string...>>;
 	type parser{};
 	static constexpr const bool correct = type::correct;
 	template <typename ... T> constexpr void run(T && ... args) {
