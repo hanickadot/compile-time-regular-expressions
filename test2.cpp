@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-SYMBOL(S);
-
 SYMBOL(E);
 SYMBOL(E2);
 SYMBOL(F);
@@ -240,6 +238,7 @@ template<typename CharT, CharT ... string> constexpr auto operator""_expr() {
 	using Parser = Decider<Stack<E, Holder<Expression>>, Input<string...>>;
 	static_assert(Parser::correct);
 	int64_t output{0};
+	//Parser::template build<Number>();
 	Parser{}.run(output);
 	return output;
 }

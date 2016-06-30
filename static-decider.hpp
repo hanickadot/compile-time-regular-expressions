@@ -14,6 +14,12 @@ template <typename T> struct Action {
 	template <char current, typename Stack, typename ... Args> static constexpr void action(Stack & stack, Args && ... args) { T::template action<current>(stack, std::forward<Args>(args)...); }
 };
 
+template <typename T> struct Builder {
+	template <char c, typename ... Content> static constexpr auto build(const Stack<Content...> && stack) {
+		return T::template build<c>(std::forward<const Stack<Content...>>(stack));
+	}
+};
+
 #define SYMBOL(x) struct x { static const char * identify() { return #x; } }
 
 template <typename Symbol, char...> struct Table {
@@ -29,6 +35,10 @@ template <typename T, char... string> struct Table<Action<T>, string...> {
 };
 
 template <typename T, char... string> struct Table<Holder<T>, string...> {
+	using Move = Epsilon;
+};
+
+template <typename T, char... string> struct Table<Builder<T>, string...> {
 	using Move = Epsilon;
 };
 
@@ -53,6 +63,7 @@ template <bool c> struct Constant {
 	template <typename ... T> bool run(T && ...) {
 		return c;
 	}
+	template <typename ... Seed> using TypeStack = Stack<Seed...>;
 };
 
 template <typename Stack, typename Input> class Decider {
@@ -70,7 +81,31 @@ public:
 	static constexpr const bool correct = currentAccepting ? true : ( currentRejecting ? false : NextDecider::correct );
 protected:
 	Stack stack{};
+	template <typename ... Seed> static constexpr auto getSeed(const Static::Stack<Seed...> &&) {
+		return typename NextDecider::template TypeStack<Seed...>{};
+	}
 public:
+	//template <typename ... Seed, typename ... Rest> static constexpr auto build(const Rest && ...) {
+	//	return Stack<Seed...>{};
+	//}
+	//template <typename ... Seed, typename BuilderType> static constexpr auto build(const Builder<BuilderType> &&) {
+	//	return Builder<BuilderType>::build<Seed...>();
+	//}
+	
+	
+	
+	template <typename ... Seed, typename T> static constexpr auto build(const Builder<T> && builder) {
+		return decltype(getSeed(Builder<T>::template build<Input::first>(Static::Stack<Seed...>{}))){};
+	}
+	
+	template <typename ... Seed, typename T> static constexpr auto build(const T &&) {
+		return typename NextDecider::template TypeStack<Seed...>{};
+	}
+	
+	template <typename ... Seed> using TypeStack = decltype(build<Seed...>(TopOfStack{}));
+	template <typename ... Seed> using Type = typename TypeStack<Seed...>::Top;
+	using OutputType = Type<>;
+	
 	constexpr Decider() = default;
 	constexpr Decider(const Stack && orig): stack{orig} {}
 protected:
