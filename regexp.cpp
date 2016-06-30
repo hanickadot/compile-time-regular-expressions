@@ -14,6 +14,7 @@ SYMBOL(Char_ABC);
 namespace RegExp {
 	
 	template <typename ...> struct RegExp {
+	constexpr bool match(const char *) { return true; }
 	};
 
 	template <char c> struct Char {
@@ -84,10 +85,13 @@ template<typename CharT, CharT ... string> constexpr auto operator""_re() {
 }
 
 int main() {
+	
 	using namespace RegExp;
 	static_assert( std::is_same<decltype("x$"_re), RegExp<Char<'x'>,End>> ::value);
 	static_assert( std::is_same<decltype("^x$"_re), RegExp<Begin,Char<'x'>,End>> ::value);
 	static_assert( std::is_same<decltype("^xy$"_re), RegExp<Begin,Char<'x'>,Char<'y'>,End>> ::value);
 	static_assert( std::is_same<decltype("^."_re), RegExp<Begin,Anything>> ::value);
+	
+	static_assert("^x$"_re.match("x") == true);
 
 }
