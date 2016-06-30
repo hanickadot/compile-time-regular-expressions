@@ -13,9 +13,6 @@ math: math.o
 regexp: regexp.o 
 	$(CXX) $(CXXFLAGS) $< -o $@
 	
-test: test.o
-	$(CXX) $(CXXFLAGS) $< -o $@
-	
 number: number.o
 	$(CXX) $(CXXFLAGS) $< -o $@
 
