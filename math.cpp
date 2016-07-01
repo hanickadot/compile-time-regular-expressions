@@ -18,31 +18,6 @@ SYMBOL(Char_Plus);
 SYMBOL(Char_Minus);
 SYMBOL(Char_Num);
 
-struct Operands {
-	static unsigned int getID() {
-		static unsigned int i{0};
-		return i++;
-	}
-	unsigned int id{getID()};
-	bool usage{false};
-	int64_t a{0};
-	int64_t b{0};
-	void push(int64_t v) {
-		if (!usage) {
-			usage = true;
-			////printf("[%d] push a = %lld <- %lld\n",id,a,v);
-			a = v;
-		} else {
-			////printf("[%d] push b = %lld <- %lld\n",id,b,v);
-			b = v;
-		}
-	}
-	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ...) {
-		stack.template nearest<Operands>().push(a);
-		////printf("[%d] operand: %lld %lld\n",id,a,b);
-	}
-};
-
 struct Term;
 struct Expression;
 struct Fact;
@@ -51,7 +26,6 @@ struct Fact;
 struct Fact {
 	int64_t value{0};
 	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ...) {
-		//printf("fact: %llu\n",value);
 		stack.template nearest<Term>().value = value;
 	}
 };
@@ -59,7 +33,6 @@ struct Fact {
 struct Term {
 	int64_t value{0};
 	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ...) {
-		//printf("term: %llu\n",value);
 		stack.template nearest<Expression>().value = value;
 	}
 };
@@ -68,11 +41,9 @@ struct Expression {
 	int64_t value{0};
 	struct Fallback { };
 	template <typename Stack, typename... T> constexpr void found(Fallback &, Stack & stack, int64_t & output, T && ...) {
-		//printf("return: %llu\n",value);
 		output = value;
 	}
 	template <typename Stack, typename... T> constexpr void found(Fact & fact, Stack & stack, T && ...) {
-		//printf("subexpression: %llu\n",value);
 		fact.value = value;
 	}
 	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ... args) {
@@ -80,8 +51,6 @@ struct Expression {
 		found(stack.template nearest<Fact>(fb), stack, std::forward<T>(args)...);
 	}
 };
-
-
 
 struct Number {
 	int64_t value{0};
@@ -104,7 +73,6 @@ struct Plus {
 	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
 		auto & se = stack.template nearest<Expression>();
 		auto & te = stack.template nearest<Term>();
-		//printf("[PLUS] %lld + %lld\n",se.value,te.value);
 		te.value = se.value + te.value;
 	}
 };
@@ -113,7 +81,6 @@ struct Minus {
 	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
 		auto & se = stack.template nearest<Expression>();
 		auto & te = stack.template nearest<Term>();
-		//printf("[MINUS] %lld - %lld\n",se.value,te.value);
 		te.value = se.value - te.value;
 	}
 };
@@ -122,7 +89,6 @@ struct Times {
 	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
 		auto & a = stack.template nearest<Term>();
 		auto & b = stack.template nearest<Fact>();
-		//printf("[TIMES] %lld * %lld\n",a.value,b.value);
 		b.value = a.value * b.value;
 	}
 };
@@ -131,11 +97,9 @@ struct Divide {
 	template <typename Stack, typename... T> static constexpr void action(Stack & stack, T && ... args) {
 		auto & a = stack.template nearest<Term>();
 		auto & b = stack.template nearest<Fact>();
-		//printf("[DIVIDE] %lld / %lld\n",a.value,b.value);
 		b.value = b.value ? (a.value / b.value) : 0;
 	}
 };
-
 
 template <> struct Static::Table<E, '('> { using Move = Static::String<T, Holder<Term>, E2>; };
 template <> struct Static::Table<E, '0'> { using Move = Static::String<T, Holder<Term>, E2>; };
