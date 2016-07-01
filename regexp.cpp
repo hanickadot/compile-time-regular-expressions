@@ -76,6 +76,7 @@ template <> struct Static::Table<Char_ABC,'$'> { using Move = RejectInput; };
 
 
 template<typename CharT, CharT ... string> constexpr auto operator""_re() {
+	static_assert(std::is_same<CharT, char>::value);
 	using namespace Static;
 	using namespace RegExp;
 	
@@ -85,7 +86,6 @@ template<typename CharT, CharT ... string> constexpr auto operator""_re() {
 }
 
 int main() {
-	
 	using namespace RegExp;
 	static_assert( std::is_same<decltype("x$"_re), RegExp<Char<'x'>,End>> ::value);
 	static_assert( std::is_same<decltype("^x$"_re), RegExp<Begin,Char<'x'>,End>> ::value);

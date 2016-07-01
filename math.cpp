@@ -234,6 +234,7 @@ template <> struct Static::Table<Char_Num, '9'> { using Move = ReadChar; };
 
 
 template<typename CharT, CharT ... string> constexpr auto operator""_expr() {
+	static_assert(std::is_same<CharT, char>::value);
 	using namespace Static;
 	using Parser = Decider<Stack<E, Holder<Expression>>, Input<string...>>;
 	static_assert(Parser::correct);
@@ -243,12 +244,12 @@ template<typename CharT, CharT ... string> constexpr auto operator""_expr() {
 }
 
 int main() {
-	static_assert("2*(3+2)"_expr == 10);
+	static_assert("2*(3+2)+32"_expr == 42);
 	static_assert("2*3+2"_expr == 8);
 	static_assert("42"_expr == 42);
 	static_assert("(((42)))"_expr == 42);
 	static_assert("2-1"_expr == 1);
 	
 	int64_t value = "42*(2-1)"_expr;
-	printf("%llu\n",value);
+	printf("%lld\n",value);
 }
