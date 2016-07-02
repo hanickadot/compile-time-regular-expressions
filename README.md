@@ -23,7 +23,7 @@ template<typename CharT, CharT ... string> constexpr auto operator""_fpre() {
 
 You need define your nonterminals, start symbol (YourStartNonTerminal), alphabet and parser table, for example: [math.cpp](math.cpp).
 
-For example code from [code-size.cpp](code-size-test):
+For example code from [code-size.cpp](code-size-test.cpp):
 
 ```C++
 #include "pregexp.hpp"
