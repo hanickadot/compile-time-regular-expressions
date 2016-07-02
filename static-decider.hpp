@@ -3,6 +3,8 @@
 
 #include "static-stack.hpp"
 
+#include <utility>
+
 namespace Static {
 	
 struct AcceptInput { };
