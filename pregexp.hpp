@@ -101,11 +101,11 @@ struct set_finish {
 };
 
 struct set_combine { 
-	template <char c, unsigned int b, unsigned int a, typename ... Content> static constexpr auto build(const Static::Stack<sre::Char<b>, sre::Char<a>, Content...> &&) { return Static::Stack<sre::Char<a,b>, Content...>{}; }
+	template <char c, unsigned int b, unsigned int ... a, typename ... Content> static constexpr auto build(const Static::Stack<sre::Char<b>, sre::Char<a...>, Content...> &&) { return Static::Stack<sre::Char<a...,b>, Content...>{}; }
 	template <char c, unsigned int a, unsigned int ... def, typename ... Content> static constexpr auto build(const Static::Stack<sre::Range<def...>, sre::Char<a>, Content...> &&) { return Static::Stack<sre::Range<def...,a,a>, Content...>{}; }
 	template <char c, unsigned int ... b, unsigned int ... a, typename ... Content> static constexpr auto build(const Static::Stack<sre::Range<b...>,sre::Range<a...>,Content...> &&) { return Static::Stack<sre::Range<a...,b...>, Content...>{}; }
-	template <char c, unsigned int b, unsigned int a, typename ... Content> static constexpr auto build(const Static::Stack<sre::Char<b>, sre::NegChar<a>, Content...> &&) { return Static::Stack<sre::NegChar<a,b>, Content...>{}; }
-	template <char c, unsigned int a, unsigned int ... def, typename ... Content> static constexpr auto build(const Static::Stack<sre::Range<def...>, sre::NegChar<a>, Content...> &&) { return Static::Stack<sre::NegativeRange<def...,a,a>, Content...>{}; }
+	template <char c, unsigned int b, unsigned int ... a, typename ... Content> static constexpr auto build(const Static::Stack<sre::Char<b>, sre::NegChar<a...>, Content...> &&) { return Static::Stack<sre::NegChar<a...,b>, Content...>{}; }
+	template <char c, unsigned int a, unsigned int ... def, typename ... Content> static constexpr auto build(const Static::Stack<sre::Range<def...>, sre::NegChar<a>, Content...> &&) { return Static::Stack<sre::NegativeRange<a,a,def...>, Content...>{}; }
 	template <char c, unsigned int ... b, unsigned int ... a, typename ... Content> static constexpr auto build(const Static::Stack<sre::Range<b...>,sre::NegativeRange<a...>,Content...> &&) { return Static::Stack<sre::NegativeRange<a...,b...>, Content...>{}; }
 	LET_IT_GO
 };
@@ -234,4 +234,8 @@ template<typename CharT, CharT ... string> constexpr auto operator""_fpre() {
 
 template <typename T, typename A> constexpr void checkType(const A &&) {
 	static_assert(std::is_same<T,A>::value);
+} 
+
+template <typename... T, typename A> constexpr void checkRegExp(const A &&) {
+	static_assert(std::is_same<sre::RegExp<T...>,A>::value);
 } 
