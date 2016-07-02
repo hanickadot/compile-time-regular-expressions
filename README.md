@@ -8,7 +8,7 @@ It's LL(1) parser implemented with C++ templates and it's checking string during
 
 # Usage
 
-With N3599 proposel for C++ usage is very nice and easy: 
+With N3599 proposal (supported by clang and gcc) for C++ usage is very nice and easy: 
 
 ```C++
 template<typename CharT, CharT ... string> constexpr auto operator""_fpre() {
