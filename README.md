@@ -21,9 +21,9 @@ template<typename CharT, CharT ... string> constexpr auto operator""_fpre() {
 }
 ```
 
-You need define your nonterminals, start symbol (YourStartNonTerminal), alphabet and parser table, for example: [math.cpp](blob/master/math.cpp).
+You need define your nonterminals, start symbol (YourStartNonTerminal), alphabet and parser table, for example: [math.cpp](math.cpp).
 
-For example code from [code-size.cpp](blob/master/code-size-test):
+For example code from [code-size.cpp](code-size-test):
 
 ```C++
 #include "pregexp.hpp"
