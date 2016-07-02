@@ -11,6 +11,32 @@ SYMBOL(Char_Begin);
 SYMBOL(Char_End);
 SYMBOL(Char_ABC);
 
+/*
+abc={a,b,c,d,e,f,g,h,i}
+dot={.}
+begin={^}
+end={$}
+plus={+}
+star={*}
+questionmark={?}
+minus={-}
+pipe={|}
+backslash={\}
+S-><Select>
+Select-><Part>,<Option>
+Option->[select],pipe,<Part>,<Option>|epsilon
+Part-><SymbolDef>,<Part>|epsilon
+SymbolDef-><Symbol>,<Repeat>
+Symbol->dot|begin|end|abc|(,<Option>,)|<Set>|backslash,<Special>
+Set->\[,<SetDef>,\] | \[,^,<NegSetDef>,\]
+SetDef->abc,<SetDef>|epsilon|<Range>
+NegSetDef->abc,<NegSetDef>|epsilon|<Range>
+Range->abc,minus,abc
+Repeat-><RepeatDef>,<Repeat>|epsilon
+RepeatDef->plus,[plus]|star,[star]|questionmark,[optional]|epsilon
+Special->x,hexdec,hexdec,[hexdec]
+*/
+
 namespace RegExp {
 	
 	template <typename ...> struct RegExp {
