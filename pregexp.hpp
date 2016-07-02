@@ -54,7 +54,7 @@ mod->epsilon | questionmark,[nongreedy] | plus,[possessive]
 number->[digit],num,<number2>,[number]
 number2->epsilon | [digit],num,<number2>
 
-block->open,<altB>,close | open,questionmark,colon,<altB>,close
+block->open,<altB>,[make_catch],close | open,questionmark,colon,<altB>,close
 
 class->sopen,[set_start],<set>,sclose,[set_finish]|sopen,caret,[set_neg_start],<set>,sclose,[set_finish]
 set-><setitem>,<set2>
@@ -201,7 +201,12 @@ struct octal3 { LET_IT_GO };
 struct hexdec2 { LET_IT_GO };
 struct hexdec4 { LET_IT_GO };
 
-
+struct make_catch { 
+	// TODO transfer id of brackets
+	template <char c, typename T, typename ... Content> static constexpr auto build(const Static::Stack<T,Content...> &&) { return Static::Stack<sre::StaticCatch<0,1,T>, Content...>{}; }
+	template <char c, typename... T, typename ... Content> static constexpr auto build(const Static::Stack<sre::Sequence<T...>,Content...> &&) { return Static::Stack<sre::StaticCatch<0,1,T...>, Content...>{}; }
+	LET_IT_GO
+};
 
 
 
