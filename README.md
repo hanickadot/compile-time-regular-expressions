@@ -1,4 +1,4 @@
-# syntax-parser
+# Static syntax parser
 
 It's LL(1) parser implemented with C++ templates and it's checking string during compile time. It's useful for:
 
@@ -6,7 +6,24 @@ It's LL(1) parser implemented with C++ templates and it's checking string during
 * Evaluating mathematical string expressions.
 * Checking for correctness with created grammar.
 
-For example code from [code-size.test](../blob/master/code-size-test)
+# Usage
+
+With N3599 proposel for C++ usage is very nice and easy: 
+
+```C++
+template<typename CharT, CharT ... string> constexpr auto operator""_fpre() {
+	static_assert(std::is_same<CharT, char>::value);
+	using Parser = Static::Decider<Stack<YourStartNonTerminal>, Static::Input<string...>>;
+	static_assert(Parser::correct);
+	// return whatever you want
+	// or you can return instance of "builded" type from parser: 
+	return typename Parser::template Type<>{};
+}
+```
+
+You need define your nonterminals, start symbol (YourStartNonTerminal), alphabet and parser table, for example: [math.cpp](../blob/master/math.cpp).
+
+For example code from [code-size.cpp](../blob/master/code-size-test):
 
 ```C++
 #include "pregexp.hpp"
