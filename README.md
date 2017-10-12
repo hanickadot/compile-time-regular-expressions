@@ -1,29 +1,52 @@
-# Static syntax parser
+# Compile time regular expressions
 
-It's LL(1) parser implemented with C++ templates and it's checking string during compile time. It's useful for:
+It's a library which provides a regular expression parsing during compile time and also compile time evaluation of them.
 
-* Static regular expression optimized with your compiler.
-* Evaluating mathematical string expressions.
-* Checking for correctness with created grammar.
+In case of an error in your pattern it gives you simple static_assert failure and not a long and crazy error somewhere in a templated code.
 
-# Usage
+Internally it using LL(1) parser implemented as C++ templates to transform a string pattern into type. This type can be evaluated during compile time or runtime. Matching pattern is implemented (for now) as depth search with all of it's caveats.
 
-With N3599 proposal (supported by clang and gcc) for C++ usage is very nice and easy: 
+## Motivation
+
+Usually a regular expressions in your code doesn't change and you want them to be quick as possible. You can write finite state automata but they are hard to maintain and do them correctly. An ordinary regular expressions are usually complex libraries which can be used in embeded environment. 
+
+Any regular expression is a just common known pattern and they are 1:1 mapped to FA. And the FA can be transformed into a code. So there is no reason for using "interpreted" regular expression.
+
+# Future work
+
+* Support full constexpr-ness with captures and repeat patterns (soon)
+* Support for structured binding of captures:
+
+```C++
+if (auto [matched, a, b] = "^([a-z]+) ([0-9]+)$"_pre.match(input); matched) {
+	// do something with a,b
+}
+```
+
+* Clean it
+* Documentation
+* Get it into standard
+
+# Implementation
+
+You can try it on the Matt Godbolt's [Compiler Explorer](https://godbolt.org/g/9K8oQv), just enable CTRE library and include `<ctre>` header.
+
+## Transforming string into type
+
+With P0424 proposal (supported by clang and gcc) for C++ usage is very nice and easy: 
 
 ```C++
 template<typename CharT, CharT ... string> constexpr auto operator""_fpre() {
 	static_assert(std::is_same<CharT, char>::value);
 	using Parser = Static::Decider<Stack<YourStartNonTerminal>, Static::Input<string...>>;
-	static_assert(Parser::correct);
-	// return whatever you want
-	// or you can return instance of "builded" type from parser: 
+	static_assert(Parser::correct, "Can't parse input pattern."); 
 	return typename Parser::template Type<>{};
 }
 ```
 
 You need define your nonterminals, start symbol (YourStartNonTerminal), alphabet and parser table, for example: [math.cpp](math.cpp).
 
-For example code from [code-size.cpp](code-size-test.cpp):
+## Using regular expression as UDL
 
 ```C++
 #include "pregexp.hpp"
@@ -31,6 +54,7 @@ For example code from [code-size.cpp](code-size-test.cpp):
 int main(int argc, char ** argv) {
 using namespace sre;
 
+// it is really just a type representation of the pattern
 static_assert(
 	std::is_same<
 		RegExp<Begin,Select<Char<'a','b','c'>,String<'x','y','z'>>,Plus<Anything>,End>,
@@ -38,6 +62,7 @@ static_assert(
 	>::value
 );
 
+// let's try it
 if (argc >= 2 && "^(?:[abc]|xyz).+$"_pre.match(argv[1])) {
 	puts("match");
 	return 0;
@@ -46,9 +71,10 @@ if (argc >= 2 && "^(?:[abc]|xyz).+$"_pre.match(argv[1])) {
 	return 1;
 }
 } 
+
 ```
- 
-Is compiled to:
+
+### Output ASM
 
 ```nasm
 _main:
