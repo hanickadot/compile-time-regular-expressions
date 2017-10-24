@@ -1,7 +1,7 @@
 .PHONY: all clean
 	
 # -ftemplate-depth-1024 -ftemplate-backtrace-limit=0
-override CXXFLAGS += -std=c++1z -Wno-gnu-string-literal-operator-template -O3
+override CXXFLAGS += -std=c++1z -Wno-gnu-string-literal-operator-template -O3 -Iinclude
 
 override TARGETS := math regexp pregexp code-size-test catch-regexp-example
 

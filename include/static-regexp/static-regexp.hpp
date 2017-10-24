@@ -123,10 +123,10 @@ public:
 		data.emplace_back(std::forward<PositionPair>(pair));
 	}
 	const PositionPair * begin() const {
-		return &*data.cbegin();
+		return data.empty() ? nullptr : &data.front();
 	}
 	const PositionPair * end() const {
-		return &*data.cend();
+		return data.empty() ? nullptr : &data.back() + 1;
 	}
 	CatchRange getRange() const {
 		return {begin(),end()};

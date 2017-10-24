@@ -2,7 +2,6 @@
 #include "static-regexp/string.hpp"
 #include "static-regexp/static-regexp.hpp"
 
-#include <iostream>
 #include <cassert>
 
 /*
