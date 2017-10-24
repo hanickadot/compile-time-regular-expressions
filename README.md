@@ -1,5 +1,7 @@
 # Compile time regular expressions
 
+> This library is highly experimental and API will change in future.
+
 It's a library which provides a regular expression parsing during compile time and also compile time evaluation of them.
 
 In case of an error in your pattern it gives you simple static_assert failure and not a long and crazy error somewhere in a templated code.
@@ -14,8 +16,8 @@ Any regular expression is a just common known pattern and they are 1:1 mapped to
 
 # Future work
 
-* Support full constexpr-ness with captures and repeat patterns (soon)
-* Support for structured binding of captures:
+- [ ] Support full constexpr-ness with captures and repeat patterns (soon)
+- [ ] Support for structured binding of captures:
 
 ```C++
 if (auto [matched, a, b] = "^([a-z]+) ([0-9]+)$"_pre.match(input); matched) {
@@ -23,9 +25,9 @@ if (auto [matched, a, b] = "^([a-z]+) ([0-9]+)$"_pre.match(input); matched) {
 }
 ```
 
-* Clean it
-* Documentation
-* Get it into standard
+- [ ] Clean source code
+- [ ] Documentation
+- [ ] Get it into standard :smile:
 
 # Implementation
 
