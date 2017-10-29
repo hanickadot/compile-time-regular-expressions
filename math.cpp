@@ -47,7 +47,7 @@ struct Expression {
 		fact.value = value;
 	}
 	template <typename Stack, typename... T> constexpr void action(Stack & stack, T && ... args) {
-		Fallback fb;
+		Fallback fb{};
 		found(stack.template nearest<Fact>(fb), stack, std::forward<T>(args)...);
 	}
 };

@@ -37,7 +37,7 @@ RepeatDef->plus,[plus]|star,[star]|questionmark,[optional]|epsilon
 Special->x,hexdec,hexdec,[hexdec]
 */
 
-namespace RegExp {
+namespace AltRegExp {
 	
 	template <typename ...> struct RegExp {
 	constexpr bool match(const char *) { return true; }
@@ -63,8 +63,8 @@ namespace RegExp {
 
 
 template <typename What> struct Add {
-	template <char c, typename ... Definition, typename ... Content> static constexpr auto build(const Static::Stack<RegExp::RegExp<Definition...>, Content...> &&) {
-		return Static::Stack<RegExp::RegExp<Definition..., What>,Content...>{};
+	template <char c, typename ... Definition, typename ... Content> static constexpr auto build(const Static::Stack<AltRegExp::RegExp<Definition...>, Content...> &&) {
+		return Static::Stack<AltRegExp::RegExp<Definition..., What>,Content...>{};
 	}
 	template <char c, typename ... Content> static constexpr auto build(const Static::Stack<Content...> &&) {
 		return Static::Stack<Content...,What>{};
@@ -72,8 +72,8 @@ template <typename What> struct Add {
 };
 
 template <template <char c> typename What> struct AddChar {
-	template <char c, typename ... Definition, typename ... Content> static constexpr auto build(const Static::Stack<RegExp::RegExp<Definition...>, Content...> &&) {
-		return Static::Stack<RegExp::RegExp<Definition..., What<c>>,Content...>{};
+	template <char c, typename ... Definition, typename ... Content> static constexpr auto build(const Static::Stack<AltRegExp::RegExp<Definition...>, Content...> &&) {
+		return Static::Stack<AltRegExp::RegExp<Definition..., What<c>>,Content...>{};
 	}
 	template <char c, typename ... Content> static constexpr auto build(const Static::Stack<Content...> &&) {
 		return Static::Stack<Content...,What<c>>{};
@@ -85,11 +85,11 @@ template <char ... c> struct Static::Table<S, c...> { using Move = Part; };
 template <char c> struct Static::Table<Part, c> { using Move = Static::String<Symbol, Part>; };
 template <> struct Static::Table<Part> { using Move = Epsilon; };
 
-template <> struct Static::Table<Symbol,'.'> { using Move = Static::String<Builder<Add<RegExp::Anything>>, Char_Anything>; };
-template <> struct Static::Table<Symbol,'^'> { using Move = Static::String<Builder<Add<RegExp::Begin>>, Char_Begin>; };
-template <> struct Static::Table<Symbol,'$'> { using Move = Static::String<Builder<Add<RegExp::End>>, Char_End>; };
+template <> struct Static::Table<Symbol,'.'> { using Move = Static::String<Builder<Add<AltRegExp::Anything>>, Char_Anything>; };
+template <> struct Static::Table<Symbol,'^'> { using Move = Static::String<Builder<Add<AltRegExp::Begin>>, Char_Begin>; };
+template <> struct Static::Table<Symbol,'$'> { using Move = Static::String<Builder<Add<AltRegExp::End>>, Char_End>; };
 
-template <char c> struct Static::Table<Symbol,c> { using Move = Static::String<Builder<AddChar<RegExp::Char>>, Char_ABC>; };
+template <char c> struct Static::Table<Symbol,c> { using Move = Static::String<Builder<AddChar<AltRegExp::Char>>, Char_ABC>; };
 
 template <> struct Static::Table<Char_Anything,'.'> { using Move = ReadChar; };
 template <> struct Static::Table<Char_Begin,'^'> { using Move = ReadChar; };
@@ -104,7 +104,7 @@ template <> struct Static::Table<Char_ABC,'$'> { using Move = RejectInput; };
 template<typename CharT, CharT ... string> constexpr auto operator""_re() {
 	static_assert(std::is_same<CharT, char>::value);
 	using namespace Static;
-	using namespace RegExp;
+	using namespace AltRegExp;
 	
 	using Parser = Decider<Stack<S>, Input<string...>>;
 	static_assert(Parser::correct);
@@ -112,7 +112,7 @@ template<typename CharT, CharT ... string> constexpr auto operator""_re() {
 }
 
 int main() {
-	using namespace RegExp;
+	using namespace AltRegExp;
 	static_assert( std::is_same<decltype("x$"_re), RegExp<Char<'x'>,End>> ::value);
 	static_assert( std::is_same<decltype("^x$"_re), RegExp<Begin,Char<'x'>,End>> ::value);
 	static_assert( std::is_same<decltype("^xy$"_re), RegExp<Begin,Char<'x'>,Char<'y'>,End>> ::value);
