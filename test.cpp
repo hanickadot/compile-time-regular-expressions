@@ -6,7 +6,7 @@ int main() {
 	using namespace ctre::literals;
 	
 	auto x = "((x+y)*z+x+(x+y)*z+x+(x+y)*z+x)*((x+y)*z+x+(x+y)*z+x+(x+y)*z+x)"_ctre;
-	std::cout << (x.value?"accept":"reject") << std::endl;
-	std::cout << "steps = " << x.steps << std::endl;
-	std::cout << "variables = " << x.subject.count << std::endl;
+	printf("%s\n", x.value?"accept":"reject");
+	printf("steps = %zu\n", x.steps);
+	printf("variables = %u\n", x.subject.count);
 }

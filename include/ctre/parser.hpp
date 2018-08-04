@@ -1,7 +1,6 @@
 #ifndef CTRE_V2__CTRE__PARSER__HPP
 #define CTRE_V2__CTRE__PARSER__HPP
 
-#include "compatibility.hpp"
 #include "type-stack.hpp"
 
 #define RULE static constexpr auto rule
@@ -20,22 +19,28 @@ struct accept { constexpr explicit operator bool() noexcept { return true; } };
 
 struct reject { constexpr explicit operator bool() noexcept { return false; } };
 
-template <typename T> concept bool ExplicitlyConvertibleToBool = requires(T v) {
-	bool(v);
+template <typename T> struct IsExplicitlyConvertibleToBool {
+	template <typename Y> static constexpr auto test(Y * y) -> decltype(bool(*y), std::true_type{});
+	template <typename> static constexpr auto test(...) -> std::false_type;
+	static constexpr const bool value = decltype(test<T>(nullptr))();
 };
 
-template <typename T> concept bool step_forward = requires(T) {
-	T::move_forward();
+template <typename T> struct IsStepForward {
+	template <typename Y> static constexpr auto test(Y *) -> decltype(Y::move_forward(), std::true_type{});
+	template <typename> static constexpr auto test(...) -> std::false_type;
+	static constexpr const bool value = decltype(test<T>(nullptr))();
 };
 
-template <typename Action, typename Subject> concept bool ActionItem = requires(Action a) {
-	a(Subject());
+template <typename T, typename Subject> struct IsActionItem {
+	template <typename Y> static constexpr auto test(Y * y) -> decltype((*y)(Subject()), std::true_type{});
+	template <typename> static constexpr auto test(...) -> std::false_type;
+	static constexpr const bool value = decltype(test<T>(nullptr))();
 };
 
 // everything else can be used as a nonterminal
 
 template <typename Grammar> struct augment_grammar: public Grammar {
-	using Grammar::start;
+	using typename Grammar::start;
 	using Grammar::rule; // Grammar rules should have same priority
 	
 	// default behaviour is reject if there is unexpected state
@@ -57,7 +62,8 @@ template <typename Subject> struct parse_result {
 	constexpr parse_result(bool value, size_t steps, Subject subject) noexcept: value{value}, steps{steps}, subject{subject} { }
 };
 	
-template <typename G, const FixedString & input> struct parser {
+//template <typename G, FixedString input> struct parser { // in c++20
+template <typename G, const auto & input> struct parser {
 	using grammar = augment_grammar<G>;
 	static constexpr size_t size = input.size();
 	template <size_t pos> static constexpr auto current() {
@@ -76,19 +82,19 @@ template <typename G, const FixedString & input> struct parser {
 	template <size_t pos = 0, typename Stack, typename Subject = empty_subject> static constexpr auto decide(Stack stack, unsigned step, const Subject subject) {
 		auto next_item_on_stack = head(stack);
 		
-		if constexpr (ActionItem<decltype(next_item_on_stack), Subject>) {
+		if constexpr (IsActionItem<decltype(next_item_on_stack), Subject>::value) {
 			// modify the subject
 			return decide<pos>(pop(stack), step+1, next_item_on_stack(subject));
 		}
 		
 		auto m = get_move<pos>(next_item_on_stack);
-		if constexpr (ExplicitlyConvertibleToBool<decltype(m)>) {
+		if constexpr (IsExplicitlyConvertibleToBool<decltype(m)>::value) {
 			// accept or reject state
 			return parse_result<Subject>(bool(m), step, subject);
 		} else {
 			// move forward with parsing
 			// if decltype(m) is pop_char then move a char forward
-			return decide<pos+step_forward<decltype(m)>>(pop_and_push(m, stack), step+1, subject);
+			return decide<pos+IsStepForward<decltype(m)>::value>(pop_and_push(m, stack), step+1, subject);
 		}
 	}
 };
