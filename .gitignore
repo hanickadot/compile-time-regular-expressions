@@ -1,6 +1,3 @@
 *.o
-math
-number
+*.d
 test
-test2
-regexp
