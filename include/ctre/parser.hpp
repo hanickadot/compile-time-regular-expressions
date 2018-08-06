@@ -6,6 +6,7 @@
 #define RULE static constexpr auto rule
 #define NONTERM(name) struct name { }
 #define START_NONTERM(name) struct name { }; using start = name
+#define SUBJECT_TYPE(name) using subject_type = name
 
 namespace ctre {
 
@@ -18,6 +19,16 @@ template <auto v> struct term {
 struct accept { constexpr explicit operator bool() noexcept { return true; } };
 
 struct reject { constexpr explicit operator bool() noexcept { return false; } };
+
+template <auto A, decltype(A) B> struct range {
+	constexpr range() noexcept { };
+	template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
+};
+
+template <auto... Def> struct set {
+	constexpr set() noexcept { };
+	template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
+};
 
 template <typename T> struct IsExplicitlyConvertibleToBool {
 	template <typename Y> static constexpr auto test(Y * y) -> decltype(bool(*y), std::true_type{});
@@ -44,10 +55,13 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	using Grammar::rule; // Grammar rules should have same priority
 	
 	// default behaviour is reject if there is unexpected state
-	template <typename A, typename B> static constexpr auto rule(A, B) -> reject;
+	static constexpr auto rule(...) -> reject;
 	
 	// if there are two same terms on top of the stack and current input, you should move forward
 	template <auto A> static constexpr auto rule(term<A>, term<A>) -> pop_input;
+	
+	template <auto A, auto B, auto V> static constexpr auto rule(range<A,B>, term<V>) -> pop_input requires ((A <= V) && (V <= B));
+	template <auto... Def, auto V> static constexpr auto rule(set<Def...>, term<V>) -> pop_input requires ((V == Def) || ... || false);
 	
 	// empty stack and empty input means we are accepting
 	static constexpr auto rule(epsilon, epsilon) -> accept;

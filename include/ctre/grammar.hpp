@@ -12,21 +12,31 @@ struct math_grammar {
 	NONTERM(T2);
 	NONTERM(F);
 	
-	struct variable_counter {
-		unsigned count{0};
+	struct expr_info {
+		unsigned variables{0};
+		unsigned constants{0};
 	};
 	
+	SUBJECT_TYPE(expr_info);
+	
 	struct add_variable {
-		constexpr auto operator()(variable_counter v) noexcept {
-			v.count++;
+		constexpr auto operator()(expr_info v) noexcept {
+			v.variables++;
+			return v;
+		}
+	};
+	
+	struct add_constant {
+		constexpr auto operator()(expr_info v) noexcept {
+			v.constants++;
 			return v;
 		}
 	};
 	
 	RULE(E, term<'('>) -> push<T, E2>;
-	RULE(E, term<'x'>) -> push<T, E2>;
-	RULE(E, term<'y'>) -> push<T, E2>;
-	RULE(E, term<'z'>) -> push<T, E2>;
+	RULE(E, range<'a','z'>) -> push<T, E2>;
+	RULE(E, range<'0','9'>) -> push<T, E2>;
+	
 	
 	RULE(E2, term<')'>) -> epsilon;
 	RULE(E2, term<'+'>) -> push<term<'+'>, T, E2>;
@@ -34,14 +44,13 @@ struct math_grammar {
 	RULE(E2, epsilon) -> epsilon;
 	
 	RULE(F, term<'('>) -> push<term<'('>, E, term<')'>>;
-	RULE(F, term<'x'>) -> push<term<'x'>, add_variable>;
-	RULE(F, term<'y'>) -> push<term<'y'>, add_variable>;
-	RULE(F, term<'z'>) -> push<term<'z'>, add_variable>;
+	RULE(F, range<'a','z'>) -> push<range<'a','z'>, add_variable>;
+	RULE(F, range<'0','9'>) -> push<range<'0','9'>, add_constant>;
+	
 	
 	RULE(T, term<'('>) -> push<F, T2>;
-	RULE(T, term<'x'>) -> push<F, T2>;
-	RULE(T, term<'y'>) -> push<F, T2>;
-	RULE(T, term<'z'>) -> push<F, T2>;
+	RULE(T, range<'a','z'>) -> push<F, T2>;
+	RULE(T, range<'0','9'>) -> push<F, T2>;
 	
 	RULE(T2, term<')'>) -> epsilon;
 	RULE(T2, term<'+'>) -> epsilon;

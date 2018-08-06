@@ -4,7 +4,7 @@ default: all
 	
 TARGETS := test.cpp
 
-CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template
+CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template -fconcepts
 
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
 OBJECTS := $(TARGETS:%.cpp=%.o)
