@@ -22,12 +22,25 @@ struct reject { constexpr explicit operator bool() noexcept { return false; } };
 
 template <auto A, decltype(A) B> struct range {
 	constexpr range() noexcept { };
-	template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
+	//template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
+	template <auto V, typename = std::enable_if_t<(A <= V) && (V <= B)>> constexpr range(term<V>) noexcept;
 };
 
 template <auto... Def> struct set {
 	constexpr set() noexcept { };
-	template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
+	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
+	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr set(term<V>) noexcept;
+};
+
+template <auto... Def> struct neg_set {
+	constexpr neg_set() noexcept { };
+	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
+	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr neg_set(term<V>) noexcept;
+};
+
+template <auto... Def> struct anything {
+	constexpr anything() noexcept { };
+	template <auto V> constexpr anything(term<V>) noexcept;
 };
 
 template <typename T> struct IsExplicitlyConvertibleToBool {
@@ -60,8 +73,12 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	// if there are two same terms on top of the stack and current input, you should move forward
 	template <auto A> static constexpr auto rule(term<A>, term<A>) -> pop_input;
 	
-	template <auto A, auto B, auto V> static constexpr auto rule(range<A,B>, term<V>) -> pop_input requires ((A <= V) && (V <= B));
-	template <auto... Def, auto V> static constexpr auto rule(set<Def...>, term<V>) -> pop_input requires ((V == Def) || ... || false);
+	//template <auto A, auto B, auto V> static constexpr auto rule(range<A,B>, term<V>) -> pop_input requires ((A <= V) && (V <= B));
+	template <auto A, auto B, auto V, typename = std::enable_if_t<((A <= V) && (V <= B))>> static constexpr auto rule(range<A,B>, term<V>) -> pop_input;
+	
+	
+	//template <auto... Def, auto V> static constexpr auto rule(set<Def...>, term<V>) -> pop_input requires ((V == Def) || ... || false);
+	template <auto... Def, auto V, typename = std::enable_if_t<((V == Def) || ... || false)>> static constexpr auto rule(set<Def...>, term<V>) -> pop_input;
 	
 	// empty stack and empty input means we are accepting
 	static constexpr auto rule(epsilon, epsilon) -> accept;

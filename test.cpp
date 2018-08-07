@@ -12,8 +12,8 @@ int main() {
 	);
 
 	
-	auto x = "(x+y)*z+4"_ctre;
-	static_assert("(x+y)*z+4"_ctre.value);
+	auto x = "(x+y)*z+(4+(x+y)*z+4+(x+y)*z+4+(x+y))*z+4+(x+y)*z+4"_ctre;
+	static_assert("(x+y)*z+(4+(x+y)*z+4+(x+y)*z+4+(x+y))*z+4+(x+y)*z+4"_ctre.value);
 	printf("%s\n", x.value?"accept":"reject");
 	printf("steps = %zu\n", x.steps);
 	printf("variables = %u\n", x.subject.variables);
