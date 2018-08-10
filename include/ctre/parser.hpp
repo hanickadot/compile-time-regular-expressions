@@ -55,6 +55,12 @@ template <typename T> struct IsStepForward {
 	static constexpr const bool value = decltype(test<T>(nullptr))();
 };
 
+template <typename T, typename Subject, typename Current> struct IsActionItemWithTerm {
+	template <typename Y> static constexpr auto test(Y * y) -> decltype((*y)(Subject(), Current()), std::true_type{});
+	template <typename> static constexpr auto test(...) -> std::false_type;
+	static constexpr const bool value = decltype(test<T>(nullptr))();
+};
+
 template <typename T, typename Subject> struct IsActionItem {
 	template <typename Y> static constexpr auto test(Y * y) -> decltype((*y)(Subject()), std::true_type{});
 	template <typename> static constexpr auto test(...) -> std::false_type;
@@ -104,28 +110,41 @@ template <typename G, const auto & input> struct parser {
 			return epsilon();
 		}
 	}
+	template <size_t pos> static constexpr auto previous() {
+		if constexpr (pos == 0) {
+			return term<input[0]>();
+		} else if constexpr (pos <= size) {
+			return term<input[pos-1]>();
+		} else {
+			return epsilon();
+		}
+	}
 	template <size_t pos = 0, typename Head> static constexpr auto get_move(Head head) {
 		return decltype(grammar().rule(Head(), current<pos>()))();
 	}
 	template <typename Subject = empty_subject> static constexpr auto decide(const Subject subject = Subject{}) {
 		return decide(list<typename G::start>(), 1, subject);
 	}
-	template <size_t pos = 0, typename Stack, typename Subject = empty_subject> static constexpr auto decide(Stack stack, unsigned step, const Subject subject) {
+	template <size_t pos = 0, typename Stack, typename Subject = empty_subject> static constexpr auto decide(Stack stack, unsigned step, Subject subject) {
 		auto next_item_on_stack = head(stack);
 		
-		if constexpr (IsActionItem<decltype(next_item_on_stack), Subject>::value) {
-			// modify the subject
+		if constexpr (IsActionItemWithTerm<decltype(next_item_on_stack), Subject, decltype(previous<pos>())>::value) {
+			// modify the subject via action.operator(subject) -> new subject
+			return decide<pos>(pop(stack), step+1, next_item_on_stack(subject, previous<pos>()));
+		} else if constexpr (IsActionItem<decltype(next_item_on_stack), Subject>::value) {
+			// modify the subject via action.operator(subject, previous) -> new subject
 			return decide<pos>(pop(stack), step+1, next_item_on_stack(subject));
-		}
-		
-		auto m = get_move<pos>(next_item_on_stack);
-		if constexpr (IsExplicitlyConvertibleToBool<decltype(m)>::value) {
-			// accept or reject state
-			return parse_result<Subject>(bool(m), step, subject);
 		} else {
-			// move forward with parsing
-			// if decltype(m) is pop_char then move a char forward
-			return decide<pos+IsStepForward<decltype(m)>::value>(pop_and_push(m, stack), step+1, subject);
+			// "else" branch because return type deduction is not working with standalone "if constexpr"
+			auto m = get_move<pos>(next_item_on_stack);
+			if constexpr (IsExplicitlyConvertibleToBool<decltype(m)>::value) {
+				// accept or reject state
+				return parse_result<Subject>(bool(m), step, subject);
+			} else {
+				// move forward with parsing
+				// if decltype(m) is pop_char then move a char forward
+				return decide<pos+IsStepForward<decltype(m)>::value>(pop_and_push(m, stack), step+1, subject);
+			}
 		}
 	}
 };

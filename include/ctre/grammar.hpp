@@ -12,22 +12,28 @@ struct math_grammar {
 	NONTERM(T2);
 	NONTERM(F);
 	
-	struct expr_info {
-		unsigned variables{0};
+	template <typename Set = list<>> struct expr_info {
+		using set = Set;
+		static constexpr size_t variables = size(set());
 		unsigned constants{0};
+		template <typename CB, typename... Items> void print(CB && cb, list<Items...>) {
+			(cb(Items()), ...);
+		}
+		template <typename CB> void print(CB && cb) {
+			print(std::forward<CB>(cb), set());
+		}
 	};
 	
-	SUBJECT_TYPE(expr_info);
+	SUBJECT_TYPE(expr_info<>);
 	
 	struct add_variable {
-		constexpr auto operator()(expr_info v) noexcept {
-			v.variables++;
-			return v;
+		template <typename Set, typename Term> constexpr auto operator()(expr_info<Set> v, Term last_term) noexcept {
+			return expr_info<decltype(set_add(last_term, Set()))>{v.constants};
 		}
 	};
 	
 	struct add_constant {
-		constexpr auto operator()(expr_info v) noexcept {
+		template <typename Set, typename Term> constexpr auto operator()(expr_info<Set> v, Term) noexcept {
 			v.constants++;
 			return v;
 		}

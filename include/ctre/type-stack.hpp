@@ -3,7 +3,9 @@
 
 namespace ctre {
 
-struct epsilon { };
+struct epsilon {
+	static constexpr auto value = '-';
+};
 
 struct pop_input {
 	static void move_forward();
@@ -34,6 +36,10 @@ template <typename Head, typename... Ts> constexpr auto pop_and_push(pop_input, 
 template <typename... Ts> constexpr size_t size(list<Ts...>) {
 	return sizeof...(Ts);
 }
+
+template <typename T, typename... Ts> static inline constexpr bool set_exists = (std::is_same_v<T, Ts> || ... || false);
+
+template <typename T, typename... Ts> constexpr auto set_add(T a, list<Ts...> b) -> std::conditional_t<set_exists<T, Ts...>, list<Ts...>, list<Ts..., T>>;
 
 }
 

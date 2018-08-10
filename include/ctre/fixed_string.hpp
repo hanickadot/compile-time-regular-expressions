@@ -2,6 +2,7 @@
 #define CTRE_V2__CTRE__FIXED_STRING__HPP
 
 #include <utility>
+#include <cstddef>
 
 namespace ctre {
 
