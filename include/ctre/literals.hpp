@@ -20,7 +20,8 @@ namespace literals {
 template <typename CharT, CharT... input> static inline constexpr auto string = basic_fixed_string<CharT, sizeof...(input)>({input...}, std::make_index_sequence<sizeof...(input)>());
 
 template <typename CharT, CharT... input> constexpr auto operator""_ctre() noexcept {
-	return ctre::parser<math_grammar, string<CharT, input...>>::decide(math_grammar::subject_type());
+	return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide();
+	//return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide(math_grammar_quick::subject_type());
 }
 
 } // literals

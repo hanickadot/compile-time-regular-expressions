@@ -32,6 +32,15 @@ template <typename Head, typename... Ts> constexpr auto pop_and_push(epsilon, li
 
 template <typename Head, typename... Ts> constexpr auto pop_and_push(pop_input, list<Head, Ts...>) -> list<Ts...> { return {}; }
 
+// support for quick-LL1 grammar
+
+template <typename T, typename... Content> constexpr auto is_quick(T, list<T, Content...>) -> bool { return true; }
+
+template <typename T, typename Y> constexpr auto is_quick(T, Y) -> bool { return false; }
+
+template <typename AHead, typename... As, typename BHead, typename... Bs> constexpr auto pop_and_push_quick(list<AHead, As...>, list<BHead, Bs...>) -> list<As..., Bs...> { return {}; }
+
+// end of quick-LL1 grammar
 
 template <typename... Ts> constexpr size_t size(list<Ts...>) {
 	return sizeof...(Ts);

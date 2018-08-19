@@ -20,6 +20,10 @@ struct accept { constexpr explicit operator bool() noexcept { return true; } };
 
 struct reject { constexpr explicit operator bool() noexcept { return false; } };
 
+struct action { 
+	struct action_tag { };
+};
+
 template <auto A, decltype(A) B> struct range {
 	constexpr range() noexcept { };
 	//template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
@@ -63,6 +67,12 @@ template <typename T, typename Subject, typename Current> struct IsActionItemWit
 
 template <typename T, typename Subject> struct IsActionItem {
 	template <typename Y> static constexpr auto test(Y * y) -> decltype((*y)(Subject()), std::true_type{});
+	template <typename> static constexpr auto test(...) -> std::false_type;
+	static constexpr const bool value = decltype(test<T>(nullptr))();
+};
+
+template <typename T> struct IsAction {
+	template <typename Y> static constexpr auto test(Y * y) -> decltype(std::declval<typename Y::action_tag>(), std::true_type{});
 	template <typename> static constexpr auto test(...) -> std::false_type;
 	static constexpr const bool value = decltype(test<T>(nullptr))();
 };
@@ -122,22 +132,36 @@ template <typename G, const auto & input> struct parser {
 	template <size_t pos = 0, typename Head> static constexpr auto get_move(Head head) {
 		return decltype(grammar().rule(Head(), current<pos>()))();
 	}
-	template <typename Subject = empty_subject> static constexpr auto decide(const Subject subject = Subject{}) {
+	template <typename Subject = typename G::subject_type> static constexpr auto decide(const Subject subject = Subject{}) {
 		return decide(list<typename G::start>(), 1, subject);
 	}
 	template <size_t pos = 0, typename Stack, typename Subject = empty_subject> static constexpr auto decide(Stack stack, unsigned step, Subject subject) {
-		auto next_item_on_stack = head(stack);
+		auto head_of_stack = head(stack);
 		
-		if constexpr (IsActionItemWithTerm<decltype(next_item_on_stack), Subject, decltype(previous<pos>())>::value) {
-			// modify the subject via action.operator(subject) -> new subject
-			return decide<pos>(pop(stack), step+1, next_item_on_stack(subject, previous<pos>()));
-		} else if constexpr (IsActionItem<decltype(next_item_on_stack), Subject>::value) {
-			// modify the subject via action.operator(subject, previous) -> new subject
-			return decide<pos>(pop(stack), step+1, next_item_on_stack(subject));
+		if constexpr (IsAction<decltype(head_of_stack)>::value) {
+			// item on top of the stack is action modifiing subject
+			// if it's applicable call operator() and modify subject accordingly
+			if constexpr (IsActionItemWithTerm<decltype(head_of_stack), Subject, decltype(previous<pos>())>::value) {
+				// modify the subject via action.operator(subject) -> new subject
+				return decide<pos>(pop(stack), step+1, head_of_stack(subject, previous<pos>()));
+			} else if constexpr (IsActionItem<decltype(head_of_stack), Subject>::value) {
+				// modify the subject via action.operator(subject, previous) -> new subject
+				return decide<pos>(pop(stack), step+1, head_of_stack(subject));
+			} else if constexpr (std::is_same_v<Subject, empty_subject>) {
+				// in case that action can't be called and subject is empty
+			 	return decide<pos>(pop(stack), step+1, subject);
+			} else {
+				// else reject input
+				return parse_result<Subject>(false, step, subject);
+			}
 		} else {
 			// "else" branch because return type deduction is not working with standalone "if constexpr"
-			auto m = get_move<pos>(next_item_on_stack);
-			if constexpr (IsExplicitlyConvertibleToBool<decltype(m)>::value) {
+			auto m = get_move<pos>(head_of_stack);
+			if constexpr (is_quick(current<pos>(), m)) {
+				// quick mean = push<TERM_OR_RANGE, ...>
+				// only nonaccepting/rejecting states are quick :)
+				return decide<pos+1>(pop_and_push_quick(m, stack), step+1, subject);
+			} else if constexpr (IsExplicitlyConvertibleToBool<decltype(m)>::value) {
 				// accept or reject state
 				return parse_result<Subject>(bool(m), step, subject);
 			} else {

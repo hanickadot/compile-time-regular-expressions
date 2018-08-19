@@ -4,16 +4,7 @@
 
 template <typename T> void foo();
 
-int main() {
-	using namespace ctre::literals;
-	
-	using out = decltype(  
-		ctre::augment_grammar<ctre::math_grammar>::rule(ctre::math_grammar::E(), ctre::term<'c'>())
-	);
-
-	
-	auto x = "(x+y+z)*(x+y)"_ctre;
-	static_assert("(x+y+z)*(x+y)"_ctre.value);
+template <typename Expr> void info(Expr x) {
 	printf("%s\n", x.value?"accept":"reject");
 	printf("steps = %zu\n", x.steps);
 	printf("variables = %zu\n", x.subject.variables);
@@ -21,7 +12,20 @@ int main() {
 	x.subject.print([](auto t){
 		printf("<%c> ",t.value);
 	});
-	printf("\n");
+	printf("\n\n");
+}
+
+int main() {
+	using namespace ctre::literals;
+	
+	using out = decltype(  
+		ctre::augment_grammar<ctre::math_grammar>::rule(ctre::math_grammar::E(), ctre::term<'c'>())
+	);
+
+	info("(x+y+z)*(x+y+a)"_ctre);
+	info("(x+y+z)*(x+y+a)+(x+y+z)*(x+y)"_ctre);
+	info("(x+y+z)*(x+y+a)+(x+y+z)*(x+y)+(x+y+z)*(x+y)"_ctre);
+	info("(x+y+z)*(x+y+a)+(x+y+z)*(x+y)+(x+y+z)*(x+y)+(x+y+z)*(x+y)"_ctre);
 	
 	
 }
