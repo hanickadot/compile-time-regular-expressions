@@ -1,8 +1,10 @@
-.PHONY: default all clean 
+.PHONY: default all clean grammar
 
 default: all
 	
 TARGETS := test.cpp
+
+DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template
 #-fconcepts
@@ -23,3 +25,12 @@ $(OBJECTS): %.o: %.cpp
 
 clean:
 	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES)
+	
+grammar: include/ctre/pcre.hpp
+	
+regrammar: 
+	rm -f include/ctre/pcre.hpp
+	$(MAKE) grammar
+
+include/ctre/pcre.hpp: include/ctre/pcre.gram
+	$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctre_v2  --cfg:fname=pcre.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre

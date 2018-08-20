@@ -1,0 +1,44 @@
+backslash = {\\}
+dot = {.}
+dolar = {$}
+open = {(}
+close = {)}
+questionmark = {?}
+colon = {:}
+sopen = {[}
+sclose = {]}
+plus = {+}
+star = {*}
+copen = {{}
+cclose = {}}
+num = {0,1,2,3,4,5,6,7,8,9}
+comma = {\,}
+pipe = {|}
+caret = {^}
+minus = {-}
+hexdec = {0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F,a,b,c,d,e,f}
+octal = {0,1,2,3,4,5,6,7}
+nonspecial = {\,,-,0,1,2,3,4,5,6,7,8,9,:,A,B,C,D,E,F,X,],a,b,c,d,e,f,x}
+nonspecial2 = {0,1,2,3,4,5,6,7,8,9,:,A,B,C,D,E,F,X,a,b,c,d,e,f,x}
+
+S -> epsilon | [addchar],other,<repeat>,<string2>,<alt2> | [addchar],nonspecial,<repeat>,<string2>,<alt2> | \\,<B>,<repeat>,<string2>,<alt2> | dot,[any],<repeat>,<string2>,<alt2> | caret,[insert_begin],<repeat>,<string2>,<alt2> | dolar,[insert_end],<repeat>,<string2>,<alt2> | (,<C>,<repeat>,<string2>,<alt2> | [,<D>,<repeat>,<string2>,<alt2>
+A -> [repeat_exactly],cclose | \,,<H>
+alt2 -> pipe,<alt> | epsilon
+alt -> [addchar],other,<repeat>,<string2>,<alt2> | [addchar],nonspecial,<repeat>,<string2>,<alt2> | \\,<B>,<repeat>,<string2>,<alt2> | dot,[any],<repeat>,<string2>,<alt2> | caret,[insert_begin],<repeat>,<string2>,<alt2> | dolar,[insert_end],<repeat>,<string2>,<alt2> | (,<C>,<repeat>,<string2>,<alt2> | [,<D>,<repeat>,<string2>,<alt2>
+altB -> epsilon | [addchar],other,<repeat>,<string2>,<alt2> | [addchar],nonspecial,<repeat>,<string2>,<alt2> | \\,<B>,<repeat>,<string2>,<alt2> | dot,[any],<repeat>,<string2>,<alt2> | caret,[insert_begin],<repeat>,<string2>,<alt2> | dolar,[insert_end],<repeat>,<string2>,<alt2> | (,<C>,<repeat>,<string2>,<alt2> | [,<D>,<repeat>,<string2>,<alt2>
+B -> a | 0,[odigit],octal,[odigit],octal,[odigit],octal | x,<G> | dot | sopen | copen | cclose | open | close | backslash | star | plus | questionmark | pipe | caret | dolar | d
+C -> questionmark,colon,<altB>,close | [addchar],other,<repeat>,<string2>,<alt2>,[make_catch],close | [addchar],nonspecial,<repeat>,<string2>,<alt2>,[make_catch],close | \\,<B>,<repeat>,<string2>,<alt2>,[make_catch],close | dot,[any],<repeat>,<string2>,<alt2>,[make_catch],close | caret,[insert_begin],<repeat>,<string2>,<alt2>,[make_catch],close | dolar,[insert_end],<repeat>,<string2>,<alt2>,[make_catch],close | (,<C>,<repeat>,<string2>,<alt2>,[make_catch],close | [,<D>,<repeat>,<string2>,<alt2>,[make_catch],close | [empty],[make_catch],close
+D -> caret,[set_neg_start],<set>,sclose | [addchar],other,<range>,<set2>,sclose | [addchar],nonspecial2,<range>,<set2>,sclose | [addchar],dot,<range>,<set2>,sclose | \\,<E>,<set2>,sclose
+E -> b | a | 0,[odigit],octal,[odigit],octal,[odigit],octal | x,<G> | dot | sopen | copen | cclose | open | close | backslash | star | plus | questionmark | pipe | caret | dolar
+F -> [insert_range],other | [insert_range],nonspecial2
+G -> [hdigit],hexdec,[hdigit],hexdec | copen,[hdigit],hexdec,[hdigit],hexdec,[hdigit],hexdec,[hdigit],hexdec,cclose
+H -> [repeat_at_least],cclose,<mod> | [digit],num,<number2>,[insert_number],[repeat_ab],cclose,<mod>
+mod -> epsilon | questionmark | plus
+number2 -> epsilon | [digit],num,<number2>
+number -> [digit],num,<number2>
+range -> epsilon | -,<F>
+repeat -> epsilon | plus,[plus],<mod> | star,[star],<mod> | questionmark,[optional],<mod> | {,<number>,<A>
+set2 -> epsilon | [addchar],other,<range>,[set_combine],<set2> | [addchar],nonspecial2,<range>,[set_combine],<set2> | [addchar],dot,<range>,[set_combine],<set2> | \\,<E>,[set_combine],<set2>
+set -> [addchar],other,<range>,<set2> | [addchar],nonspecial2,<range>,<set2> | [addchar],dot,<range>,<set2> | \\,<E>,<set2>
+string2 -> epsilon | [addchar],other,<repeat>,<string2> | [addchar],nonspecial,<repeat>,<string2> | \\,<B>,<repeat>,<string2> | dot,[any],<repeat>,<string2> | caret,[insert_begin],<repeat>,<string2> | dolar,[insert_end],<repeat>,<string2> | (,<C>,<repeat>,<string2> | [,<D>,<repeat>,<string2>
+

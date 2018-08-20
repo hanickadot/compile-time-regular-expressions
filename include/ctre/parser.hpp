@@ -5,8 +5,8 @@
 
 #define RULE static constexpr auto rule
 #define NONTERM(name) struct name { }
-#define START_NONTERM(name) struct name { }; using start = name
-#define SUBJECT_TYPE(name) using subject_type = name
+#define START_NONTERM(name) struct name { }; using _start = name
+#define SUBJECT_TYPE(name) using _subject_type = name
 
 namespace ctre {
 
@@ -36,13 +36,14 @@ template <auto... Def> struct set {
 	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr set(term<V>) noexcept;
 };
 
+
 template <auto... Def> struct neg_set {
 	constexpr neg_set() noexcept { };
 	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
 	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr neg_set(term<V>) noexcept;
 };
 
-template <auto... Def> struct anything {
+struct anything {
 	constexpr anything() noexcept { };
 	template <auto V> constexpr anything(term<V>) noexcept;
 };
@@ -80,7 +81,7 @@ template <typename T> struct IsAction {
 // everything else can be used as a nonterminal
 
 template <typename Grammar> struct augment_grammar: public Grammar {
-	using typename Grammar::start;
+	using typename Grammar::_start;
 	using Grammar::rule; // Grammar rules should have same priority
 	
 	// default behaviour is reject if there is unexpected state
@@ -89,12 +90,14 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	// if there are two same terms on top of the stack and current input, you should move forward
 	template <auto A> static constexpr auto rule(term<A>, term<A>) -> pop_input;
 	
-	//template <auto A, auto B, auto V> static constexpr auto rule(range<A,B>, term<V>) -> pop_input requires ((A <= V) && (V <= B));
 	template <auto A, auto B, auto V, typename = std::enable_if_t<((A <= V) && (V <= B))>> static constexpr auto rule(range<A,B>, term<V>) -> pop_input;
 	
-	
-	//template <auto... Def, auto V> static constexpr auto rule(set<Def...>, term<V>) -> pop_input requires ((V == Def) || ... || false);
 	template <auto... Def, auto V, typename = std::enable_if_t<((V == Def) || ... || false)>> static constexpr auto rule(set<Def...>, term<V>) -> pop_input;
+	
+	template <auto V> static constexpr auto rule(anything, term<V>) -> pop_input;
+	
+	template <auto... Def, auto V, typename = std::enable_if_t<((V != Def) && ... && true)>> static constexpr auto rule(neg_set<Def...>, term<V>) -> pop_input;
+	
 	
 	// empty stack and empty input means we are accepting
 	static constexpr auto rule(epsilon, epsilon) -> accept;
@@ -102,11 +105,22 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 
 struct empty_subject { };
 
-template <typename Subject> struct parse_result {
-	bool value;
-	size_t steps;
-	Subject subject;
-	constexpr parse_result(bool value, size_t steps, Subject subject) noexcept: value{value}, steps{steps}, subject{subject} { }
+template <typename Subject, bool Value> struct parse_result {
+	static constexpr bool correct{Value};
+	//static constexpr size_t steps{Steps};
+	Subject subject{};
+	constexpr parse_result(Subject subject) noexcept: subject{subject} { }
+	constexpr operator bool() const noexcept {
+		return correct;
+	}
+};
+
+template <bool Value> struct parse_result<empty_subject, Value> {
+	static constexpr bool correct{Value};
+	constexpr parse_result(empty_subject) noexcept { };
+	constexpr operator bool() const noexcept {
+		return correct;
+	}
 };
 	
 //template <typename G, FixedString input> struct parser { // in c++20
@@ -129,11 +143,14 @@ template <typename G, const auto & input> struct parser {
 			return epsilon();
 		}
 	}
-	template <size_t pos = 0, typename Head> static constexpr auto get_move(Head head) {
-		return decltype(grammar().rule(Head(), current<pos>()))();
+	template <typename A, typename B> static constexpr auto rule(A a,B b) {
+		return decltype(grammar().rule(a,b))();
 	}
-	template <typename Subject = typename G::subject_type> static constexpr auto decide(const Subject subject = Subject{}) {
-		return decide(list<typename G::start>(), 1, subject);
+	template <size_t pos = 0, typename Head> static constexpr auto get_move(Head head) {
+		return rule(Head(), current<pos>());
+	}
+	template <typename Subject = typename G::_subject_type> static constexpr auto decide(const Subject subject = Subject{}) {
+		return decide(list<typename G::_start>(), 1, subject);
 	}
 	template <size_t pos = 0, typename Stack, typename Subject = empty_subject> static constexpr auto decide(Stack stack, unsigned step, Subject subject) {
 		auto head_of_stack = head(stack);
@@ -152,7 +169,7 @@ template <typename G, const auto & input> struct parser {
 			 	return decide<pos>(pop(stack), step+1, subject);
 			} else {
 				// else reject input
-				return parse_result<Subject>(false, step, subject);
+				return parse_result<Subject,false>(subject);
 			}
 		} else {
 			// "else" branch because return type deduction is not working with standalone "if constexpr"
@@ -163,7 +180,7 @@ template <typename G, const auto & input> struct parser {
 				return decide<pos+1>(pop_and_push_quick(m, stack), step+1, subject);
 			} else if constexpr (IsExplicitlyConvertibleToBool<decltype(m)>::value) {
 				// accept or reject state
-				return parse_result<Subject>(bool(m), step, subject);
+				return parse_result<Subject,bool(m)>(subject);
 			} else {
 				// move forward with parsing
 				// if decltype(m) is pop_char then move a char forward

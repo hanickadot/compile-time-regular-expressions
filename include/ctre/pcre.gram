@@ -1,0 +1,68 @@
+backslash={\\}
+dot={.}
+dolar={$}
+open={(}
+close={)}
+questionmark={?}
+colon={:}
+sopen={[}
+sclose={]}
+plus={+}
+star={*}
+copen={\{}
+cclose={\}}
+num={0,1,2,3,4,5,6,7,8,9}
+comma={\,}
+pipe={|}
+caret={^}
+minus={-}
+
+hexdec={0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,A,B,C,D,E,F}
+octal={0,1,2,3,4,5,6,7}
+nonspecial={a,b,c,d,e,f,A,B,C,D,E,F,x,X,:,],0,1,2,3,4,5,6,7,8,9,\,,-}
+nonspecial2={a,b,c,d,e,f,A,B,C,D,E,F,x,X,:,0,1,2,3,4,5,6,7,8,9}
+
+S-><alt> | epsilon
+
+alt-><string>,<alt2>
+altB-><string>,<alt2> | epsilon,[empty]
+alt2->pipe,<alt>,[alternate] | epsilon
+
+string-><atom_repeat>,<string2>
+string2-><atom_repeat>,<string2>,[create_sequence] | epsilon
+
+atom_repeat-><atom>,<repeat>
+
+atom-><character>|<nonchar>|<block>|<character_class>
+
+repeat->epsilon | plus,[plus],<mod>|star,[star],<mod>|questionmark,[optional],<mod>
+repeat->copen,<number>,[repeat_exactly],cclose
+repeat->copen,<number>,comma,[repeat_at_least],cclose,<mod>
+repeat->copen,<number>,comma,<number>,[repeat_ab],cclose,<mod>
+mod->epsilon | questionmark,[nongreedy] | plus,[possessive]
+
+number->[digit],num,<number2>,[insert_number]
+number2->epsilon | [digit],num,<number2>
+
+block->open,<altB>,[make_catch],close | open,questionmark,colon,<altB>,close
+
+character_class->sopen,[set_start],<set>,sclose,[set_finish]|sopen,caret,[set_neg_start],<set>,sclose,[set_finish]
+set-><setitem>,<set2>
+set2-><setitem>,[set_combine],<set2>|epsilon
+
+setitem->[addchar],other,<range> | [addchar],nonspecial2,<range> | [addchar],dot,<range>
+range->epsilon|minus,[insert_range],other|minus,[insert_range],nonspecial2
+
+setitem->backslash,<backslash> | backslash,b,[backb] 
+
+backslash->[addchar],<special>
+special->dot|sopen|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar
+
+backslash->a,[backa]
+backslash->x,[hdigit],hexdec,[hdigit],hexdec,[hexdec2]
+backslash->x,copen,[hdigit],hexdec,[hdigit],hexdec,[hdigit],hexdec,[hdigit],hexdec,cclose,[hexdec4]
+backslash->0,[odigit],octal,[odigit],octal,[odigit],octal,[octal3]
+backslash_char->d,[class_digit]
+
+character->[addchar],other | [addchar],nonspecial | dot,[any] | backslash,<backslash> | backslash,<backslash_char>
+nonchar->caret,[insert_begin] | dolar,[insert_end]

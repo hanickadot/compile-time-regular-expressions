@@ -17,8 +17,12 @@ public:
 	
 	constexpr size_t size() const noexcept {
 		// if it's zero terminated string (from string literal) then size N - 1
-		if (content[N-1] == '\0') return N - 1;
-		else return N;
+		if constexpr (N > 0) {
+			if (content[N-1] == '\0') return N - 1;
+			else return N;
+		} else {
+			return 0;
+		}
 	}
 	constexpr CharT operator[](size_t i) const noexcept {
 		return content[i];
