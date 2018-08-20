@@ -18,7 +18,7 @@ namespace literals {
 // we need object with static linkage, 
 // until we got C++20's P0732 "Class Types in Non-Type Template Parameters"
 
-template <typename CharT, CharT... input> static inline constexpr auto string = basic_fixed_string<CharT, sizeof...(input)>({input...}, std::make_index_sequence<sizeof...(input)>());
+template <typename CharT, CharT... input> static inline constexpr auto string = basic_fixed_string<CharT, sizeof...(input)>({input...});
 
 template <typename CharT, CharT... input> constexpr auto operator""_expr() noexcept {
 	return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide();

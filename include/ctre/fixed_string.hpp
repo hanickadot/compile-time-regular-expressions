@@ -17,12 +17,8 @@ public:
 	
 	constexpr size_t size() const noexcept {
 		// if it's zero terminated string (from string literal) then size N - 1
-		if constexpr (N > 0) {
-			if (content[N-1] == '\0') return N - 1;
-			else return N;
-		} else {
-			return 0;
-		}
+		if (content[N-1] == '\0') return N - 1;
+		else return N;
 	}
 	constexpr CharT operator[](size_t i) const noexcept {
 		return content[i];
@@ -32,6 +28,15 @@ public:
 	}
 	constexpr const CharT * end() const noexcept {
 		return content + size();
+	}
+};
+
+template <typename CharT> class basic_fixed_string<CharT, 0> {
+public: 
+	using char_type = CharT;
+	constexpr basic_fixed_string(...) noexcept { }
+	constexpr size_t size() const noexcept {
+		return 0;
 	}
 };
 
