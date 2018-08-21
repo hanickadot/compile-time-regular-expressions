@@ -2,18 +2,19 @@
 
 default: all
 	
-TARGETS := test.cpp
+TARGETS := 
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template
 #-fconcepts
 
+TESTS := $(wildcard tests/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
-OBJECTS := $(TARGETS:%.cpp=%.o)
+OBJECTS := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
 DEPEDENCY_FILES := $(TARGETS:%.cpp=%.d)
 
-all: $(TRUE_TARGETS)
+all: $(TRUE_TARGETS) $(OBJECTS)
 	
 $(TRUE_TARGETS): %: %.o
 	$(CXX) $(LDFLAGS) $< -o $@
