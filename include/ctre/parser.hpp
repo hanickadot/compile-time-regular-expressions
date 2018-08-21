@@ -25,26 +25,26 @@ struct action {
 };
 
 template <auto A, decltype(A) B> struct range {
-	constexpr range() noexcept { };
+	constexpr inline range() noexcept { };
 	//template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
-	template <auto V, typename = std::enable_if_t<(A <= V) && (V <= B)>> constexpr range(term<V>) noexcept;
+	template <auto V, typename = std::enable_if_t<(A <= V) && (V <= B)>> constexpr inline range(term<V>) noexcept;
 };
 
 template <auto... Def> struct set {
-	constexpr set() noexcept { };
+	constexpr inline set() noexcept { };
 	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
-	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr set(term<V>) noexcept;
+	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr inline set(term<V>) noexcept;
 };
 
 
 template <auto... Def> struct neg_set {
-	constexpr neg_set() noexcept { };
+	constexpr inline neg_set() noexcept { };
 	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
-	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr neg_set(term<V>) noexcept;
+	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr inline neg_set(term<V>) noexcept;
 };
 
 struct anything {
-	constexpr anything() noexcept { };
+	constexpr inline anything() noexcept { };
 	template <auto V> constexpr anything(term<V>) noexcept;
 };
 
@@ -106,20 +106,19 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 struct empty_subject { };
 
 template <typename Subject, bool Value> struct parse_result {
-	static constexpr bool correct{Value};
 	//static constexpr size_t steps{Steps};
 	Subject subject{};
-	constexpr parse_result(Subject subject) noexcept: subject{subject} { }
-	constexpr operator bool() const noexcept {
-		return correct;
+	constexpr __attribute__((always_inline)) parse_result(Subject subject) noexcept: subject{subject} { }
+	constexpr __attribute__((always_inline)) operator bool() const noexcept {
+		return Value;
 	}
 };
 
 template <bool Value> struct parse_result<empty_subject, Value> {
-	static constexpr bool correct{Value};
-	constexpr parse_result(empty_subject) noexcept { };
-	constexpr operator bool() const noexcept {
-		return correct;
+	constexpr __attribute__((always_inline)) parse_result() noexcept { };
+	constexpr __attribute__((always_inline)) parse_result(empty_subject) noexcept { };
+	constexpr __attribute__((always_inline)) operator bool() const noexcept {
+		return Value;
 	}
 };
 	
@@ -127,14 +126,14 @@ template <bool Value> struct parse_result<empty_subject, Value> {
 template <typename G, const auto & input> struct parser {
 	using grammar = augment_grammar<G>;
 	static constexpr size_t size = input.size();
-	template <size_t pos> static constexpr auto current() {
+	template <size_t pos> static inline constexpr auto current() {
 		if constexpr (pos < size) {
 			return term<input[pos]>();
 		} else {
 			return epsilon();
 		}
 	}
-	template <size_t pos> static constexpr auto previous() {
+	template <size_t pos> static inline constexpr auto previous() {
 		if constexpr (pos == 0) {
 			return term<input[0]>();
 		} else if constexpr (pos <= size) {
@@ -143,16 +142,16 @@ template <typename G, const auto & input> struct parser {
 			return epsilon();
 		}
 	}
-	template <typename A, typename B> static constexpr auto rule(A a,B b) {
+	template <typename A, typename B> static inline constexpr auto rule(A a,B b) {
 		return decltype(grammar().rule(a,b))();
 	}
-	template <size_t pos = 0, typename Head> static constexpr auto get_move(Head head) {
+	template <size_t pos = 0, typename Head> static inline constexpr auto get_move(Head head) {
 		return rule(Head(), current<pos>());
 	}
-	template <typename Subject = typename G::_subject_type> static constexpr auto decide(const Subject subject = Subject{}) {
+	template <typename Subject = typename G::_subject_type> static inline constexpr auto decide(const Subject subject = Subject{}) {
 		return decide(list<typename G::_start>(), 1, subject);
 	}
-	template <size_t pos = 0, typename Stack, typename Subject = empty_subject> static constexpr auto decide(Stack stack, unsigned step, Subject subject) {
+	template <size_t pos = 0, typename Stack, typename Subject = empty_subject> static inline constexpr auto decide(Stack stack, unsigned step, Subject subject) {
 		auto head_of_stack = head(stack);
 		
 		if constexpr (IsAction<decltype(head_of_stack)>::value) {
