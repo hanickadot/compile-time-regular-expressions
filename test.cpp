@@ -35,7 +35,6 @@ int main() {
 	static_assert("(tour|to|t)+"_pcre_test);
 	static_assert("(tour|to|tournament)+"_pcre_test);
 	static_assert("(tour|to|tournament)+\ntourna"_pcre_test);
-	static_assert("-(.*),\1-"_pcre_test);
 	static_assert("-.*,.*-"_pcre_test);
 	
 	//static_assert("-\\(.*\\),\\1-"_pcre_test);
