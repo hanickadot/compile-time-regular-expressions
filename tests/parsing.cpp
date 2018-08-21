@@ -61,10 +61,18 @@ static_assert("[^[:alpha:][:digit:]]"_pcre_test);
 static_assert("[[:^alpha:][:^digit:]]"_pcre_test);
 static_assert("[[:alpha:][:digit:]]+"_pcre_test);
 
+// captures
+static_assert("<not capture>"_pcre_test);
+static_assert("(nonname)"_pcre_test);
+static_assert("(non<name>)"_pcre_test);
+static_assert("(?:noncapture)"_pcre_test);
+static_assert("(?:non<cap>ture)"_pcre_test);
+static_assert("(?<hello>:named)"_pcre_test);
+
 // LIBC++ tests
 static_assert(""_pcre_test);
 static_assert("(.*).*"_pcre_test);
-static_assert("(?=^)b"_pcre_test);
+//static_assert("(?=^)b"_pcre_test); // positive lookahead
 static_assert("(a*)*"_pcre_test);
 static_assert("(ab)*c"_pcre_test);
 static_assert("(tour|to|t)+"_pcre_test);
@@ -76,8 +84,8 @@ static_assert("-\\(.*\\),\\1-"_pcre_test);
 static_assert("A[[:lower:]]B"_pcre_test);
 static_assert("A[^[:lower:]0-9]B"_pcre_test);
 static_assert("A[^[:lower:]]B"_pcre_test);
-static_assert("Jeff(?!s\\b)"_pcre_test);
-static_assert("Jeff(?=s\\b)"_pcre_test);
+//static_assert("Jeff(?!s\\b)"_pcre_test); // negative lookahead
+//static_assert("Jeff(?=s\\b)"_pcre_test); // positive lookahead
 static_assert("[\\n]+"_pcre_test);
 static_assert("[^\\0]*"_pcre_test);
 static_assert("[^\\W]"_pcre_test);
@@ -98,7 +106,7 @@ static_assert("^[a]$"_pcre_test);
 static_assert("^[ab]$"_pcre_test);
 static_assert("^abc"_pcre_test);
 static_assert("a"_pcre_test);
-static_assert("a(?=^)b"_pcre_test);
+//static_assert("a(?=^)b"_pcre_test); // positive lookahead
 static_assert("a*"_pcre_test);
 static_assert("a*?"_pcre_test);
 static_assert("a.\\{3,5\\}c"_pcre_test);

@@ -16,62 +16,74 @@ comma={\,}
 pipe={|}
 caret={^}
 minus={-}
+angle_open={<}
+angle_close={>}
 
 escape_alphanum={b,c,g,h,i,j,k,l,m,o,p,q,u,v,y,z,A,B,C,E,F,G,H,I,J,K,L,M,O,P,Q,U,V,X,Y,Z,1,2,3,4,5,6,7,8,9}
 hexdec={0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,A,B,C,D,E,F}
 octal={0,1,2,3,4,5,6,7}
 nonspecial_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,}
+alphanum_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,_}
 set_control_chars={:,],-}
-nonspecial_in_set={a,b,c,d,e,f,A,B,C,D,E,F,x,X,n,s,t,r,S,w,W,:,0,1,2,3,4,5,6,7,8,9}
+capture_control_chars={<}
 
-S-><alt> | epsilon
+S-><content> | epsilon
 
-alt-><string>,<alt2>
-altB-><string>,<alt2> | epsilon,[empty]
-alt2->pipe,<alt>,[alternate] | epsilon
+content-><string>,<content2>
+content_in_capture-><string_in_capture>,<content2> | epsilon,[empty]
+content2->pipe,<content>,[make_alternate] | epsilon
 
 string-><atom_repeat>,<string2>
-string2-><atom_repeat>,<string2>,[create_sequence] | epsilon
+string2-><atom_repeat>,<string2>,[make_sequence] | epsilon
+
+string_in_capture-><atom_repeat_in_capture>,<string2>
 
 atom_repeat-><atom>,<repeat>
 
-atom-><character>|<asserts>|<block>|<character_class>
+atom_repeat_in_capture-><atom_in_capture>,<repeat>
 
-repeat->epsilon | plus,[plus],<mod>|star,[star],<mod>|questionmark,[optional],<mod>
+atom-><character>|<asserts>|<block>|<character_class>
+atom_in_capture-><character_in_capture>|<asserts>|<block>|<character_class>
+
+repeat->epsilon | plus,[repeat_plus],<mod>|star,[repeat_star],<mod>|questionmark,[make_optional],<mod>
 repeat->copen,<number>,[repeat_exactly],cclose
 repeat->copen,<number>,comma,[repeat_at_least],cclose,<mod>
 repeat->copen,<number>,comma,<number>,[repeat_ab],cclose,<mod>
-mod->epsilon | questionmark,[nongreedy] | plus,[possessive]
+mod->epsilon | questionmark,[make_lazy] | plus,[make_possessive]
 
-number->[digit],num,<number2>,[insert_number]
-number2->epsilon | [digit],num,<number2>
+number->[create_number],num,<number2>
+number2->epsilon | [push_number],num,<number2>
 
-block->open,<altB>,[make_catch],close | open,questionmark,colon,<altB>,close
+block->open,<content_in_capture>,[make_capture],close | open,questionmark,colon,<content_in_capture>,close
+block->open,questionmark,angle_open,<block_name>,angle_close,<content_in_capture>,[make_capture_with_name],close
+block_name->alphanum_characters,<block_name2>
+block_name2->alphanum_characters,<block_name2>|epsilon,[make_name]
+
 
 character_class->sopen,[set_start],<set>,[set_finish],sclose|sopen,caret,[set_neg_start],<set>,[set_finish],sclose
 set-><setitem>,<set2>
 set2-><setitem>,[set_combine],<set2>|epsilon
 
-named_set->sopen,colon,<named_set_name>,colon,sclose | sopen,colon,caret,<named_set_name>,[negate_named_set],colon,sclose 
-named_set_name->"alnum",[named_set_alnum]
-named_set_name->"alpha",[named_set_alpha]
-named_set_name->"ascii",[named_set_ascii]
-named_set_name->"blank",[named_set_blank]
-named_set_name->"cntrl",[named_set_cntrl]
-named_set_name->"digit",[named_set_digit]
-named_set_name->"graph",[named_set_graph]
-named_set_name->"lower",[named_set_lower]
-named_set_name->"print",[named_set_print]
-named_set_name->"punct",[named_set_punct]
-named_set_name->"space",[named_set_space]
-named_set_name->"upper",[named_set_upper]
-named_set_name->"word",[named_set_word]
-named_set_name->"xdigit",[named_set_xdigit]
+class_named->sopen,colon,<class_named_name>,colon,sclose | sopen,colon,caret,<class_named_name>,[negate_class_named],colon,sclose 
+class_named_name->"alnum",[class_named_alnum]
+class_named_name->"alpha",[class_named_alpha]
+class_named_name->"ascii",[class_named_ascii]
+class_named_name->"blank",[class_named_blank]
+class_named_name->"cntrl",[class_named_cntrl]
+class_named_name->"digit",[class_named_digit]
+class_named_name->"graph",[class_named_graph]
+class_named_name->"lower",[class_named_lower]
+class_named_name->"print",[class_named_print]
+class_named_name->"punct",[class_named_punct]
+class_named_name->"space",[class_named_space]
+class_named_name->"upper",[class_named_upper]
+class_named_name->"word",[class_named_word]
+class_named_name->"xdigit",[class_named_xdigit]
 
 
 setitem->[current_character],other,<range> | [current_character],nonspecial_characters,<range> | [current_character],dot,<range>
 range->epsilon|minus,[insert_range],other|minus,[insert_range],nonspecial_characters
-setitem-><named_set>
+setitem-><class_named>
 
 setitem->backslash,<backslash>
 
@@ -79,9 +91,9 @@ backslash->[current_character],<special>
 special->dot|sopen|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar
 
 backslash->[current_character],escape_alphanum
-backslash->x,[hdigit_new],hexdec,[hdigit_push],hexdec
-backslash->x,copen,[hdigit_new],hexdec,<hexdec_repeat>,cclose
-hexdec_repeat->[hdigit_push],hexdec,<hexdec_repeat>|epsilon
+backslash->x,[create_hexdec],hexdec,[push_hexdec],hexdec
+backslash->x,copen,[push_hexdec],hexdec,<hexdec_repeat>,cclose
+hexdec_repeat->[push_hexdec],hexdec,<hexdec_repeat>|epsilon
 backslash->d,[class_digit]|D,[class_nondigit]
 backslash->w,[class_word]|W,[class_nonword]
 backslash->n,[character_newline]|t,[character_tab]|r,[character_return_carriage]
@@ -91,7 +103,10 @@ backslash->0,[character_null]
 backslash->a,[character_alarm]
 backslash->e,[character_escape]
 backslash->f,[character_formfeed]
-__backslash_char->r,[tab]
 
-character->[current_character],other | [current_character],nonspecial_characters | [current_character], set_control_chars | dot,[any_character] | backslash,<backslash>
+character->[current_character],other | [current_character],nonspecial_characters | [current_character], set_control_chars | dot,[insert_anything] | backslash,<backslash> | [current_character],capture_control_chars | \>,[current_character]
+
+character_in_capture->[current_character],other | [current_character],nonspecial_characters | [current_character], set_control_chars | \>,[current_character] | dot,[insert_anything] | backslash,<backslash>
+
 asserts->caret,[insert_begin] | dolar,[insert_end]
+

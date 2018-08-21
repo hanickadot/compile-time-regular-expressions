@@ -3,9 +3,24 @@
 * `\0dd` `\ddd` `\0{dd...}` octal numbers
 * `\Q...\E` quoting
 * `\cx` control characters
-* backreferences
+
 * `\C` data unit
 * `\h` `\H` horizontal character classes
 * `\v` `\V` vertical character classes
 * `\p{xx}` `\P{xx}` character properties
 * `\X` unicode grapheme cluster
+* boundaries other than `^$`
+* atomic groups
+* comments
+* options
+* lookahead
+* backreferences
+* subroutines
+* conditional patterns
+* callouts
+* match point reset `\K`
+
+
+# Other unsupported "things"
+* `[[.hyphen.]]` named characters
+* `[[=M=]]` whatever this is

@@ -12,7 +12,7 @@ CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template
 TESTS := $(wildcard tests/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
 OBJECTS := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
-DEPEDENCY_FILES := $(TARGETS:%.cpp=%.d)
+DEPEDENCY_FILES := $(TARGETS:%.cpp=%.d) $(TESTS:%.cpp=%.d)
 
 all: $(TRUE_TARGETS) $(OBJECTS)
 	
