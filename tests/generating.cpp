@@ -2,7 +2,6 @@
 
 using namespace ctre::test_literals;
 
-#define DEBUG 1
 #ifdef DEBUG
 
 template <typename... T> struct id_type;
