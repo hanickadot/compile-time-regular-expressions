@@ -26,9 +26,6 @@ struct pcre_actions {
 
 /*
 TODO:
-	struct insert_begin: ctll::action {};
-	struct insert_end: ctll::action {};
-	struct insert_range: ctll::action {};
 	struct make_capture: ctll::action {};
 	struct make_capture_with_name: ctll::action {};
 	struct make_lazy: ctll::action {};

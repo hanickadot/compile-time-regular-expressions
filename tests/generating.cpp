@@ -61,6 +61,12 @@ static_assert(same_f("[[:^digit:]]"_pcre_gen, ctre::set<ctre::negate<ctre::digit
 static_assert(same_f("[[:^digit:][:^alpha:]]"_pcre_gen, ctre::set<ctre::negate<ctre::digit_chars>, ctre::negate<ctre::alpha_chars>>()));
 static_assert(same_f("[[:digit:][:alpha:]]"_pcre_gen, ctre::set<ctre::digit_chars, ctre::alpha_chars>()));
 static_assert(same_f("[[:digit:][:^alpha:]]"_pcre_gen, ctre::set<ctre::digit_chars, ctre::negate<ctre::alpha_chars>>()));
+static_assert(same_f("[a-z]"_pcre_gen, ctre::set<ctre::range<'a','z'>>()));
+static_assert(same_f("[a-z0-9]"_pcre_gen, ctre::set<ctre::range<'a','z'>,ctre::range<'0','9'>>()));
+static_assert(same_f("[^a-z]"_pcre_gen, ctre::negative_set<ctre::range<'a','z'>>()));
+static_assert(same_f("[^a-z0-9]"_pcre_gen, ctre::negative_set<ctre::range<'a','z'>,ctre::range<'0','9'>>()));
+static_assert(same_f("[a-z[:digit:]]"_pcre_gen, ctre::set<ctre::range<'a','z'>,ctre::digit_chars>()));
+static_assert(same_f("[a-z98]"_pcre_gen, ctre::set<ctre::range<'a','z'>,ctre::character<'9'>,ctre::character<'8'>>()));
 
 // alternation
 static_assert(same_f("(?:abc|def)"_pcre_gen, ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>>()));

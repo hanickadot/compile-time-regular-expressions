@@ -32,5 +32,10 @@ template <auto V, typename A, typename... Ts> constexpr auto operator()(pcre::ne
 	return ctll::push_front(negate<A>(), ctll::list<Ts...>());
 }
 
+// add range to set
+template <auto B, auto A, typename... Ts> constexpr auto operator()(pcre::insert_range, ctll::term<B>, ctll::list<character<A>, Ts...> stack) const {
+	return ctll::push_front(range<A,B>(), ctll::list<Ts...>());
+}
+
 #endif
 	
