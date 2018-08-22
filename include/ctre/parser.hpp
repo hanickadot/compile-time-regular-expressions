@@ -90,13 +90,14 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	// if there are two same terms on top of the stack and current input, you should move forward
 	template <auto A> static constexpr auto rule(term<A>, term<A>) -> pop_input;
 	
-	template <auto A, auto B, auto V, typename = std::enable_if_t<((A <= V) && (V <= B))>> static constexpr auto rule(range<A,B>, term<V>) -> pop_input;
-	
-	template <auto... Def, auto V, typename = std::enable_if_t<((V == Def) || ... || false)>> static constexpr auto rule(set<Def...>, term<V>) -> pop_input;
-	
-	template <auto V> static constexpr auto rule(anything, term<V>) -> pop_input;
-	
-	template <auto... Def, auto V, typename = std::enable_if_t<((V != Def) && ... && true)>> static constexpr auto rule(neg_set<Def...>, term<V>) -> pop_input;
+	template <typename Expected, auto V> static constexpr auto rule(Expected, term<V>) -> std::enable_if_t<std::is_constructible_v<Expected, term<V>>, pop_input>;
+	//template <auto A, auto B, auto V, typename = std::enable_if_t<((A <= V) && (V <= B))>> static constexpr auto rule(range<A,B>, term<V>) -> pop_input;
+	//
+	//template <auto... Def, auto V, typename = std::enable_if_t<((V == Def) || ... || false)>> static constexpr auto rule(set<Def...>, term<V>) -> pop_input;
+	//
+	//template <auto V> static constexpr auto rule(anything, term<V>) -> pop_input;
+	//
+	//template <auto... Def, auto V, typename = std::enable_if_t<((V != Def) && ... && true)>> static constexpr auto rule(neg_set<Def...>, term<V>) -> pop_input;
 	
 	
 	// empty stack and empty input means we are accepting
