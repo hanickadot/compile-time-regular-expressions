@@ -2,7 +2,7 @@
 #define CTRE_V2__CTRE__LITERALS__HPP
 
 #include "../ctll.hpp"
-#include "pcre-actions.hpp"
+#include "pcre_actions.hpp"
 
 
 
@@ -47,7 +47,9 @@ template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr 
 #else
 template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre_gen() noexcept {
 #endif
-	return typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<ctll::list<>>::output_type();
+	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<ctll::list<>>;
+	static_assert(tmp(), "Regular Expression contains syntax error.");
+	return typename tmp::output_type();
 }
 
 

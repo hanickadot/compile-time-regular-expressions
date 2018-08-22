@@ -3,11 +3,11 @@
 
 // class_digit
 template <auto V, typename... Ts> constexpr auto operator()(pcre::class_digit, ctll::term<V>, ctll::list<Ts...> stack) const {
-	return ctll::push_front(ctre::set<ctre::range<'0','9'>>(), stack);
+	return ctll::push_front(ctre::set<ctre::digit_chars>(), stack);
 }
 // class_non_digit
 template <auto V, typename... Ts> constexpr auto operator()(pcre::class_nondigit, ctll::term<V>, ctll::list<Ts...> stack) const {
-	return ctll::push_front(ctre::negative_set<ctre::range<'0','9'>>(), stack);
+	return ctll::push_front(ctre::negative_set<ctre::digit_chars>(), stack);
 }
 // class_space
 template <auto V, typename... Ts> constexpr auto operator()(pcre::class_space, ctll::term<V>, ctll::list<Ts...> stack) const {

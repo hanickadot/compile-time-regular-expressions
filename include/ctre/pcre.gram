@@ -31,7 +31,7 @@ S-><content> | epsilon
 
 content-><string>,<content2>
 content_in_capture-><string_in_capture>,<content2> | epsilon,[push_empty]
-content2->pipe,<content>,[make_alternate] | epsilon
+content2->pipe,<content>,[make_alternate] |pipe,[push_empty],[make_alternate] | epsilon
 
 string-><atom_repeat>,<string2>
 string2-><atom_repeat>,<string2>,[make_sequence] | epsilon
@@ -60,8 +60,8 @@ block_name->alphanum_characters,[push_name],<block_name2>
 block_name2->alphanum_characters,[push_name],<block_name2>|epsilon
 
 
-character_class->sopen,[set_start],<set>,[set_finish],sclose|sopen,caret,[set_neg_start],<set>,[set_finish],sclose
-set-><setitem>,<set2>
+character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set>,[set_make_negative],sclose
+set-><setitem>,[set_start],<set2>
 set2-><setitem>,[set_combine],<set2>|epsilon
 
 class_named->sopen,colon,<class_named_name>,colon,sclose | sopen,colon,caret,<class_named_name>,[negate_class_named],colon,sclose 

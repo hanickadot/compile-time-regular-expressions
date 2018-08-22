@@ -38,14 +38,6 @@ template <typename Head, typename... As, typename T = _nothing> constexpr auto f
 template <typename T = _nothing> constexpr auto front(empty_list, T = T()) -> T { return {}; };
 
 
-// find in list
-template <typename T, typename... As> constexpr auto find(T, list<As...>) -> std::integral_constant<bool, (std::is_same_v<T, As> || ... || false)> { return {}; };
-template <typename T> constexpr auto find(T, empty_list) -> std::false_type { return {}; };
-
-
-// add to list if not exists
-template <typename T, typename... As, bool Exists = (std::is_same_v<T, As> || ... || false)> constexpr auto insert_into_set(T, list<As...>) -> conditional<Exists, list<As...>, list<T, As...>> { return {}; };
-
 }
 
 #endif
