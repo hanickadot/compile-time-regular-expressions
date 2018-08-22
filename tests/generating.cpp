@@ -117,6 +117,7 @@ static_assert(same_f("(?<n>x)"_pcre_gen, ctre::capture_with_name<ctre::id<'n'>,c
 static_assert(same_f("(?<name>x)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::character<'x'>>())); 
 static_assert(same_f("(?<name>xy)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::string<'x','y'>>())); 
 static_assert(same_f("(?<name>x|y)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::select<ctre::character<'x'>,ctre::character<'y'>>>())); 
+static_assert(same_f("(?<xy>[x]y)"_pcre_gen, ctre::capture_with_name<ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>())); 
 
 // asserts
 static_assert(same_f("^"_pcre_gen, ctre::assert_begin()));
