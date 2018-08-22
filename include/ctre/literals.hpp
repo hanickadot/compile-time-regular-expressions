@@ -11,18 +11,18 @@ namespace ctre {
 // in C++17 (clang & gcc with gnu extension) we need translate character pack into basic_fixed_string
 
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
-template <typename CharT, CharT... input> static inline constexpr auto string = ctll::basic_fixed_string<CharT, sizeof...(input)>({input...});
+template <typename CharT, CharT... input> static inline constexpr auto _string_reference = ctll::basic_fixed_string<CharT, sizeof...(input)>({input...});
 #endif	
 
 namespace literals {
 	
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
-template <typename CharT, CharT... charpack> __attribute__((always_inline)) constexpr auto operator""_pcre() noexcept {
-	constexpr auto & input = string<CharT, charpack...>;
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_pcre() noexcept {
+	constexpr auto & input = _string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((always_inline)) constexpr auto operator""_pcre() noexcept {
+template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre() noexcept {
 #endif
-	constexpr auto out = ctll::parser<ctre::pcre, input>::decide();
+	constexpr auto out = ctll::parser<ctre::pcre, input>::template decide<ctll::list<>>();
 	return bool(out);
 }
 
@@ -31,14 +31,23 @@ template <basic_fixed_string input> __attribute__((always_inline)) constexpr aut
 namespace test_literals {
 
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
-template <typename CharT, CharT... charpack> __attribute__((always_inline)) constexpr auto operator""_pcre_test() noexcept {
-	constexpr auto & input = string<CharT, charpack...>;
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_pcre_test() noexcept {
+	constexpr auto & input = _string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((always_inline)) constexpr auto operator""_pcre_test() noexcept {
+template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre_test() noexcept {
 #endif
-	constexpr auto out = ctll::parser<ctre::pcre, input>::decide();
-	return bool(out);
+	return bool(ctll::parser<ctre::pcre, input>::decide());
 }
+
+#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_pcre_gen() noexcept {
+	constexpr auto & input = _string_reference<CharT, charpack...>;
+#else
+template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre_gen() noexcept {
+#endif
+	return ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template decide<ctll::list<>>();
+}
+
 
 } // literals
 
