@@ -5,6 +5,10 @@
 #include "parser.hpp"
 #include "grammar.hpp"
 #include "pcre.hpp"
+#include "../ctll.hpp"
+#include "pcre2.hpp"
+
+
 
 namespace ctre {
 	
@@ -38,6 +42,12 @@ namespace test_literals {
 
 template <typename CharT, CharT... input> __attribute__((always_inline)) constexpr auto operator""_pcre_test() noexcept {
 	return bool(ctre::parser<pcre, string<CharT, input...>>::decide(ctre::empty_subject()));
+	//return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide(math_grammar_quick::subject_type());
+}
+
+template <typename CharT, CharT... charpack> __attribute__((always_inline)) constexpr auto operator""_pcre2_test() noexcept {
+	constexpr auto & input = string<CharT, charpack...>;
+	return bool(ctll::parser<ctre::pcre2, input>::decide());
 	//return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide(math_grammar_quick::subject_type());
 }
 

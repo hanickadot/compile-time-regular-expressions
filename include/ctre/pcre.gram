@@ -51,13 +51,13 @@ repeat->copen,<number>,comma,[repeat_at_least],cclose,<mod>
 repeat->copen,<number>,comma,<number>,[repeat_ab],cclose,<mod>
 mod->epsilon | questionmark,[make_lazy] | plus,[make_possessive]
 
-number->[create_number],num,<number2>
-number2->epsilon | [push_number],num,<number2>
+number->num,[create_number],<number2>
+number2->epsilon | num,[push_number],<number2>
 
 block->open,<content_in_capture>,[make_capture],close | open,questionmark,colon,<content_in_capture>,close
 block->open,questionmark,angle_open,<block_name>,angle_close,<content_in_capture>,[make_capture_with_name],close
-block_name->alphanum_characters,<block_name2>
-block_name2->alphanum_characters,<block_name2>|epsilon,[make_name]
+block_name->alphanum_characters,[push_name],<block_name2>
+block_name2->alphanum_characters,[push_name],<block_name2>|epsilon
 
 
 character_class->sopen,[set_start],<set>,[set_finish],sclose|sopen,caret,[set_neg_start],<set>,[set_finish],sclose
@@ -81,19 +81,19 @@ class_named_name->"word",[class_named_word]
 class_named_name->"xdigit",[class_named_xdigit]
 
 
-setitem->[current_character],other,<range> | [current_character],nonspecial_characters,<range> | [current_character],dot,<range>
-range->epsilon|minus,[insert_range],other|minus,[insert_range],nonspecial_characters
+setitem->other,[push_character],<range> | nonspecial_characters,[push_character],<range> | dot,[push_character],<range>
+range->epsilon|minus,other,[insert_range]|minus,nonspecial_characters,[insert_range]
 setitem-><class_named>
 
 setitem->backslash,<backslash>
 
-backslash->[current_character],<special>
+backslash-><special>,[push_character]
 special->dot|sopen|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar
 
-backslash->[current_character],escape_alphanum
+backslash->escape_alphanum,[push_character]
 backslash->x,[create_hexdec],hexdec,[push_hexdec],hexdec
-backslash->x,copen,[push_hexdec],hexdec,<hexdec_repeat>,cclose
-hexdec_repeat->[push_hexdec],hexdec,<hexdec_repeat>|epsilon
+backslash->x,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose
+hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 backslash->d,[class_digit]|D,[class_nondigit]
 backslash->w,[class_word]|W,[class_nonword]
 backslash->n,[character_newline]|t,[character_tab]|r,[character_return_carriage]
@@ -104,9 +104,9 @@ backslash->a,[character_alarm]
 backslash->e,[character_escape]
 backslash->f,[character_formfeed]
 
-character->[current_character],other | [current_character],nonspecial_characters | [current_character], set_control_chars | dot,[insert_anything] | backslash,<backslash> | [current_character],capture_control_chars | \>,[current_character]
+character->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | dot,[insert_anything] | backslash,<backslash>|capture_control_chars,[push_character] | \>,[push_character]
 
-character_in_capture->[current_character],other | [current_character],nonspecial_characters | [current_character], set_control_chars | \>,[current_character] | dot,[insert_anything] | backslash,<backslash>
+character_in_capture->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | \>,[push_character] | dot,[insert_anything] | backslash,<backslash>
 
 asserts->caret,[insert_begin] | dolar,[insert_end]
 

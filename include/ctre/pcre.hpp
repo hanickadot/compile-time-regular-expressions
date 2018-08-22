@@ -71,7 +71,6 @@ struct _subject_type {};
 	struct class_word: ctre::action {};
 	struct create_hexdec: ctre::action {};
 	struct create_number: ctre::action {};
-	struct current_character: ctre::action {};
 	struct empty: ctre::action {};
 	struct insert_anything: ctre::action {};
 	struct insert_begin: ctre::action {};
@@ -81,12 +80,13 @@ struct _subject_type {};
 	struct make_capture: ctre::action {};
 	struct make_capture_with_name: ctre::action {};
 	struct make_lazy: ctre::action {};
-	struct make_name: ctre::action {};
 	struct make_optional: ctre::action {};
 	struct make_possessive: ctre::action {};
 	struct make_sequence: ctre::action {};
 	struct negate_class_named: ctre::action {};
+	struct push_character: ctre::action {};
 	struct push_hexdec: ctre::action {};
+	struct push_name: ctre::action {};
 	struct push_number: ctre::action {};
 	struct repeat_ab: ctre::action {};
 	struct repeat_at_least: ctre::action {};
@@ -98,17 +98,16 @@ struct _subject_type {};
 	struct set_neg_start: ctre::action {};
 
 // (q)LL1 function:
-	using _others = ctre::neg_set<'$','\x28','\x29','*','+',',','-','.',':','<','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','h','i','0','e','f','g','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>;
+	using _others = ctre::neg_set<'$','\x28','\x29','*','+',',','-','.',':','<','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\','_','a','b','0',']','^','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>;
 	static constexpr auto rule(s, ctre::epsilon) -> ctre::epsilon;
 	static constexpr auto rule(s, ctre::term<'\x28'>) -> ctre::push<ctre::anything, b, repeat, string2, content2>;
 	static constexpr auto rule(s, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, repeat, string2, content2>;
 	static constexpr auto rule(s, ctre::term<'['>) -> ctre::push<ctre::anything, c, repeat, string2, content2>;
-	static constexpr auto rule(s, ctre::term<'>'>) -> ctre::push<ctre::anything, current_character, repeat, string2, content2>;
 	static constexpr auto rule(s, ctre::term<'.'>) -> ctre::push<ctre::anything, insert_anything, repeat, string2, content2>;
 	static constexpr auto rule(s, ctre::term<'^'>) -> ctre::push<ctre::anything, insert_begin, repeat, string2, content2>;
 	static constexpr auto rule(s, ctre::term<'$'>) -> ctre::push<ctre::anything, insert_end, repeat, string2, content2>;
-	static constexpr auto rule(s, ctre::set<',','0','-',':','<','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, repeat, string2, content2>;
-	static constexpr auto rule(s, _others) -> ctre::push<current_character, ctre::anything, repeat, string2, content2>;
+	static constexpr auto rule(s, ctre::set<',','0','-',':','<','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, repeat, string2, content2>;
+	static constexpr auto rule(s, _others) -> ctre::push<ctre::anything, push_character, repeat, string2, content2>;
 	static constexpr auto rule(s, ctre::set<'\x29','*','+','?','_','\x7B','|','\x7D'>) -> ctre::reject;
 
 	static constexpr auto rule(a, ctre::term<','>) -> ctre::push<ctre::anything, i>;
@@ -117,13 +116,12 @@ struct _subject_type {};
 	static constexpr auto rule(b, ctre::term<'\x28'>) -> ctre::push<ctre::anything, b, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
 	static constexpr auto rule(b, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
 	static constexpr auto rule(b, ctre::term<'['>) -> ctre::push<ctre::anything, c, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
-	static constexpr auto rule(b, ctre::term<'>'>) -> ctre::push<ctre::anything, current_character, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
 	static constexpr auto rule(b, ctre::term<'.'>) -> ctre::push<ctre::anything, insert_anything, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
 	static constexpr auto rule(b, ctre::term<'^'>) -> ctre::push<ctre::anything, insert_begin, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
 	static constexpr auto rule(b, ctre::term<'$'>) -> ctre::push<ctre::anything, insert_end, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
 	static constexpr auto rule(b, ctre::term<'?'>) -> ctre::push<ctre::anything, j>;
-	static constexpr auto rule(b, ctre::set<',','-',':','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','T','0','Q','R','S','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
-	static constexpr auto rule(b, _others) -> ctre::push<current_character, ctre::anything, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
+	static constexpr auto rule(b, ctre::set<',','0','-',':','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
+	static constexpr auto rule(b, _others) -> ctre::push<ctre::anything, push_character, repeat, string2, content2, make_capture, ctre::term<'\x29'>>;
 	static constexpr auto rule(b, ctre::term<'\x29'>) -> ctre::push<empty, make_capture, ctre::anything>;
 	static constexpr auto rule(b, ctre::set<'*','+','<','_','\x7B','|','\x7D'>) -> ctre::reject;
 
@@ -142,19 +140,18 @@ struct _subject_type {};
 	static constexpr auto rule(backslash, ctre::term<'s'>) -> ctre::push<ctre::anything, class_space>;
 	static constexpr auto rule(backslash, ctre::term<'w'>) -> ctre::push<ctre::anything, class_word>;
 	static constexpr auto rule(backslash, ctre::term<'x'>) -> ctre::push<ctre::anything, h>;
-	static constexpr auto rule(backslash, ctre::set<'$','\x28','\x29','*','+','.','?','[','\\','^','\x7B','|','\x7D'>) -> ctre::push<ctre::anything>;
-	static constexpr auto rule(backslash, ctre::set<'A','B','C','E','F','G','H','I','J','K','L','M','O','P','Q','U','V','X','Y','Z','b','c','g','h','i','j','k','l','m','o','p','q','u','v','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything>;
+	static constexpr auto rule(backslash, ctre::set<'$','\x28','\x29','*','+','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','P','Q','U','V','X','Y','Z','[','\\','^','b','c','g','h','i','j','k','l','m','o','p','q','u','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character>;
 
-	static constexpr auto rule(block_name2, ctre::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, block_name2>;
-	static constexpr auto rule(block_name2, ctre::term<'>'>) -> ctre::push<make_name>;
+	static constexpr auto rule(block_name2, ctre::term<'>'>) -> ctre::epsilon;
+	static constexpr auto rule(block_name2, ctre::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_name, block_name2>;
 
-	static constexpr auto rule(block_name, ctre::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, block_name2>;
+	static constexpr auto rule(block_name, ctre::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_name, block_name2>;
 
 	static constexpr auto rule(c, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, set2, set_finish, ctre::term<']'>>;
 	static constexpr auto rule(c, ctre::term<'['>) -> ctre::push<ctre::anything, ctre::term<':'>, f, set2, set_finish, ctre::term<']'>>;
+	static constexpr auto rule(c, ctre::set<',','0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, range, set2, set_finish, ctre::term<']'>>;
+	static constexpr auto rule(c, _others) -> ctre::push<ctre::anything, push_character, range, set2, set_finish, ctre::term<']'>>;
 	static constexpr auto rule(c, ctre::term<'^'>) -> ctre::push<ctre::anything, set_neg_start, set, set_finish, ctre::term<']'>>;
-	static constexpr auto rule(c, ctre::set<',','0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, range, set2, set_finish, ctre::term<']'>>;
-	static constexpr auto rule(c, _others) -> ctre::push<current_character, ctre::anything, range, set2, set_finish, ctre::term<']'>>;
 	static constexpr auto rule(c, ctre::set<'$','\x28','\x29','*','+','-',':','<','>','?',']','_','\x7B','|','\x7D'>) -> ctre::reject;
 
 	static constexpr auto rule(class_named_name, ctre::term<'x'>) -> ctre::push<ctre::anything, ctre::term<'d'>, ctre::term<'i'>, ctre::term<'g'>, ctre::term<'i'>, ctre::term<'t'>, class_named_xdigit>;
@@ -176,23 +173,21 @@ struct _subject_type {};
 	static constexpr auto rule(content, ctre::term<'\x28'>) -> ctre::push<ctre::anything, b, repeat, string2, content2>;
 	static constexpr auto rule(content, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, repeat, string2, content2>;
 	static constexpr auto rule(content, ctre::term<'['>) -> ctre::push<ctre::anything, c, repeat, string2, content2>;
-	static constexpr auto rule(content, ctre::term<'>'>) -> ctre::push<ctre::anything, current_character, repeat, string2, content2>;
 	static constexpr auto rule(content, ctre::term<'.'>) -> ctre::push<ctre::anything, insert_anything, repeat, string2, content2>;
 	static constexpr auto rule(content, ctre::term<'^'>) -> ctre::push<ctre::anything, insert_begin, repeat, string2, content2>;
 	static constexpr auto rule(content, ctre::term<'$'>) -> ctre::push<ctre::anything, insert_end, repeat, string2, content2>;
-	static constexpr auto rule(content, ctre::set<',','0','-',':','<','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, repeat, string2, content2>;
-	static constexpr auto rule(content, _others) -> ctre::push<current_character, ctre::anything, repeat, string2, content2>;
+	static constexpr auto rule(content, ctre::set<',','0','-',':','<','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, repeat, string2, content2>;
+	static constexpr auto rule(content, _others) -> ctre::push<ctre::anything, push_character, repeat, string2, content2>;
 	static constexpr auto rule(content, ctre::set<'\x29','*','+','?','_','\x7B','|','\x7D'>) -> ctre::reject;
 
 	static constexpr auto rule(content_in_capture, ctre::term<'\x28'>) -> ctre::push<ctre::anything, b, repeat, string2, content2>;
 	static constexpr auto rule(content_in_capture, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, repeat, string2, content2>;
 	static constexpr auto rule(content_in_capture, ctre::term<'['>) -> ctre::push<ctre::anything, c, repeat, string2, content2>;
-	static constexpr auto rule(content_in_capture, ctre::term<'>'>) -> ctre::push<ctre::anything, current_character, repeat, string2, content2>;
 	static constexpr auto rule(content_in_capture, ctre::term<'.'>) -> ctre::push<ctre::anything, insert_anything, repeat, string2, content2>;
 	static constexpr auto rule(content_in_capture, ctre::term<'^'>) -> ctre::push<ctre::anything, insert_begin, repeat, string2, content2>;
 	static constexpr auto rule(content_in_capture, ctre::term<'$'>) -> ctre::push<ctre::anything, insert_end, repeat, string2, content2>;
-	static constexpr auto rule(content_in_capture, ctre::set<',','-',':','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','T','0','Q','R','S','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, repeat, string2, content2>;
-	static constexpr auto rule(content_in_capture, _others) -> ctre::push<current_character, ctre::anything, repeat, string2, content2>;
+	static constexpr auto rule(content_in_capture, ctre::set<',','0','-',':','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, repeat, string2, content2>;
+	static constexpr auto rule(content_in_capture, _others) -> ctre::push<ctre::anything, push_character, repeat, string2, content2>;
 	static constexpr auto rule(content_in_capture, ctre::term<'\x29'>) -> ctre::push<empty>;
 	static constexpr auto rule(content_in_capture, ctre::set<'*','+','<','?','_','\x7B','|','\x7D'>) -> ctre::reject;
 
@@ -215,17 +210,17 @@ struct _subject_type {};
 	static constexpr auto rule(f, ctre::term<'a'>) -> ctre::push<ctre::anything, d, ctre::term<':'>, ctre::term<']'>>;
 	static constexpr auto rule(f, ctre::term<'p'>) -> ctre::push<ctre::anything, e, ctre::term<':'>, ctre::term<']'>>;
 
-	static constexpr auto rule(g, ctre::set<',','A','0','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<insert_range, ctre::anything>;
-	static constexpr auto rule(g, _others) -> ctre::push<insert_range, ctre::anything>;
+	static constexpr auto rule(g, ctre::set<',','A','0','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, insert_range>;
+	static constexpr auto rule(g, _others) -> ctre::push<ctre::anything, insert_range>;
 	static constexpr auto rule(g, ctre::set<'$','\x28','\x29','*','+','-','.',':','<','>','?','[','\\',']','^','_','\x7B','|','\x7D'>) -> ctre::reject;
 
+	static constexpr auto rule(h, ctre::term<'\x7B'>) -> ctre::push<create_hexdec, ctre::anything, ctre::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, hexdec_repeat, ctre::term<'\x7D'>>;
 	static constexpr auto rule(h, ctre::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctre::push<create_hexdec, ctre::anything, push_hexdec, ctre::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>>;
-	static constexpr auto rule(h, ctre::term<'\x7B'>) -> ctre::push<ctre::anything, push_hexdec, ctre::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, hexdec_repeat, ctre::term<'\x7D'>>;
 
 	static constexpr auto rule(hexdec_repeat, ctre::term<'\x7D'>) -> ctre::epsilon;
-	static constexpr auto rule(hexdec_repeat, ctre::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctre::push<push_hexdec, ctre::anything, hexdec_repeat>;
+	static constexpr auto rule(hexdec_repeat, ctre::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_hexdec, hexdec_repeat>;
 
-	static constexpr auto rule(i, ctre::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctre::push<create_number, ctre::anything, number2, repeat_ab, ctre::term<'\x7D'>, mod>;
+	static constexpr auto rule(i, ctre::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, create_number, number2, repeat_ab, ctre::term<'\x7D'>, mod>;
 	static constexpr auto rule(i, ctre::term<'\x7D'>) -> ctre::push<repeat_at_least, ctre::anything, mod>;
 
 	static constexpr auto rule(j, ctre::term<'<'>) -> ctre::push<ctre::anything, block_name, ctre::term<'>'>, content_in_capture, make_capture_with_name, ctre::term<'\x29'>>;
@@ -242,9 +237,9 @@ struct _subject_type {};
 	static constexpr auto rule(mod, ctre::set<'*','_','\x7B','\x7D'>) -> ctre::reject;
 
 	static constexpr auto rule(number2, ctre::set<',','\x7D'>) -> ctre::epsilon;
-	static constexpr auto rule(number2, ctre::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctre::push<push_number, ctre::anything, number2>;
+	static constexpr auto rule(number2, ctre::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_number, number2>;
 
-	static constexpr auto rule(number, ctre::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctre::push<create_number, ctre::anything, number2>;
+	static constexpr auto rule(number, ctre::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, create_number, number2>;
 
 	static constexpr auto rule(range, ctre::set<',','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9'>) -> ctre::epsilon;
 	static constexpr auto rule(range, ctre::epsilon) -> ctre::epsilon;
@@ -264,14 +259,14 @@ struct _subject_type {};
 	static constexpr auto rule(set2, ctre::term<']'>) -> ctre::epsilon;
 	static constexpr auto rule(set2, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, set_combine, set2>;
 	static constexpr auto rule(set2, ctre::term<'['>) -> ctre::push<ctre::anything, ctre::term<':'>, f, set_combine, set2>;
-	static constexpr auto rule(set2, ctre::set<',','0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, range, set_combine, set2>;
-	static constexpr auto rule(set2, _others) -> ctre::push<current_character, ctre::anything, range, set_combine, set2>;
+	static constexpr auto rule(set2, ctre::set<',','0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, range, set_combine, set2>;
+	static constexpr auto rule(set2, _others) -> ctre::push<ctre::anything, push_character, range, set_combine, set2>;
 	static constexpr auto rule(set2, ctre::set<'$','\x28','\x29','*','+','-',':','<','>','?','^','_','\x7B','|','\x7D'>) -> ctre::reject;
 
 	static constexpr auto rule(set, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, set2>;
 	static constexpr auto rule(set, ctre::term<'['>) -> ctre::push<ctre::anything, ctre::term<':'>, f, set2>;
-	static constexpr auto rule(set, ctre::set<',','0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, range, set2>;
-	static constexpr auto rule(set, _others) -> ctre::push<current_character, ctre::anything, range, set2>;
+	static constexpr auto rule(set, ctre::set<',','0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, range, set2>;
+	static constexpr auto rule(set, _others) -> ctre::push<ctre::anything, push_character, range, set2>;
 	static constexpr auto rule(set, ctre::set<'$','\x28','\x29','*','+','-',':','<','>','?',']','^','_','\x7B','|','\x7D'>) -> ctre::reject;
 
 	static constexpr auto rule(string2, ctre::set<'\x29','|'>) -> ctre::epsilon;
@@ -279,12 +274,11 @@ struct _subject_type {};
 	static constexpr auto rule(string2, ctre::term<'\x28'>) -> ctre::push<ctre::anything, b, repeat, string2, make_sequence>;
 	static constexpr auto rule(string2, ctre::term<'\\'>) -> ctre::push<ctre::anything, backslash, repeat, string2, make_sequence>;
 	static constexpr auto rule(string2, ctre::term<'['>) -> ctre::push<ctre::anything, c, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctre::term<'>'>) -> ctre::push<ctre::anything, current_character, repeat, string2, make_sequence>;
 	static constexpr auto rule(string2, ctre::term<'.'>) -> ctre::push<ctre::anything, insert_anything, repeat, string2, make_sequence>;
 	static constexpr auto rule(string2, ctre::term<'^'>) -> ctre::push<ctre::anything, insert_begin, repeat, string2, make_sequence>;
 	static constexpr auto rule(string2, ctre::term<'$'>) -> ctre::push<ctre::anything, insert_end, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctre::set<',','0','-',':','<','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<current_character, ctre::anything, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, _others) -> ctre::push<current_character, ctre::anything, repeat, string2, make_sequence>;
+	static constexpr auto rule(string2, ctre::set<',','0','-',':','<','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',']','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctre::push<ctre::anything, push_character, repeat, string2, make_sequence>;
+	static constexpr auto rule(string2, _others) -> ctre::push<ctre::anything, push_character, repeat, string2, make_sequence>;
 	static constexpr auto rule(string2, ctre::set<'*','+','?','_','\x7B','\x7D'>) -> ctre::reject;
 
 };

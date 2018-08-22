@@ -17,7 +17,7 @@ template <typename CharT, CharT... charpack> __attribute__((always_inline)) cons
 #else
 template <basic_fixed_string input> __attribute__((always_inline)) constexpr auto operator""_pcre() noexcept {
 #endif
-	auto out = ctll::parser<ctre::pcre, input>::decide();
+	constexpr auto out = ctll::parser<ctre::pcre2, input>::decide();
 	return bool(out);
 }
 

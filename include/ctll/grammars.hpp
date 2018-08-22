@@ -27,14 +27,18 @@ struct action {
 };
 
 // move one character forward and pop it from stack command
-struct pop_input { };
+struct pop_input {
+	struct pop_input_tag { };
+};
 
 // additional overloads for type list
+template <typename... Ts> constexpr auto push_front(pop_input, list<Ts...>) -> list<Ts...> { return {}; };
+
 template <typename... Ts> constexpr auto push_front(epsilon, list<Ts...>) -> list<Ts...> { return {}; };
 
 template <typename... As, typename... Bs> constexpr auto push_front(list<As...>, list<Bs...>) -> list<As..., Bs...> { return {}; };
 
-template <typename T, typename... As> constexpr auto push_and_pop_front(T item, list<As...> l) {
+template <typename T, typename... As> constexpr auto pop_front_and_push_front(T item, list<As...> l) {
 	return push_front(item, pop_front(l));
 }
 
@@ -91,6 +95,16 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	// start stack is just a list<Grammar::_start>;
 	static constexpr inline auto start_stack = list<typename Grammar::_start>{};
 };
+
+// support for qLL1 move (for performance)
+template <auto V, typename... Content> constexpr auto is_quick(term<V>, list<term<V>, Content...>) -> std::true_type { return {}; }
+
+template <auto V, typename... Content> constexpr auto is_quick(term<V>, list<anything, Content...>) -> std::true_type { return {}; }
+
+template <typename T, typename Y> constexpr auto is_quick(T, Y) -> std::false_type { return {}; }
+
+template <typename AHead, typename... As, typename BHead, typename... Bs> constexpr auto pop_front_and_push_front_quick(list<AHead, As...>, list<BHead, Bs...>) -> list<As..., Bs...> { return {}; }
+
 
 
 }
