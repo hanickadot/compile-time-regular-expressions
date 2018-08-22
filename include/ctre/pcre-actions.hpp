@@ -4,11 +4,11 @@
 #include "pcre.hpp"
 
 namespace ctre {
+	
+template <auto v> struct character { };
 
-#define ACTION(name) template <auto V, typename Ts...> constexpr auto action(name, term<V>, list<Ts...>)
-
-ACTION(pcre::push_character) {
-	return push(character<V>(),list<Ts...>);
+template <auto V, typename... Ts> constexpr auto action(pcre::push_character, ctll::term<V>, ctll::list<Ts...> stack) {
+	return push(character<V>(), stack);
 }
 
 
