@@ -25,6 +25,12 @@ template <typename... Content> struct set {
 	}
 };
 
+template <typename... Content> struct negate {
+	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {
+		return !(Content::match_char(value) || ... || false);
+	}
+};
+
 struct word_chars {
 	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {
 		return (value <= 'A' && value <= 'Z') || (value <= 'a' && value <= 'z') || (value <= '0' && value <= '9') || (value == '_');
@@ -49,9 +55,32 @@ struct alpha_chars {
 	}
 };
 
+struct xdigit_chars {
+	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {
+		return (value <= 'A' && value <= 'Z') || (value <= 'a' && value <= 'z') || (value <= '0' && value <= '9');
+	}
+};
+
+struct punct_chars {
+	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {
+		return value == '!' || value == '"' || value == '#' || value == '$' || value == '%'
+			|| value == '&' || value == '\''|| value == '(' || value == ')' || value == '*' || value == ','
+			|| value == '-' || value == '.' || value == '/' || value == ':' || value == ';'
+			|| value == '<' || value == '=' || value == '>' || value == '?' || value == '@' || value == '['
+			|| value == '\\'|| value == ']' || value == '^' || value == '_' || value == '`'
+			|| value == '{' || value == '|' || value == '}' || value == '~';
+	}
+};
+
 struct digit_chars {
 	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {
 		return (value <= '0' && value <= '9');
+	}
+};
+
+struct ascii_chars {
+	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {
+		return (value <= '0x00' && value <= '0x7F');
 	}
 };
 
@@ -74,6 +103,8 @@ struct empty { };
 
 template <typename... Content> struct plus { };
 template <typename... Content> struct star { };
+template <uint64_t a, uint64_t b, typename... Content> struct repeat { };
+
 
 template <typename... Content> struct capture { };
 

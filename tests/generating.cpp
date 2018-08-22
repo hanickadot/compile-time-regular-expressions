@@ -57,11 +57,10 @@ static_assert(same_f("[ab]"_pcre_gen, ctre::set<ctre::character<'a'>,ctre::chara
 static_assert(same_f("[^ab]"_pcre_gen, ctre::negative_set<ctre::character<'a'>,ctre::character<'b'>>()));
 static_assert(same_f("[[:digit:][:digit:]]"_pcre_gen, ctre::set<ctre::digit_chars>()));
 static_assert(same_f("[^[:digit:]]"_pcre_gen, ctre::negative_set<ctre::digit_chars>()));
-
-
-//ID_ALL("[ab]"_pcre_gen));
-//ID_ALL("[[:digit:][:digit:]]"_pcre_gen));
-
+static_assert(same_f("[[:^digit:]]"_pcre_gen, ctre::set<ctre::negate<ctre::digit_chars>>()));
+static_assert(same_f("[[:^digit:][:^alpha:]]"_pcre_gen, ctre::set<ctre::negate<ctre::digit_chars>, ctre::negate<ctre::alpha_chars>>()));
+static_assert(same_f("[[:digit:][:alpha:]]"_pcre_gen, ctre::set<ctre::digit_chars, ctre::alpha_chars>()));
+static_assert(same_f("[[:digit:][:^alpha:]]"_pcre_gen, ctre::set<ctre::digit_chars, ctre::negate<ctre::alpha_chars>>()));
 
 // alternation
 static_assert(same_f("(?:abc|def)"_pcre_gen, ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>>()));
@@ -78,3 +77,15 @@ static_assert(same_f("x+"_pcre_gen, ctre::plus<ctre::character<'x'>>()));
 static_assert(same_f("(?:abc)+"_pcre_gen, ctre::plus<ctre::string<'a','b','c'>>()));
 static_assert(same_f("x*"_pcre_gen, ctre::star<ctre::character<'x'>>()));
 static_assert(same_f("(?:abc)*"_pcre_gen, ctre::star<ctre::string<'a','b','c'>>()));
+static_assert(same_f("x{1}"_pcre_gen, ctre::repeat<1,1,ctre::character<'x'>>()));
+static_assert(same_f("x{1,}"_pcre_gen, ctre::repeat<1,0,ctre::character<'x'>>()));
+static_assert(same_f("x{198}"_pcre_gen, ctre::repeat<198,198,ctre::character<'x'>>()));
+static_assert(same_f("x{198,}"_pcre_gen, ctre::repeat<198,0,ctre::character<'x'>>()));
+static_assert(same_f("x{1,2}"_pcre_gen, ctre::repeat<1,2,ctre::character<'x'>>()));
+static_assert(same_f("x{1,1234}"_pcre_gen, ctre::repeat<1,1234,ctre::character<'x'>>()));
+static_assert(same_f("x{567,1234}"_pcre_gen, ctre::repeat<567,1234,ctre::character<'x'>>()));
+static_assert(same_f("[x]{567,1234}"_pcre_gen, ctre::repeat<567,1234,ctre::set<ctre::character<'x'>>>()));
+static_assert(same_f("[^x]{567,1234}"_pcre_gen, ctre::repeat<567,1234,ctre::negative_set<ctre::character<'x'>>>()));
+static_assert(same_f("(?:abc){3,42}"_pcre_gen, ctre::repeat<3,42,ctre::string<'a','b','c'>>()));
+
+//auto i = "(?:abc){1,2}"_pcre_gen;

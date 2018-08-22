@@ -8,9 +8,7 @@
 
 namespace ctre {
 	
-template <uint64_t Value> struct hexdec_number { };
-	
-template <uint64_t V> struct id_number;
+template <uint64_t Value> struct number { };
 	
 struct pcre_actions {
 // i know it's ugly, but it's more readable
@@ -27,7 +25,6 @@ struct pcre_actions {
 
 /*
 TODO:
-	struct create_number: ctll::action {};
 	struct insert_begin: ctll::action {};
 	struct insert_end: ctll::action {};
 	struct insert_range: ctll::action {};
@@ -36,12 +33,8 @@ TODO:
 	struct make_lazy: ctll::action {};
 	struct make_possessive: ctll::action {};
 	struct make_sequence: ctll::action {};
-	struct negate_class_named: ctll::action {};
 	struct push_name: ctll::action {};
-	struct push_number: ctll::action {};
-	struct repeat_ab: ctll::action {};
-	struct repeat_at_least: ctll::action {};
-	struct repeat_exactly: ctll::action {};
+	
 */
 
 

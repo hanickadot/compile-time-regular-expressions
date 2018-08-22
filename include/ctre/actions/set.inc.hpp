@@ -27,6 +27,10 @@ template <auto V, typename A, typename... Content, typename... Ts> constexpr aut
 	auto new_set = push_back_into_set<set>(A(), set<Content...>());
 	return ctll::push_front(new_set, ctll::list<Ts...>());
 }
+// negate_class_named: [[^:digit:]] = [^[:digit:]]
+template <auto V, typename A, typename... Ts> constexpr auto operator()(pcre::negate_class_named, ctll::term<V>, ctll::list<A, Ts...> stack) const {
+	return ctll::push_front(negate<A>(), ctll::list<Ts...>());
+}
 
 #endif
 	
