@@ -9,6 +9,7 @@
 namespace ctre {
 
 // in C++17 (clang & gcc with gnu extension) we need translate character pack into basic_fixed_string
+// in C++20 we have `class nontype template parameters`
 
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
 template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::basic_fixed_string<CharT, sizeof...(input)>({input...});
@@ -22,8 +23,9 @@ template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr 
 #else
 template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre() noexcept {
 #endif
-	constexpr auto out = ctll::parser<ctre::pcre, input>::template decide<ctll::list<>>();
-	return bool(out);
+	using result = typename ctll::parser<ctre::pcre, input>::template output<ctll::list<>>;
+	static_assert(result(), "Regular Expression contains syntax error.");
+	return result::output_type();
 }
 
 }
@@ -36,7 +38,7 @@ template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr 
 #else
 template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre_test() noexcept {
 #endif
-	return bool(ctll::parser<ctre::pcre, input>::decide());
+	return ctll::parser<ctre::pcre, input>::correct;
 }
 
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
@@ -45,7 +47,7 @@ template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr 
 #else
 template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre_gen() noexcept {
 #endif
-	return ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template decide<ctll::list<>>();
+	return typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<ctll::list<>>();
 }
 
 

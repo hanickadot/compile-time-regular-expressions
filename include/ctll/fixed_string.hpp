@@ -29,6 +29,9 @@ public:
 	constexpr const CharT * end() const noexcept {
 		return content + size();
 	}
+#if __has_include(<compare>)
+	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
+#endif
 };
 
 template <typename CharT> class basic_fixed_string<CharT, 0> {
@@ -44,6 +47,9 @@ public:
 	constexpr const CharT * end() const noexcept {
 		return nullptr;
 	}
+#if __has_include(<compare>)
+	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
+#endif
 };
 
 template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
