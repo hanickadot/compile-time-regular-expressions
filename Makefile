@@ -27,22 +27,21 @@ $(OBJECTS): %.o: %.cpp
 -include $(DEPEDENCY_FILES)
 
 benchmark:
-	$(MAKE) clean
-	$(MAKE) IGNORE=""
+	@$(MAKE) clean
+	@$(MAKE) IGNORE=""
+	
+benchmark-clean:
+	@$(MAKE) IGNORE="" clean
 
 clean:
 	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES)
 	
-grammar: include/ctre/pcre2.hpp include/ctre/pcre.hpp
+grammar: include/ctre/pcre.hpp
 	
 regrammar: 
-	rm -f include/ctre/pcre2.hpp include/ctre/pcre.hpp
-	$(MAKE) grammar
+	@rm -f include/ctre/pcre.hpp
+	@$(MAKE) grammar
 	
 include/ctre/pcre.hpp: include/ctre/pcre.gram
-	$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre.hpp.pre --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre
-	cat include/ctre/pcre.hpp.pre | sed -e 's/ctll::/ctre::/g' > include/ctre/pcre.hpp
-	rm -f include/ctre/pcre.hpp.pre
-
-include/ctre/pcre2.hpp: include/ctre/pcre.gram
-	$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre2.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE2__HPP --cfg:grammar_name=pcre2
+	@echo "LL1q $<"
+	@$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre

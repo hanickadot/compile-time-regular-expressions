@@ -1,54 +1,43 @@
 #ifndef CTRE_V2__CTRE__LITERALS__HPP
 #define CTRE_V2__CTRE__LITERALS__HPP
 
-#include "fixed_string.hpp"
-#include "parser.hpp"
-#include "grammar.hpp"
-#include "pcre.hpp"
 #include "../ctll.hpp"
-#include "pcre2.hpp"
+#include "pcre.hpp"
 
 
 
 namespace ctre {
-	
-template <typename CharT, CharT... input> static inline constexpr auto string = basic_fixed_string<CharT, sizeof...(input)>({input...});
+
+// in C++17 (clang & gcc with gnu extension) we need translate character pack into basic_fixed_string
+
+#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+template <typename CharT, CharT... input> static inline constexpr auto string = ctll::basic_fixed_string<CharT, sizeof...(input)>({input...});
+#endif	
 
 namespace literals {
 	
-//	in C++20 :)
-//	template <basic_fixed_string input> constexpr auto operator""_ctre() noexcept { 
-//		return tape;
-//	}
-	
-// we need object with static linkage, 
-// until we got C++20's P0732 "Class Types in Non-Type Template Parameters"
-
-template <typename CharT, CharT... input> __attribute__((always_inline)) constexpr auto operator""_expr() noexcept {
-	return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide();
-	//return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide(math_grammar_quick::subject_type());
-}
-
-template <typename CharT, CharT... input> __attribute__((always_inline)) constexpr auto operator""_ctre() noexcept {
-	using Out = decltype(ctre::parser<pcre, string<CharT, input...>>::decide(ctre::empty_subject()));
-	static_assert(Out(), "Regular expression is not correct.");
-	return Out();
-	//return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide(math_grammar_quick::subject_type());
+#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+template <typename CharT, CharT... charpack> __attribute__((always_inline)) constexpr auto operator""_pcre() noexcept {
+	constexpr auto & input = string<CharT, charpack...>;
+#else
+template <basic_fixed_string input> __attribute__((always_inline)) constexpr auto operator""_pcre() noexcept {
+#endif
+	constexpr auto out = ctll::parser<ctre::pcre, input>::decide();
+	return bool(out);
 }
 
 }
 
 namespace test_literals {
 
-template <typename CharT, CharT... input> __attribute__((always_inline)) constexpr auto operator""_pcre_test() noexcept {
-	return bool(ctre::parser<pcre, string<CharT, input...>>::decide(ctre::empty_subject()));
-	//return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide(math_grammar_quick::subject_type());
-}
-
-template <typename CharT, CharT... charpack> __attribute__((always_inline)) constexpr auto operator""_pcre2_test() noexcept {
+#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+template <typename CharT, CharT... charpack> __attribute__((always_inline)) constexpr auto operator""_pcre_test() noexcept {
 	constexpr auto & input = string<CharT, charpack...>;
-	return bool(ctll::parser<ctre::pcre2, input>::decide());
-	//return ctre::parser<math_grammar_quick, string<CharT, input...>>::decide(math_grammar_quick::subject_type());
+#else
+template <basic_fixed_string input> __attribute__((always_inline)) constexpr auto operator""_pcre_test() noexcept {
+#endif
+	constexpr auto out = ctll::parser<ctre::pcre, input>::decide();
+	return bool(out);
 }
 
 } // literals
