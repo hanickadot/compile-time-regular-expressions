@@ -2,6 +2,9 @@
 
 using namespace ctre::test_literals;
 
+#define DEBUG 1
+#ifdef DEBUG
+
 template <typename... T> struct id_type;
 
 template <typename... T> constexpr auto id(T...) {
@@ -10,6 +13,8 @@ template <typename... T> constexpr auto id(T...) {
 
 #define ID(expr) auto i = id(ctll::front(expr));
 #define ID_ALL(expr) auto i = id(expr);
+
+#endif // DEBUG
 
 template <typename A, typename B> constexpr auto same(A,B) -> std::false_type { return {}; }
 
@@ -56,7 +61,7 @@ static_assert(same_f("[[:digit:]]"_pcre_gen, ctre::set<ctre::digit_chars>()));
 static_assert(same_f("[ab]"_pcre_gen, ctre::set<ctre::character<'a'>,ctre::character<'b'>>()));
 static_assert(same_f("[^ab]"_pcre_gen, ctre::negative_set<ctre::character<'a'>,ctre::character<'b'>>()));
 static_assert(same_f("[[:digit:][:digit:]]"_pcre_gen, ctre::set<ctre::digit_chars>()));
-static_assert(same_f("[^[:digit:]]"_pcre_gen, ctre::negative_set<ctre::digit_chars>()));
+static_assert(same_f("[^[:punct:]]"_pcre_gen, ctre::negative_set<ctre::punct_chars>()));
 static_assert(same_f("[[:^digit:]]"_pcre_gen, ctre::set<ctre::negate<ctre::digit_chars>>()));
 static_assert(same_f("[[:^digit:][:^alpha:]]"_pcre_gen, ctre::set<ctre::negate<ctre::digit_chars>, ctre::negate<ctre::alpha_chars>>()));
 static_assert(same_f("[[:digit:][:alpha:]]"_pcre_gen, ctre::set<ctre::digit_chars, ctre::alpha_chars>()));
@@ -109,15 +114,16 @@ static_assert(same_f("q{4,4}?"_pcre_gen, ctre::lazy_repeat<4,4,ctre::character<'
 // note: there is no possessive/lazy evaluationg for fixed number of repeats
 
 // captures
-static_assert(same_f("(a)"_pcre_gen, ctre::capture<0,ctre::character<'a'>>()));
-static_assert(same_f("(x[cd])"_pcre_gen, ctre::capture<0,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>())); 
-static_assert(same_f("(x[cd])(ab)"_pcre_gen, ctre::sequence<ctre::capture<0,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>,ctre::capture<0,ctre::string<'a','b'>>>())); 
-static_assert(same_f("(x[cd])(ab)+"_pcre_gen, ctre::sequence<ctre::capture<0,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>,ctre::plus<ctre::capture<0,ctre::string<'a','b'>>>>())); 
-static_assert(same_f("(?<n>x)"_pcre_gen, ctre::capture_with_name<ctre::id<'n'>,ctre::character<'x'>>())); 
-static_assert(same_f("(?<name>x)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::character<'x'>>())); 
-static_assert(same_f("(?<name>xy)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::string<'x','y'>>())); 
-static_assert(same_f("(?<name>x|y)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::select<ctre::character<'x'>,ctre::character<'y'>>>())); 
-static_assert(same_f("(?<xy>[x]y)"_pcre_gen, ctre::capture_with_name<ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>())); 
+static_assert(same_f("(a)"_pcre_gen, ctre::capture<1,ctre::character<'a'>>()));
+static_assert(same_f("(x[cd])"_pcre_gen, ctre::capture<1,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>())); 
+static_assert(same_f("(x[cd])(ab)"_pcre_gen, ctre::sequence<ctre::capture<1,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>,ctre::capture<2,ctre::string<'a','b'>>>())); 
+static_assert(same_f("(x[cd])(ab)+"_pcre_gen, ctre::sequence<ctre::capture<1,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>,ctre::plus<ctre::capture<2,ctre::string<'a','b'>>>>())); 
+static_assert(same_f("(?<n>x)"_pcre_gen, ctre::capture_with_name<1,ctre::id<'n'>,ctre::character<'x'>>())); 
+static_assert(same_f("(?<name>x)"_pcre_gen, ctre::capture_with_name<1,ctre::id<'n','a','m','e'>,ctre::character<'x'>>())); 
+static_assert(same_f("(?<name>xy)"_pcre_gen, ctre::capture_with_name<1,ctre::id<'n','a','m','e'>,ctre::string<'x','y'>>())); 
+static_assert(same_f("(?<name>x|y)"_pcre_gen, ctre::capture_with_name<1,ctre::id<'n','a','m','e'>,ctre::select<ctre::character<'x'>,ctre::character<'y'>>>())); 
+static_assert(same_f("(?<xy>[x]y)"_pcre_gen, ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>())); 
+static_assert(same_f("(?<xy>[x]y)(a)"_pcre_gen, ctre::sequence<ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>, ctre::capture<2,ctre::character<'a'>>>())); 
 
 // asserts
 static_assert(same_f("^"_pcre_gen, ctre::assert_begin()));

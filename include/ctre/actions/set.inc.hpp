@@ -11,56 +11,56 @@ template <template <typename...> typename SetType, typename T, typename... As, b
 //};
 //
 //// add set into set if not exists
-//template <template <typename...> typename SetType, typename... As, typename... Bs> static constexpr auto push_back_into_set(SetType<As...>, SetType<Bs...>) -> typename set_merge_helper<SetType, SetType<As...>, Bs...>::type { return {}; }
+//template <template <typename...> typename SetType, typename... As, typename... Bs> static constexpr auto push_back_into_set(SetType<As...>, SetType<Bs...>) -> typename set_merge_helper<SetType, SetType<As...>, Bs...>::type { return pcre_context{{};), subject.parameters}}
 //
-//template <template <typename...> typename SetType, typename... As> static constexpr auto push_back_into_set(SetType<As...>, SetType<>) -> SetType<As...> { return {}; }
+//template <template <typename...> typename SetType, typename... As> static constexpr auto push_back_into_set(SetType<As...>, SetType<>) -> SetType<As...> { return pcre_context{{};), subject.parameters}}
 
 
 // END OF UTILITY
 
 // set_start
-template <auto V, typename A,typename... Ts> constexpr auto operator()(pcre::set_start, ctll::term<V>, ctll::list<A,Ts...> stack) const {
-	return ctll::push_front(set<A>(), ctll::list<Ts...>());
+template <auto V, typename A,typename... Ts, typename Parameters> constexpr auto operator()(pcre::set_start, ctll::term<V>, pcre_context<ctll::list<A,Ts...>, Parameters> subject) const {
+	return pcre_context{ctll::push_front(set<A>(), ctll::list<Ts...>()), subject.parameters};
 }
 // set_make
-template <auto V, typename... Content, typename... Ts> constexpr auto operator()(pcre::set_make, ctll::term<V>, ctll::list<set<Content...>, Ts...> stack) const {
-	return ctll::push_front(set<Content...>(), ctll::list<Ts...>());
+template <auto V, typename... Content, typename... Ts, typename Parameters> constexpr auto operator()(pcre::set_make, ctll::term<V>, pcre_context<ctll::list<set<Content...>, Ts...>, Parameters> subject) const {
+	return pcre_context{ctll::push_front(set<Content...>(), ctll::list<Ts...>()), subject.parameters};
 }
 // set_make_negative
-template <auto V, typename... Content, typename... Ts> constexpr auto operator()(pcre::set_make_negative, ctll::term<V>, ctll::list<set<Content...>, Ts...> stack) const {
-	return ctll::push_front(negative_set<Content...>(), ctll::list<Ts...>());
+template <auto V, typename... Content, typename... Ts, typename Parameters> constexpr auto operator()(pcre::set_make_negative, ctll::term<V>, pcre_context<ctll::list<set<Content...>, Ts...>, Parameters> subject) const {
+	return pcre_context{ctll::push_front(negative_set<Content...>(), ctll::list<Ts...>()), subject.parameters};
 }
 // set{A...} + B = set{A,B}
-template <auto V, typename A, typename... Content, typename... Ts> constexpr auto operator()(pcre::set_combine, ctll::term<V>, ctll::list<A,set<Content...>,Ts...> stack) const {
+template <auto V, typename A, typename... Content, typename... Ts, typename Parameters> constexpr auto operator()(pcre::set_combine, ctll::term<V>, pcre_context<ctll::list<A,set<Content...>,Ts...>, Parameters> subject) const {
 	auto new_set = push_back_into_set<set>(A(), set<Content...>());
-	return ctll::push_front(new_set, ctll::list<Ts...>());
+	return pcre_context{ctll::push_front(new_set, ctll::list<Ts...>()), subject.parameters};
 }
 // TODO checkme
 //// set{A...} + set{B...} = set{A...,B...}
-//template <auto V, typename... As, typename... Bs, typename... Ts> constexpr auto operator()(pcre::set_combine, ctll::term<V>, ctll::list<set<As...>,set<Bs...>,Ts...> stack) const {
+//template <auto V, typename... As, typename... Bs, typename... Ts, typename Parameters> constexpr auto operator()(pcre::set_combine, ctll::term<V>, pcre_context<ctll::list<set<As...>,set<Bs...>,Ts...>, Parameters> subject) const {
 //	auto new_set = push_back_into_set<set>(set<As...>(), set<Bs...>());
-//	return ctll::push_front(new_set, ctll::list<Ts...>());
+//	return pcre_context{ctll::push_front(new_set, ctll::list<Ts...>()), subject.parameters};
 //}
 
 // negative_set{A...} + B = negative_set{A,B}
-template <auto V, typename A, typename... Content, typename... Ts> constexpr auto operator()(pcre::set_combine, ctll::term<V>, ctll::list<A,negative_set<Content...>,Ts...> stack) const {
+template <auto V, typename A, typename... Content, typename... Ts, typename Parameters> constexpr auto operator()(pcre::set_combine, ctll::term<V>, pcre_context<ctll::list<A,negative_set<Content...>,Ts...>, Parameters> subject) const {
 	auto new_set = push_back_into_set<set>(A(), set<Content...>());
-	return ctll::push_front(new_set, ctll::list<Ts...>());
+	return pcre_context{ctll::push_front(new_set, ctll::list<Ts...>()), subject.parameters};
 }
 // TODO checkme
 //// negative_set{A...} + negative_set{B...} = negative_set{A...,B...}
-//template <auto V, typename... As, typename... Bs, typename... Ts> constexpr auto operator()(pcre::set_combine, ctll::term<V>, ctll::list<negative_set<As...>,negative_set<Bs...>,Ts...> stack) const {
+//template <auto V, typename... As, typename... Bs, typename... Ts, typename Parameters> constexpr auto operator()(pcre::set_combine, ctll::term<V>, pcre_context<ctll::list<negative_set<As...>,negative_set<Bs...>,Ts...>, Parameters> subject) const {
 //	auto new_set = push_back_into_set<negative_set>(negative_set<As...>(), negative_set<Bs...>());
-//	return ctll::push_front(new_set, ctll::list<Ts...>());
+//	return pcre_context{ctll::push_front(new_set, ctll::list<Ts...>()), subject.parameters};
 //}
 // negate_class_named: [[^:digit:]] = [^[:digit:]]
-template <auto V, typename A, typename... Ts> constexpr auto operator()(pcre::negate_class_named, ctll::term<V>, ctll::list<A, Ts...> stack) const {
-	return ctll::push_front(negate<A>(), ctll::list<Ts...>());
+template <auto V, typename A, typename... Ts, typename Parameters> constexpr auto operator()(pcre::negate_class_named, ctll::term<V>, pcre_context<ctll::list<A, Ts...>, Parameters> subject) const {
+	return pcre_context{ctll::push_front(negate<A>(), ctll::list<Ts...>()), subject.parameters};
 }
 
 // add range to set
-template <auto B, auto A, typename... Ts> constexpr auto operator()(pcre::insert_range, ctll::term<B>, ctll::list<character<A>, Ts...> stack) const {
-	return ctll::push_front(range<A,B>(), ctll::list<Ts...>());
+template <auto B, auto A, typename... Ts, typename Parameters> constexpr auto operator()(pcre::insert_range, ctll::term<B>, pcre_context<ctll::list<character<A>, Ts...>, Parameters> subject) const {
+	return pcre_context{ctll::push_front(range<A,B>(), ctll::list<Ts...>()), subject.parameters};
 }
 
 #endif

@@ -116,9 +116,9 @@ template <typename... Content> struct possessive_star { };
 template <uint64_t a, uint64_t b, typename... Content> struct possessive_repeat { };
 
 
-template <auto Index, typename... Content> struct capture { };
+template <uint64_t Index, typename... Content> struct capture { };
 
-template <typename Name, typename... Content> struct capture_with_name { };
+template <uint64_t Index, typename Name, typename... Content> struct capture_with_name { };
 
 
 struct assert_begin { };
