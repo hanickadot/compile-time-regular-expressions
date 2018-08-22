@@ -64,7 +64,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 				return parse_result<false, decltype(subject)>();
 			} else if constexpr (std::is_same_v<ctll::pop_input, decltype(rule)>) {
 				return decide<pos+1>(pop_front(stack), subject);
-			} else if constexpr (decltype(ctll::is_quick(current_term, rule))()) {
+			} else if constexpr (ctll::is_quick(current_term, rule)) {
 				return decide<pos+1>(pop_front_and_push_front_quick(rule, stack), subject);
 			} else {
 				// special cases for epsilon and list<...> are defined in grammars.hpp
