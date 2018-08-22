@@ -95,6 +95,29 @@ static_assert(same_f("[x]{567,1234}"_pcre_gen, ctre::repeat<567,1234,ctre::set<c
 static_assert(same_f("[^x]{567,1234}"_pcre_gen, ctre::repeat<567,1234,ctre::negative_set<ctre::character<'x'>>>()));
 static_assert(same_f("(?:abc){3,42}"_pcre_gen, ctre::repeat<3,42,ctre::string<'a','b','c'>>()));
 
+// possessive/lazy
+static_assert(same_f("c++"_pcre_gen, ctre::possessive_plus<ctre::character<'c'>>()));
+static_assert(same_f("c+?"_pcre_gen, ctre::lazy_plus<ctre::character<'c'>>()));
+static_assert(same_f("g*+"_pcre_gen, ctre::possessive_star<ctre::character<'g'>>()));
+static_assert(same_f("g*?"_pcre_gen, ctre::lazy_star<ctre::character<'g'>>()));
+static_assert(same_f("i?+"_pcre_gen, ctre::possessive_optional<ctre::character<'i'>>()));
+static_assert(same_f("i??"_pcre_gen, ctre::lazy_optional<ctre::character<'i'>>()));
+static_assert(same_f("l{1,2}+"_pcre_gen, ctre::possessive_repeat<1,2,ctre::character<'l'>>()));
+static_assert(same_f("l{1,2}?"_pcre_gen, ctre::lazy_repeat<1,2,ctre::character<'l'>>()));
+static_assert(same_f("q{4,4}+"_pcre_gen, ctre::possessive_repeat<4,4,ctre::character<'q'>>()));
+static_assert(same_f("q{4,4}?"_pcre_gen, ctre::lazy_repeat<4,4,ctre::character<'q'>>()));
+// note: there is no possessive/lazy evaluationg for fixed number of repeats
+
+// captures
+static_assert(same_f("(a)"_pcre_gen, ctre::capture<0,ctre::character<'a'>>()));
+static_assert(same_f("(x[cd])"_pcre_gen, ctre::capture<0,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>())); 
+static_assert(same_f("(x[cd])(ab)"_pcre_gen, ctre::sequence<ctre::capture<0,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>,ctre::capture<0,ctre::string<'a','b'>>>())); 
+static_assert(same_f("(x[cd])(ab)+"_pcre_gen, ctre::sequence<ctre::capture<0,ctre::character<'x'>, ctre::set<ctre::character<'c'>, ctre::character<'d'>>>,ctre::plus<ctre::capture<0,ctre::string<'a','b'>>>>())); 
+static_assert(same_f("(?<n>x)"_pcre_gen, ctre::capture_with_name<ctre::id<'n'>,ctre::character<'x'>>())); 
+static_assert(same_f("(?<name>x)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::character<'x'>>())); 
+static_assert(same_f("(?<name>xy)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::string<'x','y'>>())); 
+static_assert(same_f("(?<name>x|y)"_pcre_gen, ctre::capture_with_name<ctre::id<'n','a','m','e'>,ctre::select<ctre::character<'x'>,ctre::character<'y'>>>())); 
+
 // asserts
 static_assert(same_f("^"_pcre_gen, ctre::assert_begin()));
 static_assert(same_f("$"_pcre_gen, ctre::assert_end()));

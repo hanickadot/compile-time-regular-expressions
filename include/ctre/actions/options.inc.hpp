@@ -25,4 +25,15 @@ template <auto V, typename... Content, typename... Ts> constexpr auto operator()
 	return ctll::push_front(optional<Content...>(), ctll::list<Ts...>());
 }
 
+// make_lazy (optional)
+template <auto V, typename... Subject, typename... Ts> constexpr auto operator()(pcre::make_lazy, ctll::term<V>, ctll::list<optional<Subject...>, Ts...> stack) const {
+	return ctll::push_front(lazy_optional<Subject...>(), ctll::list<Ts...>());
+}
+
+// make_possessive (optional)
+template <auto V, typename... Subject, typename... Ts> constexpr auto operator()(pcre::make_possessive, ctll::term<V>, ctll::list<optional<Subject...>, Ts...> stack) const {
+	return ctll::push_front(possessive_optional<Subject...>(), ctll::list<Ts...>());
+}
+
+
 #endif

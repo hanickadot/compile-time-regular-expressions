@@ -56,5 +56,35 @@ template <auto V, typename... Content, uint64_t A, typename... Ts> constexpr aut
 	return ctll::push_front(repeat<A,0,Content...>(), ctll::list<Ts...>());
 }
 
+// make_lazy (plus)
+template <auto V, typename... Subject, typename... Ts> constexpr auto operator()(pcre::make_lazy, ctll::term<V>, ctll::list<plus<Subject...>, Ts...> stack) const {
+	return ctll::push_front(lazy_plus<Subject...>(), ctll::list<Ts...>());
+}
+
+// make_lazy (star)
+template <auto V, typename... Subject, typename... Ts> constexpr auto operator()(pcre::make_lazy, ctll::term<V>, ctll::list<star<Subject...>, Ts...> stack) const {
+	return ctll::push_front(lazy_star<Subject...>(), ctll::list<Ts...>());
+}
+
+// make_lazy (repeat<A,B>)
+template <auto V, typename... Subject, uint64_t A, uint64_t B, typename... Ts> constexpr auto operator()(pcre::make_lazy, ctll::term<V>, ctll::list<repeat<A,B,Subject...>, Ts...> stack) const {
+	return ctll::push_front(lazy_repeat<A,B,Subject...>(), ctll::list<Ts...>());
+}
+
+// make_possessive (plus)
+template <auto V, typename... Subject, typename... Ts> constexpr auto operator()(pcre::make_possessive, ctll::term<V>, ctll::list<plus<Subject...>, Ts...> stack) const {
+	return ctll::push_front(possessive_plus<Subject...>(), ctll::list<Ts...>());
+}
+
+// make_possessive (star)
+template <auto V, typename... Subject, typename... Ts> constexpr auto operator()(pcre::make_possessive, ctll::term<V>, ctll::list<star<Subject...>, Ts...> stack) const {
+	return ctll::push_front(possessive_star<Subject...>(), ctll::list<Ts...>());
+}
+
+// make_possessive (repeat<A,B>)
+template <auto V, typename... Subject, uint64_t A, uint64_t B, typename... Ts> constexpr auto operator()(pcre::make_possessive, ctll::term<V>, ctll::list<repeat<A,B,Subject...>, Ts...> stack) const {
+	return ctll::push_front(possessive_repeat<A,B,Subject...>(), ctll::list<Ts...>());
+}
+
 
 #endif

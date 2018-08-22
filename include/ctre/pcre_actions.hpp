@@ -9,6 +9,8 @@
 namespace ctre {
 	
 template <uint64_t Value> struct number { };
+
+template <auto...> struct id { };
 	
 struct pcre_actions {
 // i know it's ugly, but it's more readable
@@ -21,18 +23,9 @@ struct pcre_actions {
 #include "actions/named_class.inc.hpp"
 #include "actions/set.inc.hpp"
 #include "actions/asserts.inc.hpp"
+#include "actions/capture.inc.hpp"
 
 };
-
-/*
-TODO:
-	struct make_capture: ctll::action {};
-	struct make_capture_with_name: ctll::action {};
-	struct make_lazy: ctll::action {};
-	struct make_possessive: ctll::action {};
-	struct push_name: ctll::action {};
-	
-*/
 
 
 };
