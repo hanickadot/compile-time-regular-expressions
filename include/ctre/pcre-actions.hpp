@@ -23,7 +23,6 @@ struct pcre_actions {
 
 /*
 TODO:
-	struct class_digit: ctll::action {};
 	struct class_named_alnum: ctll::action {};
 	struct class_named_alpha: ctll::action {};
 	struct class_named_ascii: ctll::action {};
@@ -38,17 +37,10 @@ TODO:
 	struct class_named_upper: ctll::action {};
 	struct class_named_word: ctll::action {};
 	struct class_named_xdigit: ctll::action {};
-	struct class_nondigit: ctll::action {};
-	struct class_nonnewline: ctll::action {};
-	struct class_nonspace: ctll::action {};
-	struct class_nonword: ctll::action {};
-	struct class_space: ctll::action {};
-	struct class_word: ctll::action {};
 	struct create_number: ctll::action {};
 	struct insert_begin: ctll::action {};
 	struct insert_end: ctll::action {};
 	struct insert_range: ctll::action {};
-	struct make_alternate: ctll::action {};
 	struct make_capture: ctll::action {};
 	struct make_capture_with_name: ctll::action {};
 	struct make_lazy: ctll::action {};

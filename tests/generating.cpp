@@ -18,6 +18,7 @@ static_assert(same(ctll::front("y"_pcre_gen), ctre::character<'y'>()));
 // stringification
 static_assert(ctll::size("abc"_pcre_gen) == 1);
 static_assert(same(ctll::front("abc"_pcre_gen), ctre::string<'a','b','c'>()));
+static_assert(same(ctll::front("(?:abc)"_pcre_gen), ctre::string<'a','b','c'>()));
 
 // support for hexdec
 static_assert(same(ctll::front("\\xFF"_pcre_gen), ctre::character<'\xFF'>()));
@@ -40,3 +41,8 @@ static_assert(same(ctll::front("\\w"_pcre_gen), ctre::set<ctre::word_chars>()));
 static_assert(same(ctll::front("\\W"_pcre_gen), ctre::negative_set<ctre::word_chars>()));
 static_assert(same(ctll::front("\\s"_pcre_gen), ctre::set<ctre::space_chars>()));
 static_assert(same(ctll::front("\\S"_pcre_gen), ctre::negative_set<ctre::space_chars>()));
+
+// alternation
+static_assert(same(ctll::front("(?:abc|def)"_pcre_gen), ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>>()));
+static_assert(same(ctll::front("(?:abc|def|ghi)"_pcre_gen), ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>,ctre::string<'g','h','i'>>()));
+static_assert(same(ctll::front("(?:a|b|c|d)"_pcre_gen), ctre::select<ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>,ctre::character<'d'>>()));
