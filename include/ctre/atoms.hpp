@@ -108,6 +108,9 @@ template <uint64_t a, uint64_t b, typename... Content> struct repeat { };
 
 template <typename... Content> struct capture { };
 
+struct assert_begin { };
+struct assert_end { };
+
 }
 
 #endif

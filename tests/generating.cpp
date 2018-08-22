@@ -88,4 +88,12 @@ static_assert(same_f("[x]{567,1234}"_pcre_gen, ctre::repeat<567,1234,ctre::set<c
 static_assert(same_f("[^x]{567,1234}"_pcre_gen, ctre::repeat<567,1234,ctre::negative_set<ctre::character<'x'>>>()));
 static_assert(same_f("(?:abc){3,42}"_pcre_gen, ctre::repeat<3,42,ctre::string<'a','b','c'>>()));
 
-//auto i = "(?:abc){1,2}"_pcre_gen;
+// asserts
+static_assert(same_f("^"_pcre_gen, ctre::assert_begin()));
+static_assert(same_f("$"_pcre_gen, ctre::assert_end()));
+static_assert(same_f("^$"_pcre_gen, ctre::sequence<ctre::assert_begin, ctre::assert_end>()));
+
+// TODO change this to string
+static_assert(same_f("^abc$"_pcre_gen, ctre::sequence<ctre::assert_begin, ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>, ctre::assert_end>()));
+
+static_assert(same_f("^a|b$"_pcre_gen, ctre::select<ctre::sequence<ctre::assert_begin, ctre::character<'a'>>, ctre::sequence<ctre::character<'b'>, ctre::assert_end>>()));

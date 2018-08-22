@@ -108,5 +108,5 @@ character->other,[push_character] | nonspecial_characters,[push_character] | set
 
 character_in_capture->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | \>,[push_character] | dot,[push_character_anything] | backslash,<backslash>
 
-asserts->caret,[insert_begin] | dolar,[insert_end]
+asserts->caret,[push_assert_begin] | dolar,[push_assert_end]
 

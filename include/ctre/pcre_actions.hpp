@@ -20,6 +20,7 @@ struct pcre_actions {
 #include "actions/repeat.inc.hpp"
 #include "actions/named_class.inc.hpp"
 #include "actions/set.inc.hpp"
+#include "actions/asserts.inc.hpp"
 
 };
 
@@ -32,7 +33,6 @@ TODO:
 	struct make_capture_with_name: ctll::action {};
 	struct make_lazy: ctll::action {};
 	struct make_possessive: ctll::action {};
-	struct make_sequence: ctll::action {};
 	struct push_name: ctll::action {};
 	
 */
