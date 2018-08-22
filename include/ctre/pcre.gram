@@ -30,7 +30,7 @@ capture_control_chars={<}
 S-><content> | epsilon
 
 content-><string>,<content2>
-content_in_capture-><string_in_capture>,<content2> | epsilon,[empty]
+content_in_capture-><string_in_capture>,<content2> | epsilon,[push_empty]
 content2->pipe,<content>,[make_alternate] | epsilon
 
 string-><atom_repeat>,<string2>
@@ -91,22 +91,22 @@ backslash-><special>,[push_character]
 special->dot|sopen|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar
 
 backslash->escape_alphanum,[push_character]
-backslash->x,[create_hexdec],hexdec,[push_hexdec],hexdec
-backslash->x,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose
+backslash->x,[create_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],[finish_hexdec]
+backslash->x,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose,[finish_hexdec]
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 backslash->d,[class_digit]|D,[class_nondigit]
 backslash->w,[class_word]|W,[class_nonword]
-backslash->n,[character_newline]|t,[character_tab]|r,[character_return_carriage]
+backslash->n,[push_character_newline]|t,[push_character_tab]|r,[push_character_return_carriage]
 backslash->N,[class_nonnewline]
 backslash->s,[class_space]|S,[class_nonspace]
-backslash->0,[character_null]
-backslash->a,[character_alarm]
-backslash->e,[character_escape]
-backslash->f,[character_formfeed]
+backslash->0,[push_character_null]
+backslash->a,[push_character_alarm]
+backslash->e,[push_character_escape]
+backslash->f,[push_character_formfeed]
 
-character->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | dot,[insert_anything] | backslash,<backslash>|capture_control_chars,[push_character] | \>,[push_character]
+character->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | dot,[push_character_anything] | backslash,<backslash>|capture_control_chars,[push_character] | \>,[push_character]
 
-character_in_capture->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | \>,[push_character] | dot,[insert_anything] | backslash,<backslash>
+character_in_capture->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | \>,[push_character] | dot,[push_character_anything] | backslash,<backslash>
 
 asserts->caret,[insert_begin] | dolar,[insert_end]
 

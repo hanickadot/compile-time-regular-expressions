@@ -47,7 +47,7 @@ template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr 
 #else
 template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre_gen() noexcept {
 #endif
-	return typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<ctll::list<>>();
+	return typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<ctll::list<>>::output_type();
 }
 
 

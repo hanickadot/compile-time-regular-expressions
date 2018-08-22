@@ -35,7 +35,7 @@ constexpr auto pop_front(empty_list) -> empty_list;
 
 // return front of the list
 template <typename Head, typename... As, typename T = _nothing> constexpr auto front(list<Head, As...>, T = T()) -> Head { return {}; };
-template <typename T> constexpr auto front(empty_list, T) -> T { return {}; };
+template <typename T = _nothing> constexpr auto front(empty_list, T = T()) -> T { return {}; };
 
 
 // find in list
