@@ -11,7 +11,7 @@ namespace ctll {
 struct empty_subject { };
 
 template <bool Result, typename Subject> struct parse_result {
-	constexpr operator bool() const noexcept {
+	constexpr inline __attribute__((always_inline)) operator bool() const noexcept {
 		return Result;
 	}
 	using output_type = Subject;
@@ -26,6 +26,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	static inline constexpr auto select_action = augment_actions<IngoreUnknownActions, ActionSelector>();
 	
 	template <typename Subject = empty_subject> static constexpr auto decide() noexcept {
+		// this will stop compiler from emmiting all visited symbols and make the function (true) constexpr!
 		using output = decltype(decide<0>(grammar.start_stack, Subject()));
 		return output();
 	}
