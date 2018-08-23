@@ -1,6 +1,8 @@
 #ifndef CTRE__ATOMS__HPP
 #define CTRE__ATOMS__HPP
 
+#include <cstdint>
+
 namespace ctre {
 
 template <auto V> struct character {
@@ -80,7 +82,7 @@ struct digit_chars {
 
 struct ascii_chars {
 	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {
-		return (value <= '0x00' && value <= '0x7F');
+		return (value <= '\x00' && value <= '\x7F');
 	}
 };
 
