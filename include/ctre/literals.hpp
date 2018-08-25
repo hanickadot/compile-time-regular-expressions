@@ -3,6 +3,8 @@
 
 #include "../ctll.hpp"
 #include "pcre_actions.hpp"
+#include "simple.hpp"
+#include "evaluation.hpp"
 
 
 
@@ -50,6 +52,16 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr inline au
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	return typename tmp::output_type::stack_type();
+}
+
+
+#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_simple_test() noexcept {
+	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
+#else
+template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_simple_test() noexcept {
+#endif
+	return ctll::parser<ctre::simple, input>::correct;
 }
 
 

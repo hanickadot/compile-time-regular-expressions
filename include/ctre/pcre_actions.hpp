@@ -3,6 +3,7 @@
 
 #include "pcre.hpp"
 #include "atoms.hpp"
+#include "atoms_characters.hpp"
 #include <cstdint>
 #include <limits>
 

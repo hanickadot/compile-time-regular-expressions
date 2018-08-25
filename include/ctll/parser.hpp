@@ -48,7 +48,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		auto top_symbol = front(stack, epsilon());
 		if constexpr (std::is_base_of_v<ctll::action, decltype(top_symbol)>) {
 			// skip for now
-			auto new_subject = select_action(top_symbol, get_previous_term<pos>(), subject);
+			auto new_subject = select_action.apply(top_symbol, get_previous_term<pos>(), subject);
 			return decide<pos>(pop_front(stack), new_subject);
 		} else {
 			// we need to look at the input

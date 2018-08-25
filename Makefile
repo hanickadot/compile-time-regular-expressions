@@ -36,7 +36,7 @@ benchmark-clean:
 clean:
 	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES)
 	
-grammar: include/ctre/pcre.hpp
+grammar: include/ctre/pcre.hpp include/ctre/simple.hpp
 	
 regrammar: 
 	@rm -f include/ctre/pcre.hpp
@@ -45,3 +45,7 @@ regrammar:
 include/ctre/pcre.hpp: include/ctre/pcre.gram
 	@echo "LL1q $<"
 	@$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre
+
+#include/ctre/simple.hpp: include/ctre/simple.gram
+#	@echo "LL1q $<"
+#	@$(DESATOMAT) --ll --q --input=include/ctre/simple.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=simple.hpp --cfg:namespace=ctre --cfg:guard=CTRE__SIMPLE__HPP --cfg:grammar_name=simple

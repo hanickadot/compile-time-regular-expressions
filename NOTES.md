@@ -3,7 +3,6 @@
 * `\0dd` `\ddd` `\0{dd...}` octal numbers
 * `\Q...\E` quoting
 * `\cx` control characters
-
 * `\C` data unit
 * `\h` `\H` horizontal character classes
 * `\v` `\V` vertical character classes
@@ -12,7 +11,7 @@
 * boundaries other than `^$`
 * atomic groups
 * comments
-* options
+* options/modes
 * lookahead
 * backreferences
 * subroutines

@@ -27,7 +27,7 @@ alphanum_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D
 set_control_chars={:,],-}
 capture_control_chars={<}
 
-S-><content> | epsilon
+S-><content> | epsilon,[push_empty]
 
 content-><string>,<content2>
 content_in_capture-><string_in_capture>,<content2> | epsilon,[push_empty]

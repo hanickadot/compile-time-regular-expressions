@@ -24,6 +24,7 @@ template <typename A, typename B> constexpr bool same_f(A a,B b) {
 }
 
 // basics
+static_assert(same_f(""_pcre_gen, ctre::empty()));
 static_assert(same_f("y"_pcre_gen, ctre::character<'y'>()));
 
 // stringification
