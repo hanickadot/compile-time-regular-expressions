@@ -5,7 +5,7 @@
 
 namespace ctre {
 	
-struct accept { };
+ struct accept { };
 
  template <auto... Str> struct string { };
  template <typename... Opts> struct select { };
@@ -14,17 +14,17 @@ struct accept { };
  template <typename... Content> struct sequence { };
  struct empty { };
 
-template <typename... Content> struct plus { };
-template <typename... Content> struct star { };
-template <size_t a, size_t b, typename... Content> struct repeat { };
+ template <typename... Content> struct plus { };
+ template <typename... Content> struct star { };
+ template <size_t a, size_t b, typename... Content> struct repeat { };
 
  template <typename... Content> struct lazy_plus { };
  template <typename... Content> struct lazy_star { };
-template <size_t a, size_t b, typename... Content> struct lazy_repeat { };
+ template <size_t a, size_t b, typename... Content> struct lazy_repeat { };
 
  template <typename... Content> struct possessive_plus { };
  template <typename... Content> struct possessive_star { };
-template <size_t a, size_t b, typename... Content> struct possessive_repeat { };
+ template <size_t a, size_t b, typename... Content> struct possessive_repeat { };
 
 
 template <size_t Index, typename... Content> struct capture { };

@@ -144,50 +144,25 @@ constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end,
 	return R{false, current};
 }
 
-// repeat (lazy_plus)
-template <typename R, typename Iterator, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<lazy_plus<Content...>, Tail...>) {
-	for (;;) {
+// lazy repeat
+template <typename R, typename Iterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) {
+	// A..B
+	size_t i{0};
+	for (; i < A && (A != 0); ++i) {
 		if (auto inner_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>())) {
-			if (auto outer_result = evaluate<R>(begin, inner_result._position, end, ctll::list<Tail...>())) {
-				return outer_result;
-			} else {
-				current = inner_result._position;
-				continue;
-			}
+			current = inner_result._position;
 		} else {
 			return R{false, current};
 		}
 	}
-}
-
-// repeat (possessive_plus)
-template <typename R, typename Iterator, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<possessive_plus<Content...>, Tail...>) {
-	if (auto first_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>())) {
-		// at least once
-		for (;;) {
-			// try as many of inner as possible and then try outer once
-			if (auto inner_result = evaluate<R>(begin, first_result._position, end, ctll::list<sequence<Content...>, accept>())) {
-				first_result = inner_result;
-			} else {
-				return evaluate<R>(begin, first_result._position, end, ctll::list<Tail...>());
-			}
-		}
-	}
-	return R{false, current};
-}
-
-// repeat lazy_star
-template <typename R, typename Iterator, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<lazy_star<Content...>, Tail...>) {
-	// star = 0..N
-	if (auto outer_result = evaluate<R>(begin, current, end, ctll::list<Tail...>()); outer_result) {
+	
+	if (auto outer_result = evaluate<R>(begin, current, end, ctll::list<Tail...>())) {
 		return outer_result;
 	} else {
-		for (;;) {
-			if (auto inner_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>()); inner_result) {
-				if (auto outer_result = evaluate<R>(begin, inner_result._position, end, ctll::list<Tail...>()); outer_result) {
+		for (; (i < B) || (B == 0); ++i) {
+			if (auto inner_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>())) {
+				if (auto outer_result = evaluate<R>(begin, inner_result._position, end, ctll::list<Tail...>())) {
 					return outer_result;
 				} else {
 					current = inner_result._position;
@@ -197,13 +172,24 @@ constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end,
 				return R{false, current};
 			}
 		}
+		return evaluate<R>(begin, current, end, ctll::list<Tail...>());
 	}
 }
 
-// repeat (possessive_star)
-template <typename R, typename Iterator, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<possessive_star<Content...>, Tail...>) {
-	for (;;) {
+// possessive repeat
+template <typename R, typename Iterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) {
+	// A..B
+	size_t i{0};
+	for (; i < A && (A != 0); ++i) {
+		if (auto inner_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>())) {
+			current = inner_result._position;
+		} else {
+			return R{false, current};
+		}
+	}
+	
+	for (; (i < B) || (B == 0); ++i) {
 		// try as many of inner as possible and then try outer once
 		if (auto inner_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>())) {
 			current = inner_result._position;
@@ -211,32 +197,78 @@ constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end,
 			return evaluate<R>(begin, current, end, ctll::list<Tail...>());
 		}
 	}
+	
+	return evaluate<R>(begin, current, end, ctll::list<Tail...>());
 }
 
-// empty repeat
+// (gready) repeat
+template <typename R, typename Iterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const Iterator end, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+	if ((i < B) || (B == 0)) {
+		 
+		// a*ab
+		// aab
+		
+		if (auto inner_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>())) {
+			if (auto rec_result = evaluate_recursive<R>(i+1, begin, inner_result._position, end, stack)) {
+				return rec_result;
+			}
+		}
+	} 
+	return evaluate<R>(begin, current, end, ctll::list<Tail...>());
+}	
+
+template <typename R, typename Iterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+	// A..B
+	size_t i{0};
+	for (; i < A && (A != 0); ++i) {
+		if (auto inner_result = evaluate<R>(begin, current, end, ctll::list<sequence<Content...>, accept>())) {
+			current = inner_result._position;
+		} else {
+			return R{false, current};
+		}
+	}
+	
+	return evaluate_recursive<R>(i, begin, current, end, stack);
+}
+
+// repeat lazy_star
 template <typename R, typename Iterator, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<lazy_repeat<0,0,Content...>, Tail...>) {
-	// skip empty repeat
-	return evaluate<R>(begin, current, end, ctll::list<Tail...>());
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<lazy_star<Content...>, Tail...>) {
+	return evaluate<R>(begin, current, end, ctll::list<lazy_repeat<0,0,Content...>, Tail...>());
 }
 
+// repeat (lazy_plus)
 template <typename R, typename Iterator, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<possessive_repeat<0,0,Content...>, Tail...>) {
-	// skip empty repeat
-	return evaluate<R>(begin, current, end, ctll::list<Tail...>());
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<lazy_plus<Content...>, Tail...>) {
+	return evaluate<R>(begin, current, end, ctll::list<lazy_repeat<1,0,Content...>, Tail...>());
 }
 
+// repeat (possessive_star)
 template <typename R, typename Iterator, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<repeat<0,0,Content...>, Tail...>) {
-	// skip empty repeat
-	return evaluate<R>(begin, current, end, ctll::list<Tail...>());
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<possessive_star<Content...>, Tail...>) {
+	return evaluate<R>(begin, current, end, ctll::list<possessive_repeat<0,0,Content...>, Tail...>());
 }
 
-// nonempty repeat
-template <typename R, typename Iterator, size_t B, typename... Content, typename... Tail> 
-constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<lazy_repeat<0,B,Content...>, Tail...>) {
-	// skip empty repeat
-	return evaluate<R>(begin, current, end, ctll::list<Tail...>());
+
+// repeat (possessive_plus)
+template <typename R, typename Iterator, typename... Content, typename... Tail> 
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<possessive_plus<Content...>, Tail...>) {
+	return evaluate<R>(begin, current, end, ctll::list<possessive_repeat<1,0,Content...>, Tail...>());
+}
+
+// repeat (greedy) star
+template <typename R, typename Iterator, typename... Content, typename... Tail> 
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<star<Content...>, Tail...>) {
+	return evaluate<R>(begin, current, end, ctll::list<repeat<0,0,Content...>, Tail...>());
+}
+
+
+// repeat (greedy) plus
+template <typename R, typename Iterator, typename... Content, typename... Tail> 
+constexpr R evaluate(const Iterator begin, Iterator current, const Iterator end, ctll::list<plus<Content...>, Tail...>) {
+	return evaluate<R>(begin, current, end, ctll::list<repeat<1,0,Content...>, Tail...>());
 }
 
 
