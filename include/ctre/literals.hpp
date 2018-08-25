@@ -5,7 +5,7 @@
 #include "pcre_actions.hpp"
 #include "simple.hpp"
 #include "evaluation.hpp"
-
+#include "wrapper.hpp"
 
 
 namespace ctre {
@@ -25,9 +25,10 @@ template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr 
 #else
 template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre() noexcept {
 #endif
-	using result = typename ctll::parser<ctre::pcre, input>::template output<ctll::list<>>;
-	static_assert(result(), "Regular Expression contains syntax error.");
-	return result::output_type();
+	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(tmp(), "Regular Expression contains syntax error.");
+	using re = decltype(front(typename tmp::output_type::stack_type()));
+	return ctre::regular_expression(re());
 }
 
 }

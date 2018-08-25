@@ -12,30 +12,30 @@ struct _nothing { };
 using empty_list = list<>;
 
 // calculate size of list content
-template <typename... Ts> constexpr auto size(list<Ts...>) -> std::integral_constant<size_t, sizeof...(Ts)> { return {}; };
+template <typename... Ts> constexpr auto size(list<Ts...>) noexcept -> std::integral_constant<size_t, sizeof...(Ts)> { return {}; };
 
 	
 // check if the list is empty
-template <typename... Ts> constexpr auto empty(list<Ts...>) -> std::false_type { return {}; };
+template <typename... Ts> constexpr auto empty(list<Ts...>) noexcept -> std::false_type { return {}; };
 constexpr auto empty(empty_list) -> std::true_type { return {}; };
 
 
 // concat two lists together left to right
-template <typename... As, typename... Bs> constexpr auto concat(list<As...>, list<Bs...>) -> list<As..., Bs...> { return {}; };
+template <typename... As, typename... Bs> constexpr auto concat(list<As...>, list<Bs...>) noexcept -> list<As..., Bs...> { return {}; };
 
 
 // push something to the front of a list
-template <typename T, typename... As> constexpr auto push_front(T, list<As...>) -> list<T, As...> { return {}; };
+template <typename T, typename... As> constexpr auto push_front(T, list<As...>) noexcept -> list<T, As...> { return {}; };
 
 
 // pop element from the front of a list
-template <typename T, typename... As> constexpr auto pop_front(list<T, As...>) -> list<As...> { return {}; };
+template <typename T, typename... As> constexpr auto pop_front(list<T, As...>) noexcept -> list<As...> { return {}; };
 constexpr auto pop_front(empty_list) -> empty_list;
 
 
 // return front of the list
-template <typename Head, typename... As, typename T = _nothing> constexpr auto front(list<Head, As...>, T = T()) -> Head { return {}; };
-template <typename T = _nothing> constexpr auto front(empty_list, T = T()) -> T { return {}; };
+template <typename Head, typename... As, typename T = _nothing> constexpr auto front(list<Head, As...>, T = T()) noexcept -> Head { return {}; };
+template <typename T = _nothing> constexpr auto front(empty_list, T = T()) noexcept -> T { return {}; };
 
 
 }
