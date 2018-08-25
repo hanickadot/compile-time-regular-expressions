@@ -4,6 +4,17 @@
 #include <cstdint>
 
 namespace ctre {
+	
+// sfinae check for types here
+
+template <typename T> class MatchesCharacter {
+	template <typename Y, typename CharT> static auto test(Y*, CharT c) -> decltype(Y::match_char(c), std::true_type());
+	template <typename> static auto test(...) -> std::false_type;
+public:
+	template <typename CharT> static inline constexpr bool value = decltype(test<T>(nullptr, std::declval<CharT>()))();
+};
+
+
 
 template <auto V> struct character {
 	template <typename CharT> static constexpr bool match_char(CharT value) noexcept {

@@ -4,19 +4,20 @@
 #include "atoms.hpp"
 #include "utility.hpp"
 #include "return_type.hpp"
+#include "find_captures.hpp"
 
 namespace ctre {
 
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename Pattern> 
 constexpr auto match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
-	using return_type = regex_results<Iterator>;
+	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
 template <typename Iterator, typename Pattern> 
 constexpr auto float_match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
-	using return_type = regex_results<Iterator>;
+	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
@@ -48,16 +49,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 
-
-
-// matching character like parts of patterns
-
-template <typename T> class MatchesCharacter {
-	template <typename Y, typename CharT> static auto test(Y*, CharT c) -> decltype(Y::match_char(c), std::true_type());
-	template <typename> static auto test(...) -> std::false_type;
-public:
-	template <typename CharT> static inline constexpr bool value = decltype(test<T>(nullptr, std::declval<CharT>()))();
-};
+// matching everything which behave as a one character matcher
 
 template <typename R, typename Iterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<CharacterLike, Tail...>) noexcept {

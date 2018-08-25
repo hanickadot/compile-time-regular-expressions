@@ -5,12 +5,14 @@
 
 namespace ctre {
 	
- struct accept { };
- struct start_mark { };
- struct end_mark { };
- struct end_cycle_mark { };
- template <size_t Id> struct numeric_mark { };
+// special helpers for matching
+struct accept { };
+struct start_mark { };
+struct end_mark { };
+struct end_cycle_mark { };
+template <size_t Id> struct numeric_mark { };
 
+// actual AST of regexp
  template <auto... Str> struct string { };
  template <typename... Opts> struct select { };
  template <typename... Content> struct optional { };
@@ -36,7 +38,7 @@ template <size_t Index, typename... Content> struct capture { };
 template <size_t Index, typename Name, typename... Content> struct capture_with_name { };
 
 
- struct assert_begin { };
+struct assert_begin { };
  struct assert_end { };
 
 }

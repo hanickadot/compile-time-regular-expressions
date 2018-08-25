@@ -52,6 +52,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		constexpr auto to_view() const noexcept {
 			return std::basic_string_view{_begin, static_cast<size_t>(std::distance(_begin, _end))};
 		}
+		
 		constexpr static size_t get_id() noexcept {
 			return Id;
 		}
@@ -71,6 +72,13 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return true;
 		} else {
 			return captures<Tail...>::template exists<id>();
+		}
+	}
+	template <typename Name> static constexpr bool exists() noexcept {
+		if constexpr (std::is_same_v<Name, Head::name>) {
+			return true;
+		} else {
+			return captures<Tail...>::template exists<Name>();
 		}
 	}
 	template <size_t id> constexpr auto & select() noexcept {
@@ -107,6 +115,9 @@ template <> struct captures<> {
 	template <size_t> static constexpr bool exists() noexcept {
 		return false;
 	}
+	template <typename> static constexpr bool exists() noexcept {
+		return false;
+	}
 	template <size_t> constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
@@ -121,8 +132,14 @@ template <typename Iterator, typename... Captures> struct regex_results {
 	constexpr regex_results() noexcept { }
 	constexpr regex_results(not_matched_tag_t) noexcept { }
 	
-	template <size_t Id, typename = std::enable_if_t<decltype(captures)::template exists<Id>>> auto get() const noexcept {
+	// special constructor for deducting
+	constexpr regex_results(Iterator, ctll::list<Captures...>) noexcept { }
+	
+	template <size_t Id, typename = std::enable_if_t<decltype(captures)::template exists<Id>()>> auto get() const noexcept {
 		return captures.template select<Id>();
+	}
+	template <typename Name, typename = std::enable_if_t<decltype(captures)::template exists<Name>()>> auto get() const noexcept {
+		return captures.template select<Name>();
 	}
 	static constexpr size_t size() noexcept {
 		return sizeof...(Captures) + 1;
@@ -155,6 +172,8 @@ template <typename Iterator, typename... Captures> struct regex_results {
 		return *this;
 	}
 };
+
+template <typename Iterator, typename... Captures> regex_results(Iterator, ctll::list<Captures...>) -> regex_results<Iterator, Captures...>;
 
 }
 
