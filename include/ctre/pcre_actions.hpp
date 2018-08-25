@@ -4,6 +4,7 @@
 #include "pcre.hpp"
 #include "atoms.hpp"
 #include "atoms_characters.hpp"
+#include "id.hpp"
 #include <cstdint>
 #include <limits>
 
@@ -25,8 +26,6 @@ template <typename Stack = ctll::list<>, typename Parameters = pcre_parameters<0
 template <typename... Content, typename Parameters> pcre_context(ctll::list<Content...>, Parameters) -> pcre_context<ctll::list<Content...>, Parameters>;
 	
 template <size_t Value> struct number { };
-
-template <auto...> struct id { };
 	
 struct pcre_actions {
 // i know it's ugly, but it's more readable

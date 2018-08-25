@@ -6,6 +6,10 @@
 namespace ctre {
 	
  struct accept { };
+ struct start_mark { };
+ struct end_mark { };
+ struct end_cycle_mark { };
+ template <size_t Id> struct numeric_mark { };
 
  template <auto... Str> struct string { };
  template <typename... Opts> struct select { };

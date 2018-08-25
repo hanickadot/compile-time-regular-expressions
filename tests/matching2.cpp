@@ -102,3 +102,19 @@ static_assert("a{2,5}ab"_pcre == "aaaab"sv);
 static_assert("a{2,5}ab"_pcre == "aaaaab"sv);
 static_assert("a{2,5}ab"_pcre == "aaaaaab"sv);
 static_assert("a{2,5}ab"_pcre != "aaaaaaab"sv);
+
+static_assert("(abc)"_pcre == "abc"sv);
+static_assert("(abc)+"_pcre == "abc"sv);
+static_assert("(abc)+"_pcre == "abcabc"sv);
+static_assert("(abc)+"_pcre == "abcabcabc"sv);
+
+static_assert("(?<name>abc)"_pcre == "abc"sv);
+static_assert("(?<name>abc)+"_pcre == "abc"sv);
+static_assert("(?<name>abc)+"_pcre == "abcabc"sv);
+static_assert("(?<name>abc)+"_pcre == "abcabcabc"sv);
+static_assert("(?<name>abc)+"_pcre != "name"sv);
+
+static_assert(std::string_view{"^([a-z]+)"_pcre.match("abcdef1234"sv)} == "abcdef"sv);
+static_assert(std::string_view{"^([a-z]+)1234"_pcre.match("abcdef1234"sv)} == "abcdef1234"sv);
+static_assert(std::string_view{"^([a-z])"_pcre.match("abcdef1234"sv)} == "a"sv);
+

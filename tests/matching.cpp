@@ -2,7 +2,7 @@
 #include <string_view>
 
 template <typename Pattern> constexpr bool match(std::string_view input, Pattern pattern) {
-	return ctre::evaluate(input.begin(), input.end(), pattern);
+	return bool(ctre::match_re(input.begin(), input.end(), pattern));
 }
 
 using namespace std::string_view_literals;

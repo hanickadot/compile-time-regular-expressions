@@ -6,6 +6,7 @@
 #include "simple.hpp"
 #include "evaluation.hpp"
 #include "wrapper.hpp"
+#include "id.hpp"
 
 
 namespace ctre {
@@ -29,6 +30,11 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr inline au
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
 	return ctre::regular_expression(re());
+}
+
+// this will need to be fixed with C++20
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_ctre_id() noexcept {
+	return id<charpack...>();
 }
 
 }
