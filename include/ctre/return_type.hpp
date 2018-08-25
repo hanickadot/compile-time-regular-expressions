@@ -50,6 +50,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		constexpr explicit operator bool() const noexcept {
 			return _matched;
 		}
+		
 		constexpr explicit operator auto() const noexcept {
 			return to_view();
 		}
@@ -131,7 +132,7 @@ template <> struct captures<> {
 };
 
 template <typename Iterator, typename... Captures> struct regex_results {
-	captures<captured_content<0>::template storage<Iterator>, typename Captures::template storage<Iterator>...> captures;
+	captures<captured_content<0>::template storage<Iterator>, typename Captures::template storage<Iterator>...> _captures;
 	
 	constexpr regex_results() noexcept { }
 	constexpr regex_results(not_matched_tag_t) noexcept { }
@@ -139,46 +140,49 @@ template <typename Iterator, typename... Captures> struct regex_results {
 	// special constructor for deducting
 	constexpr regex_results(Iterator, ctll::list<Captures...>) noexcept { }
 	
-	template <size_t Id, typename = std::enable_if_t<decltype(captures)::template exists<Id>()>> constexpr auto get() const noexcept {
-		return captures.template select<Id>();
+	template <size_t Id, typename = std::enable_if_t<decltype(_captures)::template exists<Id>()>> constexpr auto get() const noexcept {
+		return _captures.template select<Id>();
 	}
-	template <typename Name, typename = std::enable_if_t<decltype(captures)::template exists<Name>()>> constexpr auto get() const noexcept {
-		return captures.template select<Name>();
+	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> constexpr auto get() const noexcept {
+		return _captures.template select<Name>();
 	}
 	static constexpr size_t size() noexcept {
 		return sizeof...(Captures) + 1;
 	}
 	constexpr regex_results & matched() noexcept {
-		captures.template select<0>().matched();
+		_captures.template select<0>().matched();
 		return *this;
 	}
 	constexpr regex_results & unmatch() noexcept {
-		captures.template select<0>().unmatch();
+		_captures.template select<0>().unmatch();
 		return *this;
 	}
 	constexpr explicit operator bool() const noexcept {
-		return bool(captures.template select<0>());
+		return bool(_captures.template select<0>());
 	}
 	constexpr explicit operator auto() const noexcept {
-		return captures.template select<0>().to_view();
+		return _captures.template select<0>().to_view();
+	}
+	constexpr auto to_view() const noexcept {
+		return _captures.template select<0>().to_view();
 	}
 	constexpr regex_results & set_start_mark(Iterator pos) noexcept {
-		captures.template select<0>().set_start(pos);
+		_captures.template select<0>().set_start(pos);
 		return *this;
 	}
 	constexpr regex_results & set_end_mark(Iterator pos) noexcept {
-		captures.template select<0>().set_end(pos);
+		_captures.template select<0>().set_end(pos);
 		return *this;
 	}
 	constexpr Iterator get_end_position() const noexcept {
-		return captures.template select<0>().get_end();
+		return _captures.template select<0>().get_end();
 	}
 	template <size_t Id> constexpr regex_results & start_capture(Iterator pos) noexcept {
-		captures.template select<Id>().set_start(pos);
+		_captures.template select<Id>().set_start(pos);
 		return *this;
 	}
 	template <size_t Id> constexpr regex_results & end_capture(Iterator pos) noexcept {
-		captures.template select<Id>().set_end(pos).matched();
+		_captures.template select<Id>().set_end(pos).matched();
 		return *this;
 	}
 };

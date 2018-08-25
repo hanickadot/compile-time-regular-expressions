@@ -226,7 +226,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // (gready) repeat
 template <typename R, typename Iterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 	if ((i < B) || (B == 0)) {
 		 
 		// a*ab
