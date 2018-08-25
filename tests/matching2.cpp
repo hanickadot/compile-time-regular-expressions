@@ -9,7 +9,8 @@ static_assert("abc"_pcre == "abc"sv);
 
 static_assert("a"_pcre == "a"sv);
 static_assert("a"_pcre == "abc"sv);
-static_assert("b"_pcre != "abc"sv);
+static_assert("b"_pcre == "abc"sv);
+static_assert("^b"_pcre != "abc"sv);
 static_assert("b"_pcre != "a"sv);
 static_assert("."_pcre == "a"sv);
 static_assert("."_pcre == "abc"sv);
@@ -35,7 +36,9 @@ static_assert("(?:a|b|c)"_pcre != "d"sv);
 static_assert("(?:xy)?"_pcre == "xy"sv);
 static_assert("(?:xy)?"_pcre == ""sv);
 static_assert("(?:xy)?"_pcre == "zxy"sv);
-static_assert("(?:xy)?$"_pcre != "zxy"sv);
+static_assert("(?:xy)?$"_pcre == "zxy"sv);
+static_assert("~(?:xy)?$"_pcre != "zxy"sv);
+
 static_assert("^abc"_pcre == "abc"sv);
 static_assert("^def$"_pcre == "def"sv);
 static_assert("a^"_pcre != "a"sv);
@@ -72,9 +75,9 @@ static_assert("a++ba"_pcre == "aba"sv);
 static_assert("a{3,}x"_pcre == "aaax"sv);
 static_assert("a{3,}x"_pcre == "aaaax"sv);
 
-static_assert("a{5}"_pcre == "aaaaa"sv);
-static_assert("a{5}"_pcre == "aaaaaa"sv);
-static_assert("a{5}$"_pcre != "aaaaaa"sv);
+static_assert("^a{5}"_pcre == "aaaaa"sv);
+static_assert("^a{5}"_pcre == "aaaaaa"sv);
+static_assert("^a{5}$"_pcre != "aaaaaa"sv);
 
 static_assert("a*"_pcre == "aaa"sv);
 static_assert("a+"_pcre == "aaa"sv);
@@ -96,12 +99,12 @@ static_assert("a+ab"_pcre == "aaab"sv);
 static_assert("a*ab"_pcre == "ab"sv);
 static_assert("a+ab"_pcre == "aab"sv);
 
-static_assert("a{2,5}ab"_pcre != "aab"sv);
-static_assert("a{2,5}ab"_pcre == "aaab"sv);
-static_assert("a{2,5}ab"_pcre == "aaaab"sv);
-static_assert("a{2,5}ab"_pcre == "aaaaab"sv);
-static_assert("a{2,5}ab"_pcre == "aaaaaab"sv);
-static_assert("a{2,5}ab"_pcre != "aaaaaaab"sv);
+static_assert("^a{2,5}ab"_pcre != "aab"sv);
+static_assert("^a{2,5}ab"_pcre == "aaab"sv);
+static_assert("^a{2,5}ab"_pcre == "aaaab"sv);
+static_assert("^a{2,5}ab"_pcre == "aaaaab"sv);
+static_assert("^a{2,5}ab"_pcre == "aaaaaab"sv);
+static_assert("^a{2,5}ab"_pcre != "aaaaaaab"sv);
 
 static_assert("(abc)"_pcre == "abc"sv);
 static_assert("(abc)+"_pcre == "abc"sv);

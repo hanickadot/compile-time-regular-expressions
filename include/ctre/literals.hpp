@@ -21,10 +21,10 @@ template <typename CharT, CharT... input> static inline constexpr auto _fixed_st
 namespace literals {
 	
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_pcre() noexcept {
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_fixed_pcre() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_pcre() noexcept {
+template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_fixed_pcre() noexcept {
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -32,8 +32,24 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr inline au
 	return ctre::regular_expression(re());
 }
 
+
+
+#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_pcre() noexcept {
+	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
+#else
+template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_pcre() noexcept {
+#endif
+	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(tmp(), "Regular Expression contains syntax error.");
+	using re = decltype(front(typename tmp::output_type::stack_type()));
+	return ctre::float_regular_expression(re());
+}
+
+
+
 // this will need to be fixed with C++20
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_ctre_id() noexcept {
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_ctre_id() noexcept {
 	return id<charpack...>();
 }
 

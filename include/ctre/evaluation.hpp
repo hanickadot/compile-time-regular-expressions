@@ -18,7 +18,12 @@ constexpr auto match_re(const Iterator begin, const Iterator end, Pattern patter
 template <typename Iterator, typename Pattern> 
 constexpr auto float_match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
-	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+	for (auto it{begin}; it != end; ++it) {
+		if (auto out = evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {
+			return out;
+		}
+	}
+	return evaluate(begin, end, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
 

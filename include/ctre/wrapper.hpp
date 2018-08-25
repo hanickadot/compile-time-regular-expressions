@@ -14,7 +14,7 @@ template <typename RE> struct regular_expression {
 		return match_re(std::begin(sv), std::end(sv), RE());
 	}
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
-		return match(begin, end);
+		return match_re(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE auto operator()(std::string_view sv) noexcept {
 		return match(sv);
@@ -57,6 +57,63 @@ template <typename RE> constexpr inline bool operator!=(regular_expression<RE>, 
 };
 
 template <typename RE1, typename RE2> constexpr inline bool operator!=(regular_expression<RE1>, regular_expression<RE2>) noexcept {
+	return true;
+};
+
+
+
+
+
+template <typename RE> struct float_regular_expression {
+	constexpr CTRE_FORCE_INLINE float_regular_expression(RE) noexcept { };
+	
+	constexpr CTRE_FORCE_INLINE static auto match(std::string_view sv) noexcept {
+		return float_match_re(std::begin(sv), std::end(sv), RE());
+	}
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
+		return float_match_re(begin, end, RE());
+	}
+	constexpr CTRE_FORCE_INLINE auto operator()(std::string_view sv) noexcept {
+		return match(sv);
+	}
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE auto operator()(Iterator begin, Iterator end) noexcept {
+		return match(begin, end);
+	}
+};
+
+template <typename RE> float_regular_expression(RE) -> float_regular_expression<RE>;
+
+
+template <typename RE> constexpr inline bool operator==(float_regular_expression<RE> re, std::string_view sv) noexcept {
+	return bool(re.match(sv));
+};
+
+template <typename RE> constexpr inline bool operator==(std::string_view sv, float_regular_expression<RE> re) noexcept {
+	return bool(re.match(sv));
+};
+
+template <typename RE> constexpr inline bool operator!=(float_regular_expression<RE> re, std::string_view sv) noexcept {
+	return !bool(re.match(sv));
+};
+
+template <typename RE> constexpr inline bool operator!=(std::string_view sv, float_regular_expression<RE> re) noexcept {
+	return !bool(re.match(sv));
+};
+
+
+template <typename RE> constexpr inline bool operator==(float_regular_expression<RE>, float_regular_expression<RE>) noexcept {
+	return true;
+};
+
+template <typename RE1, typename RE2> constexpr inline bool operator==(float_regular_expression<RE1>, float_regular_expression<RE2>) noexcept {
+	return false;
+};
+
+template <typename RE> constexpr inline bool operator!=(float_regular_expression<RE>, float_regular_expression<RE>) noexcept {
+	return false;
+};
+
+template <typename RE1, typename RE2> constexpr inline bool operator!=(float_regular_expression<RE1>, float_regular_expression<RE2>) noexcept {
 	return true;
 };
 
