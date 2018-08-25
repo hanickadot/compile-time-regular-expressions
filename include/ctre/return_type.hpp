@@ -14,28 +14,28 @@ static constexpr inline auto not_matched = not_matched_tag_t{};
 	
 template <size_t Id, typename Name = void> struct captured_content {
 	template <typename Iterator> struct storage {
-		Iterator _begin;
-		Iterator _end;
+		Iterator _begin{};
+		Iterator _end{};
 		bool _matched{false};
 	
 		using name = Name;
 	
-		constexpr CTRE_FORCE_INLINE  storage() noexcept {}
+		constexpr CTRE_FORCE_INLINE storage() noexcept {}
 	
-		constexpr CTRE_FORCE_INLINE  void matched() noexcept {
+		constexpr CTRE_FORCE_INLINE void matched() noexcept {
 			_matched = true;
 		}
-		constexpr CTRE_FORCE_INLINE  void unmatch() noexcept {
+		constexpr CTRE_FORCE_INLINE void unmatch() noexcept {
 			_matched = false;
 		}
-		constexpr CTRE_FORCE_INLINE  void set_start(Iterator pos) noexcept {
+		constexpr CTRE_FORCE_INLINE void set_start(Iterator pos) noexcept {
 			_begin = pos;
 		}
-		constexpr CTRE_FORCE_INLINE  storage & set_end(Iterator pos) noexcept {
+		constexpr CTRE_FORCE_INLINE storage & set_end(Iterator pos) noexcept {
 			_end = pos;
 			return *this;
 		}
-		constexpr CTRE_FORCE_INLINE  Iterator get_end() const noexcept {
+		constexpr CTRE_FORCE_INLINE Iterator get_end() const noexcept {
 			return _end;
 		}
 		
@@ -47,18 +47,18 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _end;
 		}
 	
-		constexpr CTRE_FORCE_INLINE  explicit operator bool() const noexcept {
+		constexpr CTRE_FORCE_INLINE explicit operator bool() const noexcept {
 			return _matched;
 		}
 		
 		constexpr explicit operator auto() const noexcept {
 			return to_view();
 		}
-		constexpr CTRE_FORCE_INLINE  auto to_view() const noexcept {
+		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			return std::basic_string_view{_begin, static_cast<size_t>(std::distance(_begin, _end))};
 		}
 		
-		constexpr CTRE_FORCE_INLINE  static size_t get_id() noexcept {
+		constexpr CTRE_FORCE_INLINE static size_t get_id() noexcept {
 			return Id;
 		}
 	};
@@ -73,42 +73,42 @@ template <typename... Captures> struct captures;
 template <typename Head, typename... Tail> struct captures<Head, Tail...>: captures<Tail...> {
 	Head head;
 	constexpr CTRE_FORCE_INLINE captures() noexcept { }
-	template <size_t id> CTRE_FORCE_INLINE  static constexpr bool exists() noexcept {
+	template <size_t id> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		if constexpr (id == Head::get_id()) {
 			return true;
 		} else {
 			return captures<Tail...>::template exists<id>();
 		}
 	}
-	template <typename Name> CTRE_FORCE_INLINE  static constexpr bool exists() noexcept {
+	template <typename Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		if constexpr (std::is_same_v<Name, typename Head::name>) {
 			return true;
 		} else {
 			return captures<Tail...>::template exists<Name>();
 		}
 	}
-	template <size_t id> CTRE_FORCE_INLINE  constexpr auto & select() noexcept {
+	template <size_t id> CTRE_FORCE_INLINE constexpr auto & select() noexcept {
 		if constexpr (id == Head::get_id()) {
 			return head;
 		} else {
 			return captures<Tail...>::template select<id>();
 		}
 	}
-	template <typename Name> CTRE_FORCE_INLINE  constexpr auto & select() noexcept {
+	template <typename Name> CTRE_FORCE_INLINE constexpr auto & select() noexcept {
 		if constexpr (std::is_same_v<Name, typename Head::name>) {
 			return head;
 		} else {
 			return captures<Tail...>::template select<Name>();
 		}
 	}
-	template <size_t id> CTRE_FORCE_INLINE  constexpr auto & select() const noexcept {
+	template <size_t id> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		if constexpr (id == Head::get_id()) {
 			return head;
 		} else {
 			return captures<Tail...>::template select<id>();
 		}
 	}
-	template <typename Name> CTRE_FORCE_INLINE  constexpr auto & select() const noexcept {
+	template <typename Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		if constexpr (std::is_same_v<Name, typename Head::name>) {
 			return head;
 		} else {
@@ -119,16 +119,16 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 
 template <> struct captures<> {
 	constexpr CTRE_FORCE_INLINE captures() noexcept { }
-	template <size_t> CTRE_FORCE_INLINE  static constexpr bool exists() noexcept {
+	template <size_t> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		return false;
 	}
-	template <typename> CTRE_FORCE_INLINE  static constexpr bool exists() noexcept {
+	template <typename> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		return false;
 	}
-	template <size_t> CTRE_FORCE_INLINE  constexpr auto & select() const noexcept {
+	template <size_t> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
-	template <typename> CTRE_FORCE_INLINE  constexpr auto & select() const noexcept {
+	template <typename> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
 };
