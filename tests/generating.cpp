@@ -105,7 +105,6 @@ static_assert(same_f("c++"_pcre_gen, ctre::possessive_plus<ctre::character<'c'>>
 static_assert(same_f("c+?"_pcre_gen, ctre::lazy_plus<ctre::character<'c'>>()));
 static_assert(same_f("g*+"_pcre_gen, ctre::possessive_star<ctre::character<'g'>>()));
 static_assert(same_f("g*?"_pcre_gen, ctre::lazy_star<ctre::character<'g'>>()));
-static_assert(same_f("i?+"_pcre_gen, ctre::possessive_optional<ctre::character<'i'>>()));
 static_assert(same_f("i??"_pcre_gen, ctre::lazy_optional<ctre::character<'i'>>()));
 static_assert(same_f("l{1,2}+"_pcre_gen, ctre::possessive_repeat<1,2,ctre::character<'l'>>()));
 static_assert(same_f("l{1,2}?"_pcre_gen, ctre::lazy_repeat<1,2,ctre::character<'l'>>()));

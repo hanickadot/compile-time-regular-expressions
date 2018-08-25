@@ -6,7 +6,7 @@ template <auto V, typename... Ts, typename Parameters> static constexpr auto app
 	return pcre_context{ctll::push_front(number<0ull>(), subject.stack), subject.parameters};
 }
 // hexdec character support (push value)
-template <auto V, uint64_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
+template <auto V, size_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
 	constexpr auto previous = N << 4ull;	
 	if constexpr (V >= 'a' && V <= 'f') {
 		return pcre_context{ctll::push_front(number<(previous + (V - 'a' + 10))>(), ctll::list<Ts...>()), subject.parameters};
@@ -17,7 +17,7 @@ template <auto V, uint64_t N, typename... Ts, typename Parameters> static conste
 	}
 }
 // hexdec character support (convert to character)
-template <auto V, uint64_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::finish_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
+template <auto V, size_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::finish_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
 	if constexpr (N <= std::numeric_limits<unsigned char>::max()) {
 		return pcre_context{ctll::push_front(character<(char)N>(), ctll::list<Ts...>()), subject.parameters};
 	} else {

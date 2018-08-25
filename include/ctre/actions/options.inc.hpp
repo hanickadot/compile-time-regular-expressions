@@ -35,10 +35,5 @@ template <auto V, typename... Subject, typename... Ts, typename Parameters> stat
 	return pcre_context{ctll::push_front(lazy_optional<Subject...>(), ctll::list<Ts...>()), subject.parameters};
 }
 
-// make_possessive (optional)
-template <auto V, typename... Subject, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_possessive, ctll::term<V>, pcre_context<ctll::list<optional<Subject...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(possessive_optional<Subject...>(), ctll::list<Ts...>()), subject.parameters};
-}
-
 
 #endif

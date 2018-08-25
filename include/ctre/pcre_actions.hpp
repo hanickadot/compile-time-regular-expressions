@@ -9,8 +9,8 @@
 
 namespace ctre {
 	
-template <uint64_t Counter> struct pcre_parameters {
-	static constexpr uint64_t current_counter = Counter;
+template <size_t Counter> struct pcre_parameters {
+	static constexpr size_t current_counter = Counter;
 };
 	
 template <typename Stack = ctll::list<>, typename Parameters = pcre_parameters<0>> struct pcre_context {
@@ -24,7 +24,7 @@ template <typename Stack = ctll::list<>, typename Parameters = pcre_parameters<0
 
 template <typename... Content, typename Parameters> pcre_context(ctll::list<Content...>, Parameters) -> pcre_context<ctll::list<Content...>, Parameters>;
 	
-template <uint64_t Value> struct number { };
+template <size_t Value> struct number { };
 
 template <auto...> struct id { };
 	

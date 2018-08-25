@@ -28,6 +28,7 @@ struct pcre {
 	struct k {};
 	struct l {};
 	struct mod {};
+	struct mod_opt {};
 	struct number2 {};
 	struct number {};
 	struct range {};
@@ -237,6 +238,12 @@ struct pcre {
 	static constexpr auto rule(mod, ctll::term<'+'>) -> ctll::push<ctll::anything, make_possessive>;
 	static constexpr auto rule(mod, ctll::set<'*','_','\x7B','\x7D'>) -> ctll::reject;
 
+	static constexpr auto rule(mod_opt, ctll::set<'$','\x28','\x29',',','-','.',':','<','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
+	static constexpr auto rule(mod_opt, ctll::epsilon) -> ctll::epsilon;
+	static constexpr auto rule(mod_opt, _others) -> ctll::epsilon;
+	static constexpr auto rule(mod_opt, ctll::term<'?'>) -> ctll::push<ctll::anything, make_lazy>;
+	static constexpr auto rule(mod_opt, ctll::set<'*','+','_','\x7B','\x7D'>) -> ctll::reject;
+
 	static constexpr auto rule(number2, ctll::set<',','\x7D'>) -> ctll::epsilon;
 	static constexpr auto rule(number2, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_number, number2>;
 
@@ -251,7 +258,7 @@ struct pcre {
 	static constexpr auto rule(repeat, ctll::set<'$','\x28','\x29',',','-','.',':','<','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(repeat, ctll::epsilon) -> ctll::epsilon;
 	static constexpr auto rule(repeat, _others) -> ctll::epsilon;
-	static constexpr auto rule(repeat, ctll::term<'?'>) -> ctll::push<ctll::anything, make_optional, mod>;
+	static constexpr auto rule(repeat, ctll::term<'?'>) -> ctll::push<ctll::anything, make_optional, mod_opt>;
 	static constexpr auto rule(repeat, ctll::term<'\x7B'>) -> ctll::push<ctll::anything, number, b>;
 	static constexpr auto rule(repeat, ctll::term<'+'>) -> ctll::push<ctll::anything, repeat_plus, mod>;
 	static constexpr auto rule(repeat, ctll::term<'*'>) -> ctll::push<ctll::anything, repeat_star, mod>;

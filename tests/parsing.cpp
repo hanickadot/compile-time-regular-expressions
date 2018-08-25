@@ -12,7 +12,6 @@ static_assert("n"_pcre_test);
 
 // repetation
 static_assert("x?"_pcre_test); // optional
-static_assert("x?+"_pcre_test); // optional possesive
 static_assert("x??"_pcre_test); // optional lazy
 static_assert("x*"_pcre_test); 
 static_assert("x*+"_pcre_test);
