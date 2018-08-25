@@ -26,7 +26,7 @@ template <size_t Id> struct numeric_mark { };
 
  template <typename... Content> struct lazy_plus { };
  template <typename... Content> struct lazy_star { };
- template <size_t a, size_t b, typename... Content> struct lazy_repeat { };
+  template <size_t a, size_t b, typename... Content> struct lazy_repeat { };
 
  template <typename... Content> struct possessive_plus { };
  template <typename... Content> struct possessive_star { };

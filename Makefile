@@ -2,7 +2,7 @@
 
 default: all
 	
-TARGETS := result.cpp
+TARGETS := result.cpp test.cpp
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 

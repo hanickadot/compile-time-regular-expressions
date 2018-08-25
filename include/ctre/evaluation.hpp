@@ -170,8 +170,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	// A..B
 	size_t i{0};
 	for (; i < A && (A != 0); ++i) {
-		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			current = inner_result.get_end_position();
+		if (auto outer_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			captures = outer_result.unmatch();
+			current = outer_result.get_end_position();
 		} else {
 			return not_matched;
 		}
@@ -182,9 +183,10 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	} else {
 		for (; (i < B) || (B == 0); ++i) {
 			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-				if (auto outer_result = evaluate(begin, inner_result.get_end_position(), end, captures, ctll::list<Tail...>())) {
+				if (auto outer_result = evaluate(begin, inner_result.get_end_position(), end, inner_result.unmatch(), ctll::list<Tail...>())) {
 					return outer_result;
 				} else {
+					captures = inner_result.unmatch();
 					current = inner_result.get_end_position();
 					continue;
 				}
@@ -203,6 +205,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	size_t i{0};
 	for (; i < A && (A != 0); ++i) {
 		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
 			return not_matched;
@@ -230,7 +233,7 @@ constexpr CTRE_FORCE_INLINE R evaluate_recursive(size_t i, const Iterator begin,
 		// aab
 		
 		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, captures, stack)) {
+			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack)) {
 				return rec_result;
 			}
 		}
@@ -244,6 +247,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	size_t i{0};
 	for (; i < A && (A != 0); ++i) {
 		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
 			return not_matched;
@@ -294,19 +298,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // capture (numeric ID)
 template <typename R, typename Iterator, size_t Id, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<capture<Id, Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures.template start_capture<Id>(), ctll::list<sequence<Content...>, numeric_mark<Id>, Tail...>());
+	return evaluate(begin, current, end, captures.template start_capture<Id>(current), ctll::list<sequence<Content...>, numeric_mark<Id>, Tail...>());
 }
 
 // capture end mark (numeric and string ID)
 template <typename R, typename Iterator, size_t Id, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<numeric_mark<Id>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures.template end_capture<Id>(), ctll::list<Tail...>());
+	return evaluate(begin, current, end, captures.template end_capture<Id>(current), ctll::list<Tail...>());
 }
 
 // capture (string ID)
 template <typename R, typename Iterator, size_t Id, typename Name, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<capture_with_name<Id, Name, Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures.template start_capture<Id>(), ctll::list<sequence<Content...>, numeric_mark<Id>, Tail...>());
+	return evaluate(begin, current, end, captures.template start_capture<Id>(current), ctll::list<sequence<Content...>, numeric_mark<Id>, Tail...>());
 }
 
 

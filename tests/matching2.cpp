@@ -118,3 +118,24 @@ static_assert(std::string_view{"^([a-z]+)"_pcre.match("abcdef1234"sv)} == "abcde
 static_assert(std::string_view{"^([a-z]+)1234"_pcre.match("abcdef1234"sv)} == "abcdef1234"sv);
 static_assert(std::string_view{"^([a-z])"_pcre.match("abcdef1234"sv)} == "a"sv);
 
+static_assert("^([0-9]+[a-z]+)+"_pcre.match("123abc456def"sv));
+static_assert("^([0-9]+[a-z]+)+"_pcre.match("123abc456def"sv).template get<1>().to_view() == "456def"sv);
+static_assert("^([0-9]+[a-z]+)+"_pcre.match("123abc456def"sv).template get<0>().to_view() == "123abc456def"sv);
+
+static_assert("^([0-9]++[a-z]++)+"_pcre.match("123abc456def"sv));
+static_assert("^([0-9]++[a-z]++)+"_pcre.match("123abc456def"sv).template get<1>().to_view() == "456def"sv);
+static_assert("^([0-9]++[a-z]++)+"_pcre.match("123abc456def"sv).template get<0>().to_view() == "123abc456def"sv);
+
+static_assert("^([0-9]+?[a-z]+?)+"_pcre.match("123abc456def"sv));
+static_assert("^([0-9]+?[a-z]+?)+"_pcre.match("123abc456def"sv).template get<1>().to_view() == "123a"sv);
+static_assert("^([0-9]+?[a-z]+?)+"_pcre.match("123abc456def"sv).template get<0>().to_view() == "123a"sv);
+
+static_assert("^([0-9]+?[a-z]++)+"_pcre.match("123abc456def"sv));
+static_assert("^([0-9]+?[a-z]++)+"_pcre.match("123abc456def"sv).template get<1>().to_view() == "456def"sv);
+static_assert("^([0-9]+?[a-z]++)+"_pcre.match("123abc456def"sv).template get<0>().to_view() == "123abc456def"sv);
+
+static_assert("^([a-z]{2})([a-z]{2})"_pcre.match("abcd"sv).template get<2>().to_view() == "cd"sv);
+static_assert("^([a-z]{2})(?<second>[a-z]{2})"_pcre.match("abcd"sv).template get<decltype("second"_ctre_id)>().to_view() == "cd"sv);
+
+
+
