@@ -30,7 +30,7 @@ public:
 		return content + size();
 	}
 #if __has_include(<compare>)
-	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
+//	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
 #endif
 };
 
@@ -48,7 +48,7 @@ public:
 		return nullptr;
 	}
 #if __has_include(<compare>)
-	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
+//	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
 #endif
 };
 

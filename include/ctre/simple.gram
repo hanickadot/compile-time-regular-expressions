@@ -5,12 +5,11 @@ backslash={\\}
 space={\s}
 pipe={|}
 
-S-><opt>|epsilon
-opt-><seq>,<opt2>
-opt2->pipe,<seq>,[alt],<opt2>|epsilon
-seq-><atom>,<mod>,<seq2>
-seq2-><atom>,[seq],<mod>,<seq2>|epsilon
-atom->d,[char]|a,[char]|other,[char]|(,<opt>,)|backslash,<escape>|space,[space]
-escape->d,[digit]|a,[alpha]
-group-><seq>
+S-><alt0>|epsilon
+alt0-><seq0>,<alt>
+alt->pipe,<seq0>,[alt],<alt>|epsilon
+seq0-><val>,<mod>,<seq>
+seq-><val>,[seq],<mod>,<seq>|epsilon
+val->d,[char]|a,[char]|other,[char]|(,<alt0>,)|backslash,<esc>
+esc->d,[digit]|a,[alpha]
 mod->plus,[plus]|star,[star]|questionmark,[opt]|epsilon
