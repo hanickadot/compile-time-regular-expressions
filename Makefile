@@ -2,16 +2,17 @@
 
 default: all
 	
-TARGETS := result.cpp test.cpp
+TARGETS := result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template
+LDFLAGS := -L/usr/local/Cellar/pcre2/10.31/lib -lpcre2-8
 #-fconcepts
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
-IGNORE := $(wildcard tests/benchmark/*.cpp)
+IGNORE := $(wildcard tests/benchmark/many-of-*.cpp)
 OBJECTS_PRE := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
 OBJECTS := $(filter-out $(IGNORE:%.cpp=%.o), $(OBJECTS_PRE))
 DEPEDENCY_FILES := $(OBJECTS:%.o=%.d)
@@ -19,7 +20,7 @@ DEPEDENCY_FILES := $(OBJECTS:%.o=%.d)
 all: $(TRUE_TARGETS) $(OBJECTS)
 	
 $(TRUE_TARGETS): %: %.o
-	$(CXX) $(LDFLAGS) $< -o $@
+	$(CXX)  $< $(LDFLAGS) -o $@
 	
 $(OBJECTS): %.o: %.cpp
 	time $(CXX) $(CXXFLAGS) -MMD -c $< -o $@

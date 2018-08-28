@@ -12,12 +12,12 @@ struct _nothing { };
 using empty_list = list<>;
 
 // calculate size of list content
-template <typename... Ts> constexpr auto size(list<Ts...>) noexcept -> std::integral_constant<size_t, sizeof...(Ts)> { return {}; };
+template <typename... Ts> constexpr auto size(list<Ts...>) noexcept { return sizeof...(Ts); }
 
 	
 // check if the list is empty
-template <typename... Ts> constexpr auto empty(list<Ts...>) noexcept -> std::false_type { return {}; };
-constexpr auto empty(empty_list) -> std::true_type { return {}; };
+template <typename... Ts> constexpr bool empty(list<Ts...>) noexcept { return false; };
+constexpr bool empty(empty_list) { return true; };
 
 
 // concat two lists together left to right
