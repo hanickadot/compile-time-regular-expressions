@@ -105,6 +105,7 @@ backslash->0,[push_character_null]
 backslash->a,[push_character_alarm]
 backslash->e,[push_character_escape]
 backslash->f,[push_character_formfeed]
+backslash->g,copen,minus,<number>,cclose,[make_relative_back_reference]
 backslash->g,copen,<number>,cclose,[make_back_reference]
 backslash->g,copen,<block_name>,cclose,[make_back_reference]
 

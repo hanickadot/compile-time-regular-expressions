@@ -145,6 +145,9 @@ static_assert("^([a-z]+):\\g{1}$"_pcre.match("abc:abc"sv).template get<1>().to_v
 static_assert("^([a-z]+):\\g{1}$"_pcre != "abc:abce"sv);
 static_assert("^([a-z]+)\\g{1}$"_pcre == "abcabc"sv);
 static_assert("^([a-z]+)\\g{1}$"_pcre != "abcabcd"sv);
+static_assert("^([a-z]+)\\g{-1}$"_pcre == "abcabc"sv);
+// static_assert("^([a-z]+)\\g{-2}$"_pcre == "abcabc"sv); // will fail (TODO do something to fail gracefully)
+// TODO check for existence of capture too
 
 static_assert("^(?<text>[a-z]+):\\g{text}$"_pcre == "abc:abc"sv);
 
