@@ -133,8 +133,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 }
 
-// TODO possessive optional
-
 // matching sequence in patterns
 template <typename R, typename Iterator, typename HeadContent, typename... TailContent, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<sequence<HeadContent, TailContent...>, Tail...>) noexcept {

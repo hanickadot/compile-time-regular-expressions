@@ -24,7 +24,7 @@ template <auto V> struct character {
 };
 
 struct any {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr std::true_type match_char(CharT value) noexcept { return {}; }
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept { return true; }
 };
 
 template <typename... Content> struct negative_set {

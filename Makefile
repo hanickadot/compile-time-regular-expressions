@@ -6,13 +6,13 @@ TARGETS := result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
-CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template
+CXXFLAGS := -std=c++2a -Iinclude -O3 -Wno-gnu-string-literal-operator-template
 LDFLAGS := -L/usr/local/Cellar/pcre2/10.31/lib -lpcre2-8
-#-fconcepts
+
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
-IGNORE := $(wildcard tests/benchmark/many-of-*.cpp)
+IGNORE := $(wildcard tests/benchmark/*.cpp)
 OBJECTS_PRE := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
 OBJECTS := $(filter-out $(IGNORE:%.cpp=%.o), $(OBJECTS_PRE))
 DEPEDENCY_FILES := $(OBJECTS:%.o=%.d)

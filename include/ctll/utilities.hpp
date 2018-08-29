@@ -8,14 +8,14 @@ namespace ctll {
 template <bool> struct conditional_helper;
 	
 template <> struct conditional_helper<true> {
-	template <typename A, typename> using types = A;
+	template <typename A, typename> using type = A;
 };
 
 template <> struct conditional_helper<false> {
-	template <typename, typename B> using types = B;
+	template <typename, typename B> using type = B;
 };
 
-template <bool V, typename A, typename B> using conditional = typename conditional_helper<V>::template types<A,B>;
+template <bool V, typename A, typename B> using conditional = typename conditional_helper<V>::template type<A,B>;
 	
 }
 
