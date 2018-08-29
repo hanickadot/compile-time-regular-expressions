@@ -18,7 +18,7 @@ template <bool Result, typename Subject> struct parse_result {
 };
 
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
-template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IngoreUnknownActions = true> struct parser {
+template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IngoreUnknownActions = false> struct parser {
 #else
 template <typename Grammar, basic_fixed_string input, typename ActionSelector = empty_actions, bool IngoreUnknownActions = true> struct parser { // in c++20
 #endif

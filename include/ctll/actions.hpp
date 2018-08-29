@@ -4,7 +4,9 @@
 namespace ctll {
 	struct empty_actions {
 		// dummy operator so using Actions::operator() later will not give error
-		constexpr static void apply() {};
+		template <typename Action, typename InputSymbol, typename Subject> static constexpr auto apply(Action, InputSymbol, Subject subject) {
+			return subject;
+		}
 	};
 	
 	
@@ -16,7 +18,7 @@ namespace ctll {
 	};
 	
 	template <typename Actions> struct augment_actions<false, Actions>: public Actions {
-		using Actions::operator();
+		using Actions::apply;
 		// will fail if unknown action is called
 	};
 }
