@@ -2,3 +2,5 @@
 *.d
 test
 result
+tests/benchmark-exec/*
+!tests/benchmark-exec/*.cpp
