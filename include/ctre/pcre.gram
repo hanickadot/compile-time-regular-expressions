@@ -83,28 +83,36 @@ class_named_name->"word",[class_named_word]
 class_named_name->"xdigit",[class_named_xdigit]
 
 
-setitem->other,[push_character],<range> | nonspecial_characters,[push_character],<range> | dot,[push_character],<range>
-range->epsilon|minus,other,[insert_range]|minus,nonspecial_characters,[insert_range]
-setitem-><class_named>
+setitem->other,[push_character],<range> | nonspecial_characters,[push_character],<range> | dot,[push_character]
+setitem-><class_named>,<range>
+setitem->backslash,<backslash_range>,<range> | backslash,<backslash_set>
 
-setitem->backslash,<backslash>
+range->epsilon
+range->minus,other,[push_character],[make_range]|minus,nonspecial_characters,[push_character],[make_range]
+range->minus,backslash,<backslash_range>,[make_range]
 
-backslash-><special>,[push_character]
+
+backslash_set-><special>,[push_character]
 special->dot|sopen|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar
+backslash_set->escape_alphanum,[push_character]
 
-backslash->escape_alphanum,[push_character]
-backslash->x,[create_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],[finish_hexdec]
-backslash->x,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose,[finish_hexdec]
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
-backslash->d,[class_digit]|D,[class_nondigit]
-backslash->w,[class_word]|W,[class_nonword]
-backslash->n,[push_character_newline]|t,[push_character_tab]|r,[push_character_return_carriage]
-backslash->N,[class_nonnewline]
-backslash->s,[class_space]|S,[class_nonspace]
-backslash->0,[push_character_null]
-backslash->a,[push_character_alarm]
-backslash->e,[push_character_escape]
-backslash->f,[push_character_formfeed]
+
+backslash_range->x,[create_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],[finish_hexdec]
+backslash_range->x,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose,[finish_hexdec]
+backslash_range->n,[push_character_newline]|t,[push_character_tab]|r,[push_character_return_carriage]
+backslash_range->0,[push_character_null]
+backslash_range->a,[push_character_alarm]
+backslash_range->e,[push_character_escape]
+backslash_range->f,[push_character_formfeed]
+
+backslash_set->d,[class_digit]|D,[class_nondigit]
+backslash_set->w,[class_word]|W,[class_nonword]
+backslash_set->N,[class_nonnewline]
+backslash_set->s,[class_space]|S,[class_nonspace]
+
+backslash-><backslash_range>|<backslash_set>
+
 backslash->g,copen,minus,<number>,cclose,[make_relative_back_reference]
 backslash->g,copen,<number>,cclose,[make_back_reference]
 backslash->g,copen,<block_name>,cclose,[make_back_reference]

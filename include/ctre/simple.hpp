@@ -31,7 +31,7 @@ struct simple {
 	using _others = ctll::neg_set<'(',')','*','+','?','\\','|'>;
 	static constexpr auto rule(s, ctll::epsilon) -> ctll::epsilon;
 	static constexpr auto rule(s, _others) -> ctll::push<ctll::anything, character, mod, seq2, opt2>;
-	static constexpr auto rule(s, ctll::term<'\\'>) -> ctll::push<ctll::anything, escape, mod, seq2, opt2>;
+	static constexpr auto rule(s, ctll::term<'\\'>) -> ctll::push< ctll::anything, escape, mod, seq2, opt2 >;
 	static constexpr auto rule(s, ctll::term<'('>) -> ctll::push<ctll::anything, opt, ctll::term<')'>, mod, seq2, opt2>;
 	static constexpr auto rule(s, ctll::set<')','*','+','?','|'>) -> ctll::reject;
 

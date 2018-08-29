@@ -35,8 +35,8 @@ static_assert(same_f("(?:abc)"_pcre_gen, ctre::string<'a','b','c'>()));
 // support for hexdec
 static_assert(same_f("\\xFF"_pcre_gen, ctre::character<'\xFF'>()));
 static_assert(same_f("\\x{FF}"_pcre_gen, ctre::character<'\xFF'>()));
-static_assert(same_f("\\x{FFF}"_pcre_gen, ctre::character<(wchar_t)0xFFF>()));
-static_assert(same_f("\\x{ABCD}"_pcre_gen, ctre::character<(wchar_t)0xABCD>()));
+static_assert(same_f("\\x{FFF}"_pcre_gen, ctre::character<(size_t)0xFFF>()));
+static_assert(same_f("\\x{ABCD}"_pcre_gen, ctre::character<(size_t)0xABCD>()));
 
 // anything
 static_assert(same_f("."_pcre_gen, ctre::any()));
@@ -73,6 +73,7 @@ static_assert(same_f("[^a-z0-9]"_pcre_gen, ctre::negative_set<ctre::range<'a','z
 static_assert(same_f("[a-z[:digit:]]"_pcre_gen, ctre::set<ctre::range<'a','z'>,ctre::digit_chars>()));
 static_assert(same_f("[a-z98]"_pcre_gen, ctre::set<ctre::range<'a','z'>,ctre::character<'9'>,ctre::character<'8'>>()));
 static_assert(same_f("[\\w]"_pcre_gen, ctre::set<ctre::set<ctre::word_chars>>()));
+static_assert(same_f("[\\x30-\\x39]"_pcre_gen, ctre::set<ctre::range<'\x30','\x39'>>()));
 
 // alternation
 static_assert(same_f("(?:abc|def)"_pcre_gen, ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>>()));

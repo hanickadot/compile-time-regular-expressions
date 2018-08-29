@@ -21,7 +21,7 @@ template <auto V, size_t N, typename... Ts, typename Parameters> static constexp
 	if constexpr (N <= std::numeric_limits<unsigned char>::max()) {
 		return pcre_context{ctll::push_front(character<(char)N>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
-		return pcre_context{ctll::push_front(character<(wchar_t)N>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(character<N>(), ctll::list<Ts...>()), subject.parameters};
 	} 
 }	
 

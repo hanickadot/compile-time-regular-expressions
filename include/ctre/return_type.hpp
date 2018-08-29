@@ -47,11 +47,11 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _end;
 		}
 	
-		constexpr CTRE_FORCE_INLINE explicit operator bool() const noexcept {
+		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 			return _matched;
 		}
 		
-		constexpr explicit operator auto() const noexcept {
+		constexpr operator auto() const noexcept {
 			return to_view();
 		}
 		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
@@ -159,10 +159,10 @@ template <typename Iterator, typename... Captures> struct regex_results {
 		_captures.template select<0>().unmatch();
 		return *this;
 	}
-	constexpr CTRE_FORCE_INLINE explicit operator bool() const noexcept {
+	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 		return bool(_captures.template select<0>());
 	}
-	constexpr explicit operator auto() const noexcept {
+	constexpr operator auto() const noexcept {
 		return _captures.template select<0>().to_view();
 	}
 	constexpr auto to_view() const noexcept {
