@@ -37,6 +37,9 @@ template <size_t Index, typename... Content> struct capture { };
 
 template <size_t Index, typename Name, typename... Content> struct capture_with_name { };
 
+template <size_t Index> struct back_reference { };
+template <typename Name> struct back_reference_with_name { };
+ 
 
 struct assert_begin { };
  struct assert_end { };

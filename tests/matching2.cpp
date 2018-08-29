@@ -140,5 +140,13 @@ static_assert("^([0-9]+?[a-z]++)+"_pcre.match("123abc456def"sv).template get<0>(
 static_assert("^([a-z]{2})([a-z]{2})"_pcre.match("abcd"sv).template get<2>().to_view() == "cd"sv);
 static_assert("^([a-z]{2})(?<second>[a-z]{2})"_pcre.match("abcd"sv).template get<decltype("second"_ctre_id)>().to_view() == "cd"sv);
 
+static_assert("^([a-z]+):\\g{1}$"_pcre == "abc:abc"sv);
+static_assert("^([a-z]+):\\g{1}$"_pcre.match("abc:abc"sv).template get<1>().to_view() == "abc"sv);
+static_assert("^([a-z]+):\\g{1}$"_pcre != "abc:abce"sv);
+static_assert("^([a-z]+)\\g{1}$"_pcre == "abcabc"sv);
+static_assert("^([a-z]+)\\g{1}$"_pcre != "abcabcd"sv);
+
+static_assert("^(?<text>[a-z]+):\\g{text}$"_pcre == "abc:abc"sv);
+
 
 

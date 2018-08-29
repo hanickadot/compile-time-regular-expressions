@@ -10,13 +10,13 @@ namespace ctre {
 
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename Pattern> 
-constexpr auto match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
+constexpr inline auto match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
 template <typename Iterator, typename Pattern> 
-constexpr auto float_match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
+constexpr inline auto float_match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	for (auto it{begin}; it != end; ++it) {
 		if (auto out = evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {
@@ -316,7 +316,42 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, captures.template start_capture<Id>(current), ctll::list<sequence<Content...>, numeric_mark<Id>, Tail...>());
 }
 
+// backreference support (match agains content of iterators)
+template <typename Iterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> match_against_range(Iterator current, const Iterator end, Iterator range_current, const Iterator range_end) noexcept {
+	while (current != end && range_current != range_end) {
+		if (*current == *range_current) {
+			current++;
+			range_current++;
+		} else {
+			return {current, false};
+		}
+	}
+	return {current, range_current == range_end};
+}
 
+// backreference with name
+template <typename R, typename Id, typename Iterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<back_reference_with_name<Id>, Tail...>) noexcept {
+	
+	if (const auto ref = captures.template get<Id>()) {
+		if (auto [it, matches] = match_against_range(current, end, ref.begin(), ref.end()); matches) {
+			return evaluate(begin, it, end, captures, ctll::list<Tail...>());
+		}
+	}
+	return not_matched;
+}
+
+// backreference
+template <typename R, size_t Id, typename Iterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const Iterator end, R captures, ctll::list<back_reference<Id>, Tail...>) noexcept {
+	
+	if (const auto ref = captures.template get<Id>()) {
+		if (auto [it, matches] = match_against_range(current, end, ref.begin(), ref.end()); matches) {
+			return evaluate(begin, it, end, captures, ctll::list<Tail...>());
+		}
+	}
+	return not_matched;
+}
 
 
 }

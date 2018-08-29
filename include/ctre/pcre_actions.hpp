@@ -39,7 +39,7 @@ struct pcre_actions {
 #include "actions/set.inc.hpp"
 #include "actions/asserts.inc.hpp"
 #include "actions/capture.inc.hpp"
-
+#include "actions/backreference.inc.hpp"
 };
 
 

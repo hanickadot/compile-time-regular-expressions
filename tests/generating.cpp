@@ -124,6 +124,11 @@ static_assert(same_f("(?<name>x|y)"_pcre_gen, ctre::capture_with_name<1,ctre::id
 static_assert(same_f("(?<xy>[x]y)"_pcre_gen, ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>())); 
 static_assert(same_f("(?<xy>[x]y)(a)"_pcre_gen, ctre::sequence<ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>, ctre::capture<2,ctre::character<'a'>>>())); 
 
+// backreference
+static_assert(same_f("(a)\\g{1}"_pcre_gen, ctre::sequence<ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>>()));
+static_assert(same_f("(?<ab>a)\\g{ab}"_pcre_gen, ctre::sequence<ctre::capture_with_name<1,ctre::id<'a','b'>,ctre::character<'a'>>, ctre::back_reference_with_name<ctre::id<'a','b'>>>()));
+
+
 // asserts
 static_assert(same_f("^"_pcre_gen, ctre::assert_begin()));
 static_assert(same_f("$"_pcre_gen, ctre::assert_end()));
