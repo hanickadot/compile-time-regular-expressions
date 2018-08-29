@@ -14,7 +14,7 @@ template <auto V, size_t Id, typename... Ts, size_t Counter> static constexpr au
 // relative backreference
 template <auto V, size_t Id, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_relative_back_reference, ctll::term<V>, pcre_context<ctll::list<number<Id>, Ts...>, pcre_parameters<Counter>> subject) {	
 	static_assert(Counter >= Id, "Relative back-reference is too big number.");
-	constexpr ssize_t absolute_id = Counter - Id;
+	constexpr size_t absolute_id = Counter - Id;
 	return pcre_context{ctll::push_front(back_reference<Id>(), ctll::list<Ts...>()), subject};
 }
 

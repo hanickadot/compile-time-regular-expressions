@@ -13,7 +13,6 @@
 * comments
 * options/modes
 * lookahead
-* backreferences
 * subroutines
 * conditional patterns
 * callouts
