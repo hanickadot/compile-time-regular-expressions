@@ -35,6 +35,30 @@ static_assert(extract_date("2018/08/27"sv)->month == "08"sv);
 static_assert(extract_date("2018/08/27"sv)->day == "27"sv);
 ```
 
+#### Lexer
+```c++
+enum class type {
+    unknown, identifier, number
+};
+
+struct lex_item {
+    type t;
+    std::string_view c;
+};
+
+constexpr std::optional<lex_item> lexer(std::string_view v) noexcept {
+    using namespace ctre::literals;
+    if (auto [m,id,num] = "^([a-z]++)|([0-9]++)$"_pcre.match(v); m) {
+        if (id) {
+            return lex_item{type::identifier, id};
+        } else if (num) {
+            return lex_item{type::number, num};
+        }
+    }
+    return std::nullopt;
+}
+```
+
 ## Supported compilers
 
 * clang 5.0+
