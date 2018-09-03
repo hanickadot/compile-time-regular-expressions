@@ -2,6 +2,7 @@
 #include <string_view>
 
 using namespace ctre::literals;
+using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
 static_assert(""_pcre.match("abc"sv));
@@ -146,9 +147,10 @@ static_assert("^([a-z]+):\\g{1}$"_pcre.match("abc:abc"sv).template get<1>() == "
 static_assert(!"^([a-z]+):\\g{1}$"_pcre.match("abc:abce"sv));
 static_assert("^([a-z]+)\\g{1}$"_pcre.match("abcabc"sv));
 static_assert(!"^([a-z]+)\\g{1}$"_pcre.match("abcabcd"sv));
+static_assert("^([a-z]+)\\g{-1}$"_pcre_syntax);
 static_assert("^([a-z]+)\\g{-1}$"_pcre.match("abcabc"sv));
-// static_assert("^([a-z]+)\\g{-2}$"_pcre.match("abcabc"sv); // will fail (TODO do something to fail gracefull)y)
-// TODO check for existence of capture too
+static_assert(!"^([a-z]+)\\g{-2}$"_pcre_syntax);
+// TODO check for existence of named capture too
 
 static_assert("^(?<text>[a-z]+):\\g{text}$"_pcre.match("abc:abc"sv));
 
