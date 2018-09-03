@@ -159,3 +159,12 @@ static_assert("^abc$"_pcre.match(L"abc"sv));
 static_assert("^abc$"_pcre.match(u8"abc"sv));
 static_assert("^abc$"_pcre.match(u"abc"sv));
 static_assert("^abc$"_pcre.match(U"abc"sv));
+
+static_assert(R"(\(\))"_pcre.match("()"sv));
+static_assert("\\[\\]"_pcre.match("[]"sv));
+static_assert(R"(\[\])"_pcre.match("[]"sv));
+
+static_assert(R"(\[([A-Z]*?)\])"_pcre.match("[]"sv));
+static_assert(R"(\[([A-Z]*?)\])"_pcre.match("[URL]"sv));
+
+static_assert(R"(\[([\s\S]*?)\]\(([\s\S]*?)\))"_pcre.match("[URL](https://cpp.fail/ctre)"));
