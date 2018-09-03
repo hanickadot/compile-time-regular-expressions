@@ -25,61 +25,87 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	static inline constexpr auto grammar = augment_grammar<Grammar>();
 	static inline constexpr auto select_action = augment_actions<IngoreUnknownActions, ActionSelector>();
 	
-	template <size_t pos> static constexpr auto get_current_term() noexcept {
-		if constexpr (pos < input.size()) {
-			return term<input[pos]>{};
+	template <size_t Pos> static constexpr auto get_current_term() noexcept {
+		if constexpr (Pos < input.size()) {
+			return term<input[Pos]>{};
 		} else {
 			// return epsilon if we are past the input
 			return epsilon{};
 		}
 	}
-	template <size_t pos> static constexpr auto get_previous_term() noexcept {
-		if constexpr (pos == 0) {
+	template <size_t Pos> static constexpr auto get_previous_term() noexcept {
+		if constexpr (Pos == 0) {
 			// there is no previous character on input if we are on start
 			return epsilon{};
-		} else if constexpr ((pos-1) < input.size()) {
-			return term<input[pos-1]>{};
+		} else if constexpr ((Pos-1) < input.size()) {
+			return term<input[Pos-1]>{};
 		} else {
 			return epsilon{};
 		}
 	}
-	template <size_t pos, typename Stack, typename Subject> static constexpr auto decide(Stack stack, Subject subject) noexcept {
-		// look on top of the stack
-		auto top_symbol = front(stack, epsilon());
+	// if rule is accept => return true and subject
+	template <size_t Pos, typename Terminal, typename Stack, typename Subject> 
+	static constexpr auto move(ctll::accept, Terminal, Stack, Subject) noexcept {
+		return parse_result<true, Subject>();
+	}
+	// if rule is reject => return false and subject
+	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
+	static constexpr auto move(ctll::reject, Terminal, Stack, Subject) noexcept {
+		return parse_result<false, Subject>();
+	}
+	// if rule is pop_input => move to next character
+	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
+	static constexpr auto move(ctll::pop_input, Terminal, Stack stack, Subject subject) noexcept {
+		return decide<Pos+1>(stack, subject);
+	}
+	// if rule is string => push it to the front of stack
+	template <size_t Pos, typename... Content, typename Terminal, typename Stack, typename Subject>
+	static constexpr auto move(ctll::list<Content...> string, Terminal, Stack stack, Subject subject) noexcept {
+		return decide<Pos>(push_front(string, stack), subject);
+	}
+	// if rule is epsilon (empty string) => continue
+	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
+	static constexpr auto move(epsilon, Terminal, Stack stack, Subject subject) noexcept {
+		return decide<Pos>(stack, subject);
+	}
+	// if rule is string with current character at the beginning (term<V>) => move to next character 
+	// and push string without the character (quick LL(1))
+	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
+	static constexpr auto move(ctll::list<term<V>, Content...> string, term<V>, Stack stack, Subject subject) noexcept {
+		return decide<Pos+1>(push_front(list<Content...>(), stack), subject);
+	}
+	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
+	// and push string without the character (quick LL(1))
+	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
+	static constexpr auto move(ctll::list<anything, Content...> string, term<T>, Stack stack, Subject subject) noexcept {
+		return decide<Pos+1>(push_front(list<Content...>(), stack), subject);
+	}
+	// decide if we need to take action or move
+	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
+		// each call means we pop something from stack
+		auto [top_symbol, stack] = pop_and_get_front(previous_stack, empty_stack_symbol());
+		
+		// in case top_symbol is action type (apply it on previous subject and get new one)
 		if constexpr (std::is_base_of_v<ctll::action, decltype(top_symbol)>) {
-			// skip for now
-			auto new_subject = select_action.apply(top_symbol, get_previous_term<pos>(), subject);
-			return decide<pos>(pop_front(stack), new_subject);
-		} else {
-			// we need to look at the input
-			auto current_term = get_current_term<pos>();
-			// rule(...) functions doesn't have a body (because I want them to be pretty)
-			auto rule = decltype(grammar.rule(top_symbol,current_term))();
-			if constexpr (std::is_same_v<ctll::accept, decltype(rule)>) {
-				// we found accept command => we are done
-				return parse_result<true, decltype(subject)>();
-			} else if constexpr (std::is_same_v<ctll::reject, decltype(rule)>) {
-				// we found reject command => we are done too
-				return parse_result<false, decltype(subject)>();
-			} else if constexpr (std::is_same_v<ctll::pop_input, decltype(rule)>) {
-				// we found pop_front, move to next character and pop top of the stack
-				return decide<pos+1>(pop_front(stack), subject);
-			} else if constexpr (ctll::is_quick(current_term, rule)) {
-				// current rule contains terminal as first symbol and same symbol is in input
-				// => move forward in input and remove the symbol from stack
-				return decide<pos+1>(pop_front_and_push_front_quick(rule, stack), subject);
+			auto subject = select_action.apply(top_symbol, get_previous_term<Pos>(), previous_subject);
+			
+			// in case that semantic action is error => reject input
+			if constexpr (std::is_same_v<ctll::reject, decltype(subject)>) {
+				return parse_result<false, Subject>();
 			} else {
-				// insert current rule into stack (can be list<...> or epsilon)
-				// in case of epsilon we remove top symbol on stack and continue
-				// in case of list<As...> we concat list with the stack to list<As...,Bs...>
-				// this two `pop_front_and_push_front` functions are defined in grammars.hpp
-				return decide<pos>(pop_front_and_push_front(rule, stack), subject);
+				return decide<Pos>(stack, subject);
 			}
+		} else {
+			// all other cases are ordinary for LL(1) parser
+			auto current_term = get_current_term<Pos>();
+			auto rule = decltype(grammar.rule(top_symbol,current_term))();
+			return move<Pos>(rule, current_term, stack, previous_subject);
 		}
 	}
 	
 	template <typename Subject = empty_subject> using output = decltype(decide<0>(grammar.start_stack, Subject()));
 	static inline constexpr bool correct = decide<0>(grammar.start_stack, empty_subject());
+	template <typename Subject = empty_subject> static inline constexpr bool correct_with = decide<0>(grammar.start_stack, Subject());
 };
 
 } // end of ctll namespace

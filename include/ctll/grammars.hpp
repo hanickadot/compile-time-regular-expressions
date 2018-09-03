@@ -8,11 +8,14 @@ template <auto v> struct term {
 	static constexpr auto value = v;
 };
 
-// epsilon = nothing on stack / nothing on input tape
+// epsilon = nothing on input tape
 // also used as an command for parsing means "do nothing"
 struct epsilon {
 	static constexpr auto value = '-';
 };
+
+// empty_stack_symbol = nothing on stack
+struct empty_stack_symbol {};
 
 // push<T...> is alias to list<T...>
 template <typename... Ts> using push = list<Ts...>;
@@ -86,8 +89,8 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	// if the type on stack (range, set, neg_set, anything) is constructible from the terminal => pop_input
 	template <typename Expected, auto V> static constexpr auto rule(Expected, term<V>) -> std::enable_if_t<std::is_constructible_v<Expected, term<V>>, ctll::pop_input>;
 	
-	// empty stack and empty input means we are accepting
-	static constexpr auto rule(epsilon, epsilon) -> ctll::accept;
+	// empty stack and empty input means we are accepting 
+	static constexpr auto rule(empty_stack_symbol, epsilon) -> ctll::accept;
 	
 	// not matching anything else => reject
 	static constexpr auto rule(...) -> ctll::reject;
@@ -95,15 +98,6 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	// start stack is just a list<Grammar::_start>;
 	static constexpr inline auto start_stack = list<typename Grammar::_start>{};
 };
-
-// support for qLL1 move (for performance)
-template <auto V, typename... Content> constexpr auto is_quick(term<V>, list<term<V>, Content...>) -> std::true_type { return {}; }
-
-template <auto V, typename... Content> constexpr auto is_quick(term<V>, list<anything, Content...>) -> std::true_type { return {}; }
-
-template <typename T, typename Y> constexpr auto is_quick(T, Y) -> std::false_type { return {}; }
-
-template <typename AHead, typename... As, typename BHead, typename... Bs> constexpr auto pop_front_and_push_front_quick(list<AHead, As...>, list<BHead, Bs...>) -> list<As..., Bs...> { return {}; }
 
 
 

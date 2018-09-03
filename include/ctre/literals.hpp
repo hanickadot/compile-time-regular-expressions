@@ -79,6 +79,16 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr inline au
 
 
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_pcre_syntax() noexcept {
+	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
+#else
+template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_pcre_syntax() noexcept {
+#endif
+	return ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template correct_with<pcre_context<>>;
+}
+
+
+#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_simple_test() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
