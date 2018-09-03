@@ -6,7 +6,8 @@ TARGETS := result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
-CXXFLAGS := -std=c++2a -Iinclude -O3 -Wno-gnu-string-literal-operator-template
+CXXFLAGS := -std=c++2a -Iinclude -O3 -Wno-gnu-string-literal-operator-template 
+#-Xclang -fconcepts-ts
 LDFLAGS := -L/usr/local/Cellar/pcre2/10.31/lib -lpcre2-8
 
 

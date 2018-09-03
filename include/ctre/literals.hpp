@@ -32,7 +32,8 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 	return ctre::regular_expression(re());
 }
 
-
+// add this when we will have concepts
+// requires ctll::parser<ctre::pcre, _fixed_string_reference<CharT, charpack...>, ctre::pcre_actions>::template correct_with<pcre_context<>>
 
 #if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_pcre() noexcept {
