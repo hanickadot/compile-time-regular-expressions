@@ -2,7 +2,7 @@
 
 default: all
 	
-TARGETS := result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
+TARGETS := result.cpp test.cpp brainfuck.cpp $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
@@ -37,8 +37,10 @@ benchmark-clean:
 
 clean:
 	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES)
-	
-grammar: include/ctre/pcre.hpp include/ctre/simple.hpp
+
+GRAM_FILES := $(wildcard include/*/*.gram)	
+
+grammar: $(GRAM_FILES:%.gram=%.hpp)
 	
 regrammar: 
 	@rm -f include/ctre/pcre.hpp
@@ -46,7 +48,11 @@ regrammar:
 	
 include/ctre/pcre.hpp: include/ctre/pcre.gram
 	@echo "LL1q $<"
-	@$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre
+	@$(DESATOMAT) --ll --q --input=$< --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre
+	
+include/ctbf/brainfuck.hpp: include/ctbf/brainfuck.gram
+	@echo "LL1q $<"
+	@$(DESATOMAT) --ll --q --input=$< --output=include/ctbf/ --generator=cpp_ctll_v2  --cfg:fname=brainfuck.hpp --cfg:namespace=ctbf --cfg:guard=CTRE__BRAINFUCK__HPP --cfg:grammar_name=brainfuck
 
 #include/ctre/simple.hpp: include/ctre/simple.gram
 #	@echo "LL1q $<"
