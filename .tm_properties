@@ -1,2 +1,2 @@
 exclude = "{$exclude,**/*.dSYM,**/*.d,**/*.o,test}"
-include = "{$include,.gitignore}"
+include = "{$include,.gitignore,.travis*}"

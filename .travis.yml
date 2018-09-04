@@ -1,0 +1,18 @@
+sudo: false
+language: cpp
+compiler:
+  - gcc
+  - clang
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-precise-5.0
+    packages:
+    - g++-7.3
+    - clang-5.0
+install:
+- "[ $CXX = g++ ] && export CXX=g++-7 || true"
+- "[ $CXX = clang++ ] && export CXX=clang++-5.0 || true"
+script:
+  - make
