@@ -22,3 +22,7 @@
 # Other unsupported "things"
 * `[[.hyphen.]]` named characters
 * `[[=M=]]` whatever this is
+
+# Links
+
+https://gcc.godbolt.org/z/xEcwc0

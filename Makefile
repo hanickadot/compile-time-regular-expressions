@@ -13,7 +13,7 @@ LDFLAGS := -L/usr/local/Cellar/pcre2/10.31/lib -lpcre2-8
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
-IGNORE := $(wildcard tests/benchmark/*.cpp)
+IGNORE := $(wildcard tests/benchmark/*.cpp) tests/benchmark-exec/ctre2.cpp
 OBJECTS_PRE := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
 OBJECTS := $(filter-out $(IGNORE:%.cpp=%.o), $(OBJECTS_PRE))
 DEPEDENCY_FILES := $(OBJECTS:%.o=%.d)
