@@ -7,7 +7,7 @@ int main (int argc, char ** argv)
 {
 	//using namespace ctre::literals;
 	//constexpr auto re = "ABCD|DEFGH|EFGHI|A{4,}"_pcre;
-	std::regex re1("ABCD|DEFGH|EFGHI|A{4,}+");
+	std::regex re1("^[0-9]{4,16}?[aA]");
 	
 	auto grep = [&](auto && stream) {
 		std::string line;

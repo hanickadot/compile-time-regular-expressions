@@ -74,7 +74,6 @@ template <auto... Def> struct neg_set {
 	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr inline neg_set(term<V>) noexcept;
 };
 
-
 // AUGMENTED grammar which completes user-defined grammar for all other cases
 template <typename Grammar> struct augment_grammar: public Grammar {
 	// start nonterminal is defined in parent type
