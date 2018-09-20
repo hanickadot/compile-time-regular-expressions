@@ -16,7 +16,7 @@ constexpr inline auto match_re(const Iterator begin, const Iterator end, Pattern
 }
 
 template <typename Iterator, typename Pattern> 
-constexpr inline auto float_match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
+constexpr inline auto search_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	for (auto it{begin}; it != end; ++it) {
 		if (auto out = evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {

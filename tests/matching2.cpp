@@ -10,7 +10,7 @@ static_assert("abc"_pcre.match("abc"sv));
 
 static_assert("a"_pcre.match("a"sv));
 static_assert("a"_pcre.match("abc"sv));
-static_assert("b"_pcre.match("abc"sv));
+static_assert("b"_pcre.search("abc"sv));
 static_assert(!"^b"_pcre.match("abc"sv));
 static_assert(!"b"_pcre.match("a"sv));
 static_assert("."_pcre.match("a"sv));
@@ -38,7 +38,7 @@ static_assert(!"(?:a|b|c)"_pcre.match("d"sv));
 static_assert("(?:xy)?"_pcre.match("xy"sv));
 static_assert("(?:xy)?"_pcre.match(""sv));
 static_assert("(?:xy)?"_pcre.match("zxy"sv));
-static_assert("(?:xy)?$"_pcre.match("zxy"sv));
+static_assert("(?:xy)?$"_pcre.search("zxy"sv));
 static_assert(!"~(?:xy)?$"_pcre.match("zxy"sv));
 
 static_assert("^abc"_pcre.match("abc"sv));
