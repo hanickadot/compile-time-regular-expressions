@@ -12,7 +12,7 @@ namespace ctre {
 template <typename Iterator, typename Pattern> 
 constexpr inline auto match_re(const Iterator begin, const Iterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
-	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
 }
 
 template <typename Iterator, typename Pattern> 
