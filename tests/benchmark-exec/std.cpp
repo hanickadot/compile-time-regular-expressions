@@ -2,22 +2,26 @@
 #include <iostream>
 #include <fstream> 
 #include <regex>
+#include "ctre.hpp"
+
+extern "C" {
+
+#define PCRE2_CODE_UNIT_WIDTH 8
+#define PCRE2_STATIC
+#include <pcre2.h>
+
+}
 
 int main (int argc, char ** argv)
 {
-	//using namespace ctre::literals;
-	//constexpr auto re = "ABCD|DEFGH|EFGHI|A{4,}"_pcre;
-	std::regex re1("^[0-9]{4,16}?[aA]");
+	std::regex re("([aAbB]{4,}|[xXyY]{4,}|[1234]{4,})0");
 	
 	auto grep = [&](auto && stream) {
 		std::string line;
 		while (std::getline(stream, line)) {
-			if (std::regex_search(line, re1)) {
+			if (std::regex_search(line, re)) {
 				std::cout << line << '\n';
 			}
-			//if (bool(re.match(line))) {
-			//	std::cout << line << '\n';
-			//}
 		}
 	}; 
 	
@@ -27,6 +31,4 @@ int main (int argc, char ** argv)
 		std::string fname{std::string(argv[i])};
 		grep(std::ifstream(fname, std::ifstream::in));
 	}
-	
-	return 0;
 }

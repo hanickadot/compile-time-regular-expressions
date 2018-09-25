@@ -5,10 +5,14 @@ template <typename Pattern> constexpr bool match(std::string_view input, Pattern
 	return bool(ctre::match_re(input.begin(), input.end(), pattern));
 }
 
+template <typename Pattern> constexpr bool search(std::string_view input, Pattern pattern) {
+	return bool(ctre::search_re(input.begin(), input.end(), pattern));
+}
+
 using namespace std::string_view_literals;
 
 static_assert(match("a"sv, ctre::character<'a'>()));
-static_assert(match("abc"sv, ctre::character<'a'>())); // only match from start
+static_assert(search("abc"sv, ctre::character<'a'>())); // only match from start
 static_assert(!match("abc"sv, ctre::character<'b'>()));
 static_assert(!match("a"sv, ctre::character<'b'>()));
 static_assert(match("a"sv, ctre::any()));
@@ -67,7 +71,7 @@ static_assert(match("aba"sv, ctre::sequence<ctre::possessive_plus<ctre::characte
 
 static_assert(match("aaax"sv, ctre::sequence<ctre::lazy_repeat<3,0,ctre::character<'a'>>, ctre::character<'x'>>()));
 
-static_assert(match("aaaaaa"sv, ctre::repeat<0,5,ctre::character<'a'>>()));
+static_assert(search("aaaaaa"sv, ctre::repeat<0,5,ctre::character<'a'>>()));
 static_assert(!match("aaaaaa"sv, ctre::sequence<ctre::repeat<0,5,ctre::character<'a'>>, ctre::assert_end>()));
 static_assert(match("aaaaa"sv, ctre::sequence<ctre::repeat<0,5,ctre::character<'a'>>, ctre::assert_end>()));
 
