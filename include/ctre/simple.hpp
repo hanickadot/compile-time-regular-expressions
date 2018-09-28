@@ -26,46 +26,63 @@ struct simple {
 	struct sequence: ctll::action {};
 	struct space: ctll::action {};
 	struct star: ctll::action {};
+	
+	template <typename Move> struct rule {
+		rule(...) { }
+		using move = Move;
+	};
 
 // (q)LL1 function:
 	using _others = ctll::neg_set<'(',')','*','+','?','\\','|'>;
-	static constexpr auto rule(s, ctll::epsilon) -> ctll::epsilon;
-	static constexpr auto rule(s, _others) -> ctll::push<ctll::anything, character, mod, seq2, opt2>;
-	static constexpr auto rule(s, ctll::term<'\\'>) -> ctll::push< ctll::anything, escape, mod, seq2, opt2 >;
-	static constexpr auto rule(s, ctll::term<'('>) -> ctll::push<ctll::anything, opt, ctll::term<')'>, mod, seq2, opt2>;
-	static constexpr auto rule(s, ctll::set<')','*','+','?','|'>) -> ctll::reject;
+	rule(s, ctll::epsilon) -> rule<ctll::epsilon>;
+	rule(s, _others) -> rule<ctll::push<ctll::anything, character, mod, seq2, opt2>>;
+	rule(s, ctll::term<'\\'>) -> rule<ctll::push< ctll::anything, escape, mod, seq2, opt2 >>;
+	rule(s, ctll::term<'('>) -> rule<ctll::push<ctll::term<'('>, opt, ctll::term<')'>, mod, seq2, opt2>>;
+	rule(s, ctll::set<')','*','+','?','|'>) -> rule<ctll::reject>;
 
-	static constexpr auto rule(escape, ctll::term<'a'>) -> ctll::push<ctll::anything, alpha>;
-	static constexpr auto rule(escape, ctll::term<'d'>) -> ctll::push<ctll::anything, digit>;
-	static constexpr auto rule(escape, ctll::term<'s'>) -> ctll::push<ctll::anything, space>;
+	rule(escape, ctll::term<'a'>) -> rule<ctll::push<ctll::anything, alpha>>;
+	rule(escape, ctll::term<'d'>) -> rule<ctll::push<ctll::anything, digit>>;
+	rule(escape, ctll::term<'s'>) -> rule<ctll::push<ctll::anything, space>>;
 	
-	static constexpr auto rule(mod, ctll::set<'(',')','\\','|'>) -> ctll::epsilon;
-	static constexpr auto rule(mod, ctll::epsilon) -> ctll::epsilon;
-	static constexpr auto rule(mod, _others) -> ctll::epsilon;
-	static constexpr auto rule(mod, ctll::term<'?'>) -> ctll::push<ctll::anything, optional>;
-	static constexpr auto rule(mod, ctll::term<'+'>) -> ctll::push<ctll::anything, plus>;
-	static constexpr auto rule(mod, ctll::term<'*'>) -> ctll::push<ctll::anything, star>;
+	rule(mod, ctll::set<'(',')','\\','|'>) -> rule<ctll::epsilon>;
+	rule(mod, ctll::epsilon) -> rule<ctll::epsilon>;
+	rule(mod, _others) -> rule<ctll::epsilon>;
+	rule(mod, ctll::term<'?'>) -> rule<ctll::push<ctll::anything, optional>>;
+	rule(mod, ctll::term<'+'>) -> rule<ctll::push<ctll::anything, plus>>;
+	rule(mod, ctll::term<'*'>) -> rule<ctll::push<ctll::anything, star>>;
 
-	static constexpr auto rule(opt2, ctll::term<')'>) -> ctll::epsilon;
-	static constexpr auto rule(opt2, ctll::epsilon) -> ctll::epsilon;
-	static constexpr auto rule(opt2, ctll::term<'|'>) -> ctll::push<ctll::anything, seq, alt, opt2>;
+	rule(opt2, ctll::term<')'>) -> rule<ctll::epsilon>;
+	rule(opt2, ctll::epsilon) -> rule<ctll::epsilon>;
+	rule(opt2, ctll::term<'|'>) -> rule<ctll::push<ctll::anything, seq, alt, opt2>>;
 
-	static constexpr auto rule(opt, _others) -> ctll::push<ctll::anything, character, mod, seq2, opt2>;
-	static constexpr auto rule(opt, ctll::term<'\\'>) -> ctll::push<ctll::anything, escape, mod, seq2, opt2>;
-	static constexpr auto rule(opt, ctll::term<'('>) -> ctll::push<ctll::anything, opt, ctll::term<')'>, mod, seq2, opt2>;
-	static constexpr auto rule(opt, ctll::set<')','*','+','?','|'>) -> ctll::reject;
+	rule(opt, _others) -> rule<ctll::push<ctll::anything, character, mod, seq2, opt2>>;
+	rule(opt, ctll::term<'\\'>) -> rule<ctll::push<ctll::anything, escape, mod, seq2, opt2>>;
+	rule(opt, ctll::term<'('>) -> rule<ctll::push<ctll::anything, opt, ctll::term<')'>, mod, seq2, opt2>>;
+	rule(opt, ctll::set<')','*','+','?','|'>) -> rule<ctll::reject>;
 
-	static constexpr auto rule(seq2, ctll::set<')','|'>) -> ctll::epsilon;
-	static constexpr auto rule(seq2, ctll::epsilon) -> ctll::epsilon;
-	static constexpr auto rule(seq2, _others) -> ctll::push<ctll::anything, character, sequence, mod, seq2>;
-	static constexpr auto rule(seq2, ctll::term<'\\'>) -> ctll::push<ctll::anything, escape, sequence, mod, seq2>;
-	static constexpr auto rule(seq2, ctll::term<'('>) -> ctll::push<ctll::anything, opt, ctll::term<')'>, sequence, mod, seq2>;
-	static constexpr auto rule(seq2, ctll::set<'*','+','?'>) -> ctll::reject;
+	rule(seq2, ctll::set<')','|'>) -> rule<ctll::epsilon>;
+	rule(seq2, ctll::epsilon) -> rule<ctll::epsilon>;
+	rule(seq2, _others) -> rule<ctll::push<ctll::anything, character, sequence, mod, seq2>>;
+	rule(seq2, ctll::term<'\\'>) -> rule<ctll::push<ctll::anything, escape, sequence, mod, seq2>>;
+	rule(seq2, ctll::term<'('>) -> rule<ctll::push<ctll::anything, opt, ctll::term<')'>, sequence, mod, seq2>>;
+	rule(seq2, ctll::set<'*','+','?'>) -> rule<ctll::reject>;
 
-	static constexpr auto rule(seq, _others) -> ctll::push<ctll::anything, character, mod, seq2>;
-	static constexpr auto rule(seq, ctll::term<'\\'>) -> ctll::push<ctll::anything, escape, mod, seq2>;
-	static constexpr auto rule(seq, ctll::term<'('>) -> ctll::push<ctll::anything, opt, ctll::term<')'>, mod, seq2>;
-	static constexpr auto rule(seq, ctll::set<')','*','+','?','|'>) -> ctll::reject;
+	rule(seq, _others) -> rule<ctll::push<ctll::anything, character, mod, seq2>>;
+	rule(seq, ctll::term<'\\'>) -> rule<ctll::push<ctll::anything, escape, mod, seq2>>;
+	rule(seq, ctll::term<'('>) -> rule<ctll::push<ctll::anything, opt, ctll::term<')'>, mod, seq2>>;
+	rule(seq, ctll::set<')','*','+','?','|'>) -> rule<ctll::reject>;
+	
+	// term on stack and on input means pop_input;
+	template <auto A> rule(ctll::term<A>, ctll::term<A>) -> rule<ctll::pop_input>;
+	
+	// if the type on stack (range, set, neg_set, anything) is constructible from the terminal => pop_input
+	template <typename Expected, auto V> rule(Expected, ctll::term<V>) -> rule<std::enable_if_t<std::is_constructible_v<Expected, ctll::term<V>>, ctll::pop_input>>;
+	
+	// empty stack and empty input means we are accepting 
+	rule(ctll::empty_stack_symbol, ctll::epsilon) -> rule<ctll::accept>;
+	
+	// not matching anything else => reject
+	rule(...) -> rule<ctll::reject>;
 
 };
 

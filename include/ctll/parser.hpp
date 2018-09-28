@@ -80,6 +80,8 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	static constexpr auto move(ctll::list<anything, Content...> string, term<T>, Stack stack, Subject subject) noexcept {
 		return decide<Pos+1>(push_front(list<Content...>(), stack), subject);
 	}
+	
+	
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
 		// each call means we pop something from stack
@@ -98,7 +100,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		} else {
 			// all other cases are ordinary for LL(1) parser
 			auto current_term = get_current_term<Pos>();
-			auto rule = decltype(grammar.rule(top_symbol,current_term))();
+			auto rule = typename decltype(typename Grammar::rule{top_symbol,current_term})::move();
 			return move<Pos>(rule, current_term, stack, previous_subject);
 		}
 	}

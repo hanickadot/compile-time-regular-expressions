@@ -79,21 +79,6 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	// start nonterminal is defined in parent type
 	using typename Grammar::_start; 
 	
-	// grammar rules are inherited from Grammar parent type
-	using Grammar::rule; 
-	
-	// term on stack and on input means pop_input;
-	template <auto A> static constexpr auto rule(term<A>, term<A>) -> ctll::pop_input;
-	
-	// if the type on stack (range, set, neg_set, anything) is constructible from the terminal => pop_input
-	template <typename Expected, auto V> static constexpr auto rule(Expected, term<V>) -> std::enable_if_t<std::is_constructible_v<Expected, term<V>>, ctll::pop_input>;
-	
-	// empty stack and empty input means we are accepting 
-	static constexpr auto rule(empty_stack_symbol, epsilon) -> ctll::accept;
-	
-	// not matching anything else => reject
-	static constexpr auto rule(...) -> ctll::reject;
-	
 	// start stack is just a list<Grammar::_start>;
 	static constexpr inline auto start_stack = list<typename Grammar::_start>{};
 };
