@@ -6,7 +6,7 @@ This is placeholder branch for new version of CTRE.
 
 #### Extracting number from input
 ```c++
-std::optional<std::string_view> extract_number(std::string_view s) neoxcept {
+std::optional<std::string_view> extract_number(std::string_view s) noexcept {
     using namespace ctre::literals;
     if (auto m = "^[a-z]++([0-9]++)$"_pcre.match(s)) {
         return m.get<1>().to_view();
