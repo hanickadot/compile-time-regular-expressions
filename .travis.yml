@@ -1,14 +1,22 @@
-sudo: false
-language: cpp
-compiler:
-  - clang
+sudo: true
+language: gcc
+compiler: clang
+dist: trusty
+
 addons:
   apt:
-    sources:
-    - llvm-toolchain-precise-5.0
     packages:
     - clang
+    - libpcre2-dev 
+
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+
 install:
-- "[ $CXX = clang++ ] && export CXX=clang++ || true"
+  - sudo apt-get install -qq g++-8
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 90
+  - g++ --version
+  - export CXX=g++
 script:
   - make

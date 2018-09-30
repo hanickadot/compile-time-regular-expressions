@@ -8,7 +8,7 @@ DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CXXFLAGS := -std=c++2a -Iinclude -O3 -Wno-gnu-string-literal-operator-template 
 #-Xclang -fconcepts-ts
-LDFLAGS := -L/usr/local/Cellar/pcre2/10.31/lib -lpcre2-8
+LDFLAGS := -lpcre2-8
 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
@@ -24,7 +24,7 @@ $(TRUE_TARGETS): %: %.o
 	$(CXX)  $< $(LDFLAGS) -o $@
 	
 $(OBJECTS): %.o: %.cpp
-	time $(CXX) $(CXXFLAGS) -MMD -c $< -o $@
+	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
 
 -include $(DEPEDENCY_FILES)
 
