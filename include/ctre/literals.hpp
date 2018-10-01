@@ -14,13 +14,13 @@ namespace ctre {
 // in C++17 (clang & gcc with gnu extension) we need translate character pack into basic_fixed_string
 // in C++20 we have `class nontype template parameters`
 
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::basic_fixed_string<CharT, sizeof...(input)>({input...});
 #endif	
 
 namespace literals {
 	
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_fixed_pcre() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -35,7 +35,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 // add this when we will have concepts
 // requires ctll::parser<ctre::pcre, _fixed_string_reference<CharT, charpack...>, ctre::pcre_actions>::template correct_with<pcre_context<>>
 
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_pcre() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -53,7 +53,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 // add this when we will have concepts
 // requires ctll::parser<ctre::pcre, _fixed_string_reference<CharT, charpack...>, ctre::pcre_actions>::template correct_with<pcre_context<>>
 
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -76,7 +76,7 @@ template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr 
 
 namespace test_literals {
 
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_pcre_test() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -85,7 +85,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr inline au
 	return ctll::parser<ctre::pcre, input>::correct;
 }
 
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_pcre_gen() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -97,7 +97,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr inline au
 }
 
 
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_pcre_syntax() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -107,7 +107,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 }
 
 
-#if !__has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_simple_test() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
