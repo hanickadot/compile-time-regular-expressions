@@ -12,7 +12,7 @@ namespace ctre {
 
 // in moment when we get C++20 support this will start to work :)
 
-#if __has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -23,7 +23,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 #endif
 
 
-#if __has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input, typename ForwardIt> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto match(ForwardIt first, ForwardIt last) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -34,7 +34,7 @@ template <basic_fixed_string input, typename ForwardIt> __attribute__((flatten))
 #endif
 
 
-#if __has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto search(std::string_view sv) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -45,7 +45,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 #endif
 
 
-#if __has_cpp_attribute(__cpp_nontype_template_parameter_class)
+#if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input, typename ForwardIt> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto search(ForwardIt first, ForwardIt last) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
