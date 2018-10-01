@@ -22,14 +22,27 @@ matrix:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
         packages: ['g++-8', 'clang-6.0']
 
+  - os: osx
+    osx_image: xcode9.4
+
+  - os: osx
+    osx_image: xcode10
+    
 before_install:
     # libpcre2-dev
-  - sudo add-apt-repository -y ppa:sergey-dryabzhinsky/packages
-  - sudo apt-get update -qq
+  - |
+     if [[ (-x $(which brew)) ]]; then
+       brew update
+       brew install pcre2
+     else
+       sudo add-apt-repository -y ppa:sergey-dryabzhinsky/packages
+       sudo apt-get update -qq
+       sudo apt-get install -qq libpcre2-dev
+     fi
 
 install:
-  - sudo apt-get install -qq libpcre2-dev
-  - export CXX=${COMPILER};
+  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+  - uname -a
   - $CXX --version
 script:
   - make
