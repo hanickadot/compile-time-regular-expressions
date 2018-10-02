@@ -1,6 +1,8 @@
 # Compile time regular expressions v2
 
-This is placeholder branch for new version of CTRE.
+[![Build Status](https://travis-ci.org/hanickadot/compile-time-regular-expressions.svg?branch=master)](https://travis-ci.org/hanickadot/compile-time-regular-expressions)
+
+Fast compile-time regular expression with support for matching/searching/capturing in compile-time or runtime.
 
 ## Examples
 
