@@ -1,17 +1,48 @@
 sudo: true
-language: gcc
-compiler: clang
+language: cpp
 dist: trusty
 
+matrix:
+  include:
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-8
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-8']
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-6.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: ['g++-8', 'clang-6.0']
+
+  - os: osx
+    osx_image: xcode9.4
+
+  - os: osx
+    osx_image: xcode10
+    
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo add-apt-repository -y ppa:sergey-dryabzhinsky/packages
-  - sudo apt-get update -qq
+    # libpcre2-dev
+  - |
+     if [[ (-x $(which brew)) ]]; then
+       brew update
+       brew install pcre2
+     else
+       sudo add-apt-repository -y ppa:sergey-dryabzhinsky/packages
+       sudo apt-get update -qq
+       sudo apt-get install -qq libpcre2-dev
+     fi
 
 install:
-  - sudo apt-get install -qq g++-8 libpcre2-dev
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 90
-  - g++ --version
-  - export CXX=g++
+  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+  - uname -a
+  - $CXX --version
 script:
   - make
