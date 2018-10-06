@@ -16,6 +16,7 @@ class CtreConan(ConanFile):
     no_copy_source = True
     
     def package(self):
+        self.copy("LICENSE", "licenses")
         self.copy("*.hpp")
     
     def package_id(self):

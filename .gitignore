@@ -4,3 +4,5 @@ test
 result
 tests/benchmark-exec/*
 !tests/benchmark-exec/*.cpp
+*.pyc
+.conan/test_package/build
