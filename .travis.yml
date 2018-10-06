@@ -11,7 +11,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-8', 'libboost-all-dev']
+        packages: ['g++-8']
 
   - os: linux
     compiler: clang
@@ -20,23 +20,19 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
-        packages: ['g++-8', 'clang-6.0', 'libboost-all-dev']
+        packages: ['g++-8', 'clang-6.0']
 
   - os: linux
-    compiler: gcc
+    language: python
+    python: "3.6"
+    services:
+      - docker
     env:
       - COMPILER=g++-8
-      - CC=gcc8
       - CONAN_GCC_VERSIONS=8
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-8', 'cmake']
+      - CONAN_DOCKER_IMAGE=lasote/conangcc8
     install:
-      - sudo pip install conan conan-package-tools
-    before_script:
-      - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50
-      - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
+      - pip install -U conan conan-package-tools
     script:
       - python .conan/build.py
 
