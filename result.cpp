@@ -13,7 +13,7 @@ enum class type {
 std::pair<type, std::string_view> match(std::string_view subject) {
 	using namespace ctre::literals;
 	
-	if (auto [matched, identifier, number] = "(?:([a-z]++)|([0-9]++))"_pcre.match(subject); matched) {
+	if (auto [matched, identifier, number] = "(?:([a-z]++)|([0-9]++))"_ctre.match(subject); matched) {
 		if (identifier) return {type::identifier, std::string_view{identifier}};
 		else if (number) return {type::number, std::string_view{number}};
 		else return {type::matched, std::string_view{matched}};
