@@ -14,7 +14,7 @@ extern "C" {
 
 int main (int argc, char ** argv)
 {
-	std::regex re("([aAbB]{4,}|[xXyY]{4,}|[1234]{4,})0");
+	std::regex re("ABCD|DEFGH|EFGHI|A{4,}");
 	
 	auto grep = [&](auto && stream) {
 		std::string line;
