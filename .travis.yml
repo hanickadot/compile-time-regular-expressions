@@ -11,7 +11,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-8']
+        packages: ['g++-8', 'libboost-all-dev']
 
   - os: linux
     compiler: clang
@@ -20,7 +20,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
-        packages: ['g++-8', 'clang-6.0']
+        packages: ['g++-8', 'clang-6.0', 'libboost-all-dev']
 
   - os: linux
     compiler: gcc

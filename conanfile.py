@@ -15,7 +15,7 @@ class CtreConan(ConanFile):
     scm = {
         "type": "git",
         "url": "auto",
-        "revision": "auto" 
+        "revision": "auto"
     }
     
     def package(self):
