@@ -3,6 +3,7 @@
 #include <fstream> 
 #include <regex>
 #include "ctre.hpp"
+#include <re2/re2.h>
 
 extern "C" {
 
@@ -14,13 +15,12 @@ extern "C" {
 
 int main (int argc, char ** argv)
 {
-	using namespace ctre::literals;
-	constexpr auto re = "ABCD|DEFGH|EFGHI|A{4,}"_ctre;
-
+	re2::RE2 re("ABCD|DEFGH|EFGHI|A{4,}");
+	
 	auto grep = [&](auto && stream) {
 		std::string line;
 		while (std::getline(stream, line)) {
-			if (bool(re.search(line))) {
+			if (re2::RE2::PartialMatch(line, re)) {
 				std::cout << line << '\n';
 			}
 		}
@@ -33,4 +33,3 @@ int main (int argc, char ** argv)
 		grep(std::ifstream(fname, std::ifstream::in));
 	}
 }
-

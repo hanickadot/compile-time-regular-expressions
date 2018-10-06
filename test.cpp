@@ -7,7 +7,7 @@
 void match(std::string_view subject) {
 	using namespace ctre::literals;
 	
-	if (auto [matched, inner] = "^([0-9]+?[a-z]++)+"_pcre.match(subject); matched) {
+	if (auto [matched, inner] = "^([0-9]+?[a-z]++)+"_ctre.match(subject); matched) {
 		std::cout << "matched = " << matched.to_view() << "\n";
 		if (inner) {
 			std::cout << "  inner = " << inner.to_view() << "\n";
