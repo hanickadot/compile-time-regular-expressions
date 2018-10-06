@@ -11,11 +11,12 @@ class CtreConan(ConanFile):
     homepage = "https://github.com/hanickadot/compile-time-regular-expressions"
     name = "CTRE"
     version = "2.0"
+    exports = "LICENSE"
     exports_sources = "include/*"
     no_copy_source = True
     scm = {
         "type": "git",
-        "url": "https://github.com/hanickadot/compile-time-regular-expressions.git",
+        "url": url,
         "revision": "master"
     }
     
