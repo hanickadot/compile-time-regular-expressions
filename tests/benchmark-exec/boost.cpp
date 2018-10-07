@@ -8,7 +8,7 @@
 int main (int argc, char ** argv)
 {
 	
-	auto re = boost::regex( "([aAbB]{4,}|[xXyY]{4,}|[1234]{4,})0" );
+	auto re = boost::regex( "ABCD|DEFGH|EFGHI|A{4,}" );
 	//std::regex re("([aAbB]{4,}|[xXyY]{4,}|[1234]{4,})0");
 	
 	auto grep = [&](auto && stream) {

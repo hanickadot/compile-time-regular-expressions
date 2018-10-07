@@ -35,17 +35,15 @@ template <typename Symbol> constexpr inline unsigned match_jump(Symbol, ctll::li
 template <typename Symbol, auto First, auto Last, unsigned Next, typename... Tail> constexpr inline unsigned match_jump(Symbol s, ctll::list<ctfa::range<First, Last, Next>, Tail...>) {
 	if ((First <= s) && (s <= Last)) {
 		return Next;
-	} else {
-		return match_jump(s, ctll::list<Tail...>{});
 	}
+	return match_jump(s, ctll::list<Tail...>{});
 }
 
 template <typename Symbol, auto Value, unsigned Next, typename... Tail> constexpr inline unsigned match_jump(Symbol s, ctll::list<ctfa::eq<Value, Next>, Tail...>) {
 	if (s == Value) {
 		return Next;
-	} else {
-		return match_jump(s, ctll::list<Tail...>{});
 	}
+	return match_jump(s, ctll::list<Tail...>{});
 }
 
 template <typename Symbol, unsigned Next, typename... Tail> constexpr inline unsigned match_jump(Symbol s, ctll::list<ctfa::sink<Next>, Tail...>) {
