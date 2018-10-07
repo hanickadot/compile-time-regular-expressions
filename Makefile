@@ -8,12 +8,12 @@ DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CXXFLAGS := -std=c++2a -Iinclude -O3 -Wno-gnu-string-literal-operator-template 
 #-Xclang -fconcepts-ts
-LDFLAGS := -lpcre2-8
+LDFLAGS := -lboost_regex -lpcre2-8 -lre2
 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
-IGNORE := $(wildcard tests/benchmark/*.cpp) $(wildcard tests/benchmark-exec/boost.cpp) $(wildcard tests/benchmark-exec/re2.cpp) 
+IGNORE := $(wildcard tests/benchmark/*.cpp) tests/benchmark-exec/boost.cpp wildcard tests/benchmark-exec/re2.cpp
 OBJECTS_PRE := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
 OBJECTS := $(filter-out $(IGNORE:%.cpp=%.o), $(OBJECTS_PRE))
 DEPEDENCY_FILES := $(OBJECTS:%.o=%.d)
