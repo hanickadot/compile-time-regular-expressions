@@ -29,7 +29,6 @@ matrix:
     osx_image: xcode10
     
 before_install:
-    # libpcre2-dev
   - |
      if [[ (-x $(which brew)) ]]; then
        brew update
@@ -37,9 +36,7 @@ before_install:
      else
        sudo add-apt-repository -y ppa:sergey-dryabzhinsky/packages
        sudo apt-get update -qq
-       sudo apt-get install -qq libpcre2-dev
-	   sudo apt-get install -qq re2-dev
-	   sudo apt-get install -qq boost-dev
+       sudo apt-get install -qq libpcre2-dev re2-dev boost-dev
      fi
 
 install:
