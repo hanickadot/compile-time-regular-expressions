@@ -7,15 +7,15 @@ Fast compile-time regular expression with support for matching/searching/capturi
 ## What this library can do?
 
 ```c++
-ctre::match<"REGEX">(strview); // C++20
-"REGEX"_ctre.match(strview); // C++17 + N3599 extension
+ctre::match<"REGEX">(subject); // C++20
+"REGEX"_ctre.match(subject); // C++17 + N3599 extension
 ```
 
 * Matching
 * Searching
-* Capturing content
+* Capturing content (named captures are supported too)
 
-### What can be input?
+### What can be subject (input)?
 
 * `std::string`-like object (`std::string_view` or your own string if it's providing `begin`/`end` functions with forward iterators)
 * pair of forward iterators
