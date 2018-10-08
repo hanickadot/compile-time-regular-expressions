@@ -6,7 +6,7 @@ from cpt.packager import ConanMultiPackager
 
 if __name__ == "__main__":
     builder = ConanMultiPackager(
-        username="crte",
+        username="ctre",
         upload="https://api.bintray.com/conan/hanickadot/ctre",
         upload_only_when_stable=True,
         stable_branch_pattern="v?\d+\.\d+.*",
