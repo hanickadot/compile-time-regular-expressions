@@ -22,6 +22,20 @@ matrix:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
         packages: ['g++-8', 'clang-6.0']
 
+  - os: linux
+    language: python
+    python: "3.6"
+    services:
+      - docker
+    env:
+      - COMPILER=g++-8
+      - CONAN_GCC_VERSIONS=8
+      - CONAN_DOCKER_IMAGE=lasote/conangcc8
+    install:
+      - pip install -U conan conan-package-tools
+    script:
+      - python .conan/build.py
+
   - os: osx
     osx_image: xcode9.4
 
