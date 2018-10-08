@@ -5,7 +5,6 @@ from conans import ConanFile
 
 class CtreConan(ConanFile):
     name = "CTRE"
-    version = "2.1"
     license = "MIT"
     url = "https://github.com/hanickadot/compile-time-regular-expressions"
     author = "Hana Dusíková (ctre@hanicka.net)"
