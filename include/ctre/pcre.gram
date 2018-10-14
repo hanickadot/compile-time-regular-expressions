@@ -93,7 +93,7 @@ range->minus,backslash,<backslash_range>,[make_range]
 
 
 backslash_set-><special>,[push_character]
-special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar
+special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar|minus
 backslash_set->escape_alphanum,[push_character]
 
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon

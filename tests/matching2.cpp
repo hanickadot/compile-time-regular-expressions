@@ -15,6 +15,8 @@ static_assert(!"^b"_ctre.match("abc"sv));
 static_assert(!"b"_ctre.match("a"sv));
 static_assert("."_ctre.match("a"sv));
 static_assert("."_ctre.search("abc"sv));
+static_assert("[\\-]"_ctre.match("-"sv));
+static_assert("[\\\\]"_ctre.match("\\"sv));
 static_assert("[a-z]"_ctre.match("a"sv));
 static_assert("[a-z]"_ctre.match("f"sv));
 static_assert("[a-z]"_ctre.match("z"sv));
