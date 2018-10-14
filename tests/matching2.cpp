@@ -170,3 +170,6 @@ static_assert(R"(\[([A-Z]*?)\])"_ctre.match("[]"sv));
 static_assert(R"(\[([A-Z]*?)\])"_ctre.match("[URL]"sv));
 
 static_assert(R"(\[([\s\S]*?)\]\(([\s\S]*?)\))"_ctre.match("[URL](https://cpp.fail/ctre)"));
+
+static_assert("abc"_ctre.match("abc"));
+
