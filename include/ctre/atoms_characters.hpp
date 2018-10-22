@@ -98,7 +98,7 @@ struct ascii_chars {
 	}
 };
 
-template <auto A, auto B> struct range {
+template <auto A, auto B> struct char_range {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return (value >= A) && (value <= B);
 	}

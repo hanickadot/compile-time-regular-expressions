@@ -82,6 +82,19 @@ constexpr std::optional<lex_item> lexer(std::string_view v) noexcept {
 ```
 [link to compiler explorer](https://godbolt.org/z/iSgFiK)
 
+#### Range over input
+
+This support is preliminary and probably the API will be changed.
+
+```c++
+auto input = "123,456,768"sv;
+
+using namespace ctre::literals;
+for (auto match: ctre::range(input,"[0-9]++"_ctre)) {
+	std::cout << std::string_view{match} << "\n";
+}
+```
+
 ## Supported compilers
 
 * clang 5.0+

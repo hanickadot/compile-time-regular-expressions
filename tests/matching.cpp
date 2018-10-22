@@ -16,12 +16,12 @@ static_assert(search("abc"sv, ctre::character<'a'>())); // only match from start
 static_assert(!match("abc"sv, ctre::character<'b'>()));
 static_assert(!match("a"sv, ctre::character<'b'>()));
 static_assert(match("a"sv, ctre::any()));
-static_assert(match("a"sv, ctre::set<ctre::range<'a','z'>>()));
-static_assert(match("f"sv, ctre::set<ctre::range<'a','z'>>()));
-static_assert(match("z"sv, ctre::set<ctre::range<'a','z'>>()));
-static_assert(!match("Z"sv, ctre::set<ctre::range<'a','z'>>()));
-static_assert(match("0"sv, ctre::set<ctre::range<'a','z'>, ctre::range<'0','9'>>()));
-static_assert(!match("A"sv, ctre::set<ctre::range<'a','z'>, ctre::range<'0','9'>>()));
+static_assert(match("a"sv, ctre::set<ctre::char_range<'a','z'>>()));
+static_assert(match("f"sv, ctre::set<ctre::char_range<'a','z'>>()));
+static_assert(match("z"sv, ctre::set<ctre::char_range<'a','z'>>()));
+static_assert(!match("Z"sv, ctre::set<ctre::char_range<'a','z'>>()));
+static_assert(match("0"sv, ctre::set<ctre::char_range<'a','z'>, ctre::char_range<'0','9'>>()));
+static_assert(!match("A"sv, ctre::set<ctre::char_range<'a','z'>, ctre::char_range<'0','9'>>()));
 static_assert(match("0"sv, ctre::set<ctre::xdigit_chars>()));
 static_assert(match("9"sv, ctre::set<ctre::xdigit_chars>()));
 static_assert(match("a"sv, ctre::set<ctre::xdigit_chars>()));

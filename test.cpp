@@ -18,4 +18,12 @@ void match(std::string_view subject) {
 int main() {
 	using namespace std::string_view_literals;
 	match("123abc456def"sv);
+	
+	auto input = "123,456,768"sv;
+	
+	using namespace ctre::literals;
+	for (auto match: ctre::range(input,"[0-9]++"_ctre)) {
+		std::cout << std::string_view{match} << "\n";
+	}
+	
 }

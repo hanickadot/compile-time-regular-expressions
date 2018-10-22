@@ -60,7 +60,7 @@ template <auto V, typename A, typename... Ts, typename Parameters> static conste
 
 // add range to set
 template <auto V, auto B, auto A, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_range, ctll::term<V>, pcre_context<ctll::list<character<B>,character<A>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(range<A,B>(), ctll::list<Ts...>()), subject.parameters};
+	return pcre_context{ctll::push_front(char_range<A,B>(), ctll::list<Ts...>()), subject.parameters};
 }
 
 #endif

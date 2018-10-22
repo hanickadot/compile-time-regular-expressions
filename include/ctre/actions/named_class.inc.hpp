@@ -23,23 +23,23 @@ template <auto V, typename... Ts, typename Parameters> static constexpr auto app
 }
 // class_named_cntrl
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::class_named_cntrl, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(ctre::set<ctre::range<'\x00','\x1F'>, ctre::character<'\x7F'>>(), subject.stack), subject.parameters};
+	return pcre_context{ctll::push_front(ctre::set<ctre::char_range<'\x00','\x1F'>, ctre::character<'\x7F'>>(), subject.stack), subject.parameters};
 }
 // class_named_graph
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::class_named_graph, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(ctre::range<'\x21','\x7E'>(), subject.stack), subject.parameters};
+	return pcre_context{ctll::push_front(ctre::char_range<'\x21','\x7E'>(), subject.stack), subject.parameters};
 }
 // class_named_lower
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::class_named_lower, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(ctre::range<'a','z'>(), subject.stack), subject.parameters};
+	return pcre_context{ctll::push_front(ctre::char_range<'a','z'>(), subject.stack), subject.parameters};
 }
 // class_named_upper
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::class_named_upper, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(ctre::range<'A','Z'>(), subject.stack), subject.parameters};
+	return pcre_context{ctll::push_front(ctre::char_range<'A','Z'>(), subject.stack), subject.parameters};
 }
 // class_named_print
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::class_named_print, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(ctre::range<'\x20','\x7E'>(), subject.stack), subject.parameters};
+	return pcre_context{ctll::push_front(ctre::char_range<'\x20','\x7E'>(), subject.stack), subject.parameters};
 }
 // class_named_space
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::class_named_space, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {

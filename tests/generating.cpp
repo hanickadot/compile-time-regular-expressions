@@ -66,14 +66,14 @@ static_assert(same_f("[[:^digit:]]"_ctre_gen, ctre::set<ctre::negate<ctre::digit
 static_assert(same_f("[[:^digit:][:^alpha:]]"_ctre_gen, ctre::set<ctre::negate<ctre::digit_chars>, ctre::negate<ctre::alpha_chars>>()));
 static_assert(same_f("[[:digit:][:alpha:]]"_ctre_gen, ctre::set<ctre::digit_chars, ctre::alpha_chars>()));
 static_assert(same_f("[[:digit:][:^alpha:]]"_ctre_gen, ctre::set<ctre::digit_chars, ctre::negate<ctre::alpha_chars>>()));
-static_assert(same_f("[a-z]"_ctre_gen, ctre::set<ctre::range<'a','z'>>()));
-static_assert(same_f("[a-z0-9]"_ctre_gen, ctre::set<ctre::range<'a','z'>,ctre::range<'0','9'>>()));
-static_assert(same_f("[^a-z]"_ctre_gen, ctre::negative_set<ctre::range<'a','z'>>()));
-static_assert(same_f("[^a-z0-9]"_ctre_gen, ctre::negative_set<ctre::range<'a','z'>,ctre::range<'0','9'>>()));
-static_assert(same_f("[a-z[:digit:]]"_ctre_gen, ctre::set<ctre::range<'a','z'>,ctre::digit_chars>()));
-static_assert(same_f("[a-z98]"_ctre_gen, ctre::set<ctre::range<'a','z'>,ctre::character<'9'>,ctre::character<'8'>>()));
+static_assert(same_f("[a-z]"_ctre_gen, ctre::set<ctre::char_range<'a','z'>>()));
+static_assert(same_f("[a-z0-9]"_ctre_gen, ctre::set<ctre::char_range<'a','z'>,ctre::char_range<'0','9'>>()));
+static_assert(same_f("[^a-z]"_ctre_gen, ctre::negative_set<ctre::char_range<'a','z'>>()));
+static_assert(same_f("[^a-z0-9]"_ctre_gen, ctre::negative_set<ctre::char_range<'a','z'>,ctre::char_range<'0','9'>>()));
+static_assert(same_f("[a-z[:digit:]]"_ctre_gen, ctre::set<ctre::char_range<'a','z'>,ctre::digit_chars>()));
+static_assert(same_f("[a-z98]"_ctre_gen, ctre::set<ctre::char_range<'a','z'>,ctre::character<'9'>,ctre::character<'8'>>()));
 static_assert(same_f("[\\w]"_ctre_gen, ctre::set<ctre::set<ctre::word_chars>>()));
-static_assert(same_f("[\\x30-\\x39]"_ctre_gen, ctre::set<ctre::range<'\x30','\x39'>>()));
+static_assert(same_f("[\\x30-\\x39]"_ctre_gen, ctre::set<ctre::char_range<'\x30','\x39'>>()));
 
 // alternation
 static_assert(same_f("(?:abc|def)"_ctre_gen, ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>>()));
