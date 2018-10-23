@@ -1,0 +1,11 @@
+#include "ctre.hpp"
+
+static constexpr inline auto pattern = ctll::basic_fixed_string{"h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)h(e[ll]+o)"};
+
+static constexpr inline auto a = ctll::parser<ctre::pcre, pattern>::trampoline_decide();
+
+template <typename T> void identify(T) { }
+
+void fnc() {
+	identify(a);
+}

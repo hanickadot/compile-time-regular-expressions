@@ -10,11 +10,10 @@ namespace ctll {
 	
 struct empty_subject { };
 
-template <bool Result, typename Subject> struct parse_result {
-	constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
-		return Result;
-	}
-	using output_type = Subject;
+enum class decision {
+	reject,
+	accept,
+	undecided
 };
 
 #if !__cpp_nontype_template_parameter_class
@@ -24,6 +23,10 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 #endif
 	static inline constexpr auto grammar = augment_grammar<Grammar>();
 	static inline constexpr auto select_action = augment_actions<IngoreUnknownActions, ActionSelector>();
+	
+	template <size_t Pos, typename Stack = void, typename Subject = void, decision Decision = decision::undecided> struct seed;
+	
+	template <size_t Pos> struct placeholder { };
 	
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
@@ -46,17 +49,17 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// if rule is accept => return true and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject> 
 	static constexpr auto move(ctll::accept, Terminal, Stack, Subject) noexcept {
-		return parse_result<true, Subject>();
+		return seed<Pos, Stack, Subject, decision::accept>();
 	}
 	// if rule is reject => return false and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::reject, Terminal, Stack, Subject) noexcept {
-		return parse_result<false, Subject>();
+		return seed<Pos, Stack, Subject, decision::reject>();
 	}
 	// if rule is pop_input => move to next character
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::pop_input, Terminal, Stack stack, Subject subject) noexcept {
-		return decide<Pos+1>(stack, subject);
+		return seed<Pos+1, Stack, Subject, decision::undecided>();
 	}
 	// if rule is string => push it to the front of stack
 	template <size_t Pos, typename... Content, typename Terminal, typename Stack, typename Subject>
@@ -72,13 +75,13 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
 	static constexpr auto move(ctll::list<term<V>, Content...> string, term<V>, Stack stack, Subject subject) noexcept {
-		return decide<Pos+1>(push_front(list<Content...>(), stack), subject);
+		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
 	static constexpr auto move(ctll::list<anything, Content...> string, term<T>, Stack stack, Subject subject) noexcept {
-		return decide<Pos+1>(push_front(list<Content...>(), stack), subject);
+		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
@@ -93,7 +96,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			
 			// in case that semantic action is error => reject input
 			if constexpr (std::is_same_v<ctll::reject, decltype(subject)>) {
-				return parse_result<false, Subject>();
+				return seed<Pos, Stack, Subject, decision::reject>();
 			} else {
 				return decide<Pos>(stack, subject);
 			}
@@ -104,10 +107,42 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			return move<Pos>(rule, current_term, stack, previous_subject);
 		}
 	}
+	// helper type for trampoline
+	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct seed {
+		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
+			return Decision == decision::accept;
+		}
+		
+		using output_type = Subject;
+		
+		static constexpr auto parse() noexcept {
+			return decide<Pos>(Stack{}, Subject{});
+		}
 	
-	template <typename Subject = empty_subject> using output = decltype(decide<0>(grammar.start_stack, Subject()));
-	static inline constexpr bool correct = decide<0>(grammar.start_stack, empty_subject());
-	template <typename Subject = empty_subject> static inline constexpr bool correct_with = decide<0>(grammar.start_stack, Subject());
+		template <size_t RPos> constexpr auto operator+(placeholder<RPos>) const noexcept {
+			if constexpr (Decision == decision::reject) {
+				return *this;
+			} else if constexpr (Decision == decision::accept) {
+				return *this;
+			} else {
+				return decltype(seed<RPos, Stack, Subject, Decision>::parse()){};
+			}
+		}
+	};
+	
+	// trampolines with folded expression
+	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject default_subject, std::index_sequence<Pos...>) noexcept {
+		// Pos+1 is needed as we want to finish calculation with epsilons on stack
+		return (seed<0, decltype(grammar.start_stack), Subject, decision::undecided>::parse() + ... + placeholder<Pos+1>());
+	}
+	
+	template <typename Subject = empty_subject> static constexpr auto trampoline_decide(Subject subject = {}) noexcept {
+		return trampoline_decide(subject, std::make_index_sequence<input.size()>());
+	}
+	
+	template <typename Subject = empty_subject> using output = decltype(trampoline_decide(Subject()));
+	static inline constexpr bool correct = trampoline_decide(empty_subject());
+	template <typename Subject = empty_subject> static inline constexpr bool correct_with = trampoline_decide(Subject());
 };
 
 } // end of ctll namespace
