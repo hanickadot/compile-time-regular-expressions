@@ -13,6 +13,17 @@ namespace ctre {
 // in moment when we get C++20 support this will start to work :)
 
 #if __cpp_nontype_template_parameter_class
+template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto re() noexcept {
+#else
+template <auto & input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto re() noexcept {	
+	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(tmp(), "Regular Expression contains syntax error.");
+	using re = decltype(front(typename tmp::output_type::stack_type()));
+	return ctre::regular_expression(re());
+}
+#endif
+
+#if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
