@@ -167,7 +167,7 @@ int main(int argc, char ** argv) {
 			auto [avg, stddiff] = calculate_diff(vec);
 			std::cout << name << " = " << std::fixed << std::setw( 11 ) << std::setprecision( 3 );
 			std::cout << (avg.count() / 1'000'000.0f) << " ms";
-			std::cout << " (stddiff = " << std::fixed << std::setw( 11 ) << std::setprecision( 3 );
+			std::cout << " (stdev = " << std::fixed << std::setw( 11 ) << std::setprecision( 3 );
 			std::cout << (stddiff.count() / 1'000'000.0f) << " ms)\n";
 		};
 		
