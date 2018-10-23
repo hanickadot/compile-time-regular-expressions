@@ -13,9 +13,9 @@ namespace ctre {
 // in moment when we get C++20 support this will start to work :)
 
 #if __cpp_nontype_template_parameter_class
-template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto re() noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 #else
-template <auto & input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto re() noexcept {	
+template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
@@ -24,7 +24,7 @@ template <auto & input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE aut
 #endif
 
 #if __cpp_nontype_template_parameter_class
-template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -35,7 +35,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 
 
 #if __cpp_nontype_template_parameter_class
-template <basic_fixed_string input, typename ForwardIt> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto match(ForwardIt first, ForwardIt last) noexcept {
+template <basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(ForwardIt first, ForwardIt last) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -46,7 +46,7 @@ template <basic_fixed_string input, typename ForwardIt> __attribute__((flatten))
 
 
 #if __cpp_nontype_template_parameter_class
-template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto search(std::string_view sv) noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(std::string_view sv) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -57,7 +57,7 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 
 
 #if __cpp_nontype_template_parameter_class
-template <basic_fixed_string input, typename ForwardIt> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto search(ForwardIt first, ForwardIt last) noexcept {
+template <basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(ForwardIt first, ForwardIt last) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");

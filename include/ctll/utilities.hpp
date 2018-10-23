@@ -3,6 +3,12 @@
 
 #include <type_traits>
 
+#ifdef _MSC_VER
+#define CTLL_FORCE_INLINE __forceinline
+#else
+#define CTLL_FORCE_INLINE __attribute__((always_inline))
+#endif
+
 namespace ctll {
 	
 template <bool> struct conditional_helper;

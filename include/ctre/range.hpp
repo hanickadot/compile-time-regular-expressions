@@ -24,7 +24,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> constexpr a
 }
 
 #if __cpp_nontype_template_parameter_class
-template <basic_fixed_string input, typename BeginIterator, typename EndIterator> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto range(BeginIterator begin, EndIterator end) noexcept {
+template <basic_fixed_string input, typename BeginIterator, typename EndIterator> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto range(BeginIterator begin, EndIterator end) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -42,7 +42,7 @@ template <typename RE> constexpr auto range(const char * subject, RE re) noexcep
 }
 
 #if __cpp_nontype_template_parameter_class
-template <basic_fixed_string input, typename Subject> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto range(const Subject & subject) noexcept {
+template <basic_fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto range(const Subject & subject) noexcept {
 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");

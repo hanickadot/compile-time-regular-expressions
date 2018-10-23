@@ -11,7 +11,7 @@ namespace ctll {
 struct empty_subject { };
 
 template <bool Result, typename Subject> struct parse_result {
-	constexpr inline __attribute__((always_inline)) operator bool() const noexcept {
+	constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
 		return Result;
 	}
 	using output_type = Subject;
@@ -83,7 +83,9 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
 		// each call means we pop something from stack
-		auto [top_symbol, stack] = pop_and_get_front(previous_stack, empty_stack_symbol());
+		auto top_symbol = decltype(ctll::front(previous_stack, empty_stack_symbol()))();
+		auto stack = decltype(ctll::pop_front(previous_stack))();
+		//auto [top_symbol, stack] = pop_and_get_front(previous_stack, empty_stack_symbol());
 		
 		// in case top_symbol is action type (apply it on previous subject and get new one)
 		if constexpr (std::is_base_of_v<ctll::action, decltype(top_symbol)>) {

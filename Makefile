@@ -58,7 +58,7 @@ mtent12.txt: mtent12.zip
 REPEAT:=10
 
 compare: mtent12.txt
-	$(CXX) $(CXXFLAGS) -MMD -DPATTERN="\"(${PATTERN})\"" -c tests/benchmark-range/measurement.cpp -o tests/benchmark-range/measurement.o
+	$(CXX) $(CXXFLAGS) -MMD -march=native -DPATTERN="\"(${PATTERN})\"" -c tests/benchmark-range/measurement.cpp -o tests/benchmark-range/measurement.o
 	$(CXX) tests/benchmark-range/measurement.o -lboost_regex -lpcre2-8 -lre2 -o tests/benchmark-range/measurement
 	tests/benchmark-range/measurement all mtent12.txt ${REPEAT}
 
