@@ -6,3 +6,8 @@ tests/benchmark-exec/*
 !tests/benchmark-exec/*.cpp
 *.pyc
 .conan/test_package/build
+mtent12.txt
+*.zip
+tests/benchmark-range/*
+!tests/benchmark-range/*.cpp
+!tests/benchmark-range/*.hpp

@@ -13,9 +13,9 @@ struct regex_end_iterator {
 template <typename BeginIterator, typename EndIterator, typename RE> struct regex_iterator {
 	BeginIterator current;
 	const EndIterator end;
-	decltype(RE::search(std::declval<BeginIterator>(), std::declval<EndIterator>())) current_match;
+	decltype(RE::search_2(std::declval<BeginIterator>(), std::declval<EndIterator>())) current_match;
 
-	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::search(current, end)} {
+	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::search_2(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -24,7 +24,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> struct rege
 		return current_match;
 	}
 	constexpr regex_iterator & operator++() noexcept {
-		current_match = RE::search(current, end);
+		current_match = RE::search_2(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -32,7 +32,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> struct rege
 	}
 	constexpr regex_iterator operator++(int) noexcept {
 		auto previous = *this;
-		current_match = RE::search(current, end);
+		current_match = RE::search_2(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}

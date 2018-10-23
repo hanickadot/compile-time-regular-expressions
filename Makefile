@@ -1,4 +1,4 @@
-.PHONY: default all clean grammar
+.PHONY: default all clean grammar compare
 
 default: all
 	
@@ -6,9 +6,9 @@ TARGETS := result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
-CXXFLAGS := -std=c++2a -Iinclude -O3 -Wno-gnu-string-literal-operator-template 
+CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template 
 #-Xclang -fconcepts-ts
-LDFLAGS := -lboost_regex -lpcre2-8 -lre2
+LDFLAGS := -lpcre2-8
 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
@@ -36,7 +36,7 @@ benchmark-clean:
 	@$(MAKE) IGNORE="" clean
 
 clean:
-	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES)
+	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES) mtent12.txt mtent12.zip
 	
 grammar: include/ctre/pcre.hpp include/ctre/simple.hpp
 	
@@ -47,6 +47,20 @@ regrammar:
 include/ctre/pcre.hpp: include/ctre/pcre.gram
 	@echo "LL1q $<"
 	@$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre
+	
+mtent12.zip:
+	curl -s http://www.gutenberg.org/files/3200/old/mtent12.zip -o mtent12.zip
+	
+mtent12.txt: mtent12.zip
+	unzip -o mtent12.zip
+	touch mtent12.txt
+	
+REPEAT:=10
+
+compare: mtent12.txt
+	$(CXX) $(CXXFLAGS) -MMD -DPATTERN="\"(${PATTERN})\"" -c tests/benchmark-range/measurement.cpp -o tests/benchmark-range/measurement.o
+	$(CXX) tests/benchmark-range/measurement.o -lboost_regex -lpcre2-8 -lre2 -o tests/benchmark-range/measurement
+	tests/benchmark-range/measurement all mtent12.txt ${REPEAT}
 
 #include/ctre/simple.hpp: include/ctre/simple.gram
 #	@echo "LL1q $<"

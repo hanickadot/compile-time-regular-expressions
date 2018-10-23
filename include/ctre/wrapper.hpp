@@ -24,29 +24,28 @@ struct zero_terminated_string_end_iterator {
 	} 
 };
 
-template <typename RE> class regular_expression {
-	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto match_ex(IteratorBegin begin, IteratorEnd end) noexcept {
+template <typename RE> struct regular_expression {
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto match_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return match_re(begin, end, RE());
 	}
-	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_ex(IteratorBegin begin, IteratorEnd end) noexcept {
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
-public:
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { };
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
 		return match_re(begin, end, RE());
 	}
 	static constexpr CTRE_FORCE_INLINE auto match(const char * s) noexcept {
-		return match_ex(s, zero_terminated_string_end_iterator());
+		return match_2(s, zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto match(const wchar_t * s) noexcept {
-		return match_ex(s, zero_terminated_string_end_iterator());
+		return match_2(s, zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto match(const std::string & s) noexcept {
-		return match_ex(s.c_str(), zero_terminated_string_end_iterator());
+		return match_2(s.c_str(), zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto match(const std::wstring & s) noexcept {
-		return match_ex(s.c_str(), zero_terminated_string_end_iterator());
+		return match_2(s.c_str(), zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
 		return match(sv.begin(), sv.end());
@@ -64,16 +63,16 @@ public:
 		return search_re(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE static auto search(const char * s) noexcept {
-		return search_ex(s, zero_terminated_string_end_iterator());
+		return search_2(s, zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto search(const wchar_t * s) noexcept {
-		return search_ex(s, zero_terminated_string_end_iterator());
+		return search_2(s, zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto search(const std::string & s) noexcept {
-		return search_ex(s.c_str(), zero_terminated_string_end_iterator());
+		return search_2(s.c_str(), zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto search(const std::wstring & s) noexcept {
-		return search_ex(s.c_str(), zero_terminated_string_end_iterator());
+		return search_2(s.c_str(), zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto search(std::string_view sv) noexcept {
 		return search(sv.begin(), sv.end());

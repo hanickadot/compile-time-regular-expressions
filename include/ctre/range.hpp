@@ -37,6 +37,10 @@ template <typename Subject, typename RE> constexpr auto range(const Subject & su
 	return range(subject.begin(), subject.end(), re);
 }
 
+template <typename RE> constexpr auto range(const char * subject, RE re) noexcept {
+	return range(subject, zero_terminated_string_end_iterator(), re);
+}
+
 #if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input, typename Subject> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto range(const Subject & subject) noexcept {
 
