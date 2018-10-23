@@ -15,7 +15,7 @@ extern "C" {
 int main (int argc, char ** argv)
 {
 	using namespace ctre::literals;
-	constexpr auto re = "ABCD|DEFGH|EFGHI|A{4,}"_ctre;
+	constexpr auto re = "[0-9a-fA-F]{8,16}+"_ctre;
 
 	auto grep = [&](auto && stream) {
 		std::string line;
