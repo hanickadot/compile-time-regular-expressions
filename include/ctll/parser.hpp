@@ -116,27 +116,30 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		using output_type = Subject;
 		
 		static constexpr auto parse() noexcept {
+			// push current position to decide function with current stack and subject
 			return decide<Pos>(Stack{}, Subject{});
 		}
 	
 		template <size_t RPos> constexpr auto operator+(placeholder<RPos>) const noexcept {
-			if constexpr (Decision == decision::reject) {
-				return *this;
-			} else if constexpr (Decision == decision::accept) {
-				return *this;
-			} else {
+			if constexpr (Decision == decision::undecided) {
+				// parse for current char (RPos) with previous stack and subject :)
 				return decltype(seed<RPos, Stack, Subject, Decision>::parse()){};
+			} else {
+				// if there is decision already => just push it to the end of fold expression
+				return *this;
 			}
 		}
 	};
 	
 	// trampolines with folded expression
 	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject default_subject, std::index_sequence<Pos...>) noexcept {
+		// parse everything for first char and than for next and next ...
 		// Pos+1 is needed as we want to finish calculation with epsilons on stack
 		return (seed<0, decltype(grammar.start_stack), Subject, decision::undecided>::parse() + ... + placeholder<Pos+1>());
 	}
 	
 	template <typename Subject = empty_subject> static constexpr auto trampoline_decide(Subject subject = {}) noexcept {
+		// there will be no recursion, just sequence long as the input
 		return trampoline_decide(subject, std::make_index_sequence<input.size()>());
 	}
 	
