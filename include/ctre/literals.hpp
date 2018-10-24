@@ -20,14 +20,16 @@ template <typename CharT, CharT... input> static inline constexpr auto _fixed_st
 
 namespace literals {
 
+#ifndef _MSC_VER
+	
 // add this when we will have concepts
 // requires ctll::parser<ctre::pcre, _fixed_string_reference<CharT, charpack...>, ctre::pcre_actions>::template correct_with<pcre_context<>>
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
+template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -38,28 +40,32 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORC
 
 
 // this will need to be fixed with C++20
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_ctre_id() noexcept {
+template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_id() noexcept {
 	return id<charpack...>();
 }
+
+#endif
 
 }
 
 namespace test_literals {
+	
+#ifndef _MSC_VER
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_ctre_test() noexcept {
+template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_ctre_test() noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 #endif
 	return ctll::parser<ctre::pcre, input>::correct;
 }
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_ctre_gen() noexcept {
+template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_ctre_gen() noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -68,23 +74,25 @@ template <basic_fixed_string input> __attribute__((flatten)) constexpr inline au
 
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
+template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((flatten)) constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 #endif
 	return ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template correct_with<pcre_context<>>;
 }
 
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... charpack> __attribute__((flatten)) constexpr inline auto operator""_simple_test() noexcept {
+template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_simple_test() noexcept {
 	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> __attribute__((flatten)) constexpr inline auto operator""_simple_test() noexcept {
+template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_simple_test() noexcept {
 #endif
 	return ctll::parser<ctre::simple, input>::correct;
 }
+
+#endif
 
 
 } // literals
