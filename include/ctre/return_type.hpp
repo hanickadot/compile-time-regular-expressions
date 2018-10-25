@@ -52,7 +52,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
-			return std::basic_string_view{_begin, static_cast<size_t>(std::distance(_begin, _end))};
+			return std::string_view{_begin, static_cast<size_t>(std::distance(_begin, _end))};
 		}
 		
 		constexpr operator std::string_view() const noexcept {
@@ -163,15 +163,15 @@ template <typename Iterator, typename... Captures> struct regex_results {
 	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 		return bool(_captures.template select<0>());
 	}
-	
-	using string_view_type = decltype(_captures.template select<0>().to_view());
-	
+
 	constexpr operator std::string_view() const noexcept {
 		return to_view();
 	}
+	
 	constexpr auto to_view() const noexcept {
 		return _captures.template select<0>().to_view();
 	}
+	
 	constexpr CTRE_FORCE_INLINE regex_results & set_start_mark(Iterator pos) noexcept {
 		_captures.template select<0>().set_start(pos);
 		return *this;

@@ -31,6 +31,7 @@ template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
+	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { };
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { };
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
 		return match_re(begin, end, RE());

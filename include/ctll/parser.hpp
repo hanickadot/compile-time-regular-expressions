@@ -7,8 +7,7 @@
 #include "actions.hpp"
 
 namespace ctll {
-	
-struct empty_subject { };
+
 
 enum class decision {
 	reject,
@@ -17,12 +16,12 @@ enum class decision {
 };
 
 #if !__cpp_nontype_template_parameter_class
-template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IngoreUnknownActions = false> struct parser {
+template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
-template <typename Grammar, basic_fixed_string input, typename ActionSelector = empty_actions, bool IngoreUnknownActions = true> struct parser { // in c++20
+template <typename Grammar, basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = true> struct parser { // in c++20
 #endif
+	using Actions = ctll::conditional<IgnoreUnknownActions, ignore_unknown<ActionSelector>, identity<ActionSelector>>;
 	static inline constexpr auto grammar = augment_grammar<Grammar>();
-	static inline constexpr auto select_action = augment_actions<IngoreUnknownActions, ActionSelector>();
 	
 	template <size_t Pos, typename Stack = void, typename Subject = void, decision Decision = decision::undecided> struct seed;
 	
@@ -92,7 +91,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		
 		// in case top_symbol is action type (apply it on previous subject and get new one)
 		if constexpr (std::is_base_of_v<ctll::action, decltype(top_symbol)>) {
-			auto subject = select_action.apply(top_symbol, get_previous_term<Pos>(), previous_subject);
+			auto subject = Actions::apply(top_symbol, get_previous_term<Pos>(), previous_subject);
 			
 			// in case that semantic action is error => reject input
 			if constexpr (std::is_same_v<ctll::reject, decltype(subject)>) {
