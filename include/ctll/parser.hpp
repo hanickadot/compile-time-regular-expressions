@@ -58,7 +58,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	}
 	// if rule is pop_input => move to next character
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
-	static constexpr auto move(ctll::pop_input, Terminal, Stack stack, Subject subject) noexcept {
+	static constexpr auto move(ctll::pop_input, Terminal, Stack, Subject) noexcept {
 		return seed<Pos+1, Stack, Subject, decision::undecided>();
 	}
 	// if rule is string => push it to the front of stack
@@ -74,21 +74,21 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// if rule is string with current character at the beginning (term<V>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
-	static constexpr auto move(ctll::list<term<V>, Content...> string, term<V>, Stack stack, Subject subject) noexcept {
+	static constexpr auto move(ctll::list<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
 		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
-	static constexpr auto move(ctll::list<anything, Content...> string, term<T>, Stack stack, Subject subject) noexcept {
+	static constexpr auto move(ctll::list<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
 		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
 		// each call means we pop something from stack
 		auto top_symbol = decltype(ctll::front(previous_stack, empty_stack_symbol()))();
-		auto stack = decltype(ctll::pop_front(previous_stack))();
-		//auto [top_symbol, stack] = pop_and_get_front(previous_stack, empty_stack_symbol());
+		// gcc pedantic warning
+		[[maybe_unused]] auto stack = decltype(ctll::pop_front(previous_stack))();
 		
 		// in case top_symbol is action type (apply it on previous subject and get new one)
 		if constexpr (std::is_base_of_v<ctll::action, decltype(top_symbol)>) {
@@ -132,7 +132,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	};
 	
 	// trampolines with folded expression
-	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject default_subject, std::index_sequence<Pos...>) noexcept {
+	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject, std::index_sequence<Pos...>) noexcept {
 		// parse everything for first char and than for next and next ...
 		// Pos+1 is needed as we want to finish calculation with epsilons on stack
 		return (seed<0, decltype(grammar.start_stack), Subject, decision::undecided>::parse() + ... + placeholder<Pos+1>());
@@ -143,9 +143,9 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		return trampoline_decide(subject, std::make_index_sequence<input.size()>());
 	}
 	
-	template <typename Subject = empty_subject> using output = decltype(trampoline_decide(Subject()));
+	template <typename Subject = empty_subject> using output = decltype(trampoline_decide<Subject>());
 	static inline constexpr bool correct = trampoline_decide(empty_subject());
-	template <typename Subject = empty_subject> static inline constexpr bool correct_with = trampoline_decide(Subject());
+	template <typename Subject = empty_subject> static inline constexpr bool correct_with = trampoline_decide<Subject>();
 };
 
 } // end of ctll namespace

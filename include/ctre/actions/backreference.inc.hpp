@@ -17,7 +17,7 @@ template <auto V, size_t Id, typename... Ts, size_t Counter> static constexpr au
 }
 
 // relative backreference
-template <auto V, size_t Id, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_relative_back_reference, ctll::term<V>, pcre_context<ctll::list<number<Id>, Ts...>, pcre_parameters<Counter>> subject) {	
+template <auto V, size_t Id, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_relative_back_reference, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<number<Id>, Ts...>, pcre_parameters<Counter>> subject) {	
 	// if we are looking outside of existing list of Ids ... reject input during parsing
 	if constexpr (Counter < Id) {
 		return ctll::reject{};

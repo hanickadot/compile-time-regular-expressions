@@ -20,6 +20,7 @@ namespace ctll {
 	template <typename Actions> struct augment_actions<false, Actions>: public Actions {
 		using Actions::apply;
 		// will fail if unknown action is called
+		constexpr static auto apply(...) = delete;
 	};
 }
 

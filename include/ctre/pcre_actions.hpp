@@ -43,6 +43,6 @@ struct pcre_actions {
 };
 
 
-};
+}
 
 #endif

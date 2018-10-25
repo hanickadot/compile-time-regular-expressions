@@ -200,9 +200,10 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 // support for structured bindings
 
 namespace std {
-	template <typename... Captures> struct tuple_size<ctre::regex_results<Captures...>> : std::integral_constant<size_t, ctre::regex_results<Captures...>::size()> { };
+	template <typename... Captures> class tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::size()> { };
 	
-	template <size_t N, typename... Captures> struct tuple_element<N, ctre::regex_results<Captures...>> {
+	template <size_t N, typename... Captures> class tuple_element<N, ctre::regex_results<Captures...>> {
+	public:
 		using type = decltype(
 			std::declval<const ctre::regex_results<Captures...> &>().template get<N>()
 		);

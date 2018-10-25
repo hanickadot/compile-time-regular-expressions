@@ -37,7 +37,7 @@ public:
 template <typename CharT> class basic_fixed_string<CharT, 0> {
 public: 
 	using char_type = CharT;
-	constexpr basic_fixed_string(const CharT(&)[0]) noexcept { }
+	constexpr basic_fixed_string(const CharT *) noexcept { }
 	constexpr size_t size() const noexcept {
 		return 0;
 	}

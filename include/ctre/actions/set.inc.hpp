@@ -3,7 +3,7 @@
 
 // UTILITY
 // add into set if not exists
-template <template <typename...> typename SetType, typename T, typename... As, bool Exists = (std::is_same_v<T, As> || ... || false)> static constexpr auto push_back_into_set(T, SetType<As...>) -> ctll::conditional<Exists, SetType<As...>, SetType<As...,T>> { return {}; };
+template <template <typename...> typename SetType, typename T, typename... As, bool Exists = (std::is_same_v<T, As> || ... || false)> static constexpr auto push_back_into_set(T, SetType<As...>) -> ctll::conditional<Exists, SetType<As...>, SetType<As...,T>> { return {}; }
 
 //template <template <typename...> typename SetType, typename A, typename BHead, typename... Bs> struct set_merge_helper {
 //	using step = decltype(push_back_into_set<SetType>(BHead(), A()));
