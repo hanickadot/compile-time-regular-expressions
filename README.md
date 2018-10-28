@@ -99,5 +99,20 @@ for (auto match: ctre::range(input,"[0-9]++"_ctre)) {
 
 * clang 5.0+
 * gcc 7.2+
+* MSVC 15.8.8+ (experimental, without string_literal support)
 
 Compiler must support N3599 extension (as GNU extension in gcc and clang) or C++20 class NTTP (P0732).
+
+### MSVC
+
+Because current MSVC doesn't support custom templated string literals or NTTP, you need to use workaround:
+
+```
+static constexpr inline auto pattern = ctll::basic_fixed_string{ "h.*" };
+
+constexpr auto match(std::string_view sv) noexcept {
+	return ctre::re<pattern>().match(sv);
+}
+```
+
+(this is tested in MSVC 15.8.8)
