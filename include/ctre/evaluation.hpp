@@ -240,6 +240,10 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 		// aab
 		
 		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			// TODO MSVC issue:
+			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
+			//  return inner_result
+			// I tried to add all constructors to R but without any success 
 			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack)) {
 				return rec_result;
 			}
