@@ -58,8 +58,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
 		}
 		
-		template <typename U = char_type>
-		constexpr operator std::basic_string_view<U>() const noexcept {
+		constexpr operator std::basic_string_view<char_type>() const noexcept {
 			return to_view();
 		}
 		
@@ -76,7 +75,7 @@ static constexpr inline auto capture_not_exists = capture_not_exists_tag{};
 template <typename... Captures> struct captures;
 
 template <typename Head, typename... Tail> struct captures<Head, Tail...>: captures<Tail...> {
-	Head head;
+	Head head{};
 	constexpr CTRE_FORCE_INLINE captures() noexcept { }
 	template <size_t id> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		if constexpr (id == Head::get_id()) {
@@ -141,7 +140,7 @@ template <> struct captures<> {
 template <typename Iterator, typename... Captures> struct regex_results {
 	using char_type = typename std::iterator_traits<Iterator>::value_type;
 	
-	captures<captured_content<0>::template storage<Iterator>, typename Captures::template storage<Iterator>...> _captures;
+	captures<captured_content<0>::template storage<Iterator>, typename Captures::template storage<Iterator>...> _captures{};
 	
 	constexpr CTRE_FORCE_INLINE regex_results() noexcept { }
 	constexpr CTRE_FORCE_INLINE regex_results(not_matched_tag_t) noexcept { }
@@ -170,8 +169,7 @@ template <typename Iterator, typename... Captures> struct regex_results {
 		return bool(_captures.template select<0>());
 	}
 	
-	template <typename U = char_type>
-	constexpr operator std::basic_string_view<U>() const noexcept {
+	constexpr operator std::basic_string_view<char_type>() const noexcept {
 		return to_view();
 	}
 	

@@ -90,8 +90,8 @@ template <typename R, typename Iterator, typename EndIterator, auto... String, t
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<string<String...>, Tail...>) noexcept {
 	if constexpr (sizeof...(String) == 0) {
 		return evaluate(begin, current, end, captures, ctll::list<Tail...>());
-	} else if (auto [it, ok] = evaluate_match_string<String...>(current, end); ok) {
-		return evaluate(begin, it, end, captures, ctll::list<Tail...>());
+	} else if (auto tmp = evaluate_match_string<String...>(current, end); tmp.match) {
+		return evaluate(begin, tmp.current, end, captures, ctll::list<Tail...>());
 	} else {
 		return not_matched;
 	}
@@ -338,8 +338,8 @@ template <typename R, typename Id, typename Iterator, typename EndIterator, type
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<back_reference_with_name<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
-		if (auto [it, matches] = match_against_range(current, end, ref.begin(), ref.end()); matches) {
-			return evaluate(begin, it, end, captures, ctll::list<Tail...>());
+		if (auto tmp = match_against_range(current, end, ref.begin(), ref.end()); tmp.match) {
+			return evaluate(begin, tmp.current, end, captures, ctll::list<Tail...>());
 		}
 	}
 	return not_matched;
@@ -350,8 +350,8 @@ template <typename R, size_t Id, typename Iterator, typename EndIterator, typena
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<back_reference<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
-		if (auto [it, matches] = match_against_range(current, end, ref.begin(), ref.end()); matches) {
-			return evaluate(begin, it, end, captures, ctll::list<Tail...>());
+		if (auto tmp = match_against_range(current, end, ref.begin(), ref.end()); tmp.match) {
+			return evaluate(begin, tmp.current, end, captures, ctll::list<Tail...>());
 		}
 	}
 	return not_matched;
