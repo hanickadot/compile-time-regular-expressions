@@ -173,6 +173,15 @@ static_assert(R"(\[([\s\S]*?)\]\(([\s\S]*?)\))"_ctre.match("[URL](https://cpp.fa
 
 static_assert("abc"_ctre.match("abc"));
 static_assert("[_]"_ctre.match("_"));
+static_assert("[()]"_ctre.match("("));
+static_assert("[$]"_ctre.match("$"));
+static_assert("[*]"_ctre.match("*"));
+static_assert("[+]"_ctre.match("+"));
+static_assert("[?]"_ctre.match("?"));
+static_assert("[{}]"_ctre.match("{"));
+static_assert("[(-)]"_ctre.match("("));
+static_assert("[(-)]"_ctre.match(")"));
+
 static_assert("[A-Z_a-z]"_ctre.match("a"));
 static_assert("[A-Z_a-z]"_ctre.match("_"));
 static_assert("[A-Z_a-z]"_ctre.match("Z"));
