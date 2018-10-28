@@ -16,6 +16,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 	template <typename Iterator> struct storage {
 		Iterator _begin{};
 		Iterator _end{};
+		
+		using char_type = typename std::iterator_traits<Iterator>::value_type;
+		
 		bool _matched{false};
 	
 		using name = Name;
@@ -52,10 +55,11 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
-			return std::string_view{_begin, static_cast<size_t>(std::distance(_begin, _end))};
+			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
 		}
 		
-		constexpr operator std::string_view() const noexcept {
+		template <typename U = char_type>
+		constexpr operator std::basic_string_view<U>() const noexcept {
 			return to_view();
 		}
 		
@@ -135,6 +139,8 @@ template <> struct captures<> {
 };
 
 template <typename Iterator, typename... Captures> struct regex_results {
+	using char_type = typename std::iterator_traits<Iterator>::value_type;
+	
 	captures<captured_content<0>::template storage<Iterator>, typename Captures::template storage<Iterator>...> _captures;
 	
 	constexpr CTRE_FORCE_INLINE regex_results() noexcept { }
@@ -163,8 +169,9 @@ template <typename Iterator, typename... Captures> struct regex_results {
 	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 		return bool(_captures.template select<0>());
 	}
-
-	constexpr operator std::string_view() const noexcept {
+	
+	template <typename U = char_type>
+	constexpr operator std::basic_string_view<U>() const noexcept {
 		return to_view();
 	}
 	
