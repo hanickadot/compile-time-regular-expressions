@@ -9,10 +9,10 @@ namespace ctre {
 // sfinae check for types here
 
 template <typename T> class MatchesCharacter {
-	template <typename Y, typename CharT> static auto test(Y*, CharT c) -> decltype(Y::match_char(c), std::true_type());
+	template <typename Y, typename CharT> static auto test(CharT c) -> decltype(Y::match_char(c), std::true_type());
 	template <typename> static auto test(...) -> std::false_type;
 public:
-	template <typename CharT> static inline constexpr bool value = decltype(test<T>(nullptr, std::declval<CharT>()))();
+	template <typename CharT> static inline constexpr bool value = decltype(test<T>(std::declval<CharT>()))();
 };
 
 
