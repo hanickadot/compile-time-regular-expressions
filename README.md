@@ -107,7 +107,7 @@ Compiler must support N3599 extension (as GNU extension in gcc and clang) or C++
 
 Because current MSVC doesn't support custom templated string literals or NTTP, you need to use workaround:
 
-```
+```c++
 static constexpr inline auto pattern = ctll::basic_fixed_string{ "h.*" };
 
 constexpr auto match(std::string_view sv) noexcept {
