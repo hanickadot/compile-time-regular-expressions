@@ -186,3 +186,8 @@ static_assert("[A-Z_a-z]"_ctre.match("a"));
 static_assert("[A-Z_a-z]"_ctre.match("_"));
 static_assert("[A-Z_a-z]"_ctre.match("Z"));
 
+static_assert(("[a-z]"_ctre >> "[0-9]"_ctre).match("a9"));
+static_assert(("a"_ctre | "b"_ctre).match("a"));
+static_assert(("a"_ctre | "b"_ctre).match("b"));
+static_assert(!("a"_ctre | "b"_ctre).match("c"));
+

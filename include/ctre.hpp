@@ -5,5 +5,6 @@
 #include "ctre/functions.hpp"
 #include "ctre/iterators.hpp"
 #include "ctre/range.hpp"
+#include "ctre/operators.hpp"
 
 #endif
