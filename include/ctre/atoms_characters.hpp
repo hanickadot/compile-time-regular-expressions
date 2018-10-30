@@ -45,6 +45,8 @@ template <typename... Content> struct negate {
 	}
 };
 
+// I know word_chars and others can be expressed with set<> and range<>, but this makes the regex bad readable when debugging, please keep this in mind when touching this code in future :)
+
 struct word_chars {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return (value >= 'A' && value <= 'Z') || (value >= 'a' && value <= 'z') || (value >= '0' && value <= '9') || (value == '_');
