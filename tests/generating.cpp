@@ -125,6 +125,14 @@ static_assert(same_f("(?<name>x|y)"_ctre_gen, ctre::capture_with_name<1,ctre::id
 static_assert(same_f("(?<xy>[x]y)"_ctre_gen, ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>())); 
 static_assert(same_f("(?<xy>[x]y)(a)"_ctre_gen, ctre::sequence<ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>, ctre::capture<2,ctre::character<'a'>>>())); 
 
+static_assert(same_f("()"_ctre_gen, ctre::capture<1,ctre::empty>()));
+static_assert(same_f("(a)(b)"_ctre_gen, ctre::sequence<ctre::capture<1,ctre::character<'a'>>,ctre::capture<2,ctre::character<'b'>>>()));
+static_assert(same_f("((a)(b))"_ctre_gen, ctre::capture<1,ctre::capture<2,ctre::character<'a'>>,ctre::capture<3,ctre::character<'b'>>>()));
+static_assert(same_f("(((a)(b)))"_ctre_gen,ctre::capture<1, ctre::capture<2,ctre::capture<3,ctre::character<'a'>>,ctre::capture<4,ctre::character<'b'>>>>()));
+
+static_assert(same_f("((?:a)(b))"_ctre_gen, ctre::capture<1,ctre::character<'a'>,ctre::capture<2,ctre::character<'b'>>>()));
+
+
 // backreference
 static_assert(same_f("(a)\\g{1}"_ctre_gen, ctre::sequence<ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>>()));
 static_assert(same_f("(?<ab>a)\\g{ab}"_ctre_gen, ctre::sequence<ctre::capture_with_name<1,ctre::id<'a','b'>,ctre::character<'a'>>, ctre::back_reference_with_name<ctre::id<'a','b'>>>()));

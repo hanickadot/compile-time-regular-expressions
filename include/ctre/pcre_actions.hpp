@@ -26,6 +26,8 @@ template <typename Stack = ctll::list<>, typename Parameters = pcre_parameters<0
 template <typename... Content, typename Parameters> pcre_context(ctll::list<Content...>, Parameters) -> pcre_context<ctll::list<Content...>, Parameters>;
 	
 template <size_t Value> struct number { };
+
+template <size_t Id> struct capture_id { };
 	
 struct pcre_actions {
 // i know it's ugly, but it's more readable

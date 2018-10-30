@@ -185,9 +185,24 @@ static_assert("[(-)]"_ctre.match(")"));
 static_assert("[A-Z_a-z]"_ctre.match("a"));
 static_assert("[A-Z_a-z]"_ctre.match("_"));
 static_assert("[A-Z_a-z]"_ctre.match("Z"));
+static_assert("[-]"_ctre.match("-"));
+static_assert("[-x]"_ctre.match("x"));
+// FIXME: due current limitation of LL1 grammar parser I can make this work "[x-]" without significant change in grammar
+static_assert("<"_ctre.match("<"));
+static_assert("(<)"_ctre.match("<"));
+static_assert("(<>)"_ctre.match("<>"));
+static_assert("(<>?)"_ctre.match("<"));
+static_assert("(<?>)"_ctre.match(">"));
+static_assert("()"_ctre.match(""));
+
 
 static_assert(("[a-z]"_ctre >> "[0-9]"_ctre).match("a9"));
 static_assert(("a"_ctre | "b"_ctre).match("a"));
 static_assert(("a"_ctre | "b"_ctre).match("b"));
 static_assert(!("a"_ctre | "b"_ctre).match("c"));
+
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<0>() == "ab"sv);
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<1>() == "ab"sv);
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<2>() == "a"sv);
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<3>() == "b"sv);
 
