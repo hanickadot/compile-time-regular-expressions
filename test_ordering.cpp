@@ -19,7 +19,7 @@ std::ostream& operator<<(std::ostream& os, ctre::partial_ordering ord) {
 
 int main(int argc, char ** argv) {
 	using namespace ctre::literals;
-	constexpr auto re = "(?<ab>[b-c])\\g{ab}"_ctre;
+	constexpr auto re = "x*+^[a-y]+"_ctre;
 
 	std::cout << ctre::partial_ordering(re.match(argv[1])) << std::endl;
 	std::cout << ctre::partial_ordering(re.ordered_match(argv[1])) << std::endl;

@@ -287,9 +287,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<assert_begin, Tail...>) noexcept {
-	if (begin != current) { //TODO I'm really not sure how to handle this.
-		// Problematic pattern: "x*+^[a-z]*" (words that don't start with x)
-		return not_matched;
+	if (begin != current) {
+		captures.mask_elg({0,1,1});
+		return captures;
 	}
 	return ordered_evaluate(begin, current, end, captures, ctll::list<Tail...>());
 }
@@ -406,7 +406,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
-	//TODO this doesn't work yet!
 	// A..B
 	size_t i{0};
 	for (; i < A && (A != 0); ++i) {
@@ -419,12 +418,18 @@ constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator cu
 	
 	for (; (i < B) || (B == 0); ++i) {
 		// try as many of inner as possible and then try outer once
+
+		// I have to mask this ordering beforehand, as we can't backtrack later.
+		// This basically throws away the usual runtime benefits of a possessive repeat.
+		auto outer_result = ordered_evaluate(begin, current, end, captures, ctll::list<Tail...>());
+		captures.mask_lg(outer_result);
+
 		auto inner_result = ordered_evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>());
 		captures.mask_lg(inner_result);
 		if (inner_result) {
 			current = inner_result.get_end_position();
 		} else {
-			return ordered_evaluate(begin, current, end, captures, ctll::list<Tail...>());
+			return outer_result;
 		}
 	}
 	
