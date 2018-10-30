@@ -44,8 +44,8 @@ atom_repeat-><atom>,<repeat>
 
 atom_repeat_in_capture-><atom_in_capture>,<repeat>
 
-atom-><character>|<asserts>|<block>|<character_class>
-atom_in_capture-><character_in_capture>|<asserts>|<block>|<character_class>
+atom-><character>|<asserts>|<preblock>|<character_class>
+atom_in_capture-><character_in_capture>|<asserts>|<preblock>|<character_class>
 
 repeat->epsilon | plus,[repeat_plus],<mod>|star,[repeat_star],<mod>|questionmark,[make_optional],<mod_opt>
 repeat->copen,<number>,[repeat_exactly],cclose
@@ -57,8 +57,12 @@ mod_opt->epsilon | questionmark,[make_lazy]
 number->num,[create_number],<number2>
 number2->epsilon | num,[push_number],<number2>
 
-block->open,<content_in_capture>,[make_capture],close | open,questionmark,colon,<content_in_capture>,close
-block->open,questionmark,angle_open,<block_name>,angle_close,<content_in_capture>,[make_capture_with_name],close
+preblock->open,[prepare_capture],<block>
+
+block-><content_in_capture>,[make_capture],close
+block->questionmark,[reset_capture],colon,<content_in_capture>,close
+block->questionmark,angle_open,<block_name>,angle_close,<content_in_capture>,[make_capture_with_name],close
+
 block_name->alpha_characters,[push_name],<block_name2>
 block_name2->alphanum_characters,[push_name],<block_name2>|epsilon
 

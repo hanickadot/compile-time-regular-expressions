@@ -193,10 +193,16 @@ static_assert("(<)"_ctre.match("<"));
 static_assert("(<>)"_ctre.match("<>"));
 static_assert("(<>?)"_ctre.match("<"));
 static_assert("(<?>)"_ctre.match(">"));
+static_assert("()"_ctre.match(""));
 
 
 static_assert(("[a-z]"_ctre >> "[0-9]"_ctre).match("a9"));
 static_assert(("a"_ctre | "b"_ctre).match("a"));
 static_assert(("a"_ctre | "b"_ctre).match("b"));
 static_assert(!("a"_ctre | "b"_ctre).match("c"));
+
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<0>() == "ab"sv);
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<1>() == "ab"sv);
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<2>() == "a"sv);
+static_assert("((a)(b))"_ctre.match("ab"sv).template get<3>() == "b"sv);
 
