@@ -22,6 +22,14 @@ struct zero_terminated_string_end_iterator {
 	constexpr CTRE_FORCE_INLINE bool operator!=(const wchar_t * ptr) const noexcept {
 		return *ptr != 0;
 	} 
+	template<typename T>
+	friend constexpr CTRE_FORCE_INLINE bool operator==(T t, zero_terminated_string_end_iterator it) {
+		return it == t;
+	}
+	template<typename T>
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(T t, zero_terminated_string_end_iterator it) {
+		return it != t;
+	}
 };
 
 template <typename RE> struct regular_expression {
