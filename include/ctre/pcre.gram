@@ -64,6 +64,7 @@ block_name2->alphanum_characters,[push_name],<block_name2>|epsilon
 
 
 character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set>,[set_make_negative],sclose
+set->minus,[push_character],[set_start],<set2>
 set-><setitem>,[set_start],<set2>
 set2-><setitem>,[set_combine],<set2>|epsilon
 
@@ -121,7 +122,7 @@ backslash->g,copen,<block_name>,cclose,[make_back_reference]
 
 character->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | dot,[push_character_anything] | backslash,<backslash>|capture_control_chars,[push_character] | \>,[push_character]
 
-character_in_capture->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | \>,[push_character] | dot,[push_character_anything] | backslash,<backslash>
+character_in_capture-><character>
 
 asserts->caret,[push_assert_begin] | dolar,[push_assert_end]
 
