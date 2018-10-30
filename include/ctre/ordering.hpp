@@ -6,9 +6,12 @@ namespace ctre {
 enum class partial_ordering { less, greater, equal, unordered };
 
 struct equal_less_greater {
-	bool equal : 1 = false;
-	bool less : 1 = false;
-	bool greater : 1 = false;
+	bool equal : 1;
+	bool less : 1;
+	bool greater : 1;
+
+	constexpr equal_less_greater() noexcept : equal(0), less(0), greater(0) { }
+	constexpr equal_less_greater(bool e, bool l, bool g) noexcept : equal(e), less(l), greater(g) { }
 };
 
 }  //  namespace ctre
