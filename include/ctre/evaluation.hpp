@@ -15,6 +15,12 @@ constexpr inline auto match_re(const Iterator begin, const EndIterator end, Patt
 	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
 }
 
+template <typename Iterator, typename EndIterator, typename Pattern>
+constexpr inline auto ordered_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
+	return ordered_evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
+}
+
 template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
@@ -39,16 +45,31 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 	return captures.matched();
 }
 
+template <typename R, typename Iterator, typename EndIterator>
+constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator, Iterator, const EndIterator, R captures, ctll::list<accept>) noexcept {
+	return captures.matched();
+}
+
 // mark start of outer capture
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<start_mark, Tail...>) noexcept {
 	return evaluate(begin, current, end, captures.set_start_mark(current), ctll::list<Tail...>());
 }
 
+template <typename R, typename Iterator, typename EndIterator, typename... Tail>
+constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<start_mark, Tail...>) noexcept {
+	return ordered_evaluate(begin, current, end, captures.set_start_mark(current), ctll::list<Tail...>());
+}
+
 // mark end of outer capture
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<end_mark, Tail...>) noexcept {
 	return evaluate(begin, current, end, captures.set_end_mark(current), ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail>
+constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<end_mark, Tail...>) noexcept {
+	return ordered_evaluate(begin, current, end, captures.set_end_mark(current), ctll::list<Tail...>());
 }
 
 // mark end of cycle
@@ -67,11 +88,31 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current+1, end, captures, ctll::list<Tail...>());
 }
 
+template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>>
+constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
+	if (end == current) { // target is shorter than pattern
+		captures.mask_elg({0,1,0});
+		return captures;
+	}
+	captures.mask_elg(CharacterLike::compare_char(*current));
+	if (captures) {
+		if(!captures.is_less() && !captures.is_greater())
+			return evaluate(begin, current+1, end, captures.unmatch(), ctll::list<Tail...>());
+		return ordered_evaluate(begin, current+1, end, captures, ctll::list<Tail...>());
+	}
+	return captures;
+}
+
 // matching strings in patterns
 
 template <typename Iterator> struct string_match_result {
 	Iterator current;
 	bool match;
+};
+
+template <typename Iterator> struct string_compare_result {
+	Iterator current;
+	equal_less_greater elg;
 };
 
 template <auto Head, auto... String, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, const EndIterator end) noexcept {
@@ -145,6 +186,15 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	} else {
 		return evaluate(begin, current, end, captures, ctll::list<HeadContent, Tail...>());
 	}
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename HeadContent, typename... TailContent, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<sequence<HeadContent, TailContent...>, Tail...>) noexcept {
+	if constexpr (sizeof...(TailContent) > 0) {
+		return ordered_evaluate(begin, current, end, captures, ctll::list<HeadContent, sequence<TailContent...>, Tail...>());
+	} else {
+		return ordered_evaluate(begin, current, end, captures, ctll::list<HeadContent, Tail...>());
+	}
 	
 }
 
@@ -169,6 +219,15 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		return not_matched;
 	}
 	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R ordered_evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<assert_end, Tail...>) noexcept {
+	if (end != current) { // target is longer than pattern
+		captures.mask_elg({0,0,1});
+		return captures;
+	}
+	return ordered_evaluate(begin, current, end, captures, ctll::list<Tail...>());
 }
 
 // lazy repeat

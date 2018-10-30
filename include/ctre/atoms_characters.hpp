@@ -2,6 +2,7 @@
 #define CTRE__ATOMS_CHARACTERS__HPP
 
 #include "utility.hpp"
+#include "ordering.hpp"
 #include <cstdint>
 
 namespace ctre {
@@ -21,21 +22,40 @@ template <auto V> struct character {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return value == V;
 	}
+
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr equal_less_greater compare_char(CharT value) noexcept {
+		if (value == V) return {1,1,1};
+		if (value < V) return {0,1,0};
+		return {0,0,1};
+	}
 };
 
 struct any {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT) noexcept { return true; }
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr equal_less_greater compare_char(CharT value) noexcept {
+		return {1,0,0};
+	}
 };
 
 template <typename... Content> struct negative_set {
 	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
 		return !(Content::match_char(value) || ... || false);
 	}
+	template <typename CharT> inline static constexpr equal_less_greater compare_char(CharT value) noexcept {
+		return {!(Content::match_char(value) || ... || false), 0, 0};
+	}
 };
 
 template <typename... Content> struct set {
 	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
 		return (Content::match_char(value) || ... || false);
+	}
+
+	template <typename CharT> inline static constexpr equal_less_greater compare_char(CharT value) noexcept {
+		bool equal = (Content::compare_char(value).equal || ... || false);
+		bool less = (Content::compare_char(value).less && ... && true);
+		bool greater = (Content::compare_char(value).greater && ... && true);
+		return {equal, less, greater};
 	}
 };
 
@@ -45,11 +65,23 @@ template <typename... Content> struct negate {
 	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
 		return !(Content::match_char(value) || ... || false);
 	}
+
+	template <typename CharT> inline static constexpr equal_less_greater compare_char(CharT value) noexcept {
+		return {!(Content::match_char(value) || ... || false), 0, 0};
+	}
 };
 
 template <auto A, auto B> struct char_range {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return (value >= A) && (value <= B);
+	}
+
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr equal_less_greater compare_char(CharT value) noexcept {
+		equal_less_greater ret;
+		if (value >= A && value <= B) ret.equal = true;
+		if (value <= A) ret.less = true;
+		if (value >= B) ret.greater = true;
+		return ret;
 	}
 };
 
