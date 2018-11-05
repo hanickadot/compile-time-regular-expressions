@@ -12,7 +12,7 @@ namespace ctre {
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto match_re(const Iterator begin, const EndIterator end, Pattern pattern,
-	const match_type mtype) noexcept {
+	const match_type mtype = full_match) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	return evaluate(begin, begin, end, mtype, return_type{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
 }
@@ -71,7 +71,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	const match_type mtype, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
 	if (end == current)
 	{
-		if (mtype == partial_match && sizeof...(Tail) > 1)
+		if (mtype == partial_match)
 		{
 			return captures.set_end_mark(current).matched();
 		}
@@ -266,11 +266,12 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 		 
 		// a*ab
 		// aab
-		
+
 		if (auto inner_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			// TODO MSVC issue:
 			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
-			//  return inner_result
+			if (mtype == partial_match)
+				return inner_result;
 			// I tried to add all constructors to R but without any success 
 			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end,
 				mtype, inner_result.unmatch(), stack)) {
