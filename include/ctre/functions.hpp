@@ -10,7 +10,14 @@
 
 namespace ctre {
 
-// in moment when we get C++20 support this will start to work :)
+// avoiding CTAD limitation in C++17
+template <typename CharT, size_t N> class pattern: public ctll::basic_fixed_string<CharT, N> {
+	using parent = ctll::basic_fixed_string<CharT, N>;
+public:
+	constexpr pattern(const CharT (&input)[N]) noexcept: parent(input) { }
+};
+
+template <typename CharT, size_t N> pattern(const CharT (&)[N]) -> pattern<CharT, N>;
 
 #if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
@@ -22,6 +29,8 @@ template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexc
 	return ctre::regular_expression(re());
 }
 #endif
+
+// in moment when we get C++20 support this will start to work :)
 
 #if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
