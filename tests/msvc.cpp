@@ -25,3 +25,5 @@ template <auto & ptn> constexpr bool re2() {
 static_assert(re<pat>());
 
 static_assert(ctre::re<pat>().match("hello"sv));
+
+static_assert(ctre::match<pat>("hello"sv));
