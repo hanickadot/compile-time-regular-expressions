@@ -53,7 +53,11 @@ template <size_t Id, typename Name = void> struct captured_content {
 		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 			return _matched;
 		}
-		
+
+		constexpr CTRE_FORCE_INLINE auto size() const noexcept {
+			return static_cast<size_t>(std::distance(_begin, _end));
+		}
+
 		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
 		}
