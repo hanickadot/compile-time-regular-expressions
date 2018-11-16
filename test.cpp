@@ -4,26 +4,12 @@
 #include <iostream>
 
 
-void match(std::string_view subject) {
-	using namespace ctre::literals;
-	
-	if (auto [matched, inner] = "^([0-9]+?[a-z]++)+"_ctre.match(subject); matched) {
-		std::cout << "matched = " << matched.to_view() << "\n";
-		if (inner) {
-			std::cout << "  inner = " << inner.to_view() << "\n";
-		}
-	}
+static constexpr ctre::pattern pattern = "(?:hello|cau|guten tag|ola)|(?:hello|cau|guten tag|ola)|(?:hello|cau|guten tag|ola)|(?:hello|cau|guten tag|ola)|(?:hello|cau|guten tag|ola)|(?:hello|cau|guten tag|ola)|(?:hello|cau|guten tag|ola)";
+
+bool fnc(std::string_view view) {
+	return ctre::match<pattern>(view);
 }
 
 int main() {
-	using namespace std::string_view_literals;
-	match("123abc456def"sv);
-	
-	auto input = "123,456,768"sv;
-	
-	using namespace ctre::literals;
-	for (auto match: ctre::range(input,"[0-9]++"_ctre)) {
-		std::cout << std::string_view{match} << "\n";
-	}
-	
+	std::cout << fnc("hello") << "\n";
 }

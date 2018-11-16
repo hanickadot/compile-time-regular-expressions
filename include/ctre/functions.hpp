@@ -19,6 +19,15 @@ public:
 
 template <typename CharT, size_t N> pattern(const CharT (&)[N]) -> pattern<CharT, N>;
 
+// for better examples
+template <typename CharT, size_t N> class fixed_string: public ctll::basic_fixed_string<CharT, N> {
+	using parent = ctll::basic_fixed_string<CharT, N>;
+public:
+	constexpr fixed_string(const CharT (&input)[N]) noexcept: parent(input) { }
+};
+
+template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<CharT, N>;
+
 #if __cpp_nontype_template_parameter_class
 template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 #else

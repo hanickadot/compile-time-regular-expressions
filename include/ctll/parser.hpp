@@ -15,6 +15,10 @@ enum class decision {
 	undecided
 };
 
+template <typename T> void id(T);
+
+struct placeholder { };
+
 #if !__cpp_nontype_template_parameter_class
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
@@ -24,8 +28,6 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	static inline constexpr auto grammar = augment_grammar<Grammar>();
 	
 	template <size_t Pos, typename Stack = void, typename Subject = void, decision Decision = decision::undecided> struct seed;
-	
-	template <size_t Pos> struct placeholder { };
 	
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
@@ -107,6 +109,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		}
 	}
 	// helper type for trampoline
+	
 	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct seed {
 		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
 			return Decision == decision::accept;
@@ -119,10 +122,10 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			return decide<Pos>(Stack{}, Subject{});
 		}
 	
-		template <size_t RPos> constexpr auto operator+(placeholder<RPos>) const noexcept {
+		constexpr auto operator+(placeholder) const noexcept {
 			if constexpr (Decision == decision::undecided) {
 				// parse for current char (RPos) with previous stack and subject :)
-				return decltype(seed<RPos, Stack, Subject, Decision>::parse()){};
+				return decltype(seed<Pos, Stack, Subject, Decision>::parse()){};
 			} else {
 				// if there is decision already => just push it to the end of fold expression
 				return *this;
@@ -130,11 +133,15 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		}
 	};
 	
+	template <size_t> using index_placeholder = placeholder;
+	
 	// trampolines with folded expression
 	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject, std::index_sequence<Pos...>) noexcept {
 		// parse everything for first char and than for next and next ...
 		// Pos+1 is needed as we want to finish calculation with epsilons on stack
-		return (seed<0, decltype(grammar.start_stack), Subject, decision::undecided>::parse() + ... + placeholder<Pos+1>());
+		auto v = (seed<0, decltype(grammar.start_stack), Subject, decision::undecided>::parse() + ... + index_placeholder<Pos+1>());
+		//id(v);
+		return v;
 	}
 	
 	template <typename Subject = empty_subject> static constexpr auto trampoline_decide(Subject subject = {}) noexcept {
