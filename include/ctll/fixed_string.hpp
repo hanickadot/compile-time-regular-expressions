@@ -41,6 +41,9 @@ public:
 	constexpr size_t size() const noexcept {
 		return 0;
 	}
+	constexpr CharT operator[](size_t) const noexcept {
+		return 0;
+	}
 	constexpr const CharT * begin() const noexcept {
 		return nullptr;
 	}
@@ -52,7 +55,9 @@ public:
 #endif
 };
 
+#if __cpp_deduction_guides
 template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
+#endif
 
 }
 

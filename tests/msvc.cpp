@@ -11,7 +11,7 @@ static_assert(ctre::re<pattern1>().match("123456789"sv));
 static_assert(ctre::re<pattern2>().match(""sv));
 
 template <auto & ptn> constexpr bool re() {
-	return ctll::parser<ctre::pcre, ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
+	return ctll::parser<ctre::pcre, ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context_t<>>;
 }
 
 static_assert(re<pattern2>());
@@ -19,7 +19,7 @@ static_assert(re<pattern2>());
 static inline constexpr ctre::pattern pat = "hello";
 
 template <auto & ptn> constexpr bool re2() {
-	return ctll::parser<ctre::pcre, ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
+	return ctll::parser<ctre::pcre, ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context_t<>>;
 }
 
 static_assert(re<pat>());

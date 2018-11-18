@@ -89,7 +89,7 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 		}
 	}
 	template <typename Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-		if constexpr (std::is_same_v<Name, typename Head::name>) {
+		if constexpr (std::is_same<Name, typename Head::name>::value) {
 			return true;
 		} else {
 			return captures<Tail...>::template exists<Name>();
@@ -103,7 +103,7 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 		}
 	}
 	template <typename Name> CTRE_FORCE_INLINE constexpr auto & select() noexcept {
-		if constexpr (std::is_same_v<Name, typename Head::name>) {
+		if constexpr (std::is_same<Name, typename Head::name>::value) {
 			return head;
 		} else {
 			return captures<Tail...>::template select<Name>();
@@ -117,7 +117,7 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 		}
 	}
 	template <typename Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-		if constexpr (std::is_same_v<Name, typename Head::name>) {
+		if constexpr (std::is_same<Name, typename Head::name>::value) {
 			return head;
 		} else {
 			return captures<Tail...>::template select<Name>();

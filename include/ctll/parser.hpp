@@ -25,10 +25,11 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 template <typename Grammar, basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = true> struct parser { // in c++20
 #endif
 	using Actions = ctll::conditional<IgnoreUnknownActions, ignore_unknown<ActionSelector>, identity<ActionSelector>>;
-	static inline constexpr auto grammar = augment_grammar<Grammar>();
+	using grammar = augment_grammar<Grammar>;
 	
 	template <size_t Pos, typename Stack = void, typename Subject = void, decision Decision = decision::undecided> struct seed;
 	
+#if __cpp_if_constexpr 
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
 			return term<input[Pos]>{};
@@ -37,6 +38,13 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			return epsilon{};
 		}
 	}
+#else
+	// support for c++14
+	template <size_t Pos> static constexpr auto get_current_term() noexcept -> std::enable_if_t<(Pos < input.size()), term<input[Pos]>>;
+	template <size_t Pos> static constexpr auto get_current_term() noexcept -> std::enable_if_t<(Pos >= input.size()), epsilon>;
+#endif
+
+#if __cpp_if_constexpr && false
 	template <size_t Pos> static constexpr auto get_previous_term() noexcept {
 		if constexpr (Pos == 0) {
 			// there is no previous character on input if we are on start
@@ -47,6 +55,11 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			return epsilon{};
 		}
 	}
+#else
+	// support for c++14
+	template <size_t Pos> static constexpr auto get_previous_term() noexcept -> std::enable_if_t<((Pos <= input.size()) && (Pos > 0)), term<input[Pos-1]>>;
+	template <size_t Pos> static constexpr auto get_previous_term() noexcept -> std::enable_if_t<((Pos > input.size()) || (Pos == 0)), epsilon>;
+#endif
 	// if rule is accept => return true and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject> 
 	static constexpr auto move(ctll::accept, Terminal, Stack, Subject) noexcept {
@@ -92,19 +105,19 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		[[maybe_unused]] auto stack = decltype(ctll::pop_front(previous_stack))();
 		
 		// in case top_symbol is action type (apply it on previous subject and get new one)
-		if constexpr (std::is_base_of_v<ctll::action, decltype(top_symbol)>) {
-			auto subject = Actions::apply(top_symbol, get_previous_term<Pos>(), previous_subject);
+		if constexpr (std::is_base_of<ctll::action, decltype(top_symbol)>::value) {
+			auto subject = Actions::apply(top_symbol, decltype(get_previous_term<Pos>())(), previous_subject);
 			
 			// in case that semantic action is error => reject input
-			if constexpr (std::is_same_v<ctll::reject, decltype(subject)>) {
+			if constexpr (std::is_same<ctll::reject, decltype(subject)>::value) {
 				return seed<Pos, Stack, Subject, decision::reject>();
 			} else {
 				return decide<Pos>(stack, subject);
 			}
 		} else {
 			// all other cases are ordinary for LL(1) parser
-			auto current_term = get_current_term<Pos>();
-			auto rule = decltype(grammar.rule(top_symbol,current_term))();
+			auto current_term = decltype(get_current_term<Pos>())();
+			auto rule = decltype(grammar::rule(top_symbol,current_term))();
 			return move<Pos>(rule, current_term, stack, previous_subject);
 		}
 	}
@@ -139,7 +152,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject, std::index_sequence<Pos...>) noexcept {
 		// parse everything for first char and than for next and next ...
 		// Pos+1 is needed as we want to finish calculation with epsilons on stack
-		auto v = (seed<0, decltype(grammar.start_stack), Subject, decision::undecided>::parse() + ... + index_placeholder<Pos+1>());
+		auto v = (seed<0, typename grammar::start_stack, Subject, decision::undecided>::parse() + ... + index_placeholder<Pos+1>());
 		//id(v);
 		return v;
 	}
