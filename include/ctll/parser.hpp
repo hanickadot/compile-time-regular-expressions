@@ -44,7 +44,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	template <size_t Pos> static constexpr auto get_current_term() noexcept -> std::enable_if_t<(Pos >= input.size()), epsilon>;
 #endif
 
-#if __cpp_if_constexpr && false
+#if __cpp_if_constexpr
 	template <size_t Pos> static constexpr auto get_previous_term() noexcept {
 		if constexpr (Pos == 0) {
 			// there is no previous character on input if we are on start
@@ -73,7 +73,11 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// if rule is pop_input => move to next character
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::pop_input, Terminal, Stack, Subject) noexcept {
+		#if __cpp_fold_expressions
 		return seed<Pos+1, Stack, Subject, decision::undecided>();
+		#else
+		return decide<Pos+1>(Stack(), Subject());
+		#endif
 	}
 	// if rule is string => push it to the front of stack
 	template <size_t Pos, typename... Content, typename Terminal, typename Stack, typename Subject>
@@ -89,13 +93,21 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
 	static constexpr auto move(ctll::list<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
+		#if __cpp_fold_expressions
 		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+		#else
+		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
+		#endif
 	}
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
 	static constexpr auto move(ctll::list<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
+		#if __cpp_fold_expressions
 		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+		#else
+		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
+		#endif
 	}
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
@@ -146,6 +158,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		}
 	};
 	
+#if __cpp_fold_expressions
 	template <size_t> using index_placeholder = placeholder;
 	
 	// trampolines with folded expression
@@ -161,6 +174,9 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 		// there will be no recursion, just sequence long as the input
 		return trampoline_decide(subject, std::make_index_sequence<input.size()>());
 	}
+#else
+	template <typename Subject = empty_subject> static constexpr auto trampoline_decide(Subject subject = {}) noexcept -> decltype(decide<0, typename grammar::start_stack, Subject>());
+#endif
 	
 	template <typename Subject = empty_subject> using output = decltype(trampoline_decide<Subject>());
 	static inline constexpr bool correct = trampoline_decide(empty_subject());

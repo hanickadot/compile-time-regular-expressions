@@ -39,7 +39,7 @@ template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexc
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return ctre::regular_expression(re());
+	return ctre::regular_expression<re>(re());
 }
 #endif
 
@@ -51,7 +51,7 @@ template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
+	auto re_obj = ctre::regular_expression<re>(re());
 	return re_obj.match(sv);
 }
 #else
@@ -60,7 +60,7 @@ template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(std:
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
+	auto re_obj = ctre::regular_expression<re>(re());
 	return re_obj.match(sv);
 }
 #endif
@@ -72,7 +72,7 @@ template <basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN constexpr C
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return ctre::regular_expression(re()).match(first, last);
+	return ctre::regular_expression<re>(re()).match(first, last);
 }
 #else
 template <auto & input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(ForwardIt first, ForwardIt last) noexcept {
@@ -80,7 +80,7 @@ template <auto & input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_IN
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
+	auto re_obj = ctre::regular_expression<re>(re());
 	return re_obj.match(first,last);
 }
 #endif
@@ -92,7 +92,7 @@ template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
+	auto re_obj = ctre::regular_expression<re>(re());
 	return re_obj.search(sv);
 }
 #else
@@ -101,7 +101,7 @@ template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(std
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
+	auto re_obj = ctre::regular_expression<re>(re());
 	return re_obj.search(sv);
 }
 #endif
@@ -113,7 +113,7 @@ template <basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN constexpr C
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
+	auto re_obj = ctre::regular_expression<re>(re());
 	return re_obj.search(first, last);
 }
 #else
@@ -122,7 +122,7 @@ template <auto & input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_IN
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context_t<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
+	auto re_obj = ctre::regular_expression<re>(re());
 	return re_obj.search(first, last);
 }
 #endif

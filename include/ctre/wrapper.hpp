@@ -89,8 +89,6 @@ template <typename RE> struct regular_expression {
 	}
 };
 
-template <typename RE> regular_expression(RE) -> regular_expression<RE>;
-
 
 }
 
