@@ -53,6 +53,7 @@ public:
 };
 
 template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> basic_fixed_string(basic_fixed_string<CharT, N>) -> basic_fixed_string<CharT, N>;
 
 }
 
