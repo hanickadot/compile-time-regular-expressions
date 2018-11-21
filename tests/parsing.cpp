@@ -2,6 +2,8 @@
 
 using namespace ctre::test_literals;
 
+#ifndef EXPERIMENTAL_GCC_9
+
 // basics
 static_assert(""_ctre_test);
 static_assert("."_ctre_test);
@@ -131,3 +133,4 @@ static_assert("tour\nto\ntournament"_ctre_test);
 static_assert("tour|to|tournament"_ctre_test);
 static_assert("z"_ctre_test);
 
+#endif

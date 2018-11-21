@@ -4,7 +4,7 @@ if echo "" | $1 -std=c++2a -E -x c++ - 2>/dev/null 1>/dev/null; then
 	if [ -z "$VERSION" ]; then
 		echo "-std=c++2a";
 	else
-		echo "-std=c++2a -DISABLE_GNU_EXTENSION_LITERALS";
+		echo "-std=c++2a -DEXPERIMENTAL_GCC_9";
 	fi
 else
 	echo "-std=c++17";

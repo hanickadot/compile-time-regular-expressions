@@ -47,8 +47,6 @@ constexpr auto & _input = input;
 
 // in moment when we get C++20 support this will start to work :)
 
-template <typename T> void identify(T);
-
 #if __cpp_nontype_template_parameter_class
 template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092

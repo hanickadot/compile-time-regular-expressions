@@ -3,7 +3,7 @@
 default: all
 	
 TARGETS := a.cpp result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
-IGNORE := $(wildcard tests/benchmark/*.cpp) $(wildcard tests/benchmark-exec/*.cpp) tests/trampoline.cpp
+IGNORE := $(wildcard tests/benchmark/*.cpp) $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
@@ -11,7 +11,6 @@ CPP_STANDARD := $(shell ./cpp-20-check.sh $(CXX))
 
 CXXFLAGS := $(CPP_STANDARD) -Iinclude -O3 -Wno-gnu-string-literal-operator-template  -pedantic -Wall -Wextra 
 LDFLAGS := 
-#-lpcre2-8 -lboost_regex -lre2 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
@@ -26,7 +25,7 @@ list:
 	echo $(SUPPORTED_CPP20)
 	
 $(TRUE_TARGETS): %: %.o
-	$(CXX)  $< $(LDFLAGS) -o $@ > /dev/null
+	$(CXX)  $< $(LDFLAGS) -o $@ 
 	
 $(OBJECTS): %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@

@@ -7,13 +7,13 @@ using namespace std::string_view_literals;
 
 #if __cpp_nontype_template_parameter_class
 
-#define TEST_MATCH(id, pattern, subject) static_assert(ctre::match<_ptn>(subject))
+#define TEST_MATCH(id, pattern, subject) static_assert(ctre::match<pattern>(subject))
 
-#define TEST_SEARCH(id, pattern, subject) static_assert(ctre::search<_ptn>(subject))
+#define TEST_SEARCH(id, pattern, subject) static_assert(ctre::search<pattern>(subject))
 
-#define TEST_NOT_MATCH(id, pattern, subject) static_assert(!ctre::match<_ptn>(subject))
+#define TEST_NOT_MATCH(id, pattern, subject) static_assert(!ctre::match<pattern>(subject))
 
-#define TEST_NOT_SEARCH(id, pattern, subject) static_assert(!ctre::search<_ptn>(subject))
+#define TEST_NOT_SEARCH(id, pattern, subject) static_assert(!ctre::search<pattern>(subject))
 
 #else
 

@@ -1,5 +1,6 @@
 #include <ctre.hpp>
 using namespace ctre::test_literals;
+#ifndef EXPERIMENTAL_GCC_9
 static_assert("(tour|to|tournament)+\ntourna"_ctre_test);
 static_assert("(tour|to|tournament)+\ntourna"_ctre_test);
 static_assert("(tour|to|tournament)+\ntourna"_ctre_test);
@@ -3000,3 +3001,4 @@ static_assert("(tour|to|tournament)+\ntourna"_ctre_test);
 static_assert("(tour|to|tournament)+\ntourna"_ctre_test);
 static_assert("(tour|to|tournament)+\ntourna"_ctre_test);
 static_assert("(tour|to|tournament)+\ntourna"_ctre_test);
+#endif

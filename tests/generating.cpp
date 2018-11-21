@@ -1,5 +1,6 @@
 #include <ctre.hpp>
 
+#if false
 using namespace ctre::test_literals;
 
 #ifdef DEBUG
@@ -147,3 +148,5 @@ static_assert(same_f("^$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::ass
 static_assert(same_f("^abc$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>, ctre::assert_end>()));
 
 static_assert(same_f("^a|b$"_ctre_gen, ctre::select<ctre::sequence<ctre::assert_begin, ctre::character<'a'>>, ctre::sequence<ctre::character<'b'>, ctre::assert_end>>()));
+
+#endif 

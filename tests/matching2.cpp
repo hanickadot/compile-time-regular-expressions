@@ -5,6 +5,8 @@ using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
+#ifndef EXPERIMENTAL_GCC_9
+
 static_assert(""_ctre.search("abc"sv));
 static_assert("abc"_ctre.match("abc"sv));
 
@@ -206,3 +208,4 @@ static_assert("((a)(b))"_ctre.match("ab"sv).template get<1>() == "ab"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<2>() == "a"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<3>() == "b"sv);
 
+#endif
