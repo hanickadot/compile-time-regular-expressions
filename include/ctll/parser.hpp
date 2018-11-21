@@ -125,8 +125,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject, std::index_sequence<Pos...>) noexcept {
 		// parse everything for first char and than for next and next ...
 		// Pos+1 is needed as we want to finish calculation with epsilons on stack
-		auto v = (seed<0, grammar::start_stack, Subject, decision::undecided>::parse() + ... + index_placeholder<Pos+1>());
-		//id(v);
+		auto v = (decide<0, typename grammar::start_stack, Subject>({}, {}) + ... + index_placeholder<Pos+1>());
 		return v;
 	}
 	

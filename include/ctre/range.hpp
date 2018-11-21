@@ -20,7 +20,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> struct rege
 
 
 template <typename BeginIterator, typename EndIterator, typename RE> constexpr auto range(BeginIterator begin, EndIterator end, RE) noexcept {
-	//return regex_range<BeginIterator, EndIterator, RE>(begin, end);
+	return regex_range<BeginIterator, EndIterator, RE>(begin, end);
 }
 
 #if __cpp_nontype_template_parameter_class

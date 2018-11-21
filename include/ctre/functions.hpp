@@ -32,10 +32,12 @@ template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_st
 
 #if __cpp_nontype_template_parameter_class
 template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
+constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #else
 template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
+constexpr auto & _input = input; 
 #endif
-	constexpr auto _input = input;
+	
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
@@ -49,7 +51,7 @@ template <typename T> void identify(T);
 
 #if __cpp_nontype_template_parameter_class
 template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
-	constexpr auto _input = input;
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
@@ -58,8 +60,8 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLI
 }
 #else
 template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
-
-	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	constexpr auto & _input = input; 
+	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
 	auto re_obj = ctre::regular_expression<re>(re());
@@ -70,7 +72,7 @@ template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(std:
 
 #if __cpp_nontype_template_parameter_class
 template <ctll::basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(ForwardIt first, ForwardIt last) noexcept {
-	constexpr auto _input = input;
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
@@ -78,7 +80,7 @@ template <ctll::basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN const
 }
 #else
 template <auto & input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(ForwardIt first, ForwardIt last) noexcept {
-	constexpr auto _input = input;
+	constexpr auto & _input = input; 
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
@@ -90,8 +92,7 @@ template <auto & input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_IN
 
 #if __cpp_nontype_template_parameter_class
 template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(std::string_view sv) noexcept {
-
-	constexpr auto _input = input;
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
@@ -100,8 +101,8 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLI
 }
 #else
 template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(std::string_view sv) noexcept {
-
-	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	constexpr auto & _input = input; 
+	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
 	auto re_obj = ctre::regular_expression(re());
@@ -112,7 +113,7 @@ template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(std
 
 #if __cpp_nontype_template_parameter_class
 template <ctll::basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(ForwardIt first, ForwardIt last) noexcept {
-	constexpr auto _input = input;
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
@@ -121,7 +122,7 @@ template <ctll::basic_fixed_string input, typename ForwardIt> CTRE_FLATTEN const
 }
 #else
 template <auto & input, typename ForwardIt> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(ForwardIt first, ForwardIt last) noexcept {
-
+	constexpr auto & _input = input; 
 	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
