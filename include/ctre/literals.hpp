@@ -19,6 +19,11 @@ template <typename CharT, CharT... input> static inline constexpr auto _fixed_st
 #endif	
 
 namespace literals {
+	
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-string-literal-operator-template"
+#endif
 
 #ifndef _MSC_VER
 	
@@ -94,6 +99,9 @@ template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator"
 
 #endif
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 } // literals
 
