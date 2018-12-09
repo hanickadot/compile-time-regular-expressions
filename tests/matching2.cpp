@@ -21,6 +21,8 @@ static_assert("[a-z]"_ctre.match("a"sv));
 static_assert("[a-z]"_ctre.match("f"sv));
 static_assert("[a-z]"_ctre.match("z"sv));
 static_assert(!"[a-z]"_ctre.match("Z"sv));
+static_assert("\\u0050"_ctre.match("P"sv));
+static_assert("\u0050"_ctre.match("P"sv)); // be aware!
 static_assert("^[\\x30-\\x39]+?$"_ctre.match("123456789"sv));
 static_assert("[a-z0-9]"_ctre.match("0"sv));
 static_assert(!"[a-z0-9]"_ctre.match("A"sv));
