@@ -2,6 +2,7 @@
 #define CTRE__RETURN_TYPE__HPP
 
 #include "id.hpp"
+#include "ordering.hpp"
 #include <type_traits>
 #include <tuple>
 #include <string_view>
@@ -19,18 +20,31 @@ template <size_t Id, typename Name = void> struct captured_content {
 		
 		using char_type = typename std::iterator_traits<Iterator>::value_type;
 		
-		bool _matched{false};
+		equal_less_greater _elg;
 	
 		using name = Name;
 	
-		constexpr CTRE_FORCE_INLINE storage() noexcept {}
+		constexpr CTRE_FORCE_INLINE storage() noexcept : _elg{1, 1, 1} {}
+		constexpr CTRE_FORCE_INLINE storage(not_matched_tag_t) noexcept : _elg{0, 0, 0} {}
 	
 		constexpr CTRE_FORCE_INLINE void matched() noexcept {
-			_matched = true;
+			// TODO review how matched() and unmatched() are used and revisit those algorithms.
+			_elg = {1, 0, 0};
 		}
 		constexpr CTRE_FORCE_INLINE void unmatch() noexcept {
-			_matched = false;
+			_elg = {0, 0, 0};
 		}
+
+		constexpr CTRE_FORCE_INLINE void mask_elg(equal_less_greater elg) {
+			_elg.equal &= elg.equal;
+			_elg.less &= elg.less;
+			_elg.greater &= elg.greater;
+		}
+		constexpr CTRE_FORCE_INLINE void mask_lg(equal_less_greater elg) {
+			_elg.less &= elg.less;
+			_elg.greater &= elg.greater;
+		}
+
 		constexpr CTRE_FORCE_INLINE void set_start(Iterator pos) noexcept {
 			_begin = pos;
 		}
@@ -51,7 +65,26 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 	
 		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
-			return _matched;
+			return _elg.equal;
+		}
+
+		constexpr CTRE_FORCE_INLINE bool is_less() const noexcept {
+			return _elg.less;
+		}
+
+		constexpr CTRE_FORCE_INLINE bool is_greater() const noexcept {
+			return _elg.greater;
+		}
+
+		constexpr CTRE_FORCE_INLINE operator equal_less_greater() const noexcept {
+			return _elg;
+		}
+
+		constexpr CTRE_FORCE_INLINE operator partial_ordering() const noexcept {
+			if (_elg.equal) return partial_ordering::equal;
+			if (_elg.less) return partial_ordering::less;
+			if (_elg.greater) return partial_ordering::greater;
+			return partial_ordering::unordered;
 		}
 
 		constexpr CTRE_FORCE_INLINE auto size() const noexcept {
@@ -81,6 +114,7 @@ template <typename... Captures> struct captures;
 template <typename Head, typename... Tail> struct captures<Head, Tail...>: captures<Tail...> {
 	Head head{};
 	constexpr CTRE_FORCE_INLINE captures() noexcept { }
+	constexpr CTRE_FORCE_INLINE captures(not_matched_tag_t tag) noexcept : head(tag) { }
 	template <size_t id> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		if constexpr (id == Head::get_id()) {
 			return true;
@@ -147,7 +181,7 @@ template <typename Iterator, typename... Captures> struct regex_results {
 	captures<captured_content<0>::template storage<Iterator>, typename Captures::template storage<Iterator>...> _captures{};
 	
 	constexpr CTRE_FORCE_INLINE regex_results() noexcept { }
-	constexpr CTRE_FORCE_INLINE regex_results(not_matched_tag_t) noexcept { }
+	constexpr CTRE_FORCE_INLINE regex_results(not_matched_tag_t tag) noexcept : _captures(tag) { }
 	
 	// special constructor for deducting
 	constexpr CTRE_FORCE_INLINE regex_results(Iterator, ctll::list<Captures...>) noexcept { }
@@ -169,8 +203,28 @@ template <typename Iterator, typename... Captures> struct regex_results {
 		_captures.template select<0>().unmatch();
 		return *this;
 	}
+	constexpr CTRE_FORCE_INLINE regex_results & mask_elg(equal_less_greater elg) noexcept {
+		_captures.template select<0>().mask_elg(elg);
+		return *this;
+	}
+	constexpr CTRE_FORCE_INLINE regex_results & mask_lg(equal_less_greater elg) noexcept {
+		_captures.template select<0>().mask_lg(elg);
+		return *this;
+	}
 	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 		return bool(_captures.template select<0>());
+	}
+	constexpr CTRE_FORCE_INLINE bool is_less() const noexcept {
+		return _captures.template select<0>().is_less();
+	}
+	constexpr CTRE_FORCE_INLINE bool is_greater() const noexcept {
+		return _captures.template select<0>().is_greater();
+	}
+	constexpr CTRE_FORCE_INLINE operator equal_less_greater() const noexcept {
+		return equal_less_greater(_captures.template select<0>());
+	}
+	constexpr CTRE_FORCE_INLINE operator partial_ordering() const noexcept {
+		return partial_ordering(_captures.template select<0>());
 	}
 	
 	constexpr operator std::basic_string_view<char_type>() const noexcept {

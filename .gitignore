@@ -2,6 +2,7 @@
 *.d
 test
 result
+test_ordering
 tests/benchmark-exec/*
 !tests/benchmark-exec/*.cpp
 *.pyc
