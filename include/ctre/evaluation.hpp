@@ -60,7 +60,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const E
 
 // matching everything which behave as a one character matcher
 
-template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
+template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = typename std::enable_if<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>::type> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
 	if (end == current) return not_matched;
 	if (!CharacterLike::match_char(*current)) return not_matched;

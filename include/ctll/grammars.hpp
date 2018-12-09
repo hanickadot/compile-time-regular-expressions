@@ -4,8 +4,8 @@
 namespace ctll {
 
 // terminal type representing symbol / character of any type
-template <auto v> struct term {
-	static constexpr auto value = v;
+template <int v> struct term {
+	static constexpr int value = v;
 };
 
 // epsilon = nothing on input tape
@@ -50,28 +50,28 @@ template <typename T, typename... As> constexpr auto pop_front_and_push_front(T 
 // match any term
 struct anything {
 	constexpr inline anything() noexcept { };
-	template <auto V> constexpr anything(term<V>) noexcept;
+	template <int V> constexpr anything(term<V>) noexcept;
 };
 
 // match range of term A-B
-template <auto A, decltype(A) B> struct range {
+template <int A, int B> struct range {
 	constexpr inline range() noexcept { };
 	//template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
-	template <auto V, typename = std::enable_if_t<(A <= V) && (V <= B)>> constexpr inline range(term<V>) noexcept;
+	template <int V, typename = typename std::enable_if<(A <= V) && (V <= B)>::type> constexpr inline range(term<V>) noexcept;
 };
 
 // match terms defined in set
-template <auto... Def> struct set {
+template <int... Def> struct set {
 	constexpr inline set() noexcept { };
 	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
-	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr inline set(term<V>) noexcept;
+	template <int V, typename = typename std::enable_if<((Def == V) || ... || false)>::type> constexpr inline set(term<V>) noexcept;
 };
 
 // match terms not defined in set
-template <auto... Def> struct neg_set {
+template <int... Def> struct neg_set {
 	constexpr inline neg_set() noexcept { };
 	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
-	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr inline neg_set(term<V>) noexcept;
+	template <int V, typename = typename std::enable_if<((Def != V) && ... && true)>::type> constexpr inline neg_set(term<V>) noexcept;
 };
 
 // AUGMENTED grammar which completes user-defined grammar for all other cases
@@ -83,10 +83,10 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	using Grammar::rule; 
 	
 	// term on stack and on input means pop_input;
-	template <auto A> static constexpr auto rule(term<A>, term<A>) -> ctll::pop_input;
+	template <int A> static constexpr auto rule(term<A>, term<A>) -> ctll::pop_input;
 	
 	// if the type on stack (range, set, neg_set, anything) is constructible from the terminal => pop_input
-	template <typename Expected, auto V> static constexpr auto rule(Expected, term<V>) -> std::enable_if_t<std::is_constructible<Expected, term<V>>::value, ctll::pop_input>;
+	template <typename Expected, int V> static constexpr auto rule(Expected, term<V>) -> typename std::enable_if<std::is_constructible<Expected, term<V>>::value, ctll::pop_input>::type;
 	
 	// empty stack and empty input means we are accepting 
 	static constexpr auto rule(empty_stack_symbol, epsilon) -> ctll::accept;

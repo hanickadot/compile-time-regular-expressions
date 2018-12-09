@@ -52,7 +52,7 @@ template <typename... Tail, typename Output> constexpr auto find_captures(ctll::
 }
 
 
-// , typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<char>)
+// , typename = typename std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<char>)
 template <typename CharacterLike, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<CharacterLike, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }

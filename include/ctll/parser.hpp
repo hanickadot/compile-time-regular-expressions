@@ -40,8 +40,8 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	}
 #else
 	// support for c++14
-	template <size_t Pos> static constexpr auto get_current_term() noexcept -> std::enable_if_t<(Pos < input.size()), term<input[Pos]>>;
-	template <size_t Pos> static constexpr auto get_current_term() noexcept -> std::enable_if_t<(Pos >= input.size()), epsilon>;
+	template <size_t Pos> static constexpr auto get_current_term() noexcept -> typename std::enable_if<(Pos < input.size()), term<input[Pos]>>::type;
+	template <size_t Pos> static constexpr auto get_current_term() noexcept -> typename std::enable_if<(Pos >= input.size()), epsilon>::type;
 #endif
 
 #if __cpp_if_constexpr
@@ -57,8 +57,8 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	}
 #else
 	// support for c++14
-	template <size_t Pos> static constexpr auto get_previous_term() noexcept -> std::enable_if_t<((Pos <= input.size()) && (Pos > 0)), term<input[Pos-1]>>;
-	template <size_t Pos> static constexpr auto get_previous_term() noexcept -> std::enable_if_t<((Pos > input.size()) || (Pos == 0)), epsilon>;
+	template <size_t Pos> static constexpr auto get_previous_term() noexcept -> typename std::enable_if<((Pos <= input.size()) && (Pos > 0)), term<input[Pos-1]>>::type;
+	template <size_t Pos> static constexpr auto get_previous_term() noexcept -> typename std::enable_if<((Pos > input.size()) || (Pos == 0)), epsilon>::type;
 #endif
 	// if rule is accept => return true and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject> 

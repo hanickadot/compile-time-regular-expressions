@@ -152,10 +152,10 @@ template <typename Iterator, typename... Captures> struct regex_results {
 	// special constructor for deducting
 	constexpr CTRE_FORCE_INLINE regex_results(Iterator, ctll::list<Captures...>) noexcept { }
 	
-	template <size_t Id, typename = std::enable_if_t<decltype(_captures)::template exists<Id>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+	template <size_t Id, typename = typename std::enable_if<decltype(_captures)::template exists<Id>()>::type> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 		return _captures.template select<Id>();
 	}
-	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+	template <typename Name, typename = typename std::enable_if<decltype(_captures)::template exists<Name>()>::type> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 		return _captures.template select<Name>();
 	}
 	static constexpr size_t size() noexcept {
