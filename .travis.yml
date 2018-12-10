@@ -41,12 +41,14 @@ matrix:
 
   - os: osx
     osx_image: xcode10
-    
+
 before_install:
   - |
      if [[ (-x $(which brew)) ]]; then
        brew update
-       brew install pcre2 re2 boost
+       brew install boost || brew upgrade boost
+       brew install pcre2 || brew upgrade pcre2
+       brew install re2 || brew upgrade re2
      else
        sudo add-apt-repository -y ppa:sergey-dryabzhinsky/packages
        sudo apt-get update -qq
