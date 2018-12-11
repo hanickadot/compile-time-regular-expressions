@@ -3,7 +3,6 @@
 
 #include "../ctll.hpp"
 #include "pcre_actions.hpp"
-#include "simple.hpp"
 #include "evaluation.hpp"
 #include "wrapper.hpp"
 #include "id.hpp"
@@ -91,16 +90,6 @@ template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_I
 template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 #endif
 	return ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template correct_with<pcre_context<>>;
-}
-
-
-#if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_simple_test() noexcept {
-	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
-#else
-template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_simple_test() noexcept {
-#endif
-	return ctll::parser<ctre::simple, input>::correct;
 }
 
 #endif
