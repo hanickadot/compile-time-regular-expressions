@@ -23,9 +23,15 @@ namespace literals {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-string-literal-operator-template"
+
+#define _CTRE_ENABLE_LITERALS
+#endif
+	
+#ifdef __GNUC__
+#define _CTRE_ENABLE_LITERALS
 #endif
 
-#ifndef _MSC_VER
+#ifdef _CTRE_ENABLE_LITERALS
 	
 // add this when we will have concepts
 // requires ctll::parser<ctre::pcre, _fixed_string_reference<CharT, charpack...>, ctre::pcre_actions>::template correct_with<pcre_context<>>
@@ -55,7 +61,7 @@ template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_I
 
 namespace test_literals {
 	
-#ifndef _MSC_VER
+#ifdef _CTRE_ENABLE_LITERALS
 
 #if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
