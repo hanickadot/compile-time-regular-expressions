@@ -70,7 +70,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	}
 	// if rule is string => push it to the front of stack
 	template <size_t Pos, typename... Content, typename Terminal, typename Stack, typename Subject>
-	static constexpr auto move(ctll::list<Content...> string, Terminal, Stack stack, Subject subject) noexcept {
+	static constexpr auto move(ctll::push<Content...> string, Terminal, Stack stack, Subject subject) noexcept {
 		return decide<Pos>(push_front(string, stack), subject);
 	}
 	// if rule is epsilon (empty string) => continue
@@ -81,13 +81,13 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// if rule is string with current character at the beginning (term<V>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
-	static constexpr auto move(ctll::list<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
+	static constexpr auto move(ctll::push<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
 		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
-	static constexpr auto move(ctll::list<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
+	static constexpr auto move(ctll::push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
 		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// decide if we need to take action or move

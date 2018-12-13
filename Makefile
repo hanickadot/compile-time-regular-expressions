@@ -38,7 +38,7 @@ benchmark-clean:
 clean:
 	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES) mtent12.txt mtent12.zip
 	
-grammar: include/ctre/pcre.hpp include/ctre/simple.hpp
+grammar: include/ctre/pcre.hpp
 	
 regrammar: 
 	@rm -f include/ctre/pcre.hpp
@@ -61,7 +61,3 @@ compare: mtent12.txt
 	$(CXX) $(CXXFLAGS) -MMD -march=native -DPATTERN="\"(${PATTERN})\"" -c tests/benchmark-range/measurement.cpp -o tests/benchmark-range/measurement.o
 	$(CXX) tests/benchmark-range/measurement.o -lboost_regex -lpcre2-8 -lre2 -o tests/benchmark-range/measurement
 	tests/benchmark-range/measurement all mtent12.txt ${REPEAT}
-
-#include/ctre/simple.hpp: include/ctre/simple.gram
-#	@echo "LL1q $<"
-#	@$(DESATOMAT) --ll --q --input=include/ctre/simple.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=simple.hpp --cfg:namespace=ctre --cfg:guard=CTRE__SIMPLE__HPP --cfg:grammar_name=simple
