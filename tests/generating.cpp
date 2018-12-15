@@ -136,7 +136,7 @@ static_assert(same_f("((?:a)(b))"_ctre_gen, ctre::capture<1,ctre::character<'a'>
 // backreference
 static_assert(same_f("(a)\\g{1}"_ctre_gen, ctre::sequence<ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>>()));
 static_assert(same_f("(?<ab>a)\\g{ab}"_ctre_gen, ctre::sequence<ctre::capture_with_name<1,ctre::id<'a','b'>,ctre::character<'a'>>, ctre::back_reference_with_name<ctre::id<'a','b'>>>()));
-
+static_assert(same_f("((a)\\g{2})"_ctre_gen, ctre::capture<1, ctre::capture<2,ctre::character<'a'>>, ctre::back_reference<2>>()));
 
 // asserts
 static_assert(same_f("^"_ctre_gen, ctre::assert_begin()));
