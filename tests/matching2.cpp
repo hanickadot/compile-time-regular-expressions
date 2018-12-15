@@ -210,3 +210,13 @@ static_assert("((a)(b))"_ctre.match("ab"sv).template get<1>() == "ab"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<2>() == "a"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<3>() == "b"sv);
 
+static_assert("^x(?=y)"_ctre.search("xy"sv).template get<0>() == "x"sv);
+static_assert("^x(?!a)"_ctre.search("xy"sv).template get<0>() == "x"sv);
+
+static_assert("a(?!3)[0-9]"_ctre.match("a0"sv));
+static_assert("a(?!3)[0-9]"_ctre.match("a9"sv));
+static_assert(!"a(?!3)[0-9]"_ctre.match("a3"sv));
+
+static_assert(!"^(?=.*(.)\\g{1}+.*)[a-z]+"_ctre.search("abcdefgh"sv));
+static_assert("^(?=.*(.)\\g{1}+.*)[a-z]+"_ctre.search("abcddefgh"sv));
+
