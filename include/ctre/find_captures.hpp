@@ -98,7 +98,14 @@ template <size_t A, size_t B, typename... Content, typename... Tail, typename Ou
 
 
 
+template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lookahead_positive<Content...>, Tail...>, Output output) noexcept {
+	return find_captures(ctll::list<Content..., Tail...>(), output);
+}
 
+
+template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lookahead_negative<Content...>, Tail...>, Output output) noexcept {
+	return find_captures(ctll::list<Content..., Tail...>(), output);
+}
 
 
 
