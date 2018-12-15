@@ -20,6 +20,35 @@ ctre::match<"REGEX">(subject); // C++20
 * `std::string`-like object (`std::string_view` or your own string if it's providing `begin`/`end` functions with forward iterators)
 * pair of forward iterators
 
+## Supported compilers
+
+* clang 5.0+ (template UDL, C++17 syntax)
+* gcc 7.2+ (template UDL, C++17 syntax)
+* gcc 9.0+ (C++17 & C++20 cNTTP syntax)
+* MSVC 15.8.8+ (C++17 syntax only)
+
+#### Template UDL syntax
+
+Compiler must support N3599 extension (as GNU extension in gcc and clang).
+
+#### C++17 syntax
+
+You can provide pattern as a `constexpr ctll::basic_fixed_string` variable.
+
+```c++
+static constexpr auto pattern = ctll::basic_fixed_string{ "h.*" };
+
+constexpr auto match(std::string_view sv) noexcept {
+	return ctre::re<pattern>().match(sv);
+}
+```
+
+(this is tested in MSVC 15.8.8)
+
+#### C++20 syntax
+
+Currently only compiler which supports cNTTP syntax `ctre::match<PATTERN>(subject)` is GCC 9+.
+
 ## Examples
 
 #### Extracting number from input
@@ -94,25 +123,3 @@ for (auto match: ctre::range(input,"[0-9]++"_ctre)) {
 	std::cout << std::string_view{match} << "\n";
 }
 ```
-
-## Supported compilers
-
-* clang 5.0+
-* gcc 7.2+
-* MSVC 15.8.8+ (experimental, without string_literal support)
-
-Compiler must support N3599 extension (as GNU extension in gcc and clang) or C++20 class NTTP (P0732).
-
-### MSVC
-
-Because current MSVC doesn't support custom templated string literals or NTTP, you need to use workaround:
-
-```c++
-static constexpr inline auto pattern = ctll::basic_fixed_string{ "h.*" };
-
-constexpr auto match(std::string_view sv) noexcept {
-	return ctre::re<pattern>().match(sv);
-}
-```
-
-(this is tested in MSVC 15.8.8)
