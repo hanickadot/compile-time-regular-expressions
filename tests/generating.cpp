@@ -147,3 +147,24 @@ static_assert(same_f("^$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::ass
 static_assert(same_f("^abc$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>, ctre::assert_end>()));
 
 static_assert(same_f("^a|b$"_ctre_gen, ctre::select<ctre::sequence<ctre::assert_begin, ctre::character<'a'>>, ctre::sequence<ctre::character<'b'>, ctre::assert_end>>()));
+
+// lookahead positive/negative
+static_assert(same_f("(?=a)"_ctre_gen, ctre::lookahead_positive<ctre::character<'a'>>()));
+static_assert(same_f("(?=ax)"_ctre_gen, ctre::lookahead_positive<ctre::string<'a','x'>>()));
+static_assert(same_f("(?=[a]x)"_ctre_gen, ctre::lookahead_positive<ctre::set<ctre::character<'a'>>,ctre::character<'x'>>()));
+
+static_assert(same_f("(?!a)"_ctre_gen, ctre::lookahead_negative<ctre::character<'a'>>()));
+static_assert(same_f("(?!ax)"_ctre_gen, ctre::lookahead_negative<ctre::string<'a','x'>>()));
+static_assert(same_f("(?![a]x)"_ctre_gen, ctre::lookahead_negative<ctre::set<ctre::character<'a'>>,ctre::character<'x'>>()));
+
+static_assert(same_f("^(?=(a))$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::capture<1,ctre::character<'a'>>>, ctre::assert_end>()));
+
+static_assert(same_f("^(?=.*(a))$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>>, ctre::assert_end>()));
+
+static_assert(same_f("^(?=.*(a).*)$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::star<ctre::any>>, ctre::assert_end>()));
+
+//static_assert(same_f("^(?=.*(a)\\g{1}.*)$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>, ctre::star<ctre::any>>, ctre::assert_end>()));
+
+
+//static_assert(same_f("^(?=.*(.)\\g{1}+.*)[a-z]+"_ctre_gen, ctre::sequence< ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>, ctre::capture<1, ctre::any>, ctre::plus<ctre::back_reference<1>> ,ctre::star<ctre::any>>, ctre::plus<ctre::set<ctre::char_range<'a','z'>>> >());
+
