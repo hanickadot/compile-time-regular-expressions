@@ -25,8 +25,10 @@ namespace literals {
 
 #define CTRE_ENABLE_LITERALS
 #endif
-	
-#ifdef __GNUC__
+
+#ifdef __INTEL_COMPILER
+// not enable literals
+#elif defined __GNUC__
 #define CTRE_ENABLE_LITERALS
 #endif
 
