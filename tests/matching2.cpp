@@ -210,3 +210,24 @@ static_assert("((a)(b))"_ctre.match("ab"sv).template get<1>() == "ab"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<2>() == "a"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<3>() == "b"sv);
 
+static_assert("^x(?=y)"_ctre.search("xy"sv).template get<0>() == "x"sv);
+static_assert("^x(?!a)"_ctre.search("xy"sv).template get<0>() == "x"sv);
+
+static_assert("a(?!3)[0-9]"_ctre.match("a0"sv));
+static_assert("a(?!3)[0-9]"_ctre.match("a9"sv));
+static_assert(!"a(?!3)[0-9]"_ctre.match("a3"sv));
+
+static_assert(!".*(.)\\g{1}.*"_ctre.match("abcdefghijk"sv));
+static_assert(".*(.)\\g{1}.*"_ctre.match("aabcdefghijk"sv));
+static_assert(".*(.)\\g{1}.*"_ctre.match("abcdeffghijk"sv));
+
+static_assert("(?=.*(.)\\g{1})[a-z]+"_ctre.match("abcdeffghijk"sv));
+static_assert(!"(?=.*(.)\\g{1}{2})[a-z]+"_ctre.match("abcddeffghijk"sv));
+static_assert("(?=.*(.)\\g{1}{2})[a-z]+"_ctre.match("abcdddeffghijk"sv));
+
+static_assert( "(?!.*(.)\\g{1})[a-z]+"_ctre.match("abcdefgh"sv));
+static_assert(!"(?!.*(.)\\g{1})[a-z]+"_ctre.match("abcdeefgh"sv));
+
+
+
+
