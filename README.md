@@ -24,7 +24,7 @@ ctre::match<"REGEX">(subject); // C++20
 
 * clang 5.0+ (template UDL, C++17 syntax)
 * gcc 7.2+ (template UDL, C++17 syntax)
-* gcc 9.0+ (C++17 & C++20 cNTTP syntax)
+* gcc 9.0+ (C++17 & C++20 cNTTP syntax, trampolining a.k.a. long patterns are not supported due compiler bug)
 * MSVC 15.8.8+ (C++17 syntax only)
 
 #### Template UDL syntax

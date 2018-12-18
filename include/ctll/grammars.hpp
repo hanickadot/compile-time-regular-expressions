@@ -95,7 +95,7 @@ template <typename Grammar> struct augment_grammar: public Grammar {
 	static constexpr auto rule(...) -> ctll::reject;
 	
 	// start stack is just a list<Grammar::_start>;
-	static constexpr inline auto start_stack = list<typename Grammar::_start>{};
+	using start_stack = list<typename Grammar::_start>;
 };
 
 

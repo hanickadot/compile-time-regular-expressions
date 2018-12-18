@@ -11,15 +11,25 @@ static_assert(ctre::re<pattern1>().match("123456789"sv));
 static_assert(ctre::re<pattern2>().match(""sv));
 
 template <auto & ptn> constexpr bool re() {
-	return ctll::parser<ctre::pcre, ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
+#if __cpp_nontype_template_parameter_class
+	constexpr auto _ptn = ptn;
+#else
+	constexpr auto & _ptn = ptn;
+#endif
+	return ctll::parser<ctre::pcre, _ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
 }
 
 static_assert(re<pattern2>());
 
-static inline constexpr ctre::pattern pat = "hello";
+static inline constexpr ctll::basic_fixed_string pat = "hello";
 
 template <auto & ptn> constexpr bool re2() {
-	return ctll::parser<ctre::pcre, ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
+#if __cpp_nontype_template_parameter_class
+	constexpr auto _ptn = ptn;
+#else
+	constexpr auto & _ptn = ptn;
+#endif
+	return ctll::parser<ctre::pcre, _ptn, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
 }
 
 static_assert(re<pat>());

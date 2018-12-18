@@ -10,7 +10,7 @@
 
 namespace ctre {
 
-// in C++17 (clang & gcc with gnu extension) we need translate character pack into basic_fixed_string
+// in C++17 (clang & gcc with gnu extension) we need translate character pack into ctll::basic_fixed_string
 // in C++20 we have `class nontype template parameters`
 
 #if !__cpp_nontype_template_parameter_class
@@ -19,17 +19,20 @@ template <typename CharT, CharT... input> static inline constexpr auto _fixed_st
 
 namespace literals {
 	
+// clang and GCC <9 supports LITERALS with packs
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-string-literal-operator-template"
-
 #define CTRE_ENABLE_LITERALS
 #endif
 
 #ifdef __INTEL_COMPILER
 // not enable literals
 #elif defined __GNUC__
+#ifndef EXPERIMENTAL_GCC_9
 #define CTRE_ENABLE_LITERALS
+#endif
 #endif
 
 #ifdef CTRE_ENABLE_LITERALS
@@ -39,11 +42,12 @@ namespace literals {
 
 #if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
-	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
+	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
+template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
-	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
 	return ctre::regular_expression(re());
@@ -52,9 +56,11 @@ template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 
 
 // this will need to be fixed with C++20
+#if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_id() noexcept {
 	return id<charpack...>();
 }
+#endif
 
 #endif
 
@@ -66,20 +72,22 @@ namespace test_literals {
 
 #if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
-	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
+	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
+template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
-	return ctll::parser<ctre::pcre, input>::correct;
+	return ctll::parser<ctre::pcre, _input>::correct;
 }
 
 #if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
-	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
+	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
+template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
-	using tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	return typename tmp::output_type::stack_type();
 }
@@ -87,12 +95,14 @@ template <basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator"
 
 #if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
-	constexpr auto & input = _fixed_string_reference<CharT, charpack...>;
+	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
+template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
+	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
-	return ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template correct_with<pcre_context<>>;
+	return ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template correct_with<pcre_context<>>;
 }
+
 
 #endif
 

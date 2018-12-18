@@ -11,9 +11,13 @@ enum class type {
 };
 
 std::pair<type, std::string_view> match(std::string_view subject) {
-	using namespace ctre::literals;
 	
+	#if __cpp_nontype_template_parameter_class
+	if (auto [matched, identifier, number] = ctre::match<"(?:([a-z]++)|([0-9]++))">(subject); matched) {
+	#else
+	using namespace ctre::literals;
 	if (auto [matched, identifier, number] = "(?:([a-z]++)|([0-9]++))"_ctre.match(subject); matched) {
+	#endif
 		if (identifier) return {type::identifier, std::string_view{identifier}};
 		else if (number) return {type::number, std::string_view{number}};
 		else return {type::matched, std::string_view{matched}};
