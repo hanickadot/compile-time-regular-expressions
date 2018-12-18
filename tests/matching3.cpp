@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+#ifndef EXPERIMENTAL_GCC_9
+
 using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
@@ -195,7 +197,7 @@ TEST_MATCH(112, "\\[\\]", "[]");
 
 
 
-
+#endif
 
 
 

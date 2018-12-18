@@ -2,7 +2,7 @@
 
 default: all
 	
-TARGETS := a.cpp result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
+TARGETS := result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
 IGNORE := $(wildcard tests/benchmark/*.cpp) $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php

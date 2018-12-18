@@ -19,17 +19,20 @@ template <typename CharT, CharT... input> static inline constexpr auto _fixed_st
 
 namespace literals {
 	
+// clang and GCC <9 supports LITERALS with packs
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-string-literal-operator-template"
-
 #define CTRE_ENABLE_LITERALS
 #endif
 
 #ifdef __INTEL_COMPILER
 // not enable literals
 #elif defined __GNUC__
+#ifndef EXPERIMENTAL_GCC_9
 #define CTRE_ENABLE_LITERALS
+#endif
 #endif
 
 #ifdef CTRE_ENABLE_LITERALS
@@ -101,18 +104,6 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLI
 }
 
 
-#if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_simple_test() noexcept {
-	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
-#else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_simple_test() noexcept {
-	constexpr auto _input = input; // workaround for GCC 9 bug 88092
-#endif
-	return ctll::parser<ctre::simple, _input>::correct;
-}
-
-#endif
-#endif
 #endif
 
 #ifdef __clang__
