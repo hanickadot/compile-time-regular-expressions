@@ -145,7 +145,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	} else {
 		return evaluate(begin, current, end, captures, ctll::list<HeadContent, Tail...>());
 	}
-	
 }
 
 // matching empty in patterns
@@ -361,6 +360,34 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return not_matched;
 }
 
+// end of lookahead
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R captures, ctll::list<end_lookahead_mark>) noexcept {
+	return captures.matched();
+}
+
+// lookahead positive
+template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lookahead_positive<Content...>, Tail...>) noexcept {
+	
+	if (auto lookahead_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
+		captures = lookahead_result.unmatch();
+		return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	} else {
+		return not_matched;
+	}
+}
+
+// lookahead negative
+template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lookahead_negative<Content...>, Tail...>) noexcept {
+	
+	if (auto lookahead_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
+		return not_matched;
+	} else {
+		return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	}
+}
 
 }
 

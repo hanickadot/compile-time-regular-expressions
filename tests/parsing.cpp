@@ -132,5 +132,13 @@ static_assert("tour\n\ntournament"_ctre_test);
 static_assert("tour\nto\ntournament"_ctre_test);
 static_assert("tour|to|tournament"_ctre_test);
 static_assert("z"_ctre_test);
+static_assert("=!"_ctre_test);
+static_assert("[=!]"_ctre_test);
+static_assert("(=!)"_ctre_test);
+static_assert("(?!test)"_ctre_test);
+static_assert("(?=test)"_ctre_test);
+static_assert("^(?=.*(.)\\g{1}+.*)[a-z]+"_ctre_test);
+static_assert("^(?=.*(a)\\g{1}.*)$"_ctre_test);
+
 
 #endif

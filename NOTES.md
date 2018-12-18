@@ -12,7 +12,6 @@
 * atomic groups
 * comments
 * options/modes
-* lookahead
 * subroutines
 * conditional patterns
 * callouts

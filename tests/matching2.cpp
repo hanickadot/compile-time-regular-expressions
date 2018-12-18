@@ -5,8 +5,6 @@ using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
-#ifndef EXPERIMENTAL_GCC_9
-
 static_assert(""_ctre.search("abc"sv));
 static_assert("abc"_ctre.match("abc"sv));
 
@@ -23,6 +21,10 @@ static_assert("[a-z]"_ctre.match("a"sv));
 static_assert("[a-z]"_ctre.match("f"sv));
 static_assert("[a-z]"_ctre.match("z"sv));
 static_assert(!"[a-z]"_ctre.match("Z"sv));
+static_assert("\\u0050"_ctre.match("P"sv));
+static_assert("[\\u0050-\\u0051]"_ctre.match("Q"sv));
+static_assert("\u0050"_ctre.match("P"sv)); // be aware!
+
 static_assert("^[\\x30-\\x39]+?$"_ctre.match("123456789"sv));
 static_assert("[a-z0-9]"_ctre.match("0"sv));
 static_assert(!"[a-z0-9]"_ctre.match("A"sv));
@@ -208,4 +210,24 @@ static_assert("((a)(b))"_ctre.match("ab"sv).template get<1>() == "ab"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<2>() == "a"sv);
 static_assert("((a)(b))"_ctre.match("ab"sv).template get<3>() == "b"sv);
 
-#endif
+static_assert("^x(?=y)"_ctre.search("xy"sv).template get<0>() == "x"sv);
+static_assert("^x(?!a)"_ctre.search("xy"sv).template get<0>() == "x"sv);
+
+static_assert("a(?!3)[0-9]"_ctre.match("a0"sv));
+static_assert("a(?!3)[0-9]"_ctre.match("a9"sv));
+static_assert(!"a(?!3)[0-9]"_ctre.match("a3"sv));
+
+static_assert(!".*(.)\\g{1}.*"_ctre.match("abcdefghijk"sv));
+static_assert(".*(.)\\g{1}.*"_ctre.match("aabcdefghijk"sv));
+static_assert(".*(.)\\g{1}.*"_ctre.match("abcdeffghijk"sv));
+
+static_assert("(?=.*(.)\\g{1})[a-z]+"_ctre.match("abcdeffghijk"sv));
+static_assert(!"(?=.*(.)\\g{1}{2})[a-z]+"_ctre.match("abcddeffghijk"sv));
+static_assert("(?=.*(.)\\g{1}{2})[a-z]+"_ctre.match("abcdddeffghijk"sv));
+
+static_assert( "(?!.*(.)\\g{1})[a-z]+"_ctre.match("abcdefgh"sv));
+static_assert(!"(?!.*(.)\\g{1})[a-z]+"_ctre.match("abcdeefgh"sv));
+
+
+
+

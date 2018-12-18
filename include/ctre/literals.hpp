@@ -3,7 +3,6 @@
 
 #include "../ctll.hpp"
 #include "pcre_actions.hpp"
-#include "simple.hpp"
 #include "evaluation.hpp"
 #include "wrapper.hpp"
 #include "id.hpp"
@@ -20,8 +19,20 @@ template <typename CharT, CharT... input> static inline constexpr auto _fixed_st
 
 namespace literals {
 	
-#ifndef _MSC_VER
-#ifndef EXPERIMENTAL_GCC_9
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-string-literal-operator-template"
+
+#define CTRE_ENABLE_LITERALS
+#endif
+
+#ifdef __INTEL_COMPILER
+// not enable literals
+#elif defined __GNUC__
+#define CTRE_ENABLE_LITERALS
+#endif
+
+#ifdef CTRE_ENABLE_LITERALS
 	
 // add this when we will have concepts
 // requires ctll::parser<ctre::pcre, _fixed_string_reference<CharT, charpack...>, ctre::pcre_actions>::template correct_with<pcre_context<>>
@@ -54,8 +65,7 @@ template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_I
 
 namespace test_literals {
 	
-#ifndef _MSC_VER
-#ifndef EXPERIMENTAL_GCC_9
+#ifdef CTRE_ENABLE_LITERALS
 
 #if !__cpp_nontype_template_parameter_class
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
@@ -105,6 +115,9 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto ope
 #endif
 #endif
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 } // literals
 

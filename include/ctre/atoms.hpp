@@ -10,6 +10,7 @@ struct accept { };
 struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
+struct end_lookahead_mark { };
 template <size_t Id> struct numeric_mark { };
 
 // actual AST of regexp
@@ -39,10 +40,14 @@ template <size_t Index, typename Name, typename... Content> struct capture_with_
 
 template <size_t Index> struct back_reference { };
 template <typename Name> struct back_reference_with_name { };
- 
+
+template <typename Type> struct look_start { };
+
+template <typename... Content> struct lookahead_positive { };
+template <typename... Content> struct lookahead_negative { };
 
 struct assert_begin { };
- struct assert_end { };
+struct assert_end { };
 
 }
 
