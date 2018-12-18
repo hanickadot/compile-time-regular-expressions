@@ -130,7 +130,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
-	static constexpr auto move(ctll::push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
+	static constexpr auto move(push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
 		#ifdef EXPERIMENTAL_GCC_9
 		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
 		#else
