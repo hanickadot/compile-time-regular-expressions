@@ -1,5 +1,6 @@
 #include <ctre.hpp>
 
+#if false
 using namespace ctre::test_literals;
 
 #ifdef DEBUG
@@ -167,4 +168,5 @@ static_assert(same_f("^(?=.*(a)\\g{1}.*)$"_ctre_gen, ctre::sequence<ctre::assert
 
 static_assert(same_f("^(?=.*(a)\\g{1}.*)[a-z]$"_ctre_gen, ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>, ctre::star<ctre::any>>, ctre::set<ctre::char_range<'a','z'>>, ctre::assert_end>()));
 
+#endif
 

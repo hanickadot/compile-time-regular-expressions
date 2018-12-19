@@ -5,14 +5,26 @@ using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
-#define TEST_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().match(subject));
+#if __cpp_nontype_template_parameter_class
 
-#define TEST_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().search(subject));
+#define TEST_MATCH(id, pattern, subject) static_assert(ctre::match<pattern>(subject))
 
-#define TEST_NOT_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().match(subject));
+#define TEST_SEARCH(id, pattern, subject) static_assert(ctre::search<pattern>(subject))
 
-#define TEST_NOT_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().search(subject));
+#define TEST_NOT_MATCH(id, pattern, subject) static_assert(!ctre::match<pattern>(subject))
 
+#define TEST_NOT_SEARCH(id, pattern, subject) static_assert(!ctre::search<pattern>(subject))
+
+#else
+
+#define TEST_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().match(subject))
+
+#define TEST_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().search(subject))
+
+#define TEST_NOT_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().match(subject))
+
+#define TEST_NOT_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().search(subject))
+#endif
 
 TEST_MATCH(1, "blabla","blabla");
 TEST_NOT_MATCH(2,"blabla","blabla2");
@@ -175,8 +187,6 @@ TEST_MATCH(111, "^abc$", "abc");
 
 
 TEST_MATCH(112, "\\[\\]", "[]");
-
-
 
 
 

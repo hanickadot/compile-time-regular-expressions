@@ -1,6 +1,6 @@
 #include <ctre.hpp>
 
-static constexpr auto Pattern = ctll::basic_fixed_string{ LR"(^(\S+;\d+)\s+(\d+|\d+/\d+)?\s+((\d{1,2})-([A-Z]{3,3})-(\d{4,4})\s+(\d{1,2}):(\d{2,2})(:(\d{2,2})(\.\d{2,2})?)?(\s+\[(\S+),(\S+)\]\s+\(([A-Z]*),([A-Z]*),([A-Z]*),([A-Z]*)\))?)?)" };
+static constexpr auto Pattern = ctll::basic_fixed_string{ L"[a-z]+" };
 
 int main()
 {

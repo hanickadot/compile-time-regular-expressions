@@ -5,6 +5,7 @@
 #include "list.hpp"
 #include "grammars.hpp"
 #include "actions.hpp"
+
 #include <limits>
 
 namespace ctll {
@@ -16,19 +17,47 @@ enum class decision {
 	undecided
 };
 
-template <typename T> void id(T);
-
 struct placeholder { };
+
+template <size_t> using index_placeholder = placeholder;
+
+#ifdef EXPERIMENTAL_GCC_9
+template <size_t, typename, typename Subject, decision Decision> struct results {
+	constexpr operator bool() const noexcept {
+		return Decision == decision::accept;
+	}
+	using output_type = Subject;
+};
+#endif
+
 
 #if !__cpp_nontype_template_parameter_class
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
-template <typename Grammar, basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = true> struct parser { // in c++20
+template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
 	using Actions = ctll::conditional<IgnoreUnknownActions, ignore_unknown<ActionSelector>, identity<ActionSelector>>;
-	static inline constexpr auto grammar = augment_grammar<Grammar>();
+	using grammar = augment_grammar<Grammar>;
 	
-	template <size_t Pos, typename Stack = void, typename Subject = void, decision Decision = decision::undecided> struct seed;
+	#ifndef EXPERIMENTAL_GCC_9
+	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct results {
+		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
+			return Decision == decision::accept;
+		}
+	
+		using output_type = Subject;
+
+		constexpr auto operator+(placeholder) const noexcept {
+			if constexpr (Decision == decision::undecided) {
+				// parse for current char (RPos) with previous stack and subject :)
+				return decide<Pos, Stack, Subject>({}, {});
+			} else {
+				// if there is decision already => just push it to the end of fold expression
+				return *this;
+			}
+		}
+	};
+	#endif
 	
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
@@ -38,6 +67,7 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			} else {
 				return term<input[Pos]>{};
 			}
+			
 		} else {
 			// return epsilon if we are past the input
 			return epsilon{};
@@ -48,7 +78,12 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			// there is no previous character on input if we are on start
 			return epsilon{};
 		} else if constexpr ((Pos-1) < input.size()) {
-			return term<input[Pos-1]>{};
+			constexpr auto value = input[Pos-1];
+			if constexpr (value <= std::numeric_limits<char>::max()) {
+				return term<static_cast<char>(value)>{};
+			} else {
+				return term<input[Pos]>{};
+			}
 		} else {
 			return epsilon{};
 		}
@@ -56,21 +91,25 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// if rule is accept => return true and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject> 
 	static constexpr auto move(ctll::accept, Terminal, Stack, Subject) noexcept {
-		return seed<Pos, Stack, Subject, decision::accept>();
+		return results<Pos, Stack, Subject, decision::accept>();
 	}
 	// if rule is reject => return false and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::reject, Terminal, Stack, Subject) noexcept {
-		return seed<Pos, Stack, Subject, decision::reject>();
+		return results<Pos, Stack, Subject, decision::reject>();
 	}
 	// if rule is pop_input => move to next character
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::pop_input, Terminal, Stack, Subject) noexcept {
-		return seed<Pos+1, Stack, Subject, decision::undecided>();
+		#ifdef EXPERIMENTAL_GCC_9
+		return decide<Pos+1>(Stack(), Subject());
+		#else
+		return results<Pos+1, Stack, Subject, decision::undecided>();
+		#endif
 	}
 	// if rule is string => push it to the front of stack
 	template <size_t Pos, typename... Content, typename Terminal, typename Stack, typename Subject>
-	static constexpr auto move(ctll::push<Content...> string, Terminal, Stack stack, Subject subject) noexcept {
+	static constexpr auto move(push<Content...> string, Terminal, Stack stack, Subject subject) noexcept {
 		return decide<Pos>(push_front(string, stack), subject);
 	}
 	// if rule is epsilon (empty string) => continue
@@ -81,14 +120,22 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	// if rule is string with current character at the beginning (term<V>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
-	static constexpr auto move(ctll::push<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
-		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+	static constexpr auto move(push<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
+		#ifdef EXPERIMENTAL_GCC_9
+		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
+		#else
+		return results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+		#endif
 	}
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
-	static constexpr auto move(ctll::push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
-		return seed<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+	static constexpr auto move(push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
+		#ifdef EXPERIMENTAL_GCC_9
+		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
+		#else
+		return results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+		#endif
 	}
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
@@ -103,50 +150,28 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 			
 			// in case that semantic action is error => reject input
 			if constexpr (std::is_same_v<ctll::reject, decltype(subject)>) {
-				return seed<Pos, Stack, Subject, decision::reject>();
+				#ifndef EXPERIMENTAL_GCC_9
+				return results<Pos, Stack, Subject, decision::reject>();
+				#else
+				return results<Pos, Stack, Subject, decision::reject>();
+				#endif
 			} else {
 				return decide<Pos>(stack, subject);
 			}
 		} else {
 			// all other cases are ordinary for LL(1) parser
 			auto current_term = get_current_term<Pos>();
-			auto rule = decltype(grammar.rule(top_symbol,current_term))();
+			auto rule = decltype(grammar::rule(top_symbol,current_term))();
 			return move<Pos>(rule, current_term, stack, previous_subject);
 		}
 	}
-	// helper type for trampoline
 	
-	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct seed {
-		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
-			return Decision == decision::accept;
-		}
-		
-		using output_type = Subject;
-		
-		static constexpr auto parse() noexcept {
-			// push current position to decide function with current stack and subject
-			return decide<Pos>(Stack{}, Subject{});
-		}
-	
-		constexpr auto operator+(placeholder) const noexcept {
-			if constexpr (Decision == decision::undecided) {
-				// parse for current char (RPos) with previous stack and subject :)
-				return decltype(seed<Pos, Stack, Subject, Decision>::parse()){};
-			} else {
-				// if there is decision already => just push it to the end of fold expression
-				return *this;
-			}
-		}
-	};
-	
-	template <size_t> using index_placeholder = placeholder;
-	
+	#ifndef EXPERIMENTAL_GCC_9
 	// trampolines with folded expression
 	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject, std::index_sequence<Pos...>) noexcept {
 		// parse everything for first char and than for next and next ...
 		// Pos+1 is needed as we want to finish calculation with epsilons on stack
-		auto v = (seed<0, decltype(grammar.start_stack), Subject, decision::undecided>::parse() + ... + index_placeholder<Pos+1>());
-		//id(v);
+		auto v = (decide<0, typename grammar::start_stack, Subject>({}, {}) + ... + index_placeholder<Pos+1>());
 		return v;
 	}
 	
@@ -156,8 +181,14 @@ template <typename Grammar, basic_fixed_string input, typename ActionSelector = 
 	}
 	
 	template <typename Subject = empty_subject> using output = decltype(trampoline_decide<Subject>());
-	static inline constexpr bool correct = trampoline_decide(empty_subject());
+	static inline constexpr bool correct = trampoline_decide<empty_subject>();
 	template <typename Subject = empty_subject> static inline constexpr bool correct_with = trampoline_decide<Subject>();
+	#else
+	template <typename Subject = empty_subject> using output = decltype(decide<0, typename grammar::start_stack, Subject>({}, {}));
+	static inline constexpr bool correct = decide<0, typename grammar::start_stack, empty_subject>({}, {});
+	template <typename Subject = empty_subject> static inline constexpr bool correct_with = decide<0, typename grammar::start_stack, Subject>({}, {});
+	#endif
+
 };
 
 } // end of ctll namespace

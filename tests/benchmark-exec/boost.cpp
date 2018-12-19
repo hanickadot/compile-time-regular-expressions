@@ -16,13 +16,14 @@ extern "C" {
 
 int main (int argc, char ** argv)
 {
-	using namespace ctre::literals;
-	[[maybe_unused]] constexpr auto re = "[0-9a-fA-F]{8,16}?"_ctre;
-
+	
+	auto re = boost::regex( "[0-9a-fA-F]{8,16}" );
+	//std::regex re("([aAbB]{4,}|[xXyY]{4,}|[1234]{4,})0");
+	
 	auto grep = [&](auto && stream) {
 		std::string line;
 		while (std::getline(stream, line)) {
-			if (bool(re.search(line))) {
+			if (regex_search(line, re)) {
 				std::cout << line << '\n';
 			}
 		}
@@ -35,4 +36,3 @@ int main (int argc, char ** argv)
 		grep(std::ifstream(fname, std::ifstream::in));
 	}
 }
-

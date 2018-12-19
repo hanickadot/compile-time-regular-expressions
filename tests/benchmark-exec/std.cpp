@@ -3,6 +3,8 @@
 #include <fstream> 
 #include <regex>
 #include "ctre.hpp"
+#include <re2/re2.h>
+#include <boost/regex.hpp>
 
 extern "C" {
 
@@ -14,7 +16,7 @@ extern "C" {
 
 int main (int argc, char ** argv)
 {
-	std::regex re("([aAbB]{4,}|[xXyY]{4,}|[1234]{4,})0");
+	std::regex re("[0-9a-fA-F]{8,16}");
 	
 	auto grep = [&](auto && stream) {
 		std::string line;
