@@ -2,26 +2,30 @@
 
 default: all
 	
-TARGETS := result.cpp test.cpp $(wildcard tests/benchmark-exec/*.cpp)
+TARGETS := $(wildcard tests/benchmark-exec/*.cpp)
+IGNORE := $(wildcard tests/benchmark/*.cpp) $(wildcard tests/benchmark-exec/*.cpp)
 
 DESATOMAT := /www/root/desatomat/console/desatomat.php
 
-CXXFLAGS := -std=c++17 -Iinclude -O3 -Wno-gnu-string-literal-operator-template  -pedantic -Wall -Wextra 
-#-Xclang -fconcepts-ts
-LDFLAGS := -lpcre2-8
+CPP_STANDARD := $(shell ./cpp-20-check.sh $(CXX))
 
+CXXFLAGS := $(CPP_STANDARD) -Iinclude -O3 -Wno-gnu-string-literal-operator-template  -pedantic -Wall -Wextra 
+LDFLAGS := 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
-IGNORE := $(wildcard tests/benchmark/*.cpp) tests/benchmark-exec/boost.cpp wildcard tests/benchmark-exec/re2.cpp
-OBJECTS_PRE := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
-OBJECTS := $(filter-out $(IGNORE:%.cpp=%.o), $(OBJECTS_PRE))
+override TRUE_TARGETS := $(filter-out $(IGNORE:%.cpp=%), $(TRUE_TARGETS))
+OBJECTS := $(TARGETS:%.cpp=%.o) $(TESTS:%.cpp=%.o)
+override OBJECTS := $(filter-out $(IGNORE:%.cpp=%.o),$(OBJECTS))
 DEPEDENCY_FILES := $(OBJECTS:%.o=%.d)
 
 all: $(TRUE_TARGETS) $(OBJECTS)
 	
+list:
+	echo $(SUPPORTED_CPP20)
+	
 $(TRUE_TARGETS): %: %.o
-	$(CXX)  $< $(LDFLAGS) -o $@
+	$(CXX)  $< $(LDFLAGS) -o $@ 
 	
 $(OBJECTS): %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
