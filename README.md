@@ -47,7 +47,7 @@ constexpr auto match(std::string_view sv) noexcept {
 
 #### C++20 syntax
 
-Currently only compiler which supports cNTTP syntax `ctre::match<PATTERN>(subject)` is GCC 9+.
+Currently only compiler which supports cNTTP syntax `ctre::match<PATTERN>(subject)` is GCC 9+. Use `-DEXPERIMENTAL_GCC_9` flag to disable trampolining (which crash compiler on ICE).
 
 ## Examples
 
