@@ -404,17 +404,17 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // end of lookahead
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R captures, ctll::list<end_lookahead_mark>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, const match_type, R captures, ctll::list<end_lookahead_mark>) noexcept {
 	return captures.matched();
 }
 
 // lookahead positive
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lookahead_positive<Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const match_type mtype, R captures, ctll::list<lookahead_positive<Content...>, Tail...>) noexcept {
 	
-	if (auto lookahead_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
+	if (auto lookahead_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
 		captures = lookahead_result.unmatch();
-		return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+		return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
 	} else {
 		return not_matched;
 	}
@@ -422,9 +422,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // lookahead negative
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lookahead_negative<Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const match_type mtype, R captures, ctll::list<lookahead_negative<Content...>, Tail...>) noexcept {
 	
-	if (auto lookahead_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
+	if (auto lookahead_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
 		return not_matched;
 	} else {
 		return evaluate(begin, current, end, captures, ctll::list<Tail...>());
