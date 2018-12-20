@@ -427,7 +427,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	if (auto lookahead_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
 		return not_matched;
 	} else {
-		return evaluate(begin, current, end, m_type, captures, ctll::list<Tail...>());
+		return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
 	}
 }
 
