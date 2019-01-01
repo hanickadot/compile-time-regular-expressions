@@ -31,8 +31,6 @@ matrix:
       - COMPILER=g++-8
       - CONAN_GCC_VERSIONS=8
       - CONAN_DOCKER_IMAGE=conanio/gcc8
-    install:
-      - pip install -U conan conan-package-tools
     script:
       - python .conan/build.py
 
