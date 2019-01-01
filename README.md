@@ -15,6 +15,25 @@ ctre::match<"REGEX">(subject); // C++20
 * Searching
 * Capturing content (named captures are supported too)
 
+The library is implementing most of the PCRE syntax with a few exceptions:
+
+* atomic groups
+* boundaries other than `^$`
+* callouts
+* character properties
+* comments
+* conditional patterns
+* control characters (`\cX`)
+* horizontal / vertical character classes (`\h\H\v\V)
+* match point reset (`\K`)
+* named characters
+* octal numbers
+* options / modes
+* subroutines
+* unicode grapheme cluster (`\X`) 
+
+More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2syntax.html). 
+
 ### What can be subject (input)?
 
 * `std::string`-like object (`std::string_view` or your own string if it's providing `begin`/`end` functions with forward iterators)
