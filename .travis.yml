@@ -28,7 +28,7 @@ matrix:
     services:
       - docker
     env:
-      - COMPILER=g++-8
+      - COMPILER=g++
       - CONAN_GCC_VERSIONS=8
       - CONAN_DOCKER_IMAGE=conanio/gcc8
     script:
