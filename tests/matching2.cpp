@@ -1,7 +1,7 @@
 #include <ctre.hpp>
 #include <string_view>
 
-#ifndef EXPERIMENTAL_GCC_9 // fixed
+#if not(__GNUC__ == 9 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ == 0)
 #define CTRE_CREATE(pattern) (pattern ## _ctre)
 #define CTRE_SYNTAX(pattern) (pattern ## _ctre_syntax)
 #else

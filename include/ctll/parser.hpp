@@ -8,6 +8,13 @@
 
 #include <limits>
 
+// this is disabling TRAMPOLINING for GCC9 which causes ICE
+#if __GNUC__ == 9 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ == 0
+#ifndef CTRE_ENABLE_TRAMPOLINING_ON_GCC9
+#define CTRE_DISABLE_TRAMPOLINING 1 
+#endif
+#endif
+
 namespace ctll {
 
 
@@ -21,7 +28,7 @@ struct placeholder { };
 
 template <size_t> using index_placeholder = placeholder;
 
-#ifdef EXPERIMENTAL_GCC_9
+#ifdef CTRE_DISABLE_TRAMPOLINING
 template <size_t, typename, typename Subject, decision Decision> struct results {
 	constexpr operator bool() const noexcept {
 		return Decision == decision::accept;
@@ -39,7 +46,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	using Actions = ctll::conditional<IgnoreUnknownActions, ignore_unknown<ActionSelector>, identity<ActionSelector>>;
 	using grammar = augment_grammar<Grammar>;
 	
-	#ifndef EXPERIMENTAL_GCC_9
+	#ifndef CTRE_DISABLE_TRAMPOLINING
 	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct results {
 		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
 			return Decision == decision::accept;
@@ -101,7 +108,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	// if rule is pop_input => move to next character
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::pop_input, Terminal, Stack, Subject) noexcept {
-		#ifdef EXPERIMENTAL_GCC_9
+		#ifdef CTRE_DISABLE_TRAMPOLINING
 		return decide<Pos+1>(Stack(), Subject());
 		#else
 		return results<Pos+1, Stack, Subject, decision::undecided>();
@@ -121,7 +128,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
 	static constexpr auto move(push<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
-		#ifdef EXPERIMENTAL_GCC_9
+		#ifdef CTRE_DISABLE_TRAMPOLINING
 		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
 		#else
 		return results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
@@ -131,7 +138,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
 	static constexpr auto move(push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
-		#ifdef EXPERIMENTAL_GCC_9
+		#ifdef CTRE_DISABLE_TRAMPOLINING
 		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
 		#else
 		return results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
@@ -150,7 +157,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			
 			// in case that semantic action is error => reject input
 			if constexpr (std::is_same_v<ctll::reject, decltype(subject)>) {
-				#ifndef EXPERIMENTAL_GCC_9
+				#ifndef CTRE_DISABLE_TRAMPOLINING
 				return results<Pos, Stack, Subject, decision::reject>();
 				#else
 				return results<Pos, Stack, Subject, decision::reject>();
@@ -166,7 +173,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 		}
 	}
 	
-	#ifndef EXPERIMENTAL_GCC_9
+	#ifndef CTRE_DISABLE_TRAMPOLINING
 	// trampolines with folded expression
 	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject, std::index_sequence<Pos...>) noexcept {
 		// parse everything for first char and than for next and next ...

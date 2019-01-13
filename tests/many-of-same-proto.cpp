@@ -1,7 +1,7 @@
 #include <ctre.hpp>
 using namespace ctre::test_literals;
 
-#ifndef EXPERIMENTAL_GCC_9 // fixed
+#if not(__GNUC__ == 9 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ == 0)
 #define CTRE_TEST(pattern) static_assert(pattern ## _ctre_test)
 #else
 
