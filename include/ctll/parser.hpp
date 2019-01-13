@@ -8,13 +8,6 @@
 
 #include <limits>
 
-// this is disabling TRAMPOLINING for GCC9 which causes ICE
-#if __GNUC__ == 9 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ == 0
-#ifndef CTRE_ENABLE_TRAMPOLINING_ON_GCC9
-#define CTRE_DISABLE_TRAMPOLINING 1 
-#endif
-#endif
-
 namespace ctll {
 
 
@@ -28,43 +21,35 @@ struct placeholder { };
 
 template <size_t> using index_placeholder = placeholder;
 
-#ifdef CTRE_DISABLE_TRAMPOLINING
-template <size_t, typename, typename Subject, decision Decision> struct results {
-	constexpr operator bool() const noexcept {
-		return Decision == decision::accept;
-	}
-	using output_type = Subject;
-};
-#endif
-
-
 #if !__cpp_nontype_template_parameter_class
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
 template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
+	static constexpr auto _input = input; // workaround to GCC bug
+
 	using Actions = ctll::conditional<IgnoreUnknownActions, ignore_unknown<ActionSelector>, identity<ActionSelector>>;
 	using grammar = augment_grammar<Grammar>;
 	
-	#ifndef CTRE_DISABLE_TRAMPOLINING
 	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct results {
 		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
 			return Decision == decision::accept;
 		}
+		
+		static constexpr auto _input = input; // workaround to GCC bug
 	
 		using output_type = Subject;
-
+    
 		constexpr auto operator+(placeholder) const noexcept {
 			if constexpr (Decision == decision::undecided) {
 				// parse for current char (RPos) with previous stack and subject :)
-				return decide<Pos, Stack, Subject>({}, {});
+				return parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template decide<Pos, Stack, Subject>({}, {});
 			} else {
 				// if there is decision already => just push it to the end of fold expression
 				return *this;
 			}
 		}
 	};
-	#endif
 	
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
@@ -98,21 +83,17 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	// if rule is accept => return true and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject> 
 	static constexpr auto move(ctll::accept, Terminal, Stack, Subject) noexcept {
-		return results<Pos, Stack, Subject, decision::accept>();
+		return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos, Stack, Subject, decision::accept>();
 	}
 	// if rule is reject => return false and subject
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::reject, Terminal, Stack, Subject) noexcept {
-		return results<Pos, Stack, Subject, decision::reject>();
+		return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos, Stack, Subject, decision::reject>();
 	}
 	// if rule is pop_input => move to next character
 	template <size_t Pos, typename Terminal, typename Stack, typename Subject>
 	static constexpr auto move(ctll::pop_input, Terminal, Stack, Subject) noexcept {
-		#ifdef CTRE_DISABLE_TRAMPOLINING
-		return decide<Pos+1>(Stack(), Subject());
-		#else
-		return results<Pos+1, Stack, Subject, decision::undecided>();
-		#endif
+		return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos+1, Stack, Subject, decision::undecided>();
 	}
 	// if rule is string => push it to the front of stack
 	template <size_t Pos, typename... Content, typename Terminal, typename Stack, typename Subject>
@@ -128,21 +109,15 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
 	static constexpr auto move(push<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
-		#ifdef CTRE_DISABLE_TRAMPOLINING
-		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
-		#else
-		return results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
-		#endif
+		constexpr auto _input = input;
+		return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
 	static constexpr auto move(push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
-		#ifdef CTRE_DISABLE_TRAMPOLINING
-		return decide<Pos+1>(push_front(list<Content...>(), stack), Subject());
-		#else
-		return results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
-		#endif
+		constexpr auto _input = input;
+		return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {
@@ -157,11 +132,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			
 			// in case that semantic action is error => reject input
 			if constexpr (std::is_same_v<ctll::reject, decltype(subject)>) {
-				#ifndef CTRE_DISABLE_TRAMPOLINING
-				return results<Pos, Stack, Subject, decision::reject>();
-				#else
-				return results<Pos, Stack, Subject, decision::reject>();
-				#endif
+				return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos, Stack, Subject, decision::reject>();
 			} else {
 				return decide<Pos>(stack, subject);
 			}
@@ -173,7 +144,6 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 		}
 	}
 	
-	#ifndef CTRE_DISABLE_TRAMPOLINING
 	// trampolines with folded expression
 	template <typename Subject, size_t... Pos> static constexpr auto trampoline_decide(Subject, std::index_sequence<Pos...>) noexcept {
 		// parse everything for first char and than for next and next ...
@@ -188,13 +158,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	}
 	
 	template <typename Subject = empty_subject> using output = decltype(trampoline_decide<Subject>());
-	static inline constexpr bool correct = trampoline_decide<empty_subject>();
 	template <typename Subject = empty_subject> static inline constexpr bool correct_with = trampoline_decide<Subject>();
-	#else
-	template <typename Subject = empty_subject> using output = decltype(decide<0, typename grammar::start_stack, Subject>({}, {}));
-	static inline constexpr bool correct = decide<0, typename grammar::start_stack, empty_subject>({}, {});
-	template <typename Subject = empty_subject> static inline constexpr bool correct_with = decide<0, typename grammar::start_stack, Subject>({}, {});
-	#endif
 
 };
 

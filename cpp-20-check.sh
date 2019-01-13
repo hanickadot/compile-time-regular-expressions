@@ -4,7 +4,6 @@ if echo "" | $1 -std=c++2a -E -x c++ - 2>/dev/null 1>/dev/null; then
 	if [ -z "$VERSION" ]; then
 		echo "-std=c++2a";
 	else
-		# -DCTRE_ENABLE_TRAMPOLINING_ON_GCC9
 		echo "-std=c++2a";
 	fi
 else

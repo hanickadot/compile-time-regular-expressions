@@ -59,6 +59,9 @@ mtent12.txt: mtent12.zip
 	unzip -o mtent12.zip
 	touch mtent12.txt
 	
+ctre.hpp:
+	python3.7 -m quom include/ctre.hpp ctre.hpp
+	
 REPEAT:=10
 
 compare: mtent12.txt

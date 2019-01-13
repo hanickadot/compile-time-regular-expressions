@@ -8,7 +8,7 @@ using namespace ctre::test_literals;
 
 template <ctll::basic_fixed_string input> constexpr bool test() {
 	constexpr auto _input = input;
-	return ctll::parser<ctre::pcre, _input>::correct;
+	return ctll::parser<ctre::pcre, _input>::template correct_with<>;
 }
 
 #define CTRE_TEST(pattern) test<pattern>()

@@ -77,7 +77,7 @@ template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto 
 template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
-	return ctll::parser<ctre::pcre, _input>::correct;
+	return ctll::parser<ctre::pcre, _input>::template correct_with<>;
 }
 
 #if !__cpp_nontype_template_parameter_class
