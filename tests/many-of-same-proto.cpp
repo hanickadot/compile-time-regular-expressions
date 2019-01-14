@@ -1,13 +1,13 @@
 #include <ctre.hpp>
 using namespace ctre::test_literals;
 
-#ifndef EXPERIMENTAL_GCC_9 // fixed
+#if !__cpp_nontype_template_parameter_class
 #define CTRE_TEST(pattern) static_assert(pattern ## _ctre_test)
 #else
 
 template <ctll::basic_fixed_string input> constexpr bool test() {
 	constexpr auto _input = input;
-	return ctll::parser<ctre::pcre, _input>::correct;
+	return ctll::parser<ctre::pcre, _input>::template correct_with<>;
 }
 
 #define CTRE_TEST(pattern) static_assert(test<pattern>())
