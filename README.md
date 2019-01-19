@@ -58,7 +58,7 @@ You can provide pattern as a `constexpr ctll::basic_fixed_string` variable.
 static constexpr auto pattern = ctll::basic_fixed_string{ "h.*" };
 
 constexpr auto match(std::string_view sv) noexcept {
-	return ctre::re<pattern>().match(sv);
+	return ctre::match<pattern>(sv);
 }
 ```
 
