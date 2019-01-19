@@ -24,7 +24,7 @@ The library is implementing most of the PCRE syntax with a few exceptions:
 * comments
 * conditional patterns
 * control characters (`\cX`)
-* horizontal / vertical character classes (`\h\H\v\V)
+* horizontal / vertical character classes (`\h\H\v\V`)
 * match point reset (`\K`)
 * named characters
 * octal numbers
