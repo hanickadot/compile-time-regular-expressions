@@ -51,7 +51,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _end;
 		}
 	
-		constexpr CTRE_FORCE_INLINE explicit operator bool() const noexcept {
+		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 			return _matched;
 		}
 
@@ -178,7 +178,7 @@ public:
 		_captures.template select<0>().unmatch();
 		return *this;
 	}
-	constexpr CTRE_FORCE_INLINE explicit operator bool() const noexcept {
+	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 		return bool(_captures.template select<0>());
 	}
 	

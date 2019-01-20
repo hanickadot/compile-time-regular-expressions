@@ -26,7 +26,12 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 #else
 template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
-	static constexpr auto & _input = input; // workaround to GCC bug
+	
+	#if __cpp_nontype_template_parameter_class
+	static constexpr auto _input = input; // workaround to GCC bug
+	#else
+	static constexpr auto & _input = input; // c++17 mode
+	#endif
 
 	using Actions = ctll::conditional<IgnoreUnknownActions, ignore_unknown<ActionSelector>, identity<ActionSelector>>;
 	using grammar = augment_grammar<Grammar>;
@@ -36,7 +41,11 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			return Decision == decision::accept;
 		}
 		
-		static constexpr auto & _input = input; // workaround to GCC bug
+		#if __cpp_nontype_template_parameter_class
+		static constexpr auto _input = input; // workaround to GCC bug
+		#else
+		static constexpr auto & _input = input; // c++17 mode
+		#endif
 	
 		using output_type = Subject;
     
