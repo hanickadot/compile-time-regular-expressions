@@ -4,6 +4,8 @@
 
 Fast compile-time regular expression with support for matching/searching/capturing in compile-time or runtime.
 
+You can use single header version from directory `single-header`. This header can be regenerated with `make single-header`.
+
 ## What this library can do?
 
 ```c++
