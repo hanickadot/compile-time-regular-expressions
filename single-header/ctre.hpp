@@ -344,15 +344,15 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			return Decision == decision::accept;
 		}
 		
-#ifdef __GNUC__ // workaround to GCC bug
-	#if __cpp_nontype_template_parameter_class
-	static constexpr auto _input = input;  // c++20 mode
-	#else
-	static constexpr auto & _input = input; // c++17 mode
-	#endif
-#else
-	static constexpr auto _input = input; // everyone else
-#endif
+		#ifdef __GNUC__ // workaround to GCC bug
+			#if __cpp_nontype_template_parameter_class
+			static constexpr auto _input = input;  // c++20 mode
+			#else
+			static constexpr auto & _input = input; // c++17 mode
+			#endif
+		#else
+			static constexpr auto _input = input; // everyone else
+		#endif
 	
 		using output_type = Subject;
     
