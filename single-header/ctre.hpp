@@ -2653,7 +2653,8 @@ template <ctll::basic_fixed_string input, typename BeginIterator, typename EndIt
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return range(begin, end, re());
+	auto re_obj = ctre::regular_expression(re());
+	return range(begin, end, re_obj);
 }
 #endif
 
@@ -2671,7 +2672,8 @@ template <ctll::basic_fixed_string input, typename Subject> constexpr auto range
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return range(subject.begin(), subject.end(), re());
+	auto re_obj = ctre::regular_expression(re());
+	return range(subject.begin(), subject.end(), re_obj);
 }
 #endif
 
