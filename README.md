@@ -4,6 +4,8 @@
 
 Fast compile-time regular expression with support for matching/searching/capturing in compile-time or runtime.
 
+You can use single header version from directory `single-header`. This header can be regenerated with `make single-header`.
+
 ## What this library can do?
 
 ```c++
@@ -24,7 +26,7 @@ The library is implementing most of the PCRE syntax with a few exceptions:
 * comments
 * conditional patterns
 * control characters (`\cX`)
-* horizontal / vertical character classes (`\h\H\v\V)
+* horizontal / vertical character classes (`\h\H\v\V`)
 * match point reset (`\K`)
 * named characters
 * octal numbers
@@ -43,12 +45,19 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 
 * clang 5.0+ (template UDL, C++17 syntax)
 * gcc 7.2+ (template UDL, C++17 syntax)
-* gcc 9.0+ (C++17 & C++20 cNTTP syntax, trampolining a.k.a. long patterns are not supported due compiler bug)
+* gcc 9.0+ (C++17 & C++20 cNTTP syntax)
 * MSVC 15.8.8+ (C++17 syntax only)
 
 #### Template UDL syntax
 
-Compiler must support N3599 extension (as GNU extension in gcc and clang).
+Compiler must support N3599 extension, as GNU extension in gcc (not in c++2a mode) and clang.
+
+```c++
+constexpr auto match(std::string_view sv) noexcept {
+	using namespace ctre::literals;
+	return "h.*"_ctre.match(sv);
+}
+```
 
 #### C++17 syntax
 
@@ -58,7 +67,7 @@ You can provide pattern as a `constexpr ctll::basic_fixed_string` variable.
 static constexpr auto pattern = ctll::basic_fixed_string{ "h.*" };
 
 constexpr auto match(std::string_view sv) noexcept {
-	return ctre::re<pattern>().match(sv);
+	return ctre::match<pattern>(sv);
 }
 ```
 
@@ -70,42 +79,46 @@ Currently only compiler which supports cNTTP syntax `ctre::match<PATTERN>(subjec
 
 Also there is [known bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88534) in current GCC 9 with debug symbols and cNTTP, you can avoid it if you disable generating debug symbols (`-g0`). 
 
+```c++
+constexpr auto match(std::string_view sv) noexcept {
+	return ctre::match<"h.*">(sv);
+}
+```
+
 ## Examples
 
 #### Extracting number from input
 ```c++
 std::optional<std::string_view> extract_number(std::string_view s) noexcept {
-    using namespace ctre::literals;
-    if (auto m = "^[a-z]++([0-9]++)$"_ctre.match(s)) {
+    if (auto m = ctre::match<"^[a-z]++([0-9]++)$">(s)) {
         return m.get<1>().to_view();
     } else {
         return std::nullopt;
     }
 }
 ```
-[link to compiler explorer](https://godbolt.org/z/xi5ulD)
+[link to compiler explorer](https://gcc.godbolt.org/z/5U67_e)
 
 
 #### Extracting values from date
 ```c++
 struct date { std::string_view year; std::string_view month; std::string_view day; };
 
-constexpr std::optional<date> extract_date(std::string_view s) noexcept {
+std::optional<date> extract_date(std::string_view s) noexcept {
     using namespace ctre::literals;
-    if (auto [whole, year, month, day] = "^([0-9]{4})/([0-9]{1,2}+)/([0-9]{1,2}+)$"_ctre.match(s); whole
-    ) {
-        return date{year.to_view(), month.to_view(), day.to_view()};
+    if (auto [whole, year, month, day] = ctre::match<"^(\\d{4})/(\\d{1,2}+)/(\\d{1,2}+)$">(s); whole) {
+        return date{year, month, day};
     } else {
         return std::nullopt;
     }
 }
 
-static_assert(extract_date("2018/08/27"sv).has_value());
-static_assert((*extract_date("2018/08/27"sv)).year == "2018"sv);
-static_assert((*extract_date("2018/08/27"sv)).month == "08"sv);
-static_assert((*extract_date("2018/08/27"sv)).day == "27"sv);
+//static_assert(extract_date("2018/08/27"sv).has_value());
+//static_assert((*extract_date("2018/08/27"sv)).year == "2018"sv);
+//static_assert((*extract_date("2018/08/27"sv)).month == "08"sv);
+//static_assert((*extract_date("2018/08/27"sv)).day == "27"sv);
 ```
-[link to compiler explorer](https://godbolt.org/z/QJ6Ecb)
+[link to compiler explorer](https://gcc.godbolt.org/z/x64CVp)
 
 #### Lexer
 ```c++
@@ -118,9 +131,8 @@ struct lex_item {
     std::string_view c;
 };
 
-constexpr std::optional<lex_item> lexer(std::string_view v) noexcept {
-    using namespace ctre::literals;
-    if (auto [m,id,num] = "^([a-z]++)|([0-9]++)$"_ctre.match(v); m) {
+std::optional<lex_item> lexer(std::string_view v) noexcept {
+    if (auto [m,id,num] = ctre::match<"^([a-z]++)|([0-9]++)$">(v); m) {
         if (id) {
             return lex_item{type::identifier, id};
         } else if (num) {
@@ -130,7 +142,7 @@ constexpr std::optional<lex_item> lexer(std::string_view v) noexcept {
     return std::nullopt;
 }
 ```
-[link to compiler explorer](https://godbolt.org/z/iSgFiK)
+[link to compiler explorer](https://gcc.godbolt.org/z/PKTiCC)
 
 #### Range over input
 
@@ -139,8 +151,7 @@ This support is preliminary and probably the API will be changed.
 ```c++
 auto input = "123,456,768"sv;
 
-using namespace ctre::literals;
-for (auto match: ctre::range(input,"[0-9]++"_ctre)) {
+for (auto match: ctre::range<"[0-9]++">(input)) {
 	std::cout << std::string_view{match} << "\n";
 }
 ```
