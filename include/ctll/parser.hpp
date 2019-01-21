@@ -27,10 +27,14 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
 	
-	#if __cpp_nontype_template_parameter_class
-	static constexpr auto _input = input; // workaround to GCC bug
+	#ifdef __GNUC__ // workaround to GCC bug
+		#if __cpp_nontype_template_parameter_class
+		static constexpr auto _input = input;  // c++20 mode
+		#else
+		static constexpr auto & _input = input; // c++17 mode
+		#endif
 	#else
-	static constexpr auto & _input = input; // c++17 mode
+		static constexpr auto _input = input; // everyone else
 	#endif
 
 	using Actions = ctll::conditional<IgnoreUnknownActions, ignore_unknown<ActionSelector>, identity<ActionSelector>>;
@@ -41,11 +45,15 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			return Decision == decision::accept;
 		}
 		
-		#if __cpp_nontype_template_parameter_class
-		static constexpr auto _input = input; // workaround to GCC bug
-		#else
-		static constexpr auto & _input = input; // c++17 mode
-		#endif
+#ifdef __GNUC__ // workaround to GCC bug
+	#if __cpp_nontype_template_parameter_class
+	static constexpr auto _input = input;  // c++20 mode
+	#else
+	static constexpr auto & _input = input; // c++17 mode
+	#endif
+#else
+	static constexpr auto _input = input; // everyone else
+#endif
 	
 		using output_type = Subject;
     
