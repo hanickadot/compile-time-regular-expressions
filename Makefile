@@ -9,7 +9,7 @@ DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CPP_STANDARD := $(shell ./cpp-20-check.sh $(CXX))
 
-CXXFLAGS := $(CPP_STANDARD) -Iinclude -O3 -Wno-gnu-string-literal-operator-template  -pedantic -Wall -Wextra 
+CXXFLAGS := $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra 
 LDFLAGS := -lboost_regex -lpcre2-8 -lre2
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)

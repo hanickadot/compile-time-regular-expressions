@@ -2377,6 +2377,10 @@ namespace literals {
 #elif defined __GNUC__
 #if not(__GNUC__ == 9 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ == 0)
 #define CTRE_ENABLE_LITERALS
+#else
+#if !__cpp_nontype_template_parameter_class
+#define CTRE_ENABLE_LITERALS
+#endif
 #endif
 #endif
 
