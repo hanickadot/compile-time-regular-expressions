@@ -189,7 +189,7 @@ static_assert(CTRE_CREATE("^(?<text>[a-z]+):\\g{text}$").match("abc:abc"sv));
 
 static_assert(CTRE_CREATE("^abc$").match("abc"sv));
 static_assert(CTRE_CREATE("^abc$").match(L"abc"sv));
-static_assert(CTRE_CREATE("^abc$").match(u8"abc"sv));
+// static_assert(CTRE_CREATE("^abc$").match(u8"abc"sv)); // GCC9.0.1 doesn't support a char8_t string_view literals
 static_assert(CTRE_CREATE("^abc$").match(u"abc"sv));
 static_assert(CTRE_CREATE("^abc$").match(U"abc"sv));
 
