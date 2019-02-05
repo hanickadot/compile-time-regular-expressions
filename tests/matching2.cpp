@@ -255,4 +255,6 @@ static_assert(CTRE_CREATE("(?=.*(.)\\g{1}{2})[a-z]+").match("abcdddeffghijk"sv))
 static_assert( CTRE_CREATE("(?!.*(.)\\g{1})[a-z]+").match("abcdefgh"sv));
 static_assert(!CTRE_CREATE("(?!.*(.)\\g{1})[a-z]+").match("abcdeefgh"sv));
 
+static_assert(CTRE_CREATE("_").match("_"sv));
+
 
