@@ -14,6 +14,10 @@ int main (int argc, char ** argv)
 	
 	pcre2_match_context * mcontext = pcre2_match_context_create(NULL);
 	
+	pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+	pcre2_jit_stack * jit_stack = pcre2_jit_stack_create(32*1024, 512*1024, NULL);
+	pcre2_jit_stack_assign(mcontext, NULL, jit_stack);
+	
 	auto match_data = pcre2_match_data_create_from_pattern(re, NULL);
 	
 	benchmark(argc, argv, [&] (std::string_view line) { 

@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-static constexpr inline auto pattern = ctll::basic_fixed_string("([0-9]{4,16})?[aA]");
+static constexpr inline auto pattern = ctll::basic_fixed_string(PATTERN);
 
 int main (int argc, char ** argv)
 {
