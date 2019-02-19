@@ -1,0 +1,10 @@
+digit={0,1,2,3,4,5,6,7,8,9}
+
+S-><text>,<S2>|<placeholder>,<S>|epsilon
+S2-><placeholder>,<S>|epsilon
+
+text->other,[start_text],<text2>
+text2->other,[push_text],<text2>|epsilon,[finish]
+placeholder->{,<number>,[finish],}
+number->digit,[start_digit],<number2>
+number2->digit,[push_digit],<number2>|epsilon

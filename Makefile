@@ -42,11 +42,15 @@ benchmark-clean:
 clean:
 	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES) mtent12.txt mtent12.zip
 	
-grammar: include/ctre/pcre.hpp
+grammar: include/ctre/pcre.hpp include/ctfmt/fmt.hpp
 	
 regrammar: 
 	@rm -f include/ctre/pcre.hpp
 	@$(MAKE) grammar
+
+include/ctfmt/fmt.hpp: include/ctfmt/fmt.gram
+	@echo "LL1q $<"
+	@$(DESATOMAT) --ll --q --input=include/ctfmt/fmt.gram --output=include/ctfmt/ --generator=cpp_ctll_v2  --cfg:fname=fmt.hpp --cfg:namespace=ctfmt --cfg:guard=CTFMT__FMT__HPP --cfg:grammar_name=fmt
 	
 include/ctre/pcre.hpp: include/ctre/pcre.gram
 	@echo "LL1q $<"
