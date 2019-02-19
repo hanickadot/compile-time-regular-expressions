@@ -7,6 +7,7 @@ tests/benchmark-exec/*
 !tests/benchmark-exec/.gitignore
 !tests/benchmark-exec/.tm_properties
 !tests/benchmark-exec/*.cpp
+!tests/benchmark-exec/*.hpp
 *.pyc
 .conan/test_package/build
 mtent12.txt
