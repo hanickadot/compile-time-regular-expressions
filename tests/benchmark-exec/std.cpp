@@ -1,36 +1,10 @@
-#include <cstdio>
-#include <iostream>
-#include <fstream> 
-#include <regex>
-#include "ctre.hpp"
-#include <re2/re2.h>
-#include <boost/regex.hpp>
-
-extern "C" {
-
-#define PCRE2_CODE_UNIT_WIDTH 8
-#define PCRE2_STATIC
-#include <pcre2.h>
-
-}
+#include "common.hpp"
 
 int main (int argc, char ** argv)
 {
-	std::regex re("[0-9a-fA-F]{8,16}");
+	auto re = std::regex(PATTERN);
 	
-	auto grep = [&](auto && stream) {
-		std::string line;
-		while (std::getline(stream, line)) {
-			if (std::regex_search(line, re)) {
-				std::cout << line << '\n';
-			}
-		}
-	}; 
-	
-	if (argc == 1) {
-		grep(std::cin);
-	} else for (int i = 1; i < argc; ++i) {
-		std::string fname{std::string(argv[i])};
-		grep(std::ifstream(fname, std::ifstream::in));
-	}
+	benchmark(argc, argv, [&] (std::string_view line) { 
+		return std::regex_search(line.begin(), line.end(), re);
+	});
 }

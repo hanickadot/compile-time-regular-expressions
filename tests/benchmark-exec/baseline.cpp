@@ -1,20 +1,8 @@
-#include <cstdio>
-#include <iostream>
-#include <fstream> 
-#include <regex>
-#include "ctre.hpp"
-#include <re2/re2.h>
-#include <boost/regex.hpp>
+#include "common.hpp"
 
-extern "C" {
-
-#define PCRE2_CODE_UNIT_WIDTH 8
-#define PCRE2_STATIC
-#include <pcre2.h>
-
-}
-
-int main ()
+int main (int argc, char ** argv)
 {
+	benchmark(argc, argv, [] (auto) { return true; });
+	
 	return 0;
 }
