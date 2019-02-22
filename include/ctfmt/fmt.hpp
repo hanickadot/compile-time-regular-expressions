@@ -27,8 +27,9 @@ struct fmt {
 	using _others = ctll::neg_set<'\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>;
 	static constexpr auto rule(s, ctll::epsilon) -> ctll::epsilon;
 	static constexpr auto rule(s, ctll::term<'\x7B'>) -> ctll::push<ctll::anything, number, finish, ctll::term<'\x7D'>, s>;
+	static constexpr auto rule(s, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, start_text, text2, s2>;
 	static constexpr auto rule(s, _others) -> ctll::push<ctll::anything, start_text, text2, s2>;
-	static constexpr auto rule(s, ctll::set<'\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::reject;
+	static constexpr auto rule(s, ctll::term<'\x7D'>) -> ctll::reject;
 
 	static constexpr auto rule(number2, ctll::term<'\x7D'>) -> ctll::epsilon;
 	static constexpr auto rule(number2, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_digit, number2>;
@@ -38,10 +39,11 @@ struct fmt {
 	static constexpr auto rule(s2, ctll::epsilon) -> ctll::epsilon;
 	static constexpr auto rule(s2, ctll::term<'\x7B'>) -> ctll::push<ctll::anything, number, finish, ctll::term<'\x7D'>, s>;
 
+	static constexpr auto rule(text2, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_text, text2>;
 	static constexpr auto rule(text2, _others) -> ctll::push<ctll::anything, push_text, text2>;
 	static constexpr auto rule(text2, ctll::term<'\x7B'>) -> ctll::push<finish>;
 	static constexpr auto rule(text2, ctll::epsilon) -> ctll::push<finish>;
-	static constexpr auto rule(text2, ctll::set<'\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::reject;
+	static constexpr auto rule(text2, ctll::term<'\x7D'>) -> ctll::reject;
 
 };
 

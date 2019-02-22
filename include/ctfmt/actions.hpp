@@ -11,20 +11,25 @@ template <int64_t Number> struct number { };
 template <int64_t Value> struct placeholder { };
 template <char... Text> struct text { };
 
-template <int64_t Value, typename... Args> constexpr size_t calculate_size(placeholder<Value>, const std::tuple<Args...> & tuple) {
+template <int64_t Value, typename... Args> constexpr size_t calculate_size(placeholder<Value>, const std::tuple<Args...> & tuple) noexcept {
 	return std::get<Value>(tuple).size();
 }
 
-template <char... Text, typename... Args> constexpr size_t calculate_size(text<Text...>, const std::tuple<Args...> &) {
+template <char... Text, typename... Args> constexpr size_t calculate_size(text<Text...>, const std::tuple<Args...> &) noexcept {
 	return sizeof...(Text);
 }
 
-template <int64_t Value, typename It, typename... Args> constexpr void format_into(placeholder<Value>, It & begin, const It, const std::tuple<Args...> & tuple) {
+template <int64_t Value, typename It, typename... Args> constexpr void format_into(placeholder<Value>, It & begin, const It, const std::tuple<Args...> & tuple) noexcept {
 	const auto & obj = std::get<Value>(tuple);
+	
+	//for (auto c: obj) {
+	//	*begin++ = c;
+	//}
+	
 	begin = std::copy(obj.begin(), obj.end(), begin);
 }
 
-template <char... Text, typename It, typename... Args> constexpr void format_into(text<Text...>, It & begin, const It, const std::tuple<Args...> &) {
+template <char... Text, typename It, typename... Args> constexpr void format_into(text<Text...>, It & begin, const It, const std::tuple<Args...> &) noexcept {
 	((*begin++ = Text), ...);
 }
 

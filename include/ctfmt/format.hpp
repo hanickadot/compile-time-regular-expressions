@@ -32,31 +32,38 @@ struct view_wrap {
 	}
 };
 
-CTLL_FORCE_INLINE constexpr view_wrap input_wrap(const char * str) {
+CTLL_FORCE_INLINE constexpr size_t my_strlen(const char * str) noexcept {
+	const char * start = str;
+	while (*str++ != '\0');
+	return std::distance(start, str);
+}
+
+
+CTLL_FORCE_INLINE constexpr view_wrap input_wrap(const char * str) noexcept {
 	return view_wrap{std::string_view(str)};
 }
 
-CTLL_FORCE_INLINE constexpr view_wrap input_wrap(std::string_view v) {
+CTLL_FORCE_INLINE constexpr view_wrap input_wrap(std::string_view v) noexcept {
 	return view_wrap{v};
 }
 
-CTLL_FORCE_INLINE inline view_wrap input_wrap(const std::string & s) {
+CTLL_FORCE_INLINE inline view_wrap input_wrap(const std::string & s) noexcept {
 	return view_wrap{std::string_view(s)};
 }
 
-template <typename... Seq, typename... Args> CTFMT_FORCE_INLINE auto calculate_size_with_impl(sequence<Seq...>, const std::tuple<Args...> & args) {
+template <typename... Seq, typename... Args> CTFMT_FORCE_INLINE auto calculate_size_with_impl(sequence<Seq...>, const std::tuple<Args...> & args) noexcept {
 	return (calculate_size(Seq(), args) + ... + 0);
 }
 
-template <typename Seq, typename... Args> CTFMT_FORCE_INLINE auto calculate_size_with(const std::tuple<Args...> & args) {
+template <typename Seq, typename... Args> CTFMT_FORCE_INLINE auto calculate_size_with(const std::tuple<Args...> & args) noexcept {
 	return calculate_size_with_impl(Seq(), args);
 }
 
-template <typename... Seq, typename It, typename... Args> CTFMT_FORCE_INLINE void format_with_impl(sequence<Seq...>, It begin, It end, const std::tuple<Args ...> & args) {
+template <typename... Seq, typename It, typename... Args> CTFMT_FORCE_INLINE void format_with_impl(sequence<Seq...>, It begin, It end, const std::tuple<Args ...> & args) noexcept {
 	(format_into(Seq(), begin, end, args), ...);
 }
 
-template <typename Seq, typename It, typename... Args> CTFMT_FORCE_INLINE void format_with(It begin, It end, const std::tuple<Args ...> & args) {
+template <typename Seq, typename It, typename... Args> CTFMT_FORCE_INLINE void format_with(It begin, It end, const std::tuple<Args ...> & args) noexcept {
 	format_with_impl(Seq(), begin, end, args);
 }
 
@@ -67,16 +74,16 @@ template <typename Seq> struct format_object {
 		format_with<Seq>(output.begin(), output.end(), args);
 		return output;
 	}
-	template <size_t Size, typename... Args> CTFMT_FORCE_INLINE auto format(std::array<char, Size> & buffer, std::tuple<Args...> args) {
+	template <size_t Size, typename... Args> CTFMT_FORCE_INLINE auto format(std::array<char, Size> & buffer, std::tuple<Args...> args) noexcept {
 		size_t size = calculate_size_with<Seq>(args);
-		assert(Size >= size);
+		//assert(Size >= size);
 		format_with<Seq>(buffer.begin(), buffer.end(), args);
 		return std::string_view(buffer.begin(), size);
 	}
-	template <typename... Args> CTFMT_FORCE_INLINE auto operator()(Args && ... args) {
+	template <typename... Args> CTFMT_FORCE_INLINE auto operator()(Args && ... args)  {
 		return format(std::make_tuple(input_wrap(std::forward<Args>(args))...));
 	}
-	template <size_t Size, typename... Args> CTFMT_FORCE_INLINE auto operator()(std::array<char, Size> & buffer, Args && ... args) {
+	template <size_t Size, typename... Args> CTFMT_FORCE_INLINE auto operator()(std::array<char, Size> & buffer, Args && ... args) noexcept {
 		return format(buffer, std::make_tuple(input_wrap(std::forward<Args>(args))...));
 	}
 };
