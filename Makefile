@@ -1,4 +1,4 @@
-.PHONY: default all clean grammar compare single-header single-header/ctre.hpp
+.PHONY: default all clean grammar compare single-header single-header/ctre.hpp fmt
 
 default: all
 	
@@ -72,6 +72,9 @@ single-header/ctre.hpp:
 	echo "\n*/\n" >> single-header/ctre.hpp 
 	cat ctre.hpp.tmp >> single-header/ctre.hpp
 	rm ctre.hpp.tmp
+
+fmt: tests/fmt.cpp
+	${CXX} -std=c++2a -Iinclude -O3 -pedantic -Wall -Wextra -Wno-unused-parameter tests/fmt.cpp -o fmt
 	
 REPEAT:=10
 
