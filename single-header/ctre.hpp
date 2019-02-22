@@ -1758,16 +1758,25 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 
 // support for structured bindings
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+
 namespace std {
-	template <typename... Captures> class tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::size()> { };
+	template <typename... Captures> struct tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::size()> { };
 	
-	template <size_t N, typename... Captures> class tuple_element<N, ctre::regex_results<Captures...>> {
+	template <size_t N, typename... Captures> struct tuple_element<N, ctre::regex_results<Captures...>> {
 	public:
 		using type = decltype(
 			std::declval<const ctre::regex_results<Captures...> &>().template get<N>()
 		);
 	};
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #endif
 
