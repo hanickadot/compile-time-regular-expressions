@@ -1758,16 +1758,25 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 
 // support for structured bindings
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+
 namespace std {
-	template <typename... Captures> class tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::size()> { };
+	template <typename... Captures> struct tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::size()> { };
 	
-	template <size_t N, typename... Captures> class tuple_element<N, ctre::regex_results<Captures...>> {
+	template <size_t N, typename... Captures> struct tuple_element<N, ctre::regex_results<Captures...>> {
 	public:
 		using type = decltype(
 			std::declval<const ctre::regex_results<Captures...> &>().template get<N>()
 		);
 	};
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #endif
 
@@ -2502,47 +2511,48 @@ constexpr auto & _input = input;
 
 // in moment when we get C++20 support this will start to work :)
 
-#if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename... Args> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(Args && ... args) noexcept {
-	constexpr auto _input = input; // workaround for GCC 9 bug 88092
-	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression<re>(re());
-	return re_obj.match(std::forward<Args>(args)...);
-}
-#else
-template <auto & input, typename... Args> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto match(Args && ... args) noexcept {
-	constexpr auto & _input = input; 
-	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression<re>(re());
-	return re_obj.match(std::forward<Args>(args)...);
-}
-#endif
+template <typename RE> struct regex_match_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.match(std::forward<Args>(args)...);
+	}
+};
+
+template <typename RE> struct regex_search_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.search(std::forward<Args>(args)...);
+	}
+};
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename... Args> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(Args && ... args) noexcept {
-	constexpr auto _input = input; // workaround for GCC 9 bug 88092
-	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
-	return re_obj.search(std::forward<Args>(args)...);
-}
+
+template <auto input> struct regex_builder {
+	static constexpr auto _input = input;
+	using _tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(_tmp(), "Regular Expression contains syntax error.");
+	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+};
+
+template <ctll::basic_fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
+
+template <ctll::basic_fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+
 #else
-template <auto & input, typename... Args> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto search(Args && ... args) noexcept {
-	constexpr auto & _input = input; 
-	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(ctll::front(typename tmp::output_type::stack_type()));
-	auto re_obj = ctre::regular_expression(re());
-	return re_obj.search(std::forward<Args>(args)...);
-}
-#endif
+
+template <auto & input> struct regex_builder {
+	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(_tmp(), "Regular Expression contains syntax error.");
+	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+};
+
+template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
+
+template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
 }
+
+#endif
 
 #endif
 

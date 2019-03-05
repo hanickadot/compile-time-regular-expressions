@@ -151,7 +151,7 @@ This support is preliminary and probably the API will be changed.
 ```c++
 auto input = "123,456,768"sv;
 
-for (auto match: ctre::range<"[0-9]++">(input)) {
-	std::cout << std::string_view{match} << "\n";
+for (auto match: ctre::range<"([0-9]++),?">(input)) {
+	std::cout << std::string_view{match.get<0>()} << "\n";
 }
 ```
