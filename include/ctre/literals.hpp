@@ -53,8 +53,12 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLI
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return ctre::regular_expression(re());
+	if constexpr (tmp()) {
+		using re = decltype(front(typename tmp::output_type::stack_type()));
+		return ctre::regular_expression(re());
+	} else {
+		return ctre::regular_expression(reject());
+	}
 }
 
 
@@ -66,7 +70,7 @@ template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_I
 }
 #endif
 
-#endif
+#endif // CTRE_ENABLE_LITERALS
 
 }
 

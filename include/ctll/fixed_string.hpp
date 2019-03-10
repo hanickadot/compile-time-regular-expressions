@@ -3,8 +3,10 @@
 
 #include <utility>
 #include <cstddef>
+#include <string_view>
 
 namespace ctll {
+
 
 template <typename CharT, size_t N> class basic_fixed_string {
 	CharT content[N];
@@ -15,10 +17,15 @@ public:
 	
 	constexpr basic_fixed_string(const CharT (&input)[N]) noexcept: basic_fixed_string(input, std::make_index_sequence<N>()) { }
 	
+	template <typename... C> constexpr basic_fixed_string(C && ... input) noexcept: content{input...} { }
+	
 	constexpr size_t size() const noexcept {
 		// if it's zero terminated string (from const char * literal) then size N - 1
 		if (content[N-1] == '\0') return N - 1;
 		else return N;
+	}
+	constexpr operator std::basic_string_view<CharT>() const noexcept {
+		return std::basic_string_view<CharT>(begin(), std::distance(begin(), end()));
 	}
 	constexpr CharT operator[](size_t i) const noexcept {
 		return content[i];
@@ -54,6 +61,7 @@ public:
 
 template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
 template <typename CharT, size_t N> basic_fixed_string(basic_fixed_string<CharT, N>) -> basic_fixed_string<CharT, N>;
+template <typename CharT, typename... Rest> basic_fixed_string(CharT && c, Rest && ... rest) -> basic_fixed_string<CharT, sizeof...(Rest) + 1>;
 
 }
 

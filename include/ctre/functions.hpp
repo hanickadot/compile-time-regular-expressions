@@ -66,7 +66,7 @@ template <auto input> struct regex_builder {
 	static constexpr auto _input = input;
 	using _tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
 template <ctll::basic_fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
@@ -78,7 +78,7 @@ template <ctll::basic_fixed_string input> static constexpr inline auto search = 
 template <auto & input> struct regex_builder {
 	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
 template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();

@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+template <typename T> struct identify;
+
 #if !__cpp_nontype_template_parameter_class
 #define CTRE_CREATE(pattern) (pattern ## _ctre)
 #define CTRE_SYNTAX(pattern) (pattern ## _ctre_syntax)
@@ -31,5 +33,18 @@ using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
-static_assert(!CTRE_CREATE("\\p{Emoji}").match("a"sv));
+//identify<decltype(ctll::basic_fixed_string{u8"ěščř"})> a;
+//identify<decltype(CTRE_CREATE(u8"ěščř"))> i;
 
+//static_assert(CTRE_CREATE("ěščř").match(u8"ěščř"));
+//static_assert(CTRE_CREATE(U"ěščř").match(u8"ěščř"));
+//static_assert(CTRE_CREATE(u"ěščř").match(u8"ěščř"));
+//static_assert(CTRE_CREATE(L"ěščř").match(u8"ěščř"));
+//static_assert(CTRE_CREATE(u8"ěščř").match(u8"ěščř"));
+//
+//static_assert(CTRE_SYNTAX("\\p{Latin}"));
+//static_assert(!CTRE_SYNTAX("\\p{Latin42}"));
+//
+//static_assert(CTRE_CREATE("\\p{Latin}").match("a"sv));
+//static_assert(CTRE_CREATE("\\p{Emoji}").match("a"sv));
+//

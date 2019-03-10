@@ -21,7 +21,15 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 
 // make_property
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property<property_name<Name...>>(), subject.stack), subject.parameters};
+	constexpr ctll::basic_fixed_string name{Name...};
+	
+	constexpr unicode::property p = unicode::property_from_string(std::string_view(name));
+	
+	if constexpr (unicode::is_defined(p)) {
+		return pcre_context{ctll::push_front(property<property_name<Name...>>(), subject.stack), subject.parameters};
+	} else {
+		return ctll::reject{};
+	}
 }
 
 // make_property
