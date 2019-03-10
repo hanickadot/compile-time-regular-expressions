@@ -1,7 +1,7 @@
 #include <iostream>
 #include "ctre.hpp"
 
-static constexpr auto pattern = ctll::basic_fixed_string{ ".*" };
+static constexpr auto pattern = ctll::fixed_string{ ".*" };
 
 int main(void)
 {

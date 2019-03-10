@@ -8,7 +8,7 @@ template <typename T> struct identify;
 #define CTRE_SYNTAX(pattern) (pattern ## _ctre_syntax)
 #else
 
-template <ctll::basic_fixed_string input> constexpr auto create() {
+template <ctll::fixed_string input> constexpr auto create() {
 	constexpr auto _input = input;
 	
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<ctre::pcre_context<>>;
@@ -17,7 +17,7 @@ template <ctll::basic_fixed_string input> constexpr auto create() {
 	return ctre::regular_expression(re());
 }
 
-template <ctll::basic_fixed_string input> constexpr bool syntax() {
+template <ctll::fixed_string input> constexpr bool syntax() {
 	constexpr auto _input = input;
 	
 	return ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
@@ -33,10 +33,17 @@ using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
-//identify<decltype(ctll::basic_fixed_string{u8"ěščř"})> a;
+//identify<decltype(ctll::fixed_string{u8"ěščř"})> a;
 //identify<decltype(CTRE_CREATE(u8"ěščř"))> i;
 
-//static_assert(CTRE_CREATE("ěščř").match(u8"ěščř"));
+static_assert(CTRE_SYNTAX(u8"a+"));
+static_assert(CTRE_SYNTAX(u8"😍+"));
+static_assert(CTRE_CREATE(u8"😍+").match(U"😍"));
+//identify<decltype(CTRE_CREATE(u8"😍+"))> i;
+//static_assert(CTRE_CREATE(u8"😍+").match(U"😍"));
+//ctre::match<u8"😍">(u8"😍😍😍");
+
+//static_assert(CTRE_CREATE(u8"😍+").match(u8"😍😍😍"));
 //static_assert(CTRE_CREATE(U"ěščř").match(u8"ěščř"));
 //static_assert(CTRE_CREATE(u"ěščř").match(u8"ěščř"));
 //static_assert(CTRE_CREATE(L"ěščř").match(u8"ěščř"));

@@ -3,8 +3,8 @@
 
 using namespace std::string_view_literals;
 
-static inline constexpr auto pattern1 = ctll::basic_fixed_string{"^[\\x30-\\x39]+?$"};
-static inline constexpr auto pattern2 = ctll::basic_fixed_string{""};
+static inline constexpr auto pattern1 = ctll::fixed_string{"^[\\x30-\\x39]+?$"};
+static inline constexpr auto pattern2 = ctll::fixed_string{""};
 
 
 static_assert(ctre::re<pattern1>().match("123456789"sv));
@@ -21,7 +21,7 @@ template <auto & ptn> constexpr bool re() {
 
 static_assert(re<pattern2>());
 
-static inline constexpr ctll::basic_fixed_string pat = "hello";
+static inline constexpr ctll::fixed_string pat = "hello";
 
 template <auto & ptn> constexpr bool re2() {
 #if __cpp_nontype_template_parameter_class

@@ -24,7 +24,7 @@ template <size_t> using index_placeholder = placeholder;
 #if !__cpp_nontype_template_parameter_class
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
-template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
+template <typename Grammar, ctll::fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
 	
 	#ifdef __GNUC__ // workaround to GCC bug
@@ -70,12 +70,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 	
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
-			constexpr auto value = input[Pos];
-			if constexpr (value <= std::numeric_limits<char>::max()) {
-				return term<static_cast<char>(value)>{};
-			} else {
-				return term<input[Pos]>{};
-			}
+			return term<input[Pos]>{};
 			
 		} else {
 			// return epsilon if we are past the input
@@ -87,12 +82,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			// there is no previous character on input if we are on start
 			return epsilon{};
 		} else if constexpr ((Pos-1) < input.size()) {
-			constexpr auto value = input[Pos-1];
-			if constexpr (value <= std::numeric_limits<char>::max()) {
-				return term<static_cast<char>(value)>{};
-			} else {
-				return term<input[Pos]>{};
-			}
+			return term<input[Pos-1]>{};
 		} else {
 			return epsilon{};
 		}

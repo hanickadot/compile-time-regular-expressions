@@ -17,13 +17,13 @@ using namespace std::string_view_literals;
 
 #else
 
-#define TEST_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().match(subject))
+#define TEST_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().match(subject))
 
-#define TEST_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().search(subject))
+#define TEST_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::fixed_string(pattern); static_assert(ctre::re<_ptn ## id>().search(subject))
 
-#define TEST_NOT_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().match(subject))
+#define TEST_NOT_MATCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().match(subject))
 
-#define TEST_NOT_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::basic_fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().search(subject))
+#define TEST_NOT_SEARCH(id, pattern, subject) static constexpr inline auto _ptn ## id = ctll::fixed_string(pattern); static_assert(!ctre::re<_ptn ## id>().search(subject))
 #endif
 
 TEST_MATCH(1, "blabla","blabla");

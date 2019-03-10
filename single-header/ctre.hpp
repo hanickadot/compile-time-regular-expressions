@@ -43,14 +43,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace ctll {
 
-template <typename CharT, size_t N> class basic_fixed_string {
+template <typename CharT, size_t N> class -std=c++17 {
 	CharT content[N];
 public: 
 	using char_type = CharT;
 	
-	template <size_t... I> constexpr basic_fixed_string(const CharT (&input)[N], std::index_sequence<I...>) noexcept: content{input[I]...} { }
+	template <size_t... I> constexpr -std=c++17(const CharT (&input)[N], std::index_sequence<I...>) noexcept: content{input[I]...} { }
 	
-	constexpr basic_fixed_string(const CharT (&input)[N]) noexcept: basic_fixed_string(input, std::make_index_sequence<N>()) { }
+	constexpr -std=c++17(const CharT (&input)[N]) noexcept: -std=c++17(input, std::make_index_sequence<N>()) { }
 	
 	constexpr size_t size() const noexcept {
 		// if it's zero terminated string (from const char * literal) then size N - 1
@@ -67,14 +67,14 @@ public:
 		return content + size();
 	}
 #if __has_include(<compare>)
-//	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
+//	constexpr auto operator<=>(const -std=c++17 &, const -std=c++17 &) = default;
 #endif
 };
 
-template <typename CharT> class basic_fixed_string<CharT, 0> {
+template <typename CharT> class -std=c++17<CharT, 0> {
 public: 
 	using char_type = CharT;
-	constexpr basic_fixed_string(const CharT *) noexcept { }
+	constexpr -std=c++17(const CharT *) noexcept { }
 	constexpr size_t size() const noexcept {
 		return 0;
 	}
@@ -85,12 +85,12 @@ public:
 		return nullptr;
 	}
 #if __has_include(<compare>)
-//	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
+//	constexpr auto operator<=>(const -std=c++17 &, const -std=c++17 &) = default;
 #endif
 };
 
-template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
-template <typename CharT, size_t N> basic_fixed_string(basic_fixed_string<CharT, N>) -> basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> -std=c++17(const CharT (&)[N]) -> -std=c++17<CharT, N>;
+template <typename CharT, size_t N> -std=c++17(-std=c++17<CharT, N>) -> -std=c++17<CharT, N>;
 
 }
 
@@ -323,7 +323,7 @@ template <size_t> using index_placeholder = placeholder;
 #if !__cpp_nontype_template_parameter_class
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
-template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
+template <typename Grammar, ctll::fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
 	
 	#ifdef __GNUC__ // workaround to GCC bug
@@ -2439,11 +2439,11 @@ template <typename RE> regular_expression(RE) -> regular_expression<RE>;
 
 namespace ctre {
 
-// in C++17 (clang & gcc with gnu extension) we need translate character pack into ctll::basic_fixed_string
+// in C++17 (clang & gcc with gnu extension) we need translate character pack into ctll::fixed_string
 // in C++20 we have `class nontype template parameters`
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::basic_fixed_string<CharT, sizeof...(input)>({input...});
+template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::fixed_string<CharT, sizeof...(input)>({input...});
 #endif	
 
 namespace literals {
@@ -2477,7 +2477,7 @@ namespace literals {
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -2505,7 +2505,7 @@ namespace test_literals {
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	return ctll::parser<ctre::pcre, _input>::template correct_with<>;
@@ -2515,7 +2515,7 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto ope
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -2527,7 +2527,7 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto ope
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	return ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template correct_with<pcre_context<>>;
@@ -2552,8 +2552,8 @@ namespace ctre {
 
 #if !__cpp_nontype_template_parameter_class
 // avoiding CTAD limitation in C++17
-template <typename CharT, size_t N> class pattern: public ctll::basic_fixed_string<CharT, N> {
-	using parent = ctll::basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> class pattern: public ctll::fixed_string<CharT, N> {
+	using parent = ctll::fixed_string<CharT, N>;
 public:
 	constexpr pattern(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -2561,8 +2561,8 @@ public:
 template <typename CharT, size_t N> pattern(const CharT (&)[N]) -> pattern<CharT, N>;
 
 // for better examples
-template <typename CharT, size_t N> class fixed_string: public ctll::basic_fixed_string<CharT, N> {
-	using parent = ctll::basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> class fixed_string: public ctll::fixed_string<CharT, N> {
+	using parent = ctll::fixed_string<CharT, N>;
 public:
 	constexpr fixed_string(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -2571,7 +2571,7 @@ template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_st
 #endif
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #else
 template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
@@ -2609,9 +2609,9 @@ template <auto input> struct regex_builder {
 	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
 };
 
-template <ctll::basic_fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
+template <ctll::fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
-template <ctll::basic_fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+template <ctll::fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
 #else
 
@@ -2691,7 +2691,7 @@ template <typename Subject, typename RE> constexpr auto iterator(const Subject &
 }
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename BeginIterator, typename EndIterator> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(BeginIterator begin, EndIterator end) noexcept {
+template <ctll::fixed_string input, typename BeginIterator, typename EndIterator> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(BeginIterator begin, EndIterator end) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -2701,7 +2701,7 @@ template <ctll::basic_fixed_string input, typename BeginIterator, typename EndIt
 #endif
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(const Subject & subject) noexcept {
+template <ctll::fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(const Subject & subject) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -2737,7 +2737,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> constexpr a
 }
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename BeginIterator, typename EndIterator> constexpr auto range(BeginIterator begin, EndIterator end) noexcept {
+template <ctll::fixed_string input, typename BeginIterator, typename EndIterator> constexpr auto range(BeginIterator begin, EndIterator end) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -2756,7 +2756,7 @@ template <typename RE> constexpr auto range(const char * subject, RE re) noexcep
 }
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
+template <ctll::fixed_string input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");

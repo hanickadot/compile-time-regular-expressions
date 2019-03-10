@@ -1,6 +1,8 @@
 #ifndef CTRE__ACTIONS__CHARACTERS__HPP
 #define CTRE__ACTIONS__CHARACTERS__HPP
 
+template <auto x> struct id_char;
+
 // push character
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_character, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
 	return pcre_context{ctll::push_front(character<V>(), subject.stack), subject.parameters};
