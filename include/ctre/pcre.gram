@@ -21,7 +21,7 @@ angle_close={>}
 equal_sign={=}
 exclamation_mark={!}
 
-escape_alphanum={b,c,h,i,j,k,l,m,o,p,q,v,y,z,A,B,C,E,F,G,H,I,J,K,L,M,O,P,Q,U,V,X,Y,Z,1,2,3,4,5,6,7,8,9}
+escape_alphanum={b,c,h,i,j,k,l,m,o,q,v,y,z,A,B,C,E,F,G,H,I,J,K,L,M,O,Q,U,V,X,Y,Z,1,2,3,4,5,6,7,8,9}
 hexdec={0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,A,B,C,D,E,F}
 octal={0,1,2,3,4,5,6,7}
 nonspecial_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,,:,!,=,_}
@@ -123,13 +123,20 @@ backslash_set->d,[class_digit]|D,[class_nondigit]
 backslash_set->w,[class_word]|W,[class_nonword]
 backslash_set->N,[class_nonnewline]
 backslash_set->s,[class_space]|S,[class_nonspace]
+backslash_set->p,copen,<property_name>,cclose,[make_property]
+backslash_set->P,copen,<property_name>,cclose,[make_property_negative]
+
+property_name->alphanum_characters,[push_property_name],<property_name2>
+property_name2->alphanum_characters,[push_property_name],<property_name2>|epsilon|equal_sign,<property_value>
+
+property_value->alphanum_characters,[push_property_value],<property_value2>
+property_value2->alphanum_characters,[push_property_value],<property_value2>|epsilon
 
 backslash-><backslash_range>|<backslash_set>
 
 backslash->g,copen,minus,<number>,cclose,[make_relative_back_reference]
 backslash->g,copen,<number>,cclose,[make_back_reference]
 backslash->g,copen,<block_name>,cclose,[make_back_reference]
-
 
 character->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | dot,[push_character_anything] | backslash,<backslash>|capture_control_chars,[push_character] | \>,[push_character]
 

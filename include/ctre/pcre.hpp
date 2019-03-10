@@ -36,6 +36,10 @@ struct pcre {
 	struct mod_opt {};
 	struct number2 {};
 	struct number {};
+	struct property_name2 {};
+	struct property_name {};
+	struct property_value2 {};
+	struct property_value {};
 	struct range {};
 	struct repeat {};
 	struct s {}; using _start = s;
@@ -76,6 +80,8 @@ struct pcre {
 	struct make_lazy: ctll::action {};
 	struct make_optional: ctll::action {};
 	struct make_possessive: ctll::action {};
+	struct make_property: ctll::action {};
+	struct make_property_negative: ctll::action {};
 	struct make_range: ctll::action {};
 	struct make_relative_back_reference: ctll::action {};
 	struct make_sequence: ctll::action {};
@@ -96,6 +102,8 @@ struct pcre {
 	struct push_hexdec: ctll::action {};
 	struct push_name: ctll::action {};
 	struct push_number: ctll::action {};
+	struct push_property_name: ctll::action {};
+	struct push_property_value: ctll::action {};
 	struct repeat_ab: ctll::action {};
 	struct repeat_at_least: ctll::action {};
 	struct repeat_exactly: ctll::action {};
@@ -146,8 +154,10 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
 	static constexpr auto rule(backslash, ctll::term<'u'>) -> ctll::push<ctll::anything, create_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
 	static constexpr auto rule(backslash, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, k>;
+	static constexpr auto rule(backslash, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
+	static constexpr auto rule(backslash, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
 	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, j>;
-	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','P','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','p','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(backslash, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
 	static constexpr auto rule(backslash, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed>;
@@ -231,8 +241,10 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
 	static constexpr auto rule(e, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
 	static constexpr auto rule(e, ctll::term<'u'>) -> ctll::push<ctll::anything, create_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec, range>;
+	static constexpr auto rule(e, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
+	static constexpr auto rule(e, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
 	static constexpr auto rule(e, ctll::term<'x'>) -> ctll::push<ctll::anything, j, range>;
-	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','P','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','p','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(e, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(e, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
 	static constexpr auto rule(e, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed, range>;
@@ -298,6 +310,17 @@ struct pcre {
 	static constexpr auto rule(number2, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_number, number2>;
 
 	static constexpr auto rule(number, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2>;
+
+	static constexpr auto rule(property_name2, ctll::term<'\x7D'>) -> ctll::epsilon;
+	static constexpr auto rule(property_name2, ctll::term<'='>) -> ctll::push<ctll::anything, property_value>;
+	static constexpr auto rule(property_name2, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
+
+	static constexpr auto rule(property_name, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
+
+	static constexpr auto rule(property_value2, ctll::term<'\x7D'>) -> ctll::epsilon;
+	static constexpr auto rule(property_value2, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
+
+	static constexpr auto rule(property_value, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
 
 	static constexpr auto rule(range, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(range, ctll::epsilon) -> ctll::epsilon;
