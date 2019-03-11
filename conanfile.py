@@ -6,7 +6,7 @@ from conans import ConanFile
 
 class CtreConan(ConanFile):
     name = "CTRE"
-    license = "MIT"
+    license = "Apache 2.0 with LLVM Exception"
     url = "https://github.com/hanickadot/compile-time-regular-expressions"
     author = "Hana Dusíková (ctre@hanicka.net)"
     description = "Compile Time Regular Expression for C++17/20"
