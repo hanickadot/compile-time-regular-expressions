@@ -1,7 +1,5 @@
 #include <ctll/fixed_string.hpp>
 
-template <size_t L> struct identify;
-
 // ordinary string is taken as array of bytes
 #ifdef CTRE_STRING_IS_UTF8
 static_assert(ctll::fixed_string("ěšč").size() == 3);

@@ -70,7 +70,12 @@ template <typename Grammar, ctll::fixed_string input, typename ActionSelector = 
 	
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
-			return term<input[Pos]>{};
+			constexpr auto value = input[Pos];
+			if constexpr (value <= std::numeric_limits<char>::max()) {
+				return term<static_cast<char>(value)>{};
+			} else {
+				return term<input[Pos]>{};
+			}
 			
 		} else {
 			// return epsilon if we are past the input
@@ -82,7 +87,12 @@ template <typename Grammar, ctll::fixed_string input, typename ActionSelector = 
 			// there is no previous character on input if we are on start
 			return epsilon{};
 		} else if constexpr ((Pos-1) < input.size()) {
-			return term<input[Pos-1]>{};
+			constexpr auto value = input[Pos-1];
+			if constexpr (value <= std::numeric_limits<char>::max()) {
+				return term<static_cast<char>(value)>{};
+			} else {
+				return term<value>{};
+			}
 		} else {
 			return epsilon{};
 		}

@@ -40,57 +40,206 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <utility>
 #include <cstddef>
+#include <string_view>
 
 namespace ctll {
 
-template <typename CharT, size_t N> class -std=c++17 {
-	CharT content[N];
-public: 
-	using char_type = CharT;
-	
-	template <size_t... I> constexpr -std=c++17(const CharT (&input)[N], std::index_sequence<I...>) noexcept: content{input[I]...} { }
-	
-	constexpr -std=c++17(const CharT (&input)[N]) noexcept: -std=c++17(input, std::make_index_sequence<N>()) { }
-	
-	constexpr size_t size() const noexcept {
-		// if it's zero terminated string (from const char * literal) then size N - 1
-		if (content[N-1] == '\0') return N - 1;
-		else return N;
-	}
-	constexpr CharT operator[](size_t i) const noexcept {
-		return content[i];
-	}
-	constexpr const CharT * begin() const noexcept {
-		return content;
-	}
-	constexpr const CharT * end() const noexcept {
-		return content + size();
-	}
-#if __has_include(<compare>)
-//	constexpr auto operator<=>(const -std=c++17 &, const -std=c++17 &) = default;
-#endif
+struct length_value_t {
+	uint32_t value;
+	uint8_t length;
 };
 
-template <typename CharT> class -std=c++17<CharT, 0> {
-public: 
-	using char_type = CharT;
-	constexpr -std=c++17(const CharT *) noexcept { }
+constexpr length_value_t length_and_value_of_utf8_code_point(uint8_t first_unit) noexcept {
+	if ((first_unit & 0b1000'0000) == 0b0000'0000) return {static_cast<uint32_t>(first_unit), 1};
+	else if ((first_unit & 0b1110'0000) == 0b1100'0000) return {static_cast<uint32_t>(first_unit & 0b0001'1111), 2};
+	else if ((first_unit & 0b1111'0000) == 0b1110'0000) return {static_cast<uint32_t>(first_unit & 0b0000'1111), 3};
+	else if ((first_unit & 0b1111'1000) == 0b1111'0000) return {static_cast<uint32_t>(first_unit & 0b0000'0111), 4};
+	else if ((first_unit & 0b1111'1100) == 0b1111'1000) return {static_cast<uint32_t>(first_unit & 0b0000'0011), 5};
+	else if ((first_unit & 0b1111'1100) == 0b1111'1100) return {static_cast<uint32_t>(first_unit & 0b0000'0001), 6};
+	else return {0, 0};
+}
+
+constexpr char32_t value_of_trailing_utf8_code_point(uint8_t unit, bool & correct) noexcept {
+	if ((unit & 0b1100'0000) == 0b1000'0000) return unit & 0b0011'1111;
+	else {
+		correct = false;
+		return 0;
+	}
+}
+
+constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_unit) noexcept {
+	if ((first_unit & 0b1111110000000000) == 0b1101'1000'0000'0000) return {static_cast<uint32_t>(first_unit & 0b0000001111111111), 2};
+	else return {first_unit, 1};
+}
+
+template <size_t N> class fixed_string {
+private:
+	char32_t content[N] = {};
+	size_t real_size{0};
+	bool correct_flag{true};
+public:
+	template <typename T> constexpr fixed_string(const T (&input)[N]) noexcept {
+		if constexpr (std::is_same_v<T, char>) {
+			#if CTRE_STRING_IS_UTF8
+				size_t out{0};
+				for (size_t i{0}; i < N; ++i) {
+					if ((i == (N-1)) && (input[i] == 0)) break;
+					length_value_t info = length_and_value_of_utf8_code_point(input[i]);
+					switch (info.length) {
+						case 6:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 5:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 4:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 3:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 2:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 1:
+							content[out++] = static_cast<char32_t>(info.value);
+							real_size++;
+							break;
+						default:
+							correct_flag = false;
+							return;
+					}
+				}
+			#else
+				for (size_t i{0}; i < N; ++i) {
+					content[i] = static_cast<uint8_t>(input[i]);
+					if ((i == (N-1)) && (input[i] == 0)) break;
+					real_size++;
+				}
+			#endif
+		#if __cpp_char8_t
+		} else if constexpr (std::is_same_v<T, char8_t>) {
+			size_t out{0};
+			for (size_t i{0}; i < N; ++i) {
+				if ((i == (N-1)) && (input[i] == 0)) break;
+				length_value_t info = length_and_value_of_utf8_code_point(input[i]);
+				switch (info.length) {
+					case 6:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 5:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 4:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 3:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 2:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 1:
+						content[out++] = static_cast<char32_t>(info.value);
+						real_size++;
+						break;
+					default:
+						correct_flag = false;
+						return;
+				}
+			}
+		#endif
+		} else if constexpr (std::is_same_v<T, char16_t>) {
+			size_t out{0};
+			for (size_t i{0}; i < N; ++i) {
+				length_value_t info = length_and_value_of_utf16_code_point(input[i]);
+				if (info.length == 2) {
+					if (++i < N) {
+						if ((input[i] & 0b1111'1100'0000'0000) == 0b1101'1100'0000'0000) {
+							content[out++] = (info.value << 10) | (input[i] & 0b0000'0011'1111'1111);
+						} else {
+							correct_flag = false;
+							break;
+						}
+					}
+				} else {
+					if ((i == (N-1)) && (input[i] == 0)) break;
+					content[out++] = info.value;
+				}
+			}
+			real_size = out;
+		} else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
+			for (size_t i{0}; i < N; ++i) {
+				content[i] = input[i];
+				if ((i == (N-1)) && (input[i] == 0)) break;
+				real_size++;
+			}
+		}
+	}
+	constexpr fixed_string(const fixed_string & other) noexcept {
+		for (size_t i{0}; i < N; ++i) {
+			content[i] = other.content[i];
+		}
+		real_size = other.real_size;
+		correct_flag = other.correct_flag;
+	}
+	constexpr bool correct() const noexcept {
+		return correct_flag;
+	}
+	constexpr size_t size() const noexcept {
+		return real_size;
+	}
+	constexpr const char32_t * begin() const noexcept {
+		return content;
+	}
+	constexpr const char32_t * end() const noexcept {
+		return content + size();
+	}
+	constexpr char32_t operator[](size_t i) const noexcept {
+		return content[i];
+	}
+};
+
+template <> class fixed_string<0> {
+	static constexpr char32_t __empty[1] = {0};
+public:
+	template <typename T> constexpr fixed_string(const T (&)[]) noexcept {
+		
+	}
+	constexpr fixed_string(std::initializer_list<char32_t>) noexcept {
+		
+	}
+	constexpr fixed_string(const fixed_string &) noexcept {
+			
+	}
+	constexpr bool correct() const noexcept {
+		return true;
+	}
 	constexpr size_t size() const noexcept {
 		return 0;
 	}
-	constexpr const CharT * begin() const noexcept {
-		return nullptr;
+	constexpr const char32_t * begin() const noexcept {
+		return __empty;
 	}
-	constexpr const CharT * end() const noexcept {
-		return nullptr;
+	constexpr const char32_t * end() const noexcept {
+		return __empty + size();
 	}
-#if __has_include(<compare>)
-//	constexpr auto operator<=>(const -std=c++17 &, const -std=c++17 &) = default;
-#endif
+	constexpr char32_t operator[](size_t) const noexcept {
+		return 0;
+	}
 };
 
-template <typename CharT, size_t N> -std=c++17(const CharT (&)[N]) -> -std=c++17<CharT, N>;
-template <typename CharT, size_t N> -std=c++17(-std=c++17<CharT, N>) -> -std=c++17<CharT, N>;
+template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<N>;
+template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
+
+template <typename T, size_t N> class basic_fixed_string: fixed_string<N> {
+	using parent = fixed_string<N>;
+public:
+	template <typename... Args> constexpr basic_fixed_string(Args && ... args) noexcept: parent(std::forward<Args>(args)...) { }
+};
+
+template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> basic_fixed_string(basic_fixed_string<CharT, N>) -> basic_fixed_string<CharT, N>;
 
 }
 
@@ -390,7 +539,7 @@ template <typename Grammar, ctll::fixed_string input, typename ActionSelector = 
 			if constexpr (value <= std::numeric_limits<char>::max()) {
 				return term<static_cast<char>(value)>{};
 			} else {
-				return term<input[Pos]>{};
+				return term<value>{};
 			}
 		} else {
 			return epsilon{};
@@ -865,6 +1014,7 @@ namespace ctre {
 	
 // special helpers for matching
 struct accept { };
+struct reject { };
 struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
@@ -905,14 +1055,6 @@ template <typename... Content> struct lookahead_negative { };
 
 struct assert_begin { };
 struct assert_end { };
-
-// properties name & value
-
-template <auto... Str> struct property_name { };
-template <auto... Str> struct property_value { };
-
-template <typename Name, typename Value = void> struct property { };
-template <typename Name, typename Value = void> struct negative_property { };
 
 }
 
@@ -1001,6 +1143,22 @@ struct digit_chars : char_range<'0','9'> { };
 
 struct ascii_chars : char_range<'\x00','\x7F'> { };
 
+// properties name & value
+
+template <auto... Str> struct property_name { };
+template <auto... Str> struct property_value { };
+
+template <typename Name, typename Value = void> struct property {
+	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
+		return true;
+	}
+};
+template <typename Name, typename Value = void> struct negative_property {
+	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
+		return false;
+	}
+};
+
 }
 
 #endif
@@ -1023,6 +1181,37 @@ template <auto... Name, typename T> constexpr auto operator==(id<Name...>, T) no
 }
 
 #endif
+#ifndef CTRE__UNICODE__HPP
+#define CTRE__UNICODE__HPP
+
+#include <string_view>
+
+namespace ctre::unicode {
+
+enum class property {
+	unknown,
+	emoji,
+	latin
+};
+
+constexpr property property_from_string(std::string_view name) noexcept {
+	if (name == "Emoji") {
+		return property::emoji;
+	} else if (name == "Latin") {
+		return property::latin;
+	} else {
+		return property::unknown;
+	}
+}
+
+constexpr bool is_defined(property p) noexcept {
+	return p != property::unknown;
+}
+
+}
+
+#endif
+
 #include <cstdint>
 #include <limits>
 
@@ -1576,7 +1765,15 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 
 // make_property
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property<property_name<Name...>>(), subject.stack), subject.parameters};
+	constexpr ctll::fixed_string name{Name...};
+	
+	constexpr unicode::property p = unicode::property_from_string(std::string_view(name));
+	
+	if constexpr (unicode::is_defined(p)) {
+		return pcre_context{ctll::push_front(property<property_name<Name...>>(), subject.stack), subject.parameters};
+	} else {
+		return ctll::reject{};
+	}
 }
 
 // make_property
@@ -1987,6 +2184,12 @@ constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pat
 template <typename R, typename Iterator, typename EndIterator> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R captures, ctll::list<accept>) noexcept {
 	return captures.matched();
+}
+
+// if we found "reject" object on stack => REJECT
+template <typename R, typename... Rest, typename Iterator, typename EndIterator> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R, ctll::list<reject, Rest...>) noexcept {
+	return R{}; // just return not matched return type
 }
 
 // mark start of outer capture
@@ -2443,7 +2646,7 @@ namespace ctre {
 // in C++20 we have `class nontype template parameters`
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::fixed_string<CharT, sizeof...(input)>({input...});
+template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::fixed_string< sizeof...(input)>({input...});
 #endif	
 
 namespace literals {
@@ -2482,8 +2685,12 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return ctre::regular_expression(re());
+	if constexpr (tmp()) {
+		using re = decltype(front(typename tmp::output_type::stack_type()));
+		return ctre::regular_expression(re());
+	} else {
+		return ctre::regular_expression(reject());
+	}
 }
 
 // this will need to be fixed with C++20
@@ -2493,7 +2700,7 @@ template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_I
 }
 #endif
 
-#endif
+#endif // CTRE_ENABLE_LITERALS
 
 }
 
@@ -2552,8 +2759,8 @@ namespace ctre {
 
 #if !__cpp_nontype_template_parameter_class
 // avoiding CTAD limitation in C++17
-template <typename CharT, size_t N> class pattern: public ctll::fixed_string<CharT, N> {
-	using parent = ctll::fixed_string<CharT, N>;
+template <typename CharT, size_t N> class pattern: public ctll::fixed_string<N> {
+	using parent = ctll::fixed_string<N>;
 public:
 	constexpr pattern(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -2561,8 +2768,8 @@ public:
 template <typename CharT, size_t N> pattern(const CharT (&)[N]) -> pattern<CharT, N>;
 
 // for better examples
-template <typename CharT, size_t N> class fixed_string: public ctll::fixed_string<CharT, N> {
-	using parent = ctll::fixed_string<CharT, N>;
+template <typename CharT, size_t N> class fixed_string: public ctll::fixed_string<N> {
+	using parent = ctll::fixed_string<N>;
 public:
 	constexpr fixed_string(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -2606,7 +2813,7 @@ template <auto input> struct regex_builder {
 	static constexpr auto _input = input;
 	using _tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
 template <ctll::fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
@@ -2618,16 +2825,16 @@ template <ctll::fixed_string input> static constexpr inline auto search = regex_
 template <auto & input> struct regex_builder {
 	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
 template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
 template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
-}
-
 #endif
+
+}
 
 #endif
 

@@ -2,6 +2,8 @@
 
 template <typename... T> struct id_type;
 
+using namespace ctre::test_literals;
+
 #if !__cpp_nontype_template_parameter_class
 #define CTRE_GEN(pattern) (pattern ## _ctre_gen)
 #else
@@ -33,10 +35,12 @@ static_assert(same_f(CTRE_GEN(""), ctre::empty()));
 static_assert(same_f(CTRE_GEN("y"), ctre::character<'y'>()));
 
 // unicode
-static_assert(same_f(CTRE_GEN("😍"), ctre::character<U'😍'>()));
-//static_assert(same_f(CTRE_GEN("[😍]"), ctre::set<ctre::character<U'😍'>>()));
-
-id_type<decltype(CTRE_GEN(u8"😍"))> i;
+#if __cpp_char8_t
+static_assert(same_f(CTRE_GEN(u8"😍"), ctre::character<U'😍'>()));
+static_assert(same_f(CTRE_GEN(u8"[😍]"), ctre::set<ctre::character<U'😍'>>()));
+#endif
+static_assert(same_f(CTRE_GEN(U"😍"), ctre::character<U'😍'>()));
+static_assert(same_f(CTRE_GEN(U"[😍]"), ctre::set<ctre::character<U'😍'>>()));
 
 // stringification
 static_assert(ctll::size(CTRE_GEN("abc")) == 1);
