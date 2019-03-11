@@ -1,5 +1,9 @@
 #include <ctll/fixed_string.hpp>
 
+static constexpr auto Pattern = ctll::basic_fixed_string{ LR"(^\s*(\d+)\s+:(\S):$(\S+?)$(\S+?)$(\S+))" };
+
+static_assert(Pattern.size() == 38);
+
 // ordinary string is taken as array of bytes
 #ifdef CTRE_STRING_IS_UTF8
 static_assert(ctll::fixed_string("ěšč").size() == 3);

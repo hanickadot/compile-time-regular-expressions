@@ -232,7 +232,7 @@ public:
 template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<N>;
 template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
-template <typename T, size_t N> class basic_fixed_string: fixed_string<N> {
+template <typename T, size_t N> class basic_fixed_string: public fixed_string<N> {
 	using parent = fixed_string<N>;
 public:
 	template <typename... Args> constexpr basic_fixed_string(Args && ... args) noexcept: parent(std::forward<Args>(args)...) { }
