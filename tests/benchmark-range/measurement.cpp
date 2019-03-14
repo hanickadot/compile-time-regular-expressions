@@ -34,7 +34,7 @@ std::pair<std::chrono::nanoseconds, std::chrono::nanoseconds> calculate_diff(con
 	return {avg, std::chrono::nanoseconds{std_diff}};
 }
 
-static constexpr inline auto ctre_pattern = ctll::basic_fixed_string{PATTERN};
+static constexpr inline auto ctre_pattern = ctll::fixed_string{PATTERN};
 
 int main(int argc, char ** argv) {
 	const char * fname = "mtent12.txt";

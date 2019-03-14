@@ -61,10 +61,10 @@ constexpr auto match(std::string_view sv) noexcept {
 
 #### C++17 syntax
 
-You can provide pattern as a `constexpr ctll::basic_fixed_string` variable.
+You can provide pattern as a `constexpr ctll::fixed_string` variable.
 
 ```c++
-static constexpr auto pattern = ctll::basic_fixed_string{ "h.*" };
+static constexpr auto pattern = ctll::fixed_string{ "h.*" };
 
 constexpr auto match(std::string_view sv) noexcept {
 	return ctre::match<pattern>(sv);

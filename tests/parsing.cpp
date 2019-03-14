@@ -6,7 +6,7 @@ using namespace ctre::test_literals;
 #define CTRE_TEST(pattern) (pattern ## _ctre_test)
 #else
 
-template <ctll::basic_fixed_string input> constexpr bool test() {
+template <ctll::fixed_string input> constexpr bool test() {
 	constexpr auto _input = input;
 	return ctll::parser<ctre::pcre, _input>::template correct_with<>;
 }

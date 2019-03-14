@@ -1,6 +1,6 @@
 #include <ctre.hpp>
 
-static constexpr auto Pattern = ctll::basic_fixed_string{ L"[a-z]+" };
+static constexpr auto Pattern = ctll::fixed_string(L"[a-z]+");
 
 int main()
 {

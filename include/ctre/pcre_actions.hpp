@@ -5,6 +5,7 @@
 #include "atoms.hpp"
 #include "atoms_characters.hpp"
 #include "id.hpp"
+#include "unicode.hpp"
 #include <cstdint>
 #include <limits>
 
@@ -43,6 +44,7 @@ struct pcre_actions {
 #include "actions/repeat.inc.hpp"
 #include "actions/sequence.inc.hpp"
 #include "actions/set.inc.hpp"
+#include "actions/properties.inc.hpp"
 
 };
 

@@ -7,6 +7,7 @@ namespace ctre {
 	
 // special helpers for matching
 struct accept { };
+struct reject { };
 struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
@@ -48,6 +49,7 @@ template <typename... Content> struct lookahead_negative { };
 
 struct assert_begin { };
 struct assert_end { };
+
 
 }
 

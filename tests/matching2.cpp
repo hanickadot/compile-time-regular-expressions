@@ -6,7 +6,7 @@
 #define CTRE_SYNTAX(pattern) (pattern ## _ctre_syntax)
 #else
 
-template <ctll::basic_fixed_string input> constexpr auto create() {
+template <ctll::fixed_string input> constexpr auto create() {
 	constexpr auto _input = input;
 	
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<ctre::pcre_context<>>;
@@ -15,7 +15,7 @@ template <ctll::basic_fixed_string input> constexpr auto create() {
 	return ctre::regular_expression(re());
 }
 
-template <ctll::basic_fixed_string input> constexpr bool syntax() {
+template <ctll::fixed_string input> constexpr bool syntax() {
 	constexpr auto _input = input;
 	
 	return ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;

@@ -1,25 +1,223 @@
 /*
 
-The MIT License (MIT)
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
 
-Copyright (c) 2014-2019 Hana Dusíková (hanicka@hanicka.net)
+    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
+    1. Definitions.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+    2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+    3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+    4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+    5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+    6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+    7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+    8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+    9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+    END OF TERMS AND CONDITIONS
+
+    APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+    Copyright [yyyy] [name of copyright owner]
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+
+--- LLVM Exceptions to the Apache 2.0 License ----
+
+As an exception, if, as a result of your compiling your source code, portions
+of this Software are embedded into an Object form of such source code, you
+may redistribute such embedded portions in such Object form without complying
+with the conditions of Sections 4(a), 4(b) and 4(d) of the License.
+
+In addition, if you combine or link compiled forms of this Software with
+software that is licensed under the GPLv2 ("Combined Software") and if a
+court of competent jurisdiction determines that the patent provision (Section
+3), the indemnity provision (Section 9) or other Section of the License
+conflicts with the conditions of the GPLv2, you may retroactively and
+prospectively choose to deem waived or otherwise exclude such Section(s) of
+the License, but only in their entirety and only with respect to the Combined
+Software.
 
 */
 
@@ -40,53 +238,202 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <utility>
 #include <cstddef>
+#include <string_view>
 
 namespace ctll {
 
-template <typename CharT, size_t N> class basic_fixed_string {
-	CharT content[N];
-public: 
-	using char_type = CharT;
-	
-	template <size_t... I> constexpr basic_fixed_string(const CharT (&input)[N], std::index_sequence<I...>) noexcept: content{input[I]...} { }
-	
-	constexpr basic_fixed_string(const CharT (&input)[N]) noexcept: basic_fixed_string(input, std::make_index_sequence<N>()) { }
-	
-	constexpr size_t size() const noexcept {
-		// if it's zero terminated string (from const char * literal) then size N - 1
-		if (content[N-1] == '\0') return N - 1;
-		else return N;
-	}
-	constexpr CharT operator[](size_t i) const noexcept {
-		return content[i];
-	}
-	constexpr const CharT * begin() const noexcept {
-		return content;
-	}
-	constexpr const CharT * end() const noexcept {
-		return content + size();
-	}
-#if __has_include(<compare>)
-//	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
-#endif
+struct length_value_t {
+	uint32_t value;
+	uint8_t length;
 };
 
-template <typename CharT> class basic_fixed_string<CharT, 0> {
-public: 
-	using char_type = CharT;
-	constexpr basic_fixed_string(const CharT *) noexcept { }
+constexpr length_value_t length_and_value_of_utf8_code_point(uint8_t first_unit) noexcept {
+	if ((first_unit & 0b1000'0000) == 0b0000'0000) return {static_cast<uint32_t>(first_unit), 1};
+	else if ((first_unit & 0b1110'0000) == 0b1100'0000) return {static_cast<uint32_t>(first_unit & 0b0001'1111), 2};
+	else if ((first_unit & 0b1111'0000) == 0b1110'0000) return {static_cast<uint32_t>(first_unit & 0b0000'1111), 3};
+	else if ((first_unit & 0b1111'1000) == 0b1111'0000) return {static_cast<uint32_t>(first_unit & 0b0000'0111), 4};
+	else if ((first_unit & 0b1111'1100) == 0b1111'1000) return {static_cast<uint32_t>(first_unit & 0b0000'0011), 5};
+	else if ((first_unit & 0b1111'1100) == 0b1111'1100) return {static_cast<uint32_t>(first_unit & 0b0000'0001), 6};
+	else return {0, 0};
+}
+
+constexpr char32_t value_of_trailing_utf8_code_point(uint8_t unit, bool & correct) noexcept {
+	if ((unit & 0b1100'0000) == 0b1000'0000) return unit & 0b0011'1111;
+	else {
+		correct = false;
+		return 0;
+	}
+}
+
+constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_unit) noexcept {
+	if ((first_unit & 0b1111110000000000) == 0b1101'1000'0000'0000) return {static_cast<uint32_t>(first_unit & 0b0000001111111111), 2};
+	else return {first_unit, 1};
+}
+
+template <size_t N> class fixed_string {
+private:
+	char32_t content[N] = {};
+	size_t real_size{0};
+	bool correct_flag{true};
+public:
+	template <typename T> constexpr fixed_string(const T (&input)[N]) noexcept {
+		if constexpr (std::is_same_v<T, char>) {
+			#if CTRE_STRING_IS_UTF8
+				size_t out{0};
+				for (size_t i{0}; i < N; ++i) {
+					if ((i == (N-1)) && (input[i] == 0)) break;
+					length_value_t info = length_and_value_of_utf8_code_point(input[i]);
+					switch (info.length) {
+						case 6:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 5:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 4:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 3:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 2:
+							if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+							[[fallthrough]];
+						case 1:
+							content[out++] = static_cast<char32_t>(info.value);
+							real_size++;
+							break;
+						default:
+							correct_flag = false;
+							return;
+					}
+				}
+			#else
+				for (size_t i{0}; i < N; ++i) {
+					content[i] = static_cast<uint8_t>(input[i]);
+					if ((i == (N-1)) && (input[i] == 0)) break;
+					real_size++;
+				}
+			#endif
+		#if __cpp_char8_t
+		} else if constexpr (std::is_same_v<T, char8_t>) {
+			size_t out{0};
+			for (size_t i{0}; i < N; ++i) {
+				if ((i == (N-1)) && (input[i] == 0)) break;
+				length_value_t info = length_and_value_of_utf8_code_point(input[i]);
+				switch (info.length) {
+					case 6:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 5:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 4:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 3:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 2:
+						if (++i < N) info.value = (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
+						[[fallthrough]];
+					case 1:
+						content[out++] = static_cast<char32_t>(info.value);
+						real_size++;
+						break;
+					default:
+						correct_flag = false;
+						return;
+				}
+			}
+		#endif
+		} else if constexpr (std::is_same_v<T, char16_t>) {
+			size_t out{0};
+			for (size_t i{0}; i < N; ++i) {
+				length_value_t info = length_and_value_of_utf16_code_point(input[i]);
+				if (info.length == 2) {
+					if (++i < N) {
+						if ((input[i] & 0b1111'1100'0000'0000) == 0b1101'1100'0000'0000) {
+							content[out++] = (info.value << 10) | (input[i] & 0b0000'0011'1111'1111);
+						} else {
+							correct_flag = false;
+							break;
+						}
+					}
+				} else {
+					if ((i == (N-1)) && (input[i] == 0)) break;
+					content[out++] = info.value;
+				}
+			}
+			real_size = out;
+		} else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
+			for (size_t i{0}; i < N; ++i) {
+				content[i] = input[i];
+				if ((i == (N-1)) && (input[i] == 0)) break;
+				real_size++;
+			}
+		}
+	}
+	constexpr fixed_string(const fixed_string & other) noexcept {
+		for (size_t i{0}; i < N; ++i) {
+			content[i] = other.content[i];
+		}
+		real_size = other.real_size;
+		correct_flag = other.correct_flag;
+	}
+	constexpr bool correct() const noexcept {
+		return correct_flag;
+	}
+	constexpr size_t size() const noexcept {
+		return real_size;
+	}
+	constexpr const char32_t * begin() const noexcept {
+		return content;
+	}
+	constexpr const char32_t * end() const noexcept {
+		return content + size();
+	}
+	constexpr char32_t operator[](size_t i) const noexcept {
+		return content[i];
+	}
+};
+
+template <> class fixed_string<0> {
+	static constexpr char32_t __empty[1] = {0};
+public:
+	template <typename T> constexpr fixed_string(const T (&)[]) noexcept {
+		
+	}
+	constexpr fixed_string(std::initializer_list<char32_t>) noexcept {
+		
+	}
+	constexpr fixed_string(const fixed_string &) noexcept {
+			
+	}
+	constexpr bool correct() const noexcept {
+		return true;
+	}
 	constexpr size_t size() const noexcept {
 		return 0;
 	}
-	constexpr const CharT * begin() const noexcept {
-		return nullptr;
+	constexpr const char32_t * begin() const noexcept {
+		return __empty;
 	}
-	constexpr const CharT * end() const noexcept {
-		return nullptr;
+	constexpr const char32_t * end() const noexcept {
+		return __empty + size();
 	}
-#if __has_include(<compare>)
-//	constexpr auto operator<=>(const basic_fixed_string &, const basic_fixed_string &) = default;
-#endif
+	constexpr char32_t operator[](size_t) const noexcept {
+		return 0;
+	}
+};
+
+template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<N>;
+template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
+
+template <typename T, size_t N> class basic_fixed_string: public fixed_string<N> {
+	using parent = fixed_string<N>;
+public:
+	template <typename... Args> constexpr basic_fixed_string(Args && ... args) noexcept: parent(std::forward<Args>(args)...) { }
 };
 
 template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
@@ -323,7 +670,7 @@ template <size_t> using index_placeholder = placeholder;
 #if !__cpp_nontype_template_parameter_class
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
-template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
+template <typename Grammar, ctll::fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
 	
 	#ifdef __GNUC__ // workaround to GCC bug
@@ -390,7 +737,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			if constexpr (value <= std::numeric_limits<char>::max()) {
 				return term<static_cast<char>(value)>{};
 			} else {
-				return term<input[Pos]>{};
+				return term<value>{};
 			}
 		} else {
 			return epsilon{};
@@ -523,6 +870,10 @@ struct pcre {
 	struct mod_opt {};
 	struct number2 {};
 	struct number {};
+	struct property_name2 {};
+	struct property_name {};
+	struct property_value2 {};
+	struct property_value {};
 	struct range {};
 	struct repeat {};
 	struct s {}; using _start = s;
@@ -563,6 +914,8 @@ struct pcre {
 	struct make_lazy: ctll::action {};
 	struct make_optional: ctll::action {};
 	struct make_possessive: ctll::action {};
+	struct make_property: ctll::action {};
+	struct make_property_negative: ctll::action {};
 	struct make_range: ctll::action {};
 	struct make_relative_back_reference: ctll::action {};
 	struct make_sequence: ctll::action {};
@@ -583,6 +936,8 @@ struct pcre {
 	struct push_hexdec: ctll::action {};
 	struct push_name: ctll::action {};
 	struct push_number: ctll::action {};
+	struct push_property_name: ctll::action {};
+	struct push_property_value: ctll::action {};
 	struct repeat_ab: ctll::action {};
 	struct repeat_at_least: ctll::action {};
 	struct repeat_exactly: ctll::action {};
@@ -633,8 +988,10 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
 	static constexpr auto rule(backslash, ctll::term<'u'>) -> ctll::push<ctll::anything, create_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
 	static constexpr auto rule(backslash, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, k>;
+	static constexpr auto rule(backslash, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
+	static constexpr auto rule(backslash, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
 	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, j>;
-	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','P','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','p','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(backslash, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
 	static constexpr auto rule(backslash, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed>;
@@ -718,8 +1075,10 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
 	static constexpr auto rule(e, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
 	static constexpr auto rule(e, ctll::term<'u'>) -> ctll::push<ctll::anything, create_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec, range>;
+	static constexpr auto rule(e, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
+	static constexpr auto rule(e, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
 	static constexpr auto rule(e, ctll::term<'x'>) -> ctll::push<ctll::anything, j, range>;
-	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','P','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','p','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(e, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(e, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
 	static constexpr auto rule(e, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed, range>;
@@ -786,6 +1145,17 @@ struct pcre {
 
 	static constexpr auto rule(number, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2>;
 
+	static constexpr auto rule(property_name2, ctll::term<'\x7D'>) -> ctll::epsilon;
+	static constexpr auto rule(property_name2, ctll::term<'='>) -> ctll::push<ctll::anything, property_value>;
+	static constexpr auto rule(property_name2, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
+
+	static constexpr auto rule(property_name, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
+
+	static constexpr auto rule(property_value2, ctll::term<'\x7D'>) -> ctll::epsilon;
+	static constexpr auto rule(property_value2, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
+
+	static constexpr auto rule(property_value, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
+
 	static constexpr auto rule(range, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(range, ctll::epsilon) -> ctll::epsilon;
 	static constexpr auto rule(range, _others) -> ctll::epsilon;
@@ -842,6 +1212,7 @@ namespace ctre {
 	
 // special helpers for matching
 struct accept { };
+struct reject { };
 struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
@@ -970,6 +1341,22 @@ struct digit_chars : char_range<'0','9'> { };
 
 struct ascii_chars : char_range<'\x00','\x7F'> { };
 
+// properties name & value
+
+template <auto... Str> struct property_name { };
+template <auto... Str> struct property_value { };
+
+template <typename Name, typename Value = void> struct property {
+	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
+		return true;
+	}
+};
+template <typename Name, typename Value = void> struct negative_property {
+	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
+		return false;
+	}
+};
+
 }
 
 #endif
@@ -992,6 +1379,37 @@ template <auto... Name, typename T> constexpr auto operator==(id<Name...>, T) no
 }
 
 #endif
+#ifndef CTRE__UNICODE__HPP
+#define CTRE__UNICODE__HPP
+
+#include <string_view>
+
+namespace ctre::unicode {
+
+enum class property {
+	unknown,
+	emoji,
+	latin
+};
+
+constexpr property property_from_string(std::string_view name) noexcept {
+	if (name == "Emoji") {
+		return property::emoji;
+	} else if (name == "Latin") {
+		return property::latin;
+	} else {
+		return property::unknown;
+	}
+}
+
+constexpr bool is_defined(property p) noexcept {
+	return p != property::unknown;
+}
+
+}
+
+#endif
+
 #include <cstdint>
 #include <limits>
 
@@ -1522,6 +1940,56 @@ template <auto V, auto B, auto A, typename... Ts, typename Parameters> static co
 
 #endif
 	
+#ifndef CTRE__ACTIONS__PROPERTIES__HPP
+#define CTRE__ACTIONS__PROPERTIES__HPP
+
+// push_property_name
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_name, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_name<V>(), subject.stack), subject.parameters};
+}
+// push_property_name (concat)
+template <auto... Str, auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_name, ctll::term<V>, pcre_context<ctll::list<property_name<Str...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_name<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// push_property_value
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_value, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_value<V>(), subject.stack), subject.parameters};
+}
+// push_property_value (concat)
+template <auto... Str, auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_value, ctll::term<V>, pcre_context<ctll::list<property_value<Str...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_value<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// make_property
+template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
+	constexpr ctll::fixed_string name{Name...};
+	
+	constexpr unicode::property p = unicode::property_from_string(std::string_view(name));
+	
+	if constexpr (unicode::is_defined(p)) {
+		return pcre_context{ctll::push_front(property<property_name<Name...>>(), subject.stack), subject.parameters};
+	} else {
+		return ctll::reject{};
+	}
+}
+
+// make_property
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property<property_name<Name...>, property_value<Value...>>(), subject.stack), subject.parameters};
+}
+
+// make_property_negative
+template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(negative_property<property_name<Name...>>(), subject.stack), subject.parameters};
+}
+
+// make_property_negative
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(negative_property<property_name<Name...>, property_value<Value...>>(), subject.stack), subject.parameters};
+}
+
+#endif
 
 };
 
@@ -1916,6 +2384,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 	return captures.matched();
 }
 
+// if we found "reject" object on stack => REJECT
+template <typename R, typename... Rest, typename Iterator, typename EndIterator> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R, ctll::list<reject, Rest...>) noexcept {
+	return R{}; // just return not matched return type
+}
+
 // mark start of outer capture
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<start_mark, Tail...>) noexcept {
@@ -2263,6 +2737,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 }
 
+// property matching
+
 }
 
 #endif
@@ -2364,11 +2840,11 @@ template <typename RE> regular_expression(RE) -> regular_expression<RE>;
 
 namespace ctre {
 
-// in C++17 (clang & gcc with gnu extension) we need translate character pack into ctll::basic_fixed_string
+// in C++17 (clang & gcc with gnu extension) we need translate character pack into ctll::fixed_string
 // in C++20 we have `class nontype template parameters`
 
 #if !__cpp_nontype_template_parameter_class
-template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::basic_fixed_string<CharT, sizeof...(input)>({input...});
+template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::fixed_string< sizeof...(input)>({input...});
 #endif	
 
 namespace literals {
@@ -2402,13 +2878,17 @@ namespace literals {
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return ctre::regular_expression(re());
+	if constexpr (tmp()) {
+		using re = decltype(front(typename tmp::output_type::stack_type()));
+		return ctre::regular_expression(re());
+	} else {
+		return ctre::regular_expression(reject());
+	}
 }
 
 // this will need to be fixed with C++20
@@ -2418,7 +2898,7 @@ template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_I
 }
 #endif
 
-#endif
+#endif // CTRE_ENABLE_LITERALS
 
 }
 
@@ -2430,7 +2910,7 @@ namespace test_literals {
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	return ctll::parser<ctre::pcre, _input>::template correct_with<>;
@@ -2440,7 +2920,7 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto ope
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -2452,7 +2932,7 @@ template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr inline auto ope
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 	constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #endif
 	return ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template correct_with<pcre_context<>>;
@@ -2477,8 +2957,8 @@ namespace ctre {
 
 #if !__cpp_nontype_template_parameter_class
 // avoiding CTAD limitation in C++17
-template <typename CharT, size_t N> class pattern: public ctll::basic_fixed_string<CharT, N> {
-	using parent = ctll::basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> class pattern: public ctll::fixed_string<N> {
+	using parent = ctll::fixed_string<N>;
 public:
 	constexpr pattern(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -2486,8 +2966,8 @@ public:
 template <typename CharT, size_t N> pattern(const CharT (&)[N]) -> pattern<CharT, N>;
 
 // for better examples
-template <typename CharT, size_t N> class fixed_string: public ctll::basic_fixed_string<CharT, N> {
-	using parent = ctll::basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> class fixed_string: public ctll::fixed_string<N> {
+	using parent = ctll::fixed_string<N>;
 public:
 	constexpr fixed_string(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -2496,7 +2976,7 @@ template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_st
 #endif
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #else
 template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
@@ -2531,28 +3011,28 @@ template <auto input> struct regex_builder {
 	static constexpr auto _input = input;
 	using _tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
-template <ctll::basic_fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
+template <ctll::fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
-template <ctll::basic_fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+template <ctll::fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
 #else
 
 template <auto & input> struct regex_builder {
 	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
 template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
 template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
-}
-
 #endif
+
+}
 
 #endif
 
@@ -2616,7 +3096,7 @@ template <typename Subject, typename RE> constexpr auto iterator(const Subject &
 }
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename BeginIterator, typename EndIterator> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(BeginIterator begin, EndIterator end) noexcept {
+template <ctll::fixed_string input, typename BeginIterator, typename EndIterator> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(BeginIterator begin, EndIterator end) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -2626,7 +3106,7 @@ template <ctll::basic_fixed_string input, typename BeginIterator, typename EndIt
 #endif
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(const Subject & subject) noexcept {
+template <ctll::fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(const Subject & subject) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -2662,7 +3142,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> constexpr a
 }
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename BeginIterator, typename EndIterator> constexpr auto range(BeginIterator begin, EndIterator end) noexcept {
+template <ctll::fixed_string input, typename BeginIterator, typename EndIterator> constexpr auto range(BeginIterator begin, EndIterator end) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
@@ -2681,7 +3161,7 @@ template <typename RE> constexpr auto range(const char * subject, RE re) noexcep
 }
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
+template <ctll::fixed_string input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");

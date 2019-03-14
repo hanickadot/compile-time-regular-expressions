@@ -11,8 +11,8 @@ namespace ctre {
 
 #if !__cpp_nontype_template_parameter_class
 // avoiding CTAD limitation in C++17
-template <typename CharT, size_t N> class pattern: public ctll::basic_fixed_string<CharT, N> {
-	using parent = ctll::basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> class pattern: public ctll::fixed_string<N> {
+	using parent = ctll::fixed_string<N>;
 public:
 	constexpr pattern(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -20,8 +20,8 @@ public:
 template <typename CharT, size_t N> pattern(const CharT (&)[N]) -> pattern<CharT, N>;
 
 // for better examples
-template <typename CharT, size_t N> class fixed_string: public ctll::basic_fixed_string<CharT, N> {
-	using parent = ctll::basic_fixed_string<CharT, N>;
+template <typename CharT, size_t N> class fixed_string: public ctll::fixed_string<N> {
+	using parent = ctll::fixed_string<N>;
 public:
 	constexpr fixed_string(const CharT (&input)[N]) noexcept: parent(input) { }
 };
@@ -30,7 +30,7 @@ template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_st
 #endif
 
 #if __cpp_nontype_template_parameter_class
-template <ctll::basic_fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
+template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #else
 template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
@@ -66,27 +66,28 @@ template <auto input> struct regex_builder {
 	static constexpr auto _input = input;
 	using _tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
-template <ctll::basic_fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
+template <ctll::fixed_string input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
-template <ctll::basic_fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+template <ctll::fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
 #else
 
 template <auto & input> struct regex_builder {
 	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = decltype(ctll::front(typename _tmp::output_type::stack_type()));
+	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
 template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
 template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
-}
-
 #endif
+
+
+}
 
 #endif

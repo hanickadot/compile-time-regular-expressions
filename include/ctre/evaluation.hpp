@@ -42,6 +42,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 	return captures.matched();
 }
 
+// if we found "reject" object on stack => REJECT
+template <typename R, typename... Rest, typename Iterator, typename EndIterator> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R, ctll::list<reject, Rest...>) noexcept {
+	return R{}; // just return not matched return type
+}
+
 // mark start of outer capture
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end,
@@ -430,6 +436,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
 	}
 }
+
+// property matching
+
 
 }
 

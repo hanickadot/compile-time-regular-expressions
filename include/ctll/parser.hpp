@@ -24,7 +24,7 @@ template <size_t> using index_placeholder = placeholder;
 #if !__cpp_nontype_template_parameter_class
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #else
-template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
+template <typename Grammar, ctll::fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #endif
 	
 	#ifdef __GNUC__ // workaround to GCC bug
@@ -91,7 +91,7 @@ template <typename Grammar, ctll::basic_fixed_string input, typename ActionSelec
 			if constexpr (value <= std::numeric_limits<char>::max()) {
 				return term<static_cast<char>(value)>{};
 			} else {
-				return term<input[Pos]>{};
+				return term<value>{};
 			}
 		} else {
 			return epsilon{};
