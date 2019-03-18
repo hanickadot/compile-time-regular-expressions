@@ -84,8 +84,7 @@ template <auto Name, auto Value> struct property;
 
 template <uni::category Category> struct binary_property<Category> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		//return uni::cp_is<Category>(c);
-		return uni::cp_category(c) == Category;
+		return uni::cp_is<Category>(c);
 	}
 };
 

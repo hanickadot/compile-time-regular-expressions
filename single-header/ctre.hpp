@@ -9186,137 +9186,164 @@ constexpr category __get_category(char32_t c) {
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::lo, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_lo.lookup(c)) == category::lo;
+    return __get_category_for_version<v>(c, __cat_lo.lookup(c) ? category::lo : category::cn) ==
+           category::lo;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::so, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_so.lookup(c)) == category::so;
+    return __get_category_for_version<v>(c, __cat_so.lookup(c) ? category::so : category::cn) ==
+           category::so;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::ll, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_ll.lookup(c)) == category::ll;
+    return __get_category_for_version<v>(c, __cat_ll.lookup(c) ? category::ll : category::cn) ==
+           category::ll;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::mn, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_mn.lookup(c)) == category::mn;
+    return __get_category_for_version<v>(c, __cat_mn.lookup(c) ? category::mn : category::cn) ==
+           category::mn;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::lu, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_lu.lookup(c)) == category::lu;
+    return __get_category_for_version<v>(c, __cat_lu.lookup(c) ? category::lu : category::cn) ==
+           category::lu;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::sm, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_sm.lookup(c)) == category::sm;
+    return __get_category_for_version<v>(c, __cat_sm.lookup(c) ? category::sm : category::cn) ==
+           category::sm;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::no, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_no.lookup(c)) == category::no;
+    return __get_category_for_version<v>(c, __cat_no.lookup(c) ? category::no : category::cn) ==
+           category::no;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::nd, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_nd.lookup(c)) == category::nd;
+    return __get_category_for_version<v>(c, __cat_nd.lookup(c) ? category::nd : category::cn) ==
+           category::nd;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::po, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_po.lookup(c)) == category::po;
+    return __get_category_for_version<v>(c, __cat_po.lookup(c) ? category::po : category::cn) ==
+           category::po;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::mc, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_mc.lookup(c)) == category::mc;
+    return __get_category_for_version<v>(c, __cat_mc.lookup(c) ? category::mc : category::cn) ==
+           category::mc;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::lm, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_lm.lookup(c)) == category::lm;
+    return __get_category_for_version<v>(c, __cat_lm.lookup(c) ? category::lm : category::cn) ==
+           category::lm;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::nl, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_nl.lookup(c)) == category::nl;
+    return __get_category_for_version<v>(c, __cat_nl.lookup(c) ? category::nl : category::cn) ==
+           category::nl;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::cf, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_cf.lookup(c)) == category::cf;
+    return __get_category_for_version<v>(c, __cat_cf.lookup(c) ? category::cf : category::cn) ==
+           category::cf;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::sk, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_sk.lookup(c)) == category::sk;
+    return __get_category_for_version<v>(c, __cat_sk.lookup(c) ? category::sk : category::cn) ==
+           category::sk;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::ps, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_ps.lookup(c)) == category::ps;
+    return __get_category_for_version<v>(c, __cat_ps.lookup(c) ? category::ps : category::cn) ==
+           category::ps;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::pe, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_pe.lookup(c)) == category::pe;
+    return __get_category_for_version<v>(c, __cat_pe.lookup(c) ? category::pe : category::cn) ==
+           category::pe;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::cc, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_cc.lookup(c)) == category::cc;
+    return __get_category_for_version<v>(c, __cat_cc.lookup(c) ? category::cc : category::cn) ==
+           category::cc;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::sc, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_sc.lookup(c)) == category::sc;
+    return __get_category_for_version<v>(c, __cat_sc.lookup(c) ? category::sc : category::cn) ==
+           category::sc;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::lt, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_lt.lookup(c)) == category::lt;
+    return __get_category_for_version<v>(c, __cat_lt.lookup(c) ? category::lt : category::cn) ==
+           category::lt;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::pd, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_pd.lookup(c)) == category::pd;
+    return __get_category_for_version<v>(c, __cat_pd.lookup(c) ? category::pd : category::cn) ==
+           category::pd;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::zs, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_zs.lookup(c)) == category::zs;
+    return __get_category_for_version<v>(c, __cat_zs.lookup(c) ? category::zs : category::cn) ==
+           category::zs;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::me, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_me.lookup(c)) == category::me;
+    return __get_category_for_version<v>(c, __cat_me.lookup(c) ? category::me : category::cn) ==
+           category::me;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::pi, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_pi.lookup(c)) == category::pi;
+    return __get_category_for_version<v>(c, __cat_pi.lookup(c) ? category::pi : category::cn) ==
+           category::pi;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::pf, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_pf.lookup(c)) == category::pf;
+    return __get_category_for_version<v>(c, __cat_pf.lookup(c) ? category::pf : category::cn) ==
+           category::pf;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::pc, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_pc.lookup(c)) == category::pc;
+    return __get_category_for_version<v>(c, __cat_pc.lookup(c) ? category::pc : category::cn) ==
+           category::pc;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::zp, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_zp.lookup(c)) == category::zp;
+    return __get_category_for_version<v>(c, __cat_zp.lookup(c) ? category::zp : category::cn) ==
+           category::zp;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::zl, int> = 0>
 constexpr bool cp_is(char32_t c) {
-    return __get_category_for_version<v>(c, __cat_zl.lookup(c)) == category::zl;
+    return __get_category_for_version<v>(c, __cat_zl.lookup(c) ? category::zl : category::cn) ==
+           category::zl;
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::cased_letter, int> = 0>
@@ -13027,6 +13054,7 @@ static constexpr __bool_trie<32, 991, 1, 0, 145, 255, 1, 0, 1215, 1, 0, 153> __p
      0x0000000001000000, 0x0000000008000000, 0x0000200000000000, 0xffffffff00000002,
      0x0000ffffffffffff}};
 }    // namespace uni
+
 #include <cstring>
 #include <string_view>
 #include <optional>
@@ -13285,6 +13313,8 @@ static_assert(uni::cp_is<uni::property::xid_continue>('1'));
 static_assert(uni::cp_age(U'🤩') == uni::version::v10_0);
 static_assert(uni::cp_is<uni::property::alphabetic>(U'ß'));
 static_assert(uni::cp_category(U'🦝') == uni::category::so);
+static_assert(uni::cp_is<uni::category::lowercase_letter>('a'));
+static_assert(uni::cp_is<uni::category::letter>('a'));
 
 namespace ctre {
 	
@@ -13363,8 +13393,7 @@ template <auto Name, auto Value> struct property;
 
 template <uni::category Category> struct binary_property<Category> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		//return uni::cp_is<Category>(c);
-		return uni::cp_category(c) == Category;
+		return uni::cp_is<Category>(c);
 	}
 };
 
