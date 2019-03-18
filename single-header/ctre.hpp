@@ -7601,7 +7601,7 @@ constexpr script __cp_script(char32_t cp) {
   return it->s;
 }
 template <uni::version v = uni::version::standard_unicode_version>
-script __get_cp_script(char32_t cp, int idx) {
+constexpr script __get_cp_script(char32_t cp, int idx) {
   switch (idx) {
   case 0:
     return __cp_script<0, v>(cp);
@@ -17586,44 +17586,47 @@ constexpr script cp_script(char32_t cp) {
 
 template<uni::version v = uni::version::standard_unicode_version>
 struct script_extensions_view {
-    script_extensions_view(char32_t c) : c(c){};
+    constexpr script_extensions_view(char32_t c) : c(c){};
 
     struct sentinel {};
     struct iterator {
-        iterator(char32_t c) : m_c(c), m_script(__get_cp_script<v>(m_c, idx)) {
+        constexpr iterator(char32_t c) : m_c(c), m_script(__get_cp_script<v>(m_c, idx)) {
             if(m_script == script::unknown)
                 m_script = __cp_script<0, v>(m_c);
         }
-        script operator*() const {
+        constexpr script operator*() const {
             return m_script;
         };
 
-        void operator++() {
+        constexpr void operator++() {
             idx++;
             m_script = __get_cp_script<v>(m_c, idx);
         }
 
-        bool operator==(sentinel) const {
+        constexpr bool operator==(sentinel) const {
             return m_script == script::unknown;
         };
-        bool operator!=(sentinel) const {
+        constexpr bool operator!=(sentinel) const {
             return m_script != script::unknown;
         };
-        bool operator==(iterator it) const {
+        constexpr bool operator==(iterator it) const {
             return m_script == it.m_script && m_c == it.m_c;
         };
-        bool operator!=(iterator it) const {
+        constexpr bool operator!=(iterator it) const {
             return !(*this == it);
         };
 
     private:
         char32_t m_c;
+        int idx = 0;
         script m_script;
-        int idx = 1;
     };
 
-    iterator begin() const {
+    constexpr iterator begin() const {
         return iterator{c};
+    }
+    constexpr sentinel end() const {
+        return sentinel{};
     }
 
 private:
@@ -17813,39 +17816,55 @@ template <uni::category Category> struct binary_property<Category> {
 };
 
 // unicode TS#18 level 1.2 any/assigned/ascii
-template <special_binary_property Prop> struct binary_property<Prop> {
+
+template <> struct binary_property<special_binary_property::any> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		if constexpr (Prop == special_binary_property::any) {
-			return uni::cp_is_valid(c);
-		} else if constexpr (Prop == special_binary_property::assigned) {
-			return uni::cp_is_assigned(c);
-		} else if constexpr (Prop == special_binary_property::ascii) {
-			return uni::cp_is_ascii(c);
-		} else {
-			return false;
-		}
-		
+		return uni::cp_is_valid(c);
 	}
 };
 
-// unicode TS#18 level 1.2 script
+template <> struct binary_property<special_binary_property::assigned> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_is_assigned(c);
+	}
+};
+
+template <> struct binary_property<special_binary_property::ascii> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_is_ascii(c);
+	}
+};
+
+// unicode TS#18 level 1.2.2
+
+enum class property_type {
+	script, script_extension, unknown
+};
+
+// unicode TS#18 level 1.2.2
+
 template <uni::script Script> struct binary_property<Script> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_script(c) == Script;
 	}
 };
 
-// nonbinary properties
-
-enum class property_type {
-	script, script_extension, unknown
+template <uni::script Script> struct property<property_type::script_extension, Script> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		for (uni::script sc: uni::cp_script_extensions(c)) {
+			if (sc == Script) return true;
+		}
+		return false;
+	}
 };
+
+// nonbinary properties
 
 constexpr property_type property_type_from_name(std::string_view str) noexcept {
 	using namespace std::string_view_literals;
-	if (uni::__pronamecomp(str, "script"sv) == 0) {
+	if (uni::__pronamecomp(str, "script"sv) == 0 || uni::__pronamecomp(str, "sc"sv) == 0) {
 		return property_type::script;
-	} else if (uni::__pronamecomp(str, "script_extension"sv) == 0) {
+	} else if (uni::__pronamecomp(str, "script_extension"sv) == 0 || uni::__pronamecomp(str, "scx"sv) == 0) {
 		return property_type::script_extension;
 	} else {
 		return property_type::unknown;
@@ -17878,14 +17897,20 @@ template <> struct property_type_builder<property_type::script> {
 		if constexpr (sc == uni::script::unknown) {
 			return ctll::reject{};
 		} else {
-			return property<property_type::script, sc>();
+			return binary_property<sc>();
 		}
 	}
 };
 
-template <uni::script Script> struct property<property_type::script, Script> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_script(c) == Script;
+template <> struct property_type_builder<property_type::script_extension> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto sc = uni::__script_from_string(get_string_view(value));
+		if constexpr (sc == uni::script::unknown) {
+			return ctll::reject{};
+		} else {
+			return property<property_type::script_extension, sc>();
+		}
 	}
 };
 

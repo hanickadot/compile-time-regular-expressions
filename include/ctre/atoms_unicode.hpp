@@ -44,39 +44,55 @@ template <uni::category Category> struct binary_property<Category> {
 };
 
 // unicode TS#18 level 1.2 any/assigned/ascii
-template <special_binary_property Prop> struct binary_property<Prop> {
+
+template <> struct binary_property<special_binary_property::any> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		if constexpr (Prop == special_binary_property::any) {
-			return uni::cp_is_valid(c);
-		} else if constexpr (Prop == special_binary_property::assigned) {
-			return uni::cp_is_assigned(c);
-		} else if constexpr (Prop == special_binary_property::ascii) {
-			return uni::cp_is_ascii(c);
-		} else {
-			return false;
-		}
-		
+		return uni::cp_is_valid(c);
 	}
 };
 
-// unicode TS#18 level 1.2 script
+template <> struct binary_property<special_binary_property::assigned> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_is_assigned(c);
+	}
+};
+
+template <> struct binary_property<special_binary_property::ascii> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_is_ascii(c);
+	}
+};
+
+// unicode TS#18 level 1.2.2
+
+enum class property_type {
+	script, script_extension, unknown
+};
+
+// unicode TS#18 level 1.2.2
+
 template <uni::script Script> struct binary_property<Script> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_script(c) == Script;
 	}
 };
 
-// nonbinary properties
-
-enum class property_type {
-	script, script_extension, unknown
+template <uni::script Script> struct property<property_type::script_extension, Script> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		for (uni::script sc: uni::cp_script_extensions(c)) {
+			if (sc == Script) return true;
+		}
+		return false;
+	}
 };
+
+// nonbinary properties
 
 constexpr property_type property_type_from_name(std::string_view str) noexcept {
 	using namespace std::string_view_literals;
-	if (uni::__pronamecomp(str, "script"sv) == 0) {
+	if (uni::__pronamecomp(str, "script"sv) == 0 || uni::__pronamecomp(str, "sc"sv) == 0) {
 		return property_type::script;
-	} else if (uni::__pronamecomp(str, "script_extension"sv) == 0) {
+	} else if (uni::__pronamecomp(str, "script_extension"sv) == 0 || uni::__pronamecomp(str, "scx"sv) == 0) {
 		return property_type::script_extension;
 	} else {
 		return property_type::unknown;
@@ -109,14 +125,20 @@ template <> struct property_type_builder<property_type::script> {
 		if constexpr (sc == uni::script::unknown) {
 			return ctll::reject{};
 		} else {
-			return property<property_type::script, sc>();
+			return binary_property<sc>();
 		}
 	}
 };
 
-template <uni::script Script> struct property<property_type::script, Script> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_script(c) == Script;
+template <> struct property_type_builder<property_type::script_extension> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto sc = uni::__script_from_string(get_string_view(value));
+		if constexpr (sc == uni::script::unknown) {
+			return ctll::reject{};
+		} else {
+			return property<property_type::script_extension, sc>();
+		}
 	}
 };
 
