@@ -17872,7 +17872,7 @@ constexpr property_type property_type_from_name(std::string_view str) noexcept {
 }
 
 template <property_type Property> struct property_type_builder {
-	template <auto... Value> constexpr auto get() {
+	template <auto... Value> static constexpr auto get() {
 		return ctll::reject{};
 	}
 };
