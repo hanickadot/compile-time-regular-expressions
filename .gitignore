@@ -8,6 +8,7 @@ tests/benchmark-exec/*
 !tests/benchmark-exec/.tm_properties
 !tests/benchmark-exec/*.cpp
 !tests/benchmark-exec/*.hpp
+!tests/benchmark-exec/*.js
 *.pyc
 .conan/test_package/build
 mtent12.txt
