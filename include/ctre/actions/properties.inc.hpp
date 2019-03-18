@@ -19,10 +19,6 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 	return pcre_context{ctll::push_front(property_value<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
 }
 
-template <size_t Sz> static constexpr std::string_view get_string_view(const std::array<char, Sz> & arr) noexcept {
-	return std::string_view(arr.data(), arr.size());
-}
-
 // make_property
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
@@ -37,10 +33,16 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 }
 
 // make_property
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters>) {
-	return ctll::reject{};
-	// TODO when nonbinary properties are supported
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	constexpr auto prop = property_builder<Name...>::template get<Value...>();
+	
+	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(prop, subject.stack), subject.parameters};
+	}
 }
+
 
 // make_property_negative
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
@@ -56,9 +58,14 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 }
 
 // make_property_negative
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters>) {
-	return ctll::reject{};
-	// TODO when nonbinary properties are supported
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	constexpr auto prop = property_builder<Name...>::template get<Value...>();
+	
+	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(negate<decltype(prop)>(), subject.stack), subject.parameters};
+	}
 }
 
 #endif

@@ -2,6 +2,8 @@
 #define CTRE__EVALUATION__HPP
 
 #include "atoms.hpp"
+#include "atoms_characters.hpp"
+#include "atoms_unicode.hpp"
 #include "utility.hpp"
 #include "return_type.hpp"
 #include "find_captures.hpp"

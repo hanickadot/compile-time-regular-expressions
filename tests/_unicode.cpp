@@ -63,6 +63,10 @@ static_assert(CTRE_CREATE(U"\\p{Lu}+").match(U"ABCD"));
 static_assert(!CTRE_CREATE(U"\\p{Lu}+").match(U"ABcD"));
 static_assert(CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890"));
 static_assert(!CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890h"));
+static_assert(CTRE_CREATE(U"\\p{script=Latin}+").match(U"abcd"));
+static_assert(CTRE_CREATE(U"\\p{script=Greek}+").match(U"βΩ"));
+static_assert(!CTRE_CREATE(U"\\p{script=Latin}+").match(U"βΩ"));
+static_assert(!CTRE_CREATE(U"\\p{script=Greek}+").match(U"abcd"));
 
 //identify<decltype(ctll::fixed_string{u8"ěščř"})> a;
 //identify<decltype(CTRE_CREATE(u8"ěščř"))> i;

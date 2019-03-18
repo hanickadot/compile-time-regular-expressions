@@ -3,7 +3,6 @@
 
 #include "utility.hpp"
 #include <cstdint>
-#include "../ext-unicode-db/singleheader/ext/unicode.hpp"
 
 namespace ctre {
 	
@@ -73,26 +72,6 @@ struct digit_chars : char_range<'0','9'> { };
 
 struct ascii_chars : char_range<'\x00','\x7F'> { };
 
-// properties name & value
-
-template <auto... Str> struct property_name { };
-template <auto... Str> struct property_value { };
-
-template <auto Name> struct binary_property;
-
-template <auto Name, auto Value> struct property;
-
-template <uni::category Category> struct binary_property<Category> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_is<Category>(c);
-	}
-};
-
-template <uni::script Script> struct binary_property<Script> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_script(c) == Script;
-	}
-};
 
 }
 
