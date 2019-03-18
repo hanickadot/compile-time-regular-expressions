@@ -109,6 +109,7 @@ backslash_set->escape_alphanum,[push_character]
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 
 backslash_range->u,[create_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],[finish_hexdec]
+backslash_range->u,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose,[finish_hexdec]
 backslash_range->x,[create_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],[finish_hexdec]
 backslash_range->x,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose,[finish_hexdec]
 backslash_range->n,[push_character_newline]

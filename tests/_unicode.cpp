@@ -47,6 +47,22 @@ using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
 
+// UTS #18 Level 1: RL1.1: Hex Notation
+static_assert(CTRE_CREATE(U"\\u{1F92A}").match(U"🤪"));
+static_assert(CTRE_CREATE(U"\\u20AC").match(U"€"));
+// TODO multiple character inside \u{AA BB CC}
+// TODO deal with normalization 1.1.1
+
+// UTS #18 Level 1: RL1.2: Properties
+// TODO only \p and \P is not supported
+static_assert(CTRE_SYNTAX(U"\\p{L}"));
+static_assert(CTRE_SYNTAX(U"\\p{Letter}"));
+static_assert(CTRE_CREATE(U"\\p{Ll}+").match(U"abcdef"));
+static_assert(CTRE_CREATE(U"\\p{Lu}+").match(U"ABCD"));
+static_assert(!CTRE_CREATE(U"\\p{Lu}+").match(U"ABcD"));
+static_assert(CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890"));
+static_assert(!CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890h"));
+
 //identify<decltype(ctll::fixed_string{u8"ěščř"})> a;
 //identify<decltype(CTRE_CREATE(u8"ěščř"))> i;
 
@@ -66,7 +82,6 @@ static_assert(!CTRE_CREATE(u8"[😍a\\x{1F92A}]+").match(U"😍a😍aa😍😍a�
 constexpr auto m1 = CTRE_CREATE(u8"[😍a-z\\x{1F92A}]+").match(U"abc😍😍xyz");
 static_assert(m1.to_view().length() == 8);
 #endif
-
 static_assert(CTRE_SYNTAX(U"a+"));
 static_assert(CTRE_SYNTAX(U"😍+"));
 static_assert(CTRE_CREATE(U"😍").match(U"😍"));

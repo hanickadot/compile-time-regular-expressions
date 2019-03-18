@@ -19,32 +19,46 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 	return pcre_context{ctll::push_front(property_value<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
 }
 
+template <size_t Sz> static constexpr std::string_view get_string_view(const std::array<char, Sz> & arr) noexcept {
+	return std::string_view(arr.data(), arr.size());
+}
+
 // make_property
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	constexpr ctll::fixed_string name{Name...};
+	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
 	
-	constexpr unicode::property p = unicode::property_from_string(std::string_view(name));
+	constexpr auto p = uni::__category_from_string(get_string_view(name));
 	
-	if constexpr (unicode::is_defined(p)) {
-		return pcre_context{ctll::push_front(property<property_name<Name...>>(), subject.stack), subject.parameters};
-	} else {
+	if constexpr (p == uni::category::unassigned) {
 		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(binary_property<p>(), subject.stack), subject.parameters};
 	}
 }
 
 // make_property
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property<property_name<Name...>, property_value<Value...>>(), subject.stack), subject.parameters};
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters>) {
+	return ctll::reject{};
+	// TODO when nonbinary properties are supported
 }
 
 // make_property_negative
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(negative_property<property_name<Name...>>(), subject.stack), subject.parameters};
+	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	
+	constexpr auto p = uni::__category_from_string(get_string_view(name));
+	
+	if constexpr (p == uni::category::unassigned) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(negate<binary_property<p>>(), subject.stack), subject.parameters};
+	}
 }
 
 // make_property_negative
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(negative_property<property_name<Name...>, property_value<Value...>>(), subject.stack), subject.parameters};
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters>) {
+	return ctll::reject{};
+	// TODO when nonbinary properties are supported
 }
 
 #endif
