@@ -1422,6 +1422,40 @@ constexpr bool binary_search(ForwardIt first, ForwardIt last, const T& value) {
     first = uni::lower_bound(first, last, value);
     return (!(first == last) && !(value < *first));
 }
+template<auto N>
+struct _compact_range {
+    std::array<std::uint32_t, N> _data;
+    constexpr uint8_t value(char32_t cp, uint8_t default_value) const {
+        const auto end = _data.end();
+        auto it = uni::upper_bound(_data.begin(), end, cp, [](char32_t cp, uint32_t v) {
+            char32_t c = (v >> 8);
+            return cp < c;
+        });
+        if(it == end)
+            return default_value;
+        it--;
+        return *(it)&0xFF;
+    }
+};
+template<class... U>
+_compact_range(U...)->_compact_range<sizeof...(U)>;
+
+template<auto N>
+struct _compact_list {
+    std::array<std::uint32_t, N> _data;
+    constexpr uint8_t value(char32_t cp, uint8_t default_value) const {
+        const auto end = _data.end();
+        auto it = uni::lower_bound(_data.begin(), end, cp, [](char32_t cp, uint32_t v) {
+            char32_t c = (v >> 8);
+            return cp < c;
+        });
+        if(it == end || (*it >> 8) != cp)
+            return default_value;
+        return *(it)&0xFF;
+    }
+};
+template<class... U>
+_compact_list(U...)->_compact_list<sizeof...(U)>;
 
 template<std::size_t r1_s, std::size_t r2_s, int16_t r2_t_f, int16_t r2_t_b, std::size_t r3_s,
          std::size_t r4_s, int16_t r4_t_f, int16_t r4_t_b, std::size_t r5_s, int16_t r5_t_f,
@@ -1494,26 +1528,24 @@ struct flat_array {
     }
 };
 
-struct __range_array_elem {
-    char32_t c : 24;
-    bool b = 1;
-};
-template<std::size_t size>
+template<auto N>
 struct __range_array {
-    std::array<__range_array_elem, size> data;
-
-    constexpr bool lookup(char32_t u) const {
-        if((char32_t)u > 0x10FFFF)
-            return false;
-        auto it =
-            uni::upper_bound(data.begin(), data.end(), u,
-                             [](char32_t cp, const __range_array_elem& e) { return cp < e.c; });
-        if(it == data.end())
+    std::array<std::uint32_t, N> _data;
+    constexpr bool lookup(char32_t cp) const {
+        const auto end = _data.end();
+        auto it = uni::upper_bound(_data.begin(), end, cp, [](char32_t cp, uint32_t v) {
+            char32_t c = (v >> 8);
+            return cp < c;
+        });
+        if(it == end)
             return false;
         it--;
-        return it->b;
+        return (*it) & 0xFF;
     }
 };
+
+template<class... U>
+__range_array(U...)->__range_array<sizeof...(U)>;
 
 constexpr char __propcharnorm(char a) {
     if(a >= 'A' && a <= 'Z')
@@ -1533,12 +1565,12 @@ constexpr int __propcharcomp(char a, char b) {
 }
 constexpr int __pronamecomp(std::string_view sa, std::string_view sb) {
     // workaround, iterators in std::string_view are not constexpr in libc++ (for now)
-    const char * a = sa.begin();
-    const char * b = sb.begin();
-    
-    const char * ae = sa.end();
-    const char * be = sb.end();
-    
+    const char* a = sa.begin();
+    const char* b = sb.begin();
+
+    const char* ae = sa.end();
+    const char* be = sb.end();
+
     for(; a != ae && b != be; a++, b++) {
         auto res = __propcharcomp(*a, *b);
         if(res != 0)
@@ -1640,1221 +1672,310 @@ enum class version : uint8_t {
 static constexpr std::array __age_strings = {
     "unassigned", "1.1", "2.0", "2.1", "3.0", "3.1", "3.2", "4.0", "4.1",  "5.0",  "5.1",
     "5.2",        "6.0", "6.1", "6.2", "6.3", "7.0", "8.0", "9.0", "10.0", "11.0", "12.0"};
-
-struct __age_data_t {
-    char32_t first;
-    version a;
-};
-static constexpr std::array __age_data = {
-    __age_data_t{0x0000, version::v1_1},        __age_data_t{0x01F6, version::v3_0},
-    __age_data_t{0x01FA, version::v1_1},        __age_data_t{0x0218, version::v3_0},
-    __age_data_t{0x0220, version::v3_2},        __age_data_t{0x0221, version::v4_0},
-    __age_data_t{0x0222, version::v3_0},        __age_data_t{0x0234, version::v4_0},
-    __age_data_t{0x0237, version::v4_1},        __age_data_t{0x0242, version::v5_0},
-    __age_data_t{0x0250, version::v1_1},        __age_data_t{0x02A9, version::v3_0},
-    __age_data_t{0x02AE, version::v4_0},        __age_data_t{0x02B0, version::v1_1},
-    __age_data_t{0x02DF, version::v3_0},        __age_data_t{0x02E0, version::v1_1},
-    __age_data_t{0x02EA, version::v3_0},        __age_data_t{0x02EF, version::v4_0},
-    __age_data_t{0x0300, version::v1_1},        __age_data_t{0x0346, version::v3_0},
-    __age_data_t{0x034F, version::v3_2},        __age_data_t{0x0350, version::v4_0},
-    __age_data_t{0x0358, version::v4_1},        __age_data_t{0x035D, version::v4_0},
-    __age_data_t{0x0360, version::v1_1},        __age_data_t{0x0362, version::v3_0},
-    __age_data_t{0x0363, version::v3_2},        __age_data_t{0x0370, version::v5_1},
-    __age_data_t{0x0374, version::v1_1},        __age_data_t{0x0376, version::v5_1},
-    __age_data_t{0x0378, version::unassigned},  __age_data_t{0x037A, version::v1_1},
-    __age_data_t{0x037B, version::v5_0},        __age_data_t{0x037E, version::v1_1},
-    __age_data_t{0x037F, version::v7_0},        __age_data_t{0x0380, version::unassigned},
-    __age_data_t{0x0384, version::v1_1},        __age_data_t{0x038B, version::unassigned},
-    __age_data_t{0x038C, version::v1_1},        __age_data_t{0x038D, version::unassigned},
-    __age_data_t{0x038E, version::v1_1},        __age_data_t{0x03A2, version::unassigned},
-    __age_data_t{0x03A3, version::v1_1},        __age_data_t{0x03CF, version::v5_1},
-    __age_data_t{0x03D0, version::v1_1},        __age_data_t{0x03D7, version::v3_0},
-    __age_data_t{0x03D8, version::v3_2},        __age_data_t{0x03DA, version::v1_1},
-    __age_data_t{0x03DB, version::v3_0},        __age_data_t{0x03DC, version::v1_1},
-    __age_data_t{0x03DD, version::v3_0},        __age_data_t{0x03DE, version::v1_1},
-    __age_data_t{0x03DF, version::v3_0},        __age_data_t{0x03E0, version::v1_1},
-    __age_data_t{0x03E1, version::v3_0},        __age_data_t{0x03E2, version::v1_1},
-    __age_data_t{0x03F4, version::v3_1},        __age_data_t{0x03F6, version::v3_2},
-    __age_data_t{0x03F7, version::v4_0},        __age_data_t{0x03FC, version::v4_1},
-    __age_data_t{0x0400, version::v3_0},        __age_data_t{0x0401, version::v1_1},
-    __age_data_t{0x040D, version::v3_0},        __age_data_t{0x040E, version::v1_1},
-    __age_data_t{0x0450, version::v3_0},        __age_data_t{0x0451, version::v1_1},
-    __age_data_t{0x045D, version::v3_0},        __age_data_t{0x045E, version::v1_1},
-    __age_data_t{0x0487, version::v5_1},        __age_data_t{0x0488, version::v3_0},
-    __age_data_t{0x048A, version::v3_2},        __age_data_t{0x048C, version::v3_0},
-    __age_data_t{0x0490, version::v1_1},        __age_data_t{0x04C5, version::v3_2},
-    __age_data_t{0x04C7, version::v1_1},        __age_data_t{0x04C9, version::v3_2},
-    __age_data_t{0x04CB, version::v1_1},        __age_data_t{0x04CD, version::v3_2},
-    __age_data_t{0x04CF, version::v5_0},        __age_data_t{0x04D0, version::v1_1},
-    __age_data_t{0x04EC, version::v3_0},        __age_data_t{0x04EE, version::v1_1},
-    __age_data_t{0x04F6, version::v4_1},        __age_data_t{0x04F8, version::v1_1},
-    __age_data_t{0x04FA, version::v5_0},        __age_data_t{0x0500, version::v3_2},
-    __age_data_t{0x0510, version::v5_0},        __age_data_t{0x0514, version::v5_1},
-    __age_data_t{0x0524, version::v5_2},        __age_data_t{0x0526, version::v6_0},
-    __age_data_t{0x0528, version::v7_0},        __age_data_t{0x0530, version::unassigned},
-    __age_data_t{0x0531, version::v1_1},        __age_data_t{0x0557, version::unassigned},
-    __age_data_t{0x0559, version::v1_1},        __age_data_t{0x0560, version::v11_0},
-    __age_data_t{0x0561, version::v1_1},        __age_data_t{0x0588, version::v11_0},
-    __age_data_t{0x0589, version::v1_1},        __age_data_t{0x058A, version::v3_0},
-    __age_data_t{0x058B, version::unassigned},  __age_data_t{0x058D, version::v7_0},
-    __age_data_t{0x058F, version::v6_1},        __age_data_t{0x0590, version::unassigned},
-    __age_data_t{0x0591, version::v2_0},        __age_data_t{0x05A2, version::v4_1},
-    __age_data_t{0x05A3, version::v2_0},        __age_data_t{0x05B0, version::v1_1},
-    __age_data_t{0x05BA, version::v5_0},        __age_data_t{0x05BB, version::v1_1},
-    __age_data_t{0x05C4, version::v2_0},        __age_data_t{0x05C5, version::v4_1},
-    __age_data_t{0x05C8, version::unassigned},  __age_data_t{0x05D0, version::v1_1},
-    __age_data_t{0x05EB, version::unassigned},  __age_data_t{0x05EF, version::v11_0},
-    __age_data_t{0x05F0, version::v1_1},        __age_data_t{0x05F5, version::unassigned},
-    __age_data_t{0x0600, version::v4_0},        __age_data_t{0x0604, version::v6_1},
-    __age_data_t{0x0605, version::v7_0},        __age_data_t{0x0606, version::v5_1},
-    __age_data_t{0x060B, version::v4_1},        __age_data_t{0x060C, version::v1_1},
-    __age_data_t{0x060D, version::v4_0},        __age_data_t{0x0616, version::v5_1},
-    __age_data_t{0x061B, version::v1_1},        __age_data_t{0x061C, version::v6_3},
-    __age_data_t{0x061D, version::unassigned},  __age_data_t{0x061E, version::v4_1},
-    __age_data_t{0x061F, version::v1_1},        __age_data_t{0x0620, version::v6_0},
-    __age_data_t{0x0621, version::v1_1},        __age_data_t{0x063B, version::v5_1},
-    __age_data_t{0x0640, version::v1_1},        __age_data_t{0x0653, version::v3_0},
-    __age_data_t{0x0656, version::v4_0},        __age_data_t{0x0659, version::v4_1},
-    __age_data_t{0x065F, version::v6_0},        __age_data_t{0x0660, version::v1_1},
-    __age_data_t{0x066E, version::v3_2},        __age_data_t{0x0670, version::v1_1},
-    __age_data_t{0x06B8, version::v3_0},        __age_data_t{0x06BA, version::v1_1},
-    __age_data_t{0x06BF, version::v3_0},        __age_data_t{0x06C0, version::v1_1},
-    __age_data_t{0x06CF, version::v3_0},        __age_data_t{0x06D0, version::v1_1},
-    __age_data_t{0x06EE, version::v4_0},        __age_data_t{0x06F0, version::v1_1},
-    __age_data_t{0x06FA, version::v3_0},        __age_data_t{0x06FF, version::v4_0},
-    __age_data_t{0x0700, version::v3_0},        __age_data_t{0x070E, version::unassigned},
-    __age_data_t{0x070F, version::v3_0},        __age_data_t{0x072D, version::v4_0},
-    __age_data_t{0x0730, version::v3_0},        __age_data_t{0x074B, version::unassigned},
-    __age_data_t{0x074D, version::v4_0},        __age_data_t{0x0750, version::v4_1},
-    __age_data_t{0x076E, version::v5_1},        __age_data_t{0x0780, version::v3_0},
-    __age_data_t{0x07B1, version::v3_2},        __age_data_t{0x07B2, version::unassigned},
-    __age_data_t{0x07C0, version::v5_0},        __age_data_t{0x07FB, version::unassigned},
-    __age_data_t{0x07FD, version::v11_0},       __age_data_t{0x0800, version::v5_2},
-    __age_data_t{0x082E, version::unassigned},  __age_data_t{0x0830, version::v5_2},
-    __age_data_t{0x083F, version::unassigned},  __age_data_t{0x0840, version::v6_0},
-    __age_data_t{0x085C, version::unassigned},  __age_data_t{0x085E, version::v6_0},
-    __age_data_t{0x085F, version::unassigned},  __age_data_t{0x0860, version::v10_0},
-    __age_data_t{0x086B, version::unassigned},  __age_data_t{0x08A0, version::v6_1},
-    __age_data_t{0x08A1, version::v7_0},        __age_data_t{0x08A2, version::v6_1},
-    __age_data_t{0x08AD, version::v7_0},        __age_data_t{0x08B3, version::v8_0},
-    __age_data_t{0x08B5, version::unassigned},  __age_data_t{0x08B6, version::v9_0},
-    __age_data_t{0x08BE, version::unassigned},  __age_data_t{0x08D3, version::v11_0},
-    __age_data_t{0x08D4, version::v9_0},        __age_data_t{0x08E3, version::v8_0},
-    __age_data_t{0x08E4, version::v6_1},        __age_data_t{0x08FF, version::v7_0},
-    __age_data_t{0x0900, version::v5_2},        __age_data_t{0x0901, version::v1_1},
-    __age_data_t{0x0904, version::v4_0},        __age_data_t{0x0905, version::v1_1},
-    __age_data_t{0x093A, version::v6_0},        __age_data_t{0x093C, version::v1_1},
-    __age_data_t{0x094E, version::v5_2},        __age_data_t{0x094F, version::v6_0},
-    __age_data_t{0x0950, version::v1_1},        __age_data_t{0x0955, version::v5_2},
-    __age_data_t{0x0956, version::v6_0},        __age_data_t{0x0958, version::v1_1},
-    __age_data_t{0x0971, version::v5_1},        __age_data_t{0x0973, version::v6_0},
-    __age_data_t{0x0978, version::v7_0},        __age_data_t{0x0979, version::v5_2},
-    __age_data_t{0x097B, version::v5_0},        __age_data_t{0x097D, version::v4_1},
-    __age_data_t{0x097E, version::v5_0},        __age_data_t{0x0980, version::v7_0},
-    __age_data_t{0x0981, version::v1_1},        __age_data_t{0x0984, version::unassigned},
-    __age_data_t{0x0985, version::v1_1},        __age_data_t{0x098D, version::unassigned},
-    __age_data_t{0x098F, version::v1_1},        __age_data_t{0x0991, version::unassigned},
-    __age_data_t{0x0993, version::v1_1},        __age_data_t{0x09A9, version::unassigned},
-    __age_data_t{0x09AA, version::v1_1},        __age_data_t{0x09B1, version::unassigned},
-    __age_data_t{0x09B2, version::v1_1},        __age_data_t{0x09B3, version::unassigned},
-    __age_data_t{0x09B6, version::v1_1},        __age_data_t{0x09BA, version::unassigned},
-    __age_data_t{0x09BC, version::v1_1},        __age_data_t{0x09BD, version::v4_0},
-    __age_data_t{0x09BE, version::v1_1},        __age_data_t{0x09C5, version::unassigned},
-    __age_data_t{0x09C7, version::v1_1},        __age_data_t{0x09C9, version::unassigned},
-    __age_data_t{0x09CB, version::v1_1},        __age_data_t{0x09CE, version::v4_1},
-    __age_data_t{0x09CF, version::unassigned},  __age_data_t{0x09D7, version::v1_1},
-    __age_data_t{0x09D8, version::unassigned},  __age_data_t{0x09DC, version::v1_1},
-    __age_data_t{0x09DE, version::unassigned},  __age_data_t{0x09DF, version::v1_1},
-    __age_data_t{0x09E4, version::unassigned},  __age_data_t{0x09E6, version::v1_1},
-    __age_data_t{0x09FB, version::v5_2},        __age_data_t{0x09FC, version::v10_0},
-    __age_data_t{0x09FE, version::v11_0},       __age_data_t{0x09FF, version::unassigned},
-    __age_data_t{0x0A01, version::v4_0},        __age_data_t{0x0A02, version::v1_1},
-    __age_data_t{0x0A03, version::v4_0},        __age_data_t{0x0A04, version::unassigned},
-    __age_data_t{0x0A05, version::v1_1},        __age_data_t{0x0A0B, version::unassigned},
-    __age_data_t{0x0A0F, version::v1_1},        __age_data_t{0x0A11, version::unassigned},
-    __age_data_t{0x0A13, version::v1_1},        __age_data_t{0x0A29, version::unassigned},
-    __age_data_t{0x0A2A, version::v1_1},        __age_data_t{0x0A31, version::unassigned},
-    __age_data_t{0x0A32, version::v1_1},        __age_data_t{0x0A34, version::unassigned},
-    __age_data_t{0x0A35, version::v1_1},        __age_data_t{0x0A37, version::unassigned},
-    __age_data_t{0x0A38, version::v1_1},        __age_data_t{0x0A3A, version::unassigned},
-    __age_data_t{0x0A3C, version::v1_1},        __age_data_t{0x0A3D, version::unassigned},
-    __age_data_t{0x0A3E, version::v1_1},        __age_data_t{0x0A43, version::unassigned},
-    __age_data_t{0x0A47, version::v1_1},        __age_data_t{0x0A49, version::unassigned},
-    __age_data_t{0x0A4B, version::v1_1},        __age_data_t{0x0A4E, version::unassigned},
-    __age_data_t{0x0A51, version::v5_1},        __age_data_t{0x0A52, version::unassigned},
-    __age_data_t{0x0A59, version::v1_1},        __age_data_t{0x0A5D, version::unassigned},
-    __age_data_t{0x0A5E, version::v1_1},        __age_data_t{0x0A5F, version::unassigned},
-    __age_data_t{0x0A66, version::v1_1},        __age_data_t{0x0A75, version::v5_1},
-    __age_data_t{0x0A76, version::v11_0},       __age_data_t{0x0A77, version::unassigned},
-    __age_data_t{0x0A81, version::v1_1},        __age_data_t{0x0A84, version::unassigned},
-    __age_data_t{0x0A85, version::v1_1},        __age_data_t{0x0A8C, version::v4_0},
-    __age_data_t{0x0A8D, version::v1_1},        __age_data_t{0x0A8E, version::unassigned},
-    __age_data_t{0x0A8F, version::v1_1},        __age_data_t{0x0A92, version::unassigned},
-    __age_data_t{0x0A93, version::v1_1},        __age_data_t{0x0AA9, version::unassigned},
-    __age_data_t{0x0AAA, version::v1_1},        __age_data_t{0x0AB1, version::unassigned},
-    __age_data_t{0x0AB2, version::v1_1},        __age_data_t{0x0AB4, version::unassigned},
-    __age_data_t{0x0AB5, version::v1_1},        __age_data_t{0x0ABA, version::unassigned},
-    __age_data_t{0x0ABC, version::v1_1},        __age_data_t{0x0AC6, version::unassigned},
-    __age_data_t{0x0AC7, version::v1_1},        __age_data_t{0x0ACA, version::unassigned},
-    __age_data_t{0x0ACB, version::v1_1},        __age_data_t{0x0ACE, version::unassigned},
-    __age_data_t{0x0AD0, version::v1_1},        __age_data_t{0x0AD1, version::unassigned},
-    __age_data_t{0x0AE0, version::v1_1},        __age_data_t{0x0AE1, version::v4_0},
-    __age_data_t{0x0AE4, version::unassigned},  __age_data_t{0x0AE6, version::v1_1},
-    __age_data_t{0x0AF0, version::v6_1},        __age_data_t{0x0AF1, version::v4_0},
-    __age_data_t{0x0AF2, version::unassigned},  __age_data_t{0x0AF9, version::v8_0},
-    __age_data_t{0x0AFA, version::v10_0},       __age_data_t{0x0B00, version::unassigned},
-    __age_data_t{0x0B01, version::v1_1},        __age_data_t{0x0B04, version::unassigned},
-    __age_data_t{0x0B05, version::v1_1},        __age_data_t{0x0B0D, version::unassigned},
-    __age_data_t{0x0B0F, version::v1_1},        __age_data_t{0x0B11, version::unassigned},
-    __age_data_t{0x0B13, version::v1_1},        __age_data_t{0x0B29, version::unassigned},
-    __age_data_t{0x0B2A, version::v1_1},        __age_data_t{0x0B31, version::unassigned},
-    __age_data_t{0x0B32, version::v1_1},        __age_data_t{0x0B34, version::unassigned},
-    __age_data_t{0x0B35, version::v4_0},        __age_data_t{0x0B36, version::v1_1},
-    __age_data_t{0x0B3A, version::unassigned},  __age_data_t{0x0B3C, version::v1_1},
-    __age_data_t{0x0B44, version::v5_1},        __age_data_t{0x0B45, version::unassigned},
-    __age_data_t{0x0B47, version::v1_1},        __age_data_t{0x0B49, version::unassigned},
-    __age_data_t{0x0B4B, version::v1_1},        __age_data_t{0x0B4E, version::unassigned},
-    __age_data_t{0x0B56, version::v1_1},        __age_data_t{0x0B58, version::unassigned},
-    __age_data_t{0x0B5C, version::v1_1},        __age_data_t{0x0B5E, version::unassigned},
-    __age_data_t{0x0B5F, version::v1_1},        __age_data_t{0x0B62, version::v5_1},
-    __age_data_t{0x0B64, version::unassigned},  __age_data_t{0x0B66, version::v1_1},
-    __age_data_t{0x0B71, version::v4_0},        __age_data_t{0x0B72, version::v6_0},
-    __age_data_t{0x0B78, version::unassigned},  __age_data_t{0x0B82, version::v1_1},
-    __age_data_t{0x0B84, version::unassigned},  __age_data_t{0x0B85, version::v1_1},
-    __age_data_t{0x0B8B, version::unassigned},  __age_data_t{0x0B8E, version::v1_1},
-    __age_data_t{0x0B91, version::unassigned},  __age_data_t{0x0B92, version::v1_1},
-    __age_data_t{0x0B96, version::unassigned},  __age_data_t{0x0B99, version::v1_1},
-    __age_data_t{0x0B9B, version::unassigned},  __age_data_t{0x0B9C, version::v1_1},
-    __age_data_t{0x0B9D, version::unassigned},  __age_data_t{0x0B9E, version::v1_1},
-    __age_data_t{0x0BA0, version::unassigned},  __age_data_t{0x0BA3, version::v1_1},
-    __age_data_t{0x0BA5, version::unassigned},  __age_data_t{0x0BA8, version::v1_1},
-    __age_data_t{0x0BAB, version::unassigned},  __age_data_t{0x0BAE, version::v1_1},
-    __age_data_t{0x0BB6, version::v4_1},        __age_data_t{0x0BB7, version::v1_1},
-    __age_data_t{0x0BBA, version::unassigned},  __age_data_t{0x0BBE, version::v1_1},
-    __age_data_t{0x0BC3, version::unassigned},  __age_data_t{0x0BC6, version::v1_1},
-    __age_data_t{0x0BC9, version::unassigned},  __age_data_t{0x0BCA, version::v1_1},
-    __age_data_t{0x0BCE, version::unassigned},  __age_data_t{0x0BD0, version::v5_1},
-    __age_data_t{0x0BD1, version::unassigned},  __age_data_t{0x0BD7, version::v1_1},
-    __age_data_t{0x0BD8, version::unassigned},  __age_data_t{0x0BE6, version::v4_1},
-    __age_data_t{0x0BE7, version::v1_1},        __age_data_t{0x0BF3, version::v4_0},
-    __age_data_t{0x0BFB, version::unassigned},  __age_data_t{0x0C00, version::v7_0},
-    __age_data_t{0x0C01, version::v1_1},        __age_data_t{0x0C04, version::v11_0},
-    __age_data_t{0x0C05, version::v1_1},        __age_data_t{0x0C0D, version::unassigned},
-    __age_data_t{0x0C0E, version::v1_1},        __age_data_t{0x0C11, version::unassigned},
-    __age_data_t{0x0C12, version::v1_1},        __age_data_t{0x0C29, version::unassigned},
-    __age_data_t{0x0C2A, version::v1_1},        __age_data_t{0x0C34, version::v7_0},
-    __age_data_t{0x0C35, version::v1_1},        __age_data_t{0x0C3A, version::unassigned},
-    __age_data_t{0x0C3D, version::v5_1},        __age_data_t{0x0C3E, version::v1_1},
-    __age_data_t{0x0C45, version::unassigned},  __age_data_t{0x0C46, version::v1_1},
-    __age_data_t{0x0C49, version::unassigned},  __age_data_t{0x0C4A, version::v1_1},
-    __age_data_t{0x0C4E, version::unassigned},  __age_data_t{0x0C55, version::v1_1},
-    __age_data_t{0x0C57, version::unassigned},  __age_data_t{0x0C58, version::v5_1},
-    __age_data_t{0x0C5A, version::v8_0},        __age_data_t{0x0C5B, version::unassigned},
-    __age_data_t{0x0C60, version::v1_1},        __age_data_t{0x0C62, version::v5_1},
-    __age_data_t{0x0C64, version::unassigned},  __age_data_t{0x0C66, version::v1_1},
-    __age_data_t{0x0C70, version::unassigned},  __age_data_t{0x0C77, version::v12_0},
-    __age_data_t{0x0C78, version::v5_1},        __age_data_t{0x0C80, version::v9_0},
-    __age_data_t{0x0C81, version::v7_0},        __age_data_t{0x0C82, version::v1_1},
-    __age_data_t{0x0C84, version::v11_0},       __age_data_t{0x0C85, version::v1_1},
-    __age_data_t{0x0C8D, version::unassigned},  __age_data_t{0x0C8E, version::v1_1},
-    __age_data_t{0x0C91, version::unassigned},  __age_data_t{0x0C92, version::v1_1},
-    __age_data_t{0x0CA9, version::unassigned},  __age_data_t{0x0CAA, version::v1_1},
-    __age_data_t{0x0CB4, version::unassigned},  __age_data_t{0x0CB5, version::v1_1},
-    __age_data_t{0x0CBA, version::unassigned},  __age_data_t{0x0CBC, version::v4_0},
-    __age_data_t{0x0CBE, version::v1_1},        __age_data_t{0x0CC5, version::unassigned},
-    __age_data_t{0x0CC6, version::v1_1},        __age_data_t{0x0CC9, version::unassigned},
-    __age_data_t{0x0CCA, version::v1_1},        __age_data_t{0x0CCE, version::unassigned},
-    __age_data_t{0x0CD5, version::v1_1},        __age_data_t{0x0CD7, version::unassigned},
-    __age_data_t{0x0CDE, version::v1_1},        __age_data_t{0x0CDF, version::unassigned},
-    __age_data_t{0x0CE0, version::v1_1},        __age_data_t{0x0CE2, version::v5_0},
-    __age_data_t{0x0CE4, version::unassigned},  __age_data_t{0x0CE6, version::v1_1},
-    __age_data_t{0x0CF0, version::unassigned},  __age_data_t{0x0CF1, version::v5_0},
-    __age_data_t{0x0CF3, version::unassigned},  __age_data_t{0x0D00, version::v10_0},
-    __age_data_t{0x0D01, version::v7_0},        __age_data_t{0x0D02, version::v1_1},
-    __age_data_t{0x0D04, version::unassigned},  __age_data_t{0x0D05, version::v1_1},
-    __age_data_t{0x0D0D, version::unassigned},  __age_data_t{0x0D0E, version::v1_1},
-    __age_data_t{0x0D11, version::unassigned},  __age_data_t{0x0D12, version::v1_1},
-    __age_data_t{0x0D29, version::v6_0},        __age_data_t{0x0D2A, version::v1_1},
-    __age_data_t{0x0D3A, version::v6_0},        __age_data_t{0x0D3B, version::v10_0},
-    __age_data_t{0x0D3D, version::v5_1},        __age_data_t{0x0D3E, version::v1_1},
-    __age_data_t{0x0D44, version::v5_1},        __age_data_t{0x0D45, version::unassigned},
-    __age_data_t{0x0D46, version::v1_1},        __age_data_t{0x0D49, version::unassigned},
-    __age_data_t{0x0D4A, version::v1_1},        __age_data_t{0x0D4E, version::v6_0},
-    __age_data_t{0x0D4F, version::v9_0},        __age_data_t{0x0D50, version::unassigned},
-    __age_data_t{0x0D54, version::v9_0},        __age_data_t{0x0D57, version::v1_1},
-    __age_data_t{0x0D58, version::v9_0},        __age_data_t{0x0D5F, version::v8_0},
-    __age_data_t{0x0D60, version::v1_1},        __age_data_t{0x0D62, version::v5_1},
-    __age_data_t{0x0D64, version::unassigned},  __age_data_t{0x0D66, version::v1_1},
-    __age_data_t{0x0D70, version::v5_1},        __age_data_t{0x0D76, version::v9_0},
-    __age_data_t{0x0D79, version::v5_1},        __age_data_t{0x0D80, version::unassigned},
-    __age_data_t{0x0D82, version::v3_0},        __age_data_t{0x0D84, version::unassigned},
-    __age_data_t{0x0D85, version::v3_0},        __age_data_t{0x0D97, version::unassigned},
-    __age_data_t{0x0D9A, version::v3_0},        __age_data_t{0x0DB2, version::unassigned},
-    __age_data_t{0x0DB3, version::v3_0},        __age_data_t{0x0DBC, version::unassigned},
-    __age_data_t{0x0DBD, version::v3_0},        __age_data_t{0x0DBE, version::unassigned},
-    __age_data_t{0x0DC0, version::v3_0},        __age_data_t{0x0DC7, version::unassigned},
-    __age_data_t{0x0DCA, version::v3_0},        __age_data_t{0x0DCB, version::unassigned},
-    __age_data_t{0x0DCF, version::v3_0},        __age_data_t{0x0DD5, version::unassigned},
-    __age_data_t{0x0DD6, version::v3_0},        __age_data_t{0x0DD7, version::unassigned},
-    __age_data_t{0x0DD8, version::v3_0},        __age_data_t{0x0DE0, version::unassigned},
-    __age_data_t{0x0DE6, version::v7_0},        __age_data_t{0x0DF0, version::unassigned},
-    __age_data_t{0x0DF2, version::v3_0},        __age_data_t{0x0DF5, version::unassigned},
-    __age_data_t{0x0E01, version::v1_1},        __age_data_t{0x0E3B, version::unassigned},
-    __age_data_t{0x0E3F, version::v1_1},        __age_data_t{0x0E5C, version::unassigned},
-    __age_data_t{0x0E81, version::v1_1},        __age_data_t{0x0E83, version::unassigned},
-    __age_data_t{0x0E84, version::v1_1},        __age_data_t{0x0E85, version::unassigned},
-    __age_data_t{0x0E86, version::v12_0},       __age_data_t{0x0E87, version::v1_1},
-    __age_data_t{0x0E89, version::v12_0},       __age_data_t{0x0E8A, version::v1_1},
-    __age_data_t{0x0E8B, version::unassigned},  __age_data_t{0x0E8C, version::v12_0},
-    __age_data_t{0x0E8D, version::v1_1},        __age_data_t{0x0E8E, version::v12_0},
-    __age_data_t{0x0E94, version::v1_1},        __age_data_t{0x0E98, version::v12_0},
-    __age_data_t{0x0E99, version::v1_1},        __age_data_t{0x0EA0, version::v12_0},
-    __age_data_t{0x0EA1, version::v1_1},        __age_data_t{0x0EA4, version::unassigned},
-    __age_data_t{0x0EA5, version::v1_1},        __age_data_t{0x0EA6, version::unassigned},
-    __age_data_t{0x0EA7, version::v1_1},        __age_data_t{0x0EA8, version::v12_0},
-    __age_data_t{0x0EAA, version::v1_1},        __age_data_t{0x0EAC, version::v12_0},
-    __age_data_t{0x0EAD, version::v1_1},        __age_data_t{0x0EBA, version::v12_0},
-    __age_data_t{0x0EBB, version::v1_1},        __age_data_t{0x0EBE, version::unassigned},
-    __age_data_t{0x0EC0, version::v1_1},        __age_data_t{0x0EC5, version::unassigned},
-    __age_data_t{0x0EC6, version::v1_1},        __age_data_t{0x0EC7, version::unassigned},
-    __age_data_t{0x0EC8, version::v1_1},        __age_data_t{0x0ECE, version::unassigned},
-    __age_data_t{0x0ED0, version::v1_1},        __age_data_t{0x0EDA, version::unassigned},
-    __age_data_t{0x0EDC, version::v1_1},        __age_data_t{0x0EDE, version::v6_1},
-    __age_data_t{0x0EE0, version::unassigned},  __age_data_t{0x0F00, version::v2_0},
-    __age_data_t{0x0F48, version::unassigned},  __age_data_t{0x0F49, version::v2_0},
-    __age_data_t{0x0F6A, version::v3_0},        __age_data_t{0x0F6B, version::v5_1},
-    __age_data_t{0x0F6D, version::unassigned},  __age_data_t{0x0F71, version::v2_0},
-    __age_data_t{0x0F8C, version::v6_0},        __age_data_t{0x0F90, version::v2_0},
-    __age_data_t{0x0F96, version::v3_0},        __age_data_t{0x0F97, version::v2_0},
-    __age_data_t{0x0F98, version::unassigned},  __age_data_t{0x0F99, version::v2_0},
-    __age_data_t{0x0FAE, version::v3_0},        __age_data_t{0x0FB1, version::v2_0},
-    __age_data_t{0x0FB8, version::v3_0},        __age_data_t{0x0FB9, version::v2_0},
-    __age_data_t{0x0FBA, version::v3_0},        __age_data_t{0x0FBD, version::unassigned},
-    __age_data_t{0x0FBE, version::v3_0},        __age_data_t{0x0FCD, version::unassigned},
-    __age_data_t{0x0FCE, version::v5_1},        __age_data_t{0x0FCF, version::v3_0},
-    __age_data_t{0x0FD0, version::v4_1},        __age_data_t{0x0FD2, version::v5_1},
-    __age_data_t{0x0FD5, version::v5_2},        __age_data_t{0x0FD9, version::v6_0},
-    __age_data_t{0x0FDB, version::unassigned},  __age_data_t{0x1000, version::v3_0},
-    __age_data_t{0x1022, version::v5_1},        __age_data_t{0x1023, version::v3_0},
-    __age_data_t{0x1028, version::v5_1},        __age_data_t{0x1029, version::v3_0},
-    __age_data_t{0x102B, version::v5_1},        __age_data_t{0x102C, version::v3_0},
-    __age_data_t{0x1033, version::v5_1},        __age_data_t{0x1036, version::v3_0},
-    __age_data_t{0x103A, version::v5_1},        __age_data_t{0x1040, version::v3_0},
-    __age_data_t{0x105A, version::v5_1},        __age_data_t{0x109A, version::v5_2},
-    __age_data_t{0x109E, version::v5_1},        __age_data_t{0x10A0, version::v1_1},
-    __age_data_t{0x10C6, version::unassigned},  __age_data_t{0x10C7, version::v6_1},
-    __age_data_t{0x10C8, version::unassigned},  __age_data_t{0x10CD, version::v6_1},
-    __age_data_t{0x10CE, version::unassigned},  __age_data_t{0x10D0, version::v1_1},
-    __age_data_t{0x10F7, version::v3_2},        __age_data_t{0x10F9, version::v4_1},
-    __age_data_t{0x10FB, version::v1_1},        __age_data_t{0x10FC, version::v4_1},
-    __age_data_t{0x10FD, version::v6_1},        __age_data_t{0x1100, version::v1_1},
-    __age_data_t{0x115A, version::v5_2},        __age_data_t{0x115F, version::v1_1},
-    __age_data_t{0x11A3, version::v5_2},        __age_data_t{0x11A8, version::v1_1},
-    __age_data_t{0x11FA, version::v5_2},        __age_data_t{0x1200, version::v3_0},
-    __age_data_t{0x1207, version::v4_1},        __age_data_t{0x1208, version::v3_0},
-    __age_data_t{0x1247, version::v4_1},        __age_data_t{0x1248, version::v3_0},
-    __age_data_t{0x1249, version::unassigned},  __age_data_t{0x124A, version::v3_0},
-    __age_data_t{0x124E, version::unassigned},  __age_data_t{0x1250, version::v3_0},
-    __age_data_t{0x1257, version::unassigned},  __age_data_t{0x1258, version::v3_0},
-    __age_data_t{0x1259, version::unassigned},  __age_data_t{0x125A, version::v3_0},
-    __age_data_t{0x125E, version::unassigned},  __age_data_t{0x1260, version::v3_0},
-    __age_data_t{0x1287, version::v4_1},        __age_data_t{0x1288, version::v3_0},
-    __age_data_t{0x1289, version::unassigned},  __age_data_t{0x128A, version::v3_0},
-    __age_data_t{0x128E, version::unassigned},  __age_data_t{0x1290, version::v3_0},
-    __age_data_t{0x12AF, version::v4_1},        __age_data_t{0x12B0, version::v3_0},
-    __age_data_t{0x12B1, version::unassigned},  __age_data_t{0x12B2, version::v3_0},
-    __age_data_t{0x12B6, version::unassigned},  __age_data_t{0x12B8, version::v3_0},
-    __age_data_t{0x12BF, version::unassigned},  __age_data_t{0x12C0, version::v3_0},
-    __age_data_t{0x12C1, version::unassigned},  __age_data_t{0x12C2, version::v3_0},
-    __age_data_t{0x12C6, version::unassigned},  __age_data_t{0x12C8, version::v3_0},
-    __age_data_t{0x12CF, version::v4_1},        __age_data_t{0x12D0, version::v3_0},
-    __age_data_t{0x12D7, version::unassigned},  __age_data_t{0x12D8, version::v3_0},
-    __age_data_t{0x12EF, version::v4_1},        __age_data_t{0x12F0, version::v3_0},
-    __age_data_t{0x130F, version::v4_1},        __age_data_t{0x1310, version::v3_0},
-    __age_data_t{0x1311, version::unassigned},  __age_data_t{0x1312, version::v3_0},
-    __age_data_t{0x1316, version::unassigned},  __age_data_t{0x1318, version::v3_0},
-    __age_data_t{0x131F, version::v4_1},        __age_data_t{0x1320, version::v3_0},
-    __age_data_t{0x1347, version::v4_1},        __age_data_t{0x1348, version::v3_0},
-    __age_data_t{0x135B, version::unassigned},  __age_data_t{0x135D, version::v6_0},
-    __age_data_t{0x135F, version::v4_1},        __age_data_t{0x1361, version::v3_0},
-    __age_data_t{0x137D, version::unassigned},  __age_data_t{0x1380, version::v4_1},
-    __age_data_t{0x139A, version::unassigned},  __age_data_t{0x13A0, version::v3_0},
-    __age_data_t{0x13F5, version::v8_0},        __age_data_t{0x13F6, version::unassigned},
-    __age_data_t{0x13F8, version::v8_0},        __age_data_t{0x13FE, version::unassigned},
-    __age_data_t{0x1400, version::v5_2},        __age_data_t{0x1401, version::v3_0},
-    __age_data_t{0x1677, version::v5_2},        __age_data_t{0x1680, version::v3_0},
-    __age_data_t{0x169D, version::unassigned},  __age_data_t{0x16A0, version::v3_0},
-    __age_data_t{0x16F1, version::v7_0},        __age_data_t{0x16F9, version::unassigned},
-    __age_data_t{0x1700, version::v3_2},        __age_data_t{0x170D, version::unassigned},
-    __age_data_t{0x170E, version::v3_2},        __age_data_t{0x1715, version::unassigned},
-    __age_data_t{0x1720, version::v3_2},        __age_data_t{0x1737, version::unassigned},
-    __age_data_t{0x1740, version::v3_2},        __age_data_t{0x1754, version::unassigned},
-    __age_data_t{0x1760, version::v3_2},        __age_data_t{0x176D, version::unassigned},
-    __age_data_t{0x176E, version::v3_2},        __age_data_t{0x1771, version::unassigned},
-    __age_data_t{0x1772, version::v3_2},        __age_data_t{0x1774, version::unassigned},
-    __age_data_t{0x1780, version::v3_0},        __age_data_t{0x17DD, version::v4_0},
-    __age_data_t{0x17DE, version::unassigned},  __age_data_t{0x17E0, version::v3_0},
-    __age_data_t{0x17EA, version::unassigned},  __age_data_t{0x17F0, version::v4_0},
-    __age_data_t{0x17FA, version::unassigned},  __age_data_t{0x1800, version::v3_0},
-    __age_data_t{0x180F, version::unassigned},  __age_data_t{0x1810, version::v3_0},
-    __age_data_t{0x181A, version::unassigned},  __age_data_t{0x1820, version::v3_0},
-    __age_data_t{0x1878, version::v11_0},       __age_data_t{0x1879, version::unassigned},
-    __age_data_t{0x1880, version::v3_0},        __age_data_t{0x18AA, version::v5_1},
-    __age_data_t{0x18AB, version::unassigned},  __age_data_t{0x18B0, version::v5_2},
-    __age_data_t{0x18F6, version::unassigned},  __age_data_t{0x1900, version::v4_0},
-    __age_data_t{0x191D, version::v7_0},        __age_data_t{0x191F, version::unassigned},
-    __age_data_t{0x1920, version::v4_0},        __age_data_t{0x192C, version::unassigned},
-    __age_data_t{0x1930, version::v4_0},        __age_data_t{0x193C, version::unassigned},
-    __age_data_t{0x1940, version::v4_0},        __age_data_t{0x1941, version::unassigned},
-    __age_data_t{0x1944, version::v4_0},        __age_data_t{0x196E, version::unassigned},
-    __age_data_t{0x1970, version::v4_0},        __age_data_t{0x1975, version::unassigned},
-    __age_data_t{0x1980, version::v4_1},        __age_data_t{0x19AA, version::v5_2},
-    __age_data_t{0x19AC, version::unassigned},  __age_data_t{0x19B0, version::v4_1},
-    __age_data_t{0x19CA, version::unassigned},  __age_data_t{0x19D0, version::v4_1},
-    __age_data_t{0x19DA, version::v5_2},        __age_data_t{0x19DB, version::unassigned},
-    __age_data_t{0x19DE, version::v4_1},        __age_data_t{0x19E0, version::v4_0},
-    __age_data_t{0x1A00, version::v4_1},        __age_data_t{0x1A1C, version::unassigned},
-    __age_data_t{0x1A1E, version::v4_1},        __age_data_t{0x1A20, version::v5_2},
-    __age_data_t{0x1A5F, version::unassigned},  __age_data_t{0x1A60, version::v5_2},
-    __age_data_t{0x1A7D, version::unassigned},  __age_data_t{0x1A7F, version::v5_2},
-    __age_data_t{0x1A8A, version::unassigned},  __age_data_t{0x1A90, version::v5_2},
-    __age_data_t{0x1A9A, version::unassigned},  __age_data_t{0x1AA0, version::v5_2},
-    __age_data_t{0x1AAE, version::unassigned},  __age_data_t{0x1AB0, version::v7_0},
-    __age_data_t{0x1ABF, version::unassigned},  __age_data_t{0x1B00, version::v5_0},
-    __age_data_t{0x1B4C, version::unassigned},  __age_data_t{0x1B50, version::v5_0},
-    __age_data_t{0x1B7D, version::unassigned},  __age_data_t{0x1B80, version::v5_1},
-    __age_data_t{0x1BAB, version::v6_1},        __age_data_t{0x1BAE, version::v5_1},
-    __age_data_t{0x1BBA, version::v6_1},        __age_data_t{0x1BC0, version::v6_0},
-    __age_data_t{0x1BF4, version::unassigned},  __age_data_t{0x1BFC, version::v6_0},
-    __age_data_t{0x1C00, version::v5_1},        __age_data_t{0x1C38, version::unassigned},
-    __age_data_t{0x1C3B, version::v5_1},        __age_data_t{0x1C4A, version::unassigned},
-    __age_data_t{0x1C4D, version::v5_1},        __age_data_t{0x1C80, version::v9_0},
-    __age_data_t{0x1C89, version::unassigned},  __age_data_t{0x1C90, version::v11_0},
-    __age_data_t{0x1CBB, version::unassigned},  __age_data_t{0x1CBD, version::v11_0},
-    __age_data_t{0x1CC0, version::v6_1},        __age_data_t{0x1CC8, version::unassigned},
-    __age_data_t{0x1CD0, version::v5_2},        __age_data_t{0x1CF3, version::v6_1},
-    __age_data_t{0x1CF7, version::v10_0},       __age_data_t{0x1CF8, version::v7_0},
-    __age_data_t{0x1CFA, version::v12_0},       __age_data_t{0x1CFB, version::unassigned},
-    __age_data_t{0x1D00, version::v4_0},        __age_data_t{0x1D6C, version::v4_1},
-    __age_data_t{0x1DC4, version::v5_0},        __age_data_t{0x1DCB, version::v5_1},
-    __age_data_t{0x1DE7, version::v7_0},        __age_data_t{0x1DF6, version::v10_0},
-    __age_data_t{0x1DFA, version::unassigned},  __age_data_t{0x1DFB, version::v9_0},
-    __age_data_t{0x1DFC, version::v6_0},        __age_data_t{0x1DFD, version::v5_2},
-    __age_data_t{0x1DFE, version::v5_0},        __age_data_t{0x1E00, version::v1_1},
-    __age_data_t{0x1E9B, version::v2_0},        __age_data_t{0x1E9C, version::v5_1},
-    __age_data_t{0x1EA0, version::v1_1},        __age_data_t{0x1EFA, version::v5_1},
-    __age_data_t{0x1F00, version::v1_1},        __age_data_t{0x1F16, version::unassigned},
-    __age_data_t{0x1F18, version::v1_1},        __age_data_t{0x1F1E, version::unassigned},
-    __age_data_t{0x1F20, version::v1_1},        __age_data_t{0x1F46, version::unassigned},
-    __age_data_t{0x1F48, version::v1_1},        __age_data_t{0x1F4E, version::unassigned},
-    __age_data_t{0x1F50, version::v1_1},        __age_data_t{0x1F58, version::unassigned},
-    __age_data_t{0x1F59, version::v1_1},        __age_data_t{0x1F5A, version::unassigned},
-    __age_data_t{0x1F5B, version::v1_1},        __age_data_t{0x1F5C, version::unassigned},
-    __age_data_t{0x1F5D, version::v1_1},        __age_data_t{0x1F5E, version::unassigned},
-    __age_data_t{0x1F5F, version::v1_1},        __age_data_t{0x1F7E, version::unassigned},
-    __age_data_t{0x1F80, version::v1_1},        __age_data_t{0x1FB5, version::unassigned},
-    __age_data_t{0x1FB6, version::v1_1},        __age_data_t{0x1FC5, version::unassigned},
-    __age_data_t{0x1FC6, version::v1_1},        __age_data_t{0x1FD4, version::unassigned},
-    __age_data_t{0x1FD6, version::v1_1},        __age_data_t{0x1FDC, version::unassigned},
-    __age_data_t{0x1FDD, version::v1_1},        __age_data_t{0x1FF0, version::unassigned},
-    __age_data_t{0x1FF2, version::v1_1},        __age_data_t{0x1FF5, version::unassigned},
-    __age_data_t{0x1FF6, version::v1_1},        __age_data_t{0x1FFF, version::unassigned},
-    __age_data_t{0x2000, version::v1_1},        __age_data_t{0x202F, version::v3_0},
-    __age_data_t{0x2030, version::v1_1},        __age_data_t{0x2047, version::v3_2},
-    __age_data_t{0x2048, version::v3_0},        __age_data_t{0x204E, version::v3_2},
-    __age_data_t{0x2053, version::v4_0},        __age_data_t{0x2055, version::v4_1},
-    __age_data_t{0x2057, version::v3_2},        __age_data_t{0x2058, version::v4_1},
-    __age_data_t{0x205F, version::v3_2},        __age_data_t{0x2064, version::v5_1},
-    __age_data_t{0x2065, version::unassigned},  __age_data_t{0x2066, version::v6_3},
-    __age_data_t{0x206A, version::v1_1},        __age_data_t{0x2071, version::v3_2},
-    __age_data_t{0x2072, version::unassigned},  __age_data_t{0x2074, version::v1_1},
-    __age_data_t{0x208F, version::unassigned},  __age_data_t{0x2090, version::v4_1},
-    __age_data_t{0x2095, version::v6_0},        __age_data_t{0x209D, version::unassigned},
-    __age_data_t{0x20A0, version::v1_1},        __age_data_t{0x20AB, version::v2_0},
-    __age_data_t{0x20AC, version::v2_1},        __age_data_t{0x20AD, version::v3_0},
-    __age_data_t{0x20B0, version::v3_2},        __age_data_t{0x20B2, version::v4_1},
-    __age_data_t{0x20B6, version::v5_2},        __age_data_t{0x20B9, version::v6_0},
-    __age_data_t{0x20BA, version::v6_2},        __age_data_t{0x20BB, version::v7_0},
-    __age_data_t{0x20BE, version::v8_0},        __age_data_t{0x20BF, version::v10_0},
-    __age_data_t{0x20C0, version::unassigned},  __age_data_t{0x20D0, version::v1_1},
-    __age_data_t{0x20E2, version::v3_0},        __age_data_t{0x20E4, version::v3_2},
-    __age_data_t{0x20EB, version::v4_1},        __age_data_t{0x20EC, version::v5_0},
-    __age_data_t{0x20F0, version::v5_1},        __age_data_t{0x20F1, version::unassigned},
-    __age_data_t{0x2100, version::v1_1},        __age_data_t{0x2139, version::v3_0},
-    __age_data_t{0x213B, version::v4_0},        __age_data_t{0x213C, version::v4_1},
-    __age_data_t{0x213D, version::v3_2},        __age_data_t{0x214C, version::v4_1},
-    __age_data_t{0x214D, version::v5_0},        __age_data_t{0x214F, version::v5_1},
-    __age_data_t{0x2150, version::v5_2},        __age_data_t{0x2153, version::v1_1},
-    __age_data_t{0x2183, version::v3_0},        __age_data_t{0x2184, version::v5_0},
-    __age_data_t{0x2185, version::v5_1},        __age_data_t{0x2189, version::v5_2},
-    __age_data_t{0x218A, version::v8_0},        __age_data_t{0x218C, version::unassigned},
-    __age_data_t{0x2190, version::v1_1},        __age_data_t{0x21EB, version::v3_0},
-    __age_data_t{0x21F4, version::v3_2},        __age_data_t{0x2200, version::v1_1},
-    __age_data_t{0x22F2, version::v3_2},        __age_data_t{0x2300, version::v1_1},
-    __age_data_t{0x2301, version::v3_0},        __age_data_t{0x2302, version::v1_1},
-    __age_data_t{0x237B, version::v3_0},        __age_data_t{0x237C, version::v3_2},
-    __age_data_t{0x237D, version::v3_0},        __age_data_t{0x239B, version::v3_2},
-    __age_data_t{0x23CF, version::v4_0},        __age_data_t{0x23D1, version::v4_1},
-    __age_data_t{0x23DC, version::v5_0},        __age_data_t{0x23E8, version::v5_2},
-    __age_data_t{0x23E9, version::v6_0},        __age_data_t{0x23F4, version::v7_0},
-    __age_data_t{0x23FB, version::v9_0},        __age_data_t{0x23FF, version::v10_0},
-    __age_data_t{0x2400, version::v1_1},        __age_data_t{0x2425, version::v3_0},
-    __age_data_t{0x2427, version::unassigned},  __age_data_t{0x2440, version::v1_1},
-    __age_data_t{0x244B, version::unassigned},  __age_data_t{0x2460, version::v1_1},
-    __age_data_t{0x24EB, version::v3_2},        __age_data_t{0x24FF, version::v4_0},
-    __age_data_t{0x2500, version::v1_1},        __age_data_t{0x2596, version::v3_2},
-    __age_data_t{0x25A0, version::v1_1},        __age_data_t{0x25F0, version::v3_0},
-    __age_data_t{0x25F8, version::v3_2},        __age_data_t{0x2600, version::v1_1},
-    __age_data_t{0x2614, version::v4_0},        __age_data_t{0x2616, version::v3_2},
-    __age_data_t{0x2618, version::v4_1},        __age_data_t{0x2619, version::v3_0},
-    __age_data_t{0x261A, version::v1_1},        __age_data_t{0x2670, version::v3_0},
-    __age_data_t{0x2672, version::v3_2},        __age_data_t{0x267E, version::v4_1},
-    __age_data_t{0x2680, version::v3_2},        __age_data_t{0x268A, version::v4_0},
-    __age_data_t{0x2692, version::v4_1},        __age_data_t{0x269D, version::v5_1},
-    __age_data_t{0x269E, version::v5_2},        __age_data_t{0x26A0, version::v4_0},
-    __age_data_t{0x26A2, version::v4_1},        __age_data_t{0x26B2, version::v5_0},
-    __age_data_t{0x26B3, version::v5_1},        __age_data_t{0x26BD, version::v5_2},
-    __age_data_t{0x26C0, version::v5_1},        __age_data_t{0x26C4, version::v5_2},
-    __age_data_t{0x26CE, version::v6_0},        __age_data_t{0x26CF, version::v5_2},
-    __age_data_t{0x26E2, version::v6_0},        __age_data_t{0x26E3, version::v5_2},
-    __age_data_t{0x26E4, version::v6_0},        __age_data_t{0x26E8, version::v5_2},
-    __age_data_t{0x2700, version::v7_0},        __age_data_t{0x2701, version::v1_1},
-    __age_data_t{0x2705, version::v6_0},        __age_data_t{0x2706, version::v1_1},
-    __age_data_t{0x270A, version::v6_0},        __age_data_t{0x270C, version::v1_1},
-    __age_data_t{0x2728, version::v6_0},        __age_data_t{0x2729, version::v1_1},
-    __age_data_t{0x274C, version::v6_0},        __age_data_t{0x274D, version::v1_1},
-    __age_data_t{0x274E, version::v6_0},        __age_data_t{0x274F, version::v1_1},
-    __age_data_t{0x2753, version::v6_0},        __age_data_t{0x2756, version::v1_1},
-    __age_data_t{0x2757, version::v5_2},        __age_data_t{0x2758, version::v1_1},
-    __age_data_t{0x275F, version::v6_0},        __age_data_t{0x2761, version::v1_1},
-    __age_data_t{0x2768, version::v3_2},        __age_data_t{0x2776, version::v1_1},
-    __age_data_t{0x2795, version::v6_0},        __age_data_t{0x2798, version::v1_1},
-    __age_data_t{0x27B0, version::v6_0},        __age_data_t{0x27B1, version::v1_1},
-    __age_data_t{0x27BF, version::v6_0},        __age_data_t{0x27C0, version::v4_1},
-    __age_data_t{0x27C7, version::v5_0},        __age_data_t{0x27CB, version::v6_1},
-    __age_data_t{0x27CC, version::v5_1},        __age_data_t{0x27CD, version::v6_1},
-    __age_data_t{0x27CE, version::v6_0},        __age_data_t{0x27D0, version::v3_2},
-    __age_data_t{0x27EC, version::v5_1},        __age_data_t{0x27F0, version::v3_2},
-    __age_data_t{0x2800, version::v3_0},        __age_data_t{0x2900, version::v3_2},
-    __age_data_t{0x2B00, version::v4_0},        __age_data_t{0x2B0E, version::v4_1},
-    __age_data_t{0x2B14, version::v5_0},        __age_data_t{0x2B1B, version::v5_1},
-    __age_data_t{0x2B20, version::v5_0},        __age_data_t{0x2B24, version::v5_1},
-    __age_data_t{0x2B4D, version::v7_0},        __age_data_t{0x2B50, version::v5_1},
-    __age_data_t{0x2B55, version::v5_2},        __age_data_t{0x2B5A, version::v7_0},
-    __age_data_t{0x2B74, version::unassigned},  __age_data_t{0x2B76, version::v7_0},
-    __age_data_t{0x2B96, version::unassigned},  __age_data_t{0x2B98, version::v7_0},
-    __age_data_t{0x2BBA, version::v11_0},       __age_data_t{0x2BBD, version::v7_0},
-    __age_data_t{0x2BC9, version::v12_0},       __age_data_t{0x2BCA, version::v7_0},
-    __age_data_t{0x2BD2, version::v10_0},       __age_data_t{0x2BD3, version::v11_0},
-    __age_data_t{0x2BEC, version::v8_0},        __age_data_t{0x2BF0, version::v11_0},
-    __age_data_t{0x2BFF, version::v12_0},       __age_data_t{0x2C00, version::v4_1},
-    __age_data_t{0x2C2F, version::unassigned},  __age_data_t{0x2C30, version::v4_1},
-    __age_data_t{0x2C5F, version::unassigned},  __age_data_t{0x2C60, version::v5_0},
-    __age_data_t{0x2C6D, version::v5_1},        __age_data_t{0x2C70, version::v5_2},
-    __age_data_t{0x2C71, version::v5_1},        __age_data_t{0x2C74, version::v5_0},
-    __age_data_t{0x2C78, version::v5_1},        __age_data_t{0x2C7E, version::v5_2},
-    __age_data_t{0x2C80, version::v4_1},        __age_data_t{0x2CEB, version::v5_2},
-    __age_data_t{0x2CF2, version::v6_1},        __age_data_t{0x2CF4, version::unassigned},
-    __age_data_t{0x2CF9, version::v4_1},        __age_data_t{0x2D26, version::unassigned},
-    __age_data_t{0x2D27, version::v6_1},        __age_data_t{0x2D28, version::unassigned},
-    __age_data_t{0x2D2D, version::v6_1},        __age_data_t{0x2D2E, version::unassigned},
-    __age_data_t{0x2D30, version::v4_1},        __age_data_t{0x2D66, version::v6_1},
-    __age_data_t{0x2D68, version::unassigned},  __age_data_t{0x2D6F, version::v4_1},
-    __age_data_t{0x2D70, version::v6_0},        __age_data_t{0x2D71, version::unassigned},
-    __age_data_t{0x2D7F, version::v6_0},        __age_data_t{0x2D80, version::v4_1},
-    __age_data_t{0x2D97, version::unassigned},  __age_data_t{0x2DA0, version::v4_1},
-    __age_data_t{0x2DA7, version::unassigned},  __age_data_t{0x2DA8, version::v4_1},
-    __age_data_t{0x2DAF, version::unassigned},  __age_data_t{0x2DB0, version::v4_1},
-    __age_data_t{0x2DB7, version::unassigned},  __age_data_t{0x2DB8, version::v4_1},
-    __age_data_t{0x2DBF, version::unassigned},  __age_data_t{0x2DC0, version::v4_1},
-    __age_data_t{0x2DC7, version::unassigned},  __age_data_t{0x2DC8, version::v4_1},
-    __age_data_t{0x2DCF, version::unassigned},  __age_data_t{0x2DD0, version::v4_1},
-    __age_data_t{0x2DD7, version::unassigned},  __age_data_t{0x2DD8, version::v4_1},
-    __age_data_t{0x2DDF, version::unassigned},  __age_data_t{0x2DE0, version::v5_1},
-    __age_data_t{0x2E00, version::v4_1},        __age_data_t{0x2E18, version::v5_1},
-    __age_data_t{0x2E1C, version::v4_1},        __age_data_t{0x2E1E, version::v5_1},
-    __age_data_t{0x2E31, version::v5_2},        __age_data_t{0x2E32, version::v6_1},
-    __age_data_t{0x2E3C, version::v7_0},        __age_data_t{0x2E43, version::v9_0},
-    __age_data_t{0x2E45, version::v10_0},       __age_data_t{0x2E4A, version::v11_0},
-    __age_data_t{0x2E4F, version::v12_0},       __age_data_t{0x2E50, version::unassigned},
-    __age_data_t{0x2E80, version::v3_0},        __age_data_t{0x2E9A, version::unassigned},
-    __age_data_t{0x2E9B, version::v3_0},        __age_data_t{0x2EF4, version::unassigned},
-    __age_data_t{0x2F00, version::v3_0},        __age_data_t{0x2FD6, version::unassigned},
-    __age_data_t{0x2FF0, version::v3_0},        __age_data_t{0x2FFC, version::unassigned},
-    __age_data_t{0x3000, version::v1_1},        __age_data_t{0x3038, version::v3_0},
-    __age_data_t{0x303B, version::v3_2},        __age_data_t{0x303E, version::v3_0},
-    __age_data_t{0x303F, version::v1_1},        __age_data_t{0x3040, version::unassigned},
-    __age_data_t{0x3041, version::v1_1},        __age_data_t{0x3095, version::v3_2},
-    __age_data_t{0x3097, version::unassigned},  __age_data_t{0x3099, version::v1_1},
-    __age_data_t{0x309F, version::v3_2},        __age_data_t{0x30A1, version::v1_1},
-    __age_data_t{0x30FF, version::v3_2},        __age_data_t{0x3100, version::unassigned},
-    __age_data_t{0x3105, version::v1_1},        __age_data_t{0x312D, version::v5_1},
-    __age_data_t{0x312E, version::v10_0},       __age_data_t{0x312F, version::v11_0},
-    __age_data_t{0x3130, version::unassigned},  __age_data_t{0x3131, version::v1_1},
-    __age_data_t{0x318F, version::unassigned},  __age_data_t{0x3190, version::v1_1},
-    __age_data_t{0x31A0, version::v3_0},        __age_data_t{0x31B8, version::v6_0},
-    __age_data_t{0x31BB, version::unassigned},  __age_data_t{0x31C0, version::v4_1},
-    __age_data_t{0x31D0, version::v5_1},        __age_data_t{0x31E4, version::unassigned},
-    __age_data_t{0x31F0, version::v3_2},        __age_data_t{0x3200, version::v1_1},
-    __age_data_t{0x321D, version::v4_0},        __age_data_t{0x321F, version::unassigned},
-    __age_data_t{0x3220, version::v1_1},        __age_data_t{0x3244, version::v5_2},
-    __age_data_t{0x3250, version::v4_0},        __age_data_t{0x3251, version::v3_2},
-    __age_data_t{0x3260, version::v1_1},        __age_data_t{0x327C, version::v4_0},
-    __age_data_t{0x327E, version::v4_1},        __age_data_t{0x327F, version::v1_1},
-    __age_data_t{0x32B1, version::v3_2},        __age_data_t{0x32C0, version::v1_1},
-    __age_data_t{0x32CC, version::v4_0},        __age_data_t{0x32D0, version::v1_1},
-    __age_data_t{0x32FF, version::unassigned},  __age_data_t{0x3300, version::v1_1},
-    __age_data_t{0x3377, version::v4_0},        __age_data_t{0x337B, version::v1_1},
-    __age_data_t{0x33DE, version::v4_0},        __age_data_t{0x33E0, version::v1_1},
-    __age_data_t{0x33FF, version::v4_0},        __age_data_t{0x3400, version::unassigned},
-    __age_data_t{0x3403, version::v3_0},        __age_data_t{0x3404, version::unassigned},
-    __age_data_t{0x3405, version::v3_0},        __age_data_t{0x3406, version::unassigned},
-    __age_data_t{0x3481, version::v3_0},        __age_data_t{0x3482, version::unassigned},
-    __age_data_t{0x3483, version::v3_0},        __age_data_t{0x3484, version::unassigned},
-    __age_data_t{0x3828, version::v3_0},        __age_data_t{0x3829, version::unassigned},
-    __age_data_t{0x382A, version::v3_0},        __age_data_t{0x382B, version::unassigned},
-    __age_data_t{0x3B4B, version::v3_0},        __age_data_t{0x3B4C, version::unassigned},
-    __age_data_t{0x3B4D, version::v3_0},        __age_data_t{0x3B4E, version::unassigned},
-    __age_data_t{0x4DB4, version::v3_0},        __age_data_t{0x4DB5, version::unassigned},
-    __age_data_t{0x4DC0, version::v4_0},        __age_data_t{0x4E00, version::v1_1},
-    __age_data_t{0x4E02, version::unassigned},  __age_data_t{0x4E03, version::v1_1},
-    __age_data_t{0x4E04, version::unassigned},  __age_data_t{0x4E05, version::v1_1},
-    __age_data_t{0x4E06, version::unassigned},  __age_data_t{0x4E07, version::v1_1},
-    __age_data_t{0x4E0A, version::unassigned},  __age_data_t{0x4E5B, version::v1_1},
-    __age_data_t{0x4E5C, version::unassigned},  __age_data_t{0x4E5D, version::v1_1},
-    __age_data_t{0x4E5E, version::unassigned},  __age_data_t{0x4E8A, version::v1_1},
-    __age_data_t{0x4E8B, version::unassigned},  __age_data_t{0x4E8C, version::v1_1},
-    __age_data_t{0x4E8D, version::unassigned},  __age_data_t{0x4E92, version::v1_1},
-    __age_data_t{0x4E93, version::unassigned},  __age_data_t{0x4E94, version::v1_1},
-    __age_data_t{0x4E97, version::unassigned},  __age_data_t{0x4EBD, version::v1_1},
-    __age_data_t{0x4EBE, version::unassigned},  __age_data_t{0x4EBF, version::v1_1},
-    __age_data_t{0x4EC1, version::unassigned},  __age_data_t{0x4EDD, version::v1_1},
-    __age_data_t{0x4EDE, version::unassigned},  __age_data_t{0x4EDF, version::v1_1},
-    __age_data_t{0x4EE0, version::unassigned},  __age_data_t{0x4EE6, version::v1_1},
-    __age_data_t{0x4EE7, version::unassigned},  __age_data_t{0x4EE8, version::v1_1},
-    __age_data_t{0x4EE9, version::unassigned},  __age_data_t{0x4F0B, version::v1_1},
-    __age_data_t{0x4F0C, version::unassigned},  __age_data_t{0x4F0D, version::v1_1},
-    __age_data_t{0x4F0E, version::unassigned},  __age_data_t{0x4F6E, version::v1_1},
-    __age_data_t{0x4F6F, version::unassigned},  __age_data_t{0x4F70, version::v1_1},
-    __age_data_t{0x4F71, version::unassigned},  __age_data_t{0x5102, version::v1_1},
-    __age_data_t{0x5103, version::unassigned},  __age_data_t{0x5104, version::v1_1},
-    __age_data_t{0x5105, version::unassigned},  __age_data_t{0x5144, version::v1_1},
-    __age_data_t{0x5145, version::unassigned},  __age_data_t{0x5146, version::v1_1},
-    __age_data_t{0x5147, version::unassigned},  __age_data_t{0x5167, version::v1_1},
-    __age_data_t{0x5168, version::unassigned},  __age_data_t{0x5169, version::v1_1},
-    __age_data_t{0x516E, version::unassigned},  __age_data_t{0x533F, version::v1_1},
-    __age_data_t{0x5340, version::unassigned},  __age_data_t{0x5341, version::v1_1},
-    __age_data_t{0x5346, version::unassigned},  __age_data_t{0x534A, version::v1_1},
-    __age_data_t{0x534B, version::unassigned},  __age_data_t{0x534C, version::v1_1},
-    __age_data_t{0x534D, version::unassigned},  __age_data_t{0x53BF, version::v1_1},
-    __age_data_t{0x53C0, version::unassigned},  __age_data_t{0x53C1, version::v1_1},
-    __age_data_t{0x53C5, version::unassigned},  __age_data_t{0x56D9, version::v1_1},
-    __age_data_t{0x56DA, version::unassigned},  __age_data_t{0x56DB, version::v1_1},
-    __age_data_t{0x56DC, version::unassigned},  __age_data_t{0x58EF, version::v1_1},
-    __age_data_t{0x58F0, version::unassigned},  __age_data_t{0x58F1, version::v1_1},
-    __age_data_t{0x58F2, version::unassigned},  __age_data_t{0x58F7, version::v1_1},
-    __age_data_t{0x58F8, version::unassigned},  __age_data_t{0x58F9, version::v1_1},
-    __age_data_t{0x58FA, version::unassigned},  __age_data_t{0x5E78, version::v1_1},
-    __age_data_t{0x5E79, version::unassigned},  __age_data_t{0x5E7A, version::v1_1},
-    __age_data_t{0x5E7B, version::unassigned},  __age_data_t{0x5EFC, version::v1_1},
-    __age_data_t{0x5EFD, version::unassigned},  __age_data_t{0x5EFE, version::v1_1},
-    __age_data_t{0x5F00, version::unassigned},  __age_data_t{0x5F0A, version::v1_1},
-    __age_data_t{0x5F0B, version::unassigned},  __age_data_t{0x5F0C, version::v1_1},
-    __age_data_t{0x5F11, version::unassigned},  __age_data_t{0x62FC, version::v1_1},
-    __age_data_t{0x62FD, version::unassigned},  __age_data_t{0x62FE, version::v1_1},
-    __age_data_t{0x62FF, version::unassigned},  __age_data_t{0x634A, version::v1_1},
-    __age_data_t{0x634B, version::unassigned},  __age_data_t{0x634C, version::v1_1},
-    __age_data_t{0x634D, version::unassigned},  __age_data_t{0x67D0, version::v1_1},
-    __age_data_t{0x67D1, version::unassigned},  __age_data_t{0x67D2, version::v1_1},
-    __age_data_t{0x67D3, version::unassigned},  __age_data_t{0x6F04, version::v1_1},
-    __age_data_t{0x6F05, version::unassigned},  __age_data_t{0x6F06, version::v1_1},
-    __age_data_t{0x6F07, version::unassigned},  __age_data_t{0x7394, version::v1_1},
-    __age_data_t{0x7395, version::unassigned},  __age_data_t{0x7396, version::v1_1},
-    __age_data_t{0x7397, version::unassigned},  __age_data_t{0x767C, version::v1_1},
-    __age_data_t{0x767D, version::unassigned},  __age_data_t{0x767E, version::v1_1},
-    __age_data_t{0x767F, version::unassigned},  __age_data_t{0x8084, version::v1_1},
-    __age_data_t{0x8085, version::unassigned},  __age_data_t{0x8086, version::v1_1},
-    __age_data_t{0x8087, version::unassigned},  __age_data_t{0x842A, version::v1_1},
-    __age_data_t{0x842B, version::unassigned},  __age_data_t{0x842C, version::v1_1},
-    __age_data_t{0x842D, version::unassigned},  __age_data_t{0x8CAC, version::v1_1},
-    __age_data_t{0x8CAD, version::unassigned},  __age_data_t{0x8CAE, version::v1_1},
-    __age_data_t{0x8CAF, version::unassigned},  __age_data_t{0x8CB1, version::v1_1},
-    __age_data_t{0x8CB2, version::unassigned},  __age_data_t{0x8CB3, version::v1_1},
-    __age_data_t{0x8CB4, version::unassigned},  __age_data_t{0x8D2E, version::v1_1},
-    __age_data_t{0x8D2F, version::unassigned},  __age_data_t{0x8D30, version::v1_1},
-    __age_data_t{0x8D31, version::unassigned},  __age_data_t{0x961F, version::v1_1},
-    __age_data_t{0x9620, version::unassigned},  __age_data_t{0x9621, version::v1_1},
-    __age_data_t{0x9622, version::unassigned},  __age_data_t{0x9644, version::v1_1},
-    __age_data_t{0x9645, version::unassigned},  __age_data_t{0x9646, version::v1_1},
-    __age_data_t{0x9647, version::unassigned},  __age_data_t{0x964A, version::v1_1},
-    __age_data_t{0x964B, version::unassigned},  __age_data_t{0x964C, version::v1_1},
-    __age_data_t{0x964D, version::unassigned},  __age_data_t{0x9676, version::v1_1},
-    __age_data_t{0x9677, version::unassigned},  __age_data_t{0x9678, version::v1_1},
-    __age_data_t{0x9679, version::unassigned},  __age_data_t{0x96F4, version::v1_1},
-    __age_data_t{0x96F5, version::unassigned},  __age_data_t{0x96F6, version::v1_1},
-    __age_data_t{0x96F7, version::unassigned},  __age_data_t{0x9FA4, version::v1_1},
-    __age_data_t{0x9FA5, version::unassigned},  __age_data_t{0x9FBA, version::v4_1},
-    __age_data_t{0x9FBB, version::unassigned},  __age_data_t{0x9FC2, version::v5_1},
-    __age_data_t{0x9FC3, version::unassigned},  __age_data_t{0x9FCA, version::v5_2},
-    __age_data_t{0x9FCB, version::unassigned},  __age_data_t{0x9FCC, version::v6_1},
-    __age_data_t{0x9FCD, version::unassigned},  __age_data_t{0x9FD4, version::v8_0},
-    __age_data_t{0x9FD5, version::unassigned},  __age_data_t{0x9FE9, version::v10_0},
-    __age_data_t{0x9FEA, version::unassigned},  __age_data_t{0x9FEE, version::v11_0},
-    __age_data_t{0x9FEF, version::unassigned},  __age_data_t{0xA000, version::v3_0},
-    __age_data_t{0xA48D, version::unassigned},  __age_data_t{0xA490, version::v3_0},
-    __age_data_t{0xA4A2, version::v3_2},        __age_data_t{0xA4A4, version::v3_0},
-    __age_data_t{0xA4B4, version::v3_2},        __age_data_t{0xA4B5, version::v3_0},
-    __age_data_t{0xA4C1, version::v3_2},        __age_data_t{0xA4C2, version::v3_0},
-    __age_data_t{0xA4C5, version::v3_2},        __age_data_t{0xA4C6, version::v3_0},
-    __age_data_t{0xA4C7, version::unassigned},  __age_data_t{0xA4D0, version::v5_2},
-    __age_data_t{0xA500, version::v5_1},        __age_data_t{0xA62C, version::unassigned},
-    __age_data_t{0xA640, version::v5_1},        __age_data_t{0xA660, version::v6_0},
-    __age_data_t{0xA662, version::v5_1},        __age_data_t{0xA674, version::v6_1},
-    __age_data_t{0xA67C, version::v5_1},        __age_data_t{0xA698, version::v7_0},
-    __age_data_t{0xA69E, version::v8_0},        __age_data_t{0xA69F, version::v6_1},
-    __age_data_t{0xA6A0, version::v5_2},        __age_data_t{0xA6F8, version::unassigned},
-    __age_data_t{0xA700, version::v4_1},        __age_data_t{0xA717, version::v5_0},
-    __age_data_t{0xA71B, version::v5_1},        __age_data_t{0xA720, version::v5_0},
-    __age_data_t{0xA722, version::v5_1},        __age_data_t{0xA78D, version::v6_0},
-    __age_data_t{0xA78F, version::v8_0},        __age_data_t{0xA790, version::v6_0},
-    __age_data_t{0xA792, version::v6_1},        __age_data_t{0xA794, version::v7_0},
-    __age_data_t{0xA7A0, version::v6_0},        __age_data_t{0xA7AA, version::v6_1},
-    __age_data_t{0xA7AB, version::v7_0},        __age_data_t{0xA7AE, version::v9_0},
-    __age_data_t{0xA7AF, version::v11_0},       __age_data_t{0xA7B0, version::v7_0},
-    __age_data_t{0xA7B2, version::v8_0},        __age_data_t{0xA7B8, version::v11_0},
-    __age_data_t{0xA7BA, version::v12_0},       __age_data_t{0xA7C0, version::unassigned},
-    __age_data_t{0xA7C2, version::v12_0},       __age_data_t{0xA7C7, version::unassigned},
-    __age_data_t{0xA7F7, version::v7_0},        __age_data_t{0xA7F8, version::v6_1},
-    __age_data_t{0xA7FA, version::v6_0},        __age_data_t{0xA7FB, version::v5_1},
-    __age_data_t{0xA800, version::v4_1},        __age_data_t{0xA82C, version::unassigned},
-    __age_data_t{0xA830, version::v5_2},        __age_data_t{0xA83A, version::unassigned},
-    __age_data_t{0xA840, version::v5_0},        __age_data_t{0xA878, version::unassigned},
-    __age_data_t{0xA880, version::v5_1},        __age_data_t{0xA8C5, version::v9_0},
-    __age_data_t{0xA8C6, version::unassigned},  __age_data_t{0xA8CE, version::v5_1},
-    __age_data_t{0xA8DA, version::unassigned},  __age_data_t{0xA8E0, version::v5_2},
-    __age_data_t{0xA8FC, version::v8_0},        __age_data_t{0xA8FE, version::v11_0},
-    __age_data_t{0xA900, version::v5_1},        __age_data_t{0xA954, version::unassigned},
-    __age_data_t{0xA95F, version::v5_1},        __age_data_t{0xA960, version::v5_2},
-    __age_data_t{0xA97D, version::unassigned},  __age_data_t{0xA980, version::v5_2},
-    __age_data_t{0xA9CE, version::unassigned},  __age_data_t{0xA9CF, version::v5_2},
-    __age_data_t{0xA9DA, version::unassigned},  __age_data_t{0xA9DE, version::v5_2},
-    __age_data_t{0xA9E0, version::v7_0},        __age_data_t{0xA9FF, version::unassigned},
-    __age_data_t{0xAA00, version::v5_1},        __age_data_t{0xAA37, version::unassigned},
-    __age_data_t{0xAA40, version::v5_1},        __age_data_t{0xAA4E, version::unassigned},
-    __age_data_t{0xAA50, version::v5_1},        __age_data_t{0xAA5A, version::unassigned},
-    __age_data_t{0xAA5C, version::v5_1},        __age_data_t{0xAA60, version::v5_2},
-    __age_data_t{0xAA7C, version::v7_0},        __age_data_t{0xAA80, version::v5_2},
-    __age_data_t{0xAAC3, version::unassigned},  __age_data_t{0xAADB, version::v5_2},
-    __age_data_t{0xAAE0, version::v6_1},        __age_data_t{0xAAF7, version::unassigned},
-    __age_data_t{0xAB01, version::v6_0},        __age_data_t{0xAB07, version::unassigned},
-    __age_data_t{0xAB09, version::v6_0},        __age_data_t{0xAB0F, version::unassigned},
-    __age_data_t{0xAB11, version::v6_0},        __age_data_t{0xAB17, version::unassigned},
-    __age_data_t{0xAB20, version::v6_0},        __age_data_t{0xAB27, version::unassigned},
-    __age_data_t{0xAB28, version::v6_0},        __age_data_t{0xAB2F, version::unassigned},
-    __age_data_t{0xAB30, version::v7_0},        __age_data_t{0xAB60, version::v8_0},
-    __age_data_t{0xAB64, version::v7_0},        __age_data_t{0xAB66, version::v12_0},
-    __age_data_t{0xAB68, version::unassigned},  __age_data_t{0xAB70, version::v8_0},
-    __age_data_t{0xABC0, version::v5_2},        __age_data_t{0xABEE, version::unassigned},
-    __age_data_t{0xABF0, version::v5_2},        __age_data_t{0xABFA, version::unassigned},
-    __age_data_t{0xAC00, version::v2_0},        __age_data_t{0xD7A4, version::unassigned},
-    __age_data_t{0xD7B0, version::v5_2},        __age_data_t{0xD7C7, version::unassigned},
-    __age_data_t{0xD7CB, version::v5_2},        __age_data_t{0xD7FC, version::unassigned},
-    __age_data_t{0xDB7E, version::v2_0},        __age_data_t{0xDB7F, version::unassigned},
-    __age_data_t{0xDBFE, version::v2_0},        __age_data_t{0xDBFF, version::unassigned},
-    __age_data_t{0xDFFE, version::v2_0},        __age_data_t{0xDFFF, version::unassigned},
-    __age_data_t{0xF8FE, version::v1_1},        __age_data_t{0xF8FF, version::unassigned},
-    __age_data_t{0xF900, version::v1_1},        __age_data_t{0xFA2E, version::v6_1},
-    __age_data_t{0xFA30, version::v3_2},        __age_data_t{0xFA6B, version::v5_2},
-    __age_data_t{0xFA6E, version::unassigned},  __age_data_t{0xFA70, version::v4_1},
-    __age_data_t{0xFADA, version::unassigned},  __age_data_t{0xFB00, version::v1_1},
-    __age_data_t{0xFB07, version::unassigned},  __age_data_t{0xFB13, version::v1_1},
-    __age_data_t{0xFB18, version::unassigned},  __age_data_t{0xFB1D, version::v3_0},
-    __age_data_t{0xFB1E, version::v1_1},        __age_data_t{0xFB37, version::unassigned},
-    __age_data_t{0xFB38, version::v1_1},        __age_data_t{0xFB3D, version::unassigned},
-    __age_data_t{0xFB3E, version::v1_1},        __age_data_t{0xFB3F, version::unassigned},
-    __age_data_t{0xFB40, version::v1_1},        __age_data_t{0xFB42, version::unassigned},
-    __age_data_t{0xFB43, version::v1_1},        __age_data_t{0xFB45, version::unassigned},
-    __age_data_t{0xFB46, version::v1_1},        __age_data_t{0xFBB2, version::v6_0},
-    __age_data_t{0xFBC2, version::unassigned},  __age_data_t{0xFBD3, version::v1_1},
-    __age_data_t{0xFD40, version::unassigned},  __age_data_t{0xFD50, version::v1_1},
-    __age_data_t{0xFD90, version::unassigned},  __age_data_t{0xFD92, version::v1_1},
-    __age_data_t{0xFDC8, version::unassigned},  __age_data_t{0xFDF0, version::v1_1},
-    __age_data_t{0xFDFC, version::v3_2},        __age_data_t{0xFDFD, version::v4_0},
-    __age_data_t{0xFDFE, version::unassigned},  __age_data_t{0xFE00, version::v3_2},
-    __age_data_t{0xFE10, version::v4_1},        __age_data_t{0xFE1A, version::unassigned},
-    __age_data_t{0xFE20, version::v1_1},        __age_data_t{0xFE24, version::v5_1},
-    __age_data_t{0xFE27, version::v7_0},        __age_data_t{0xFE2E, version::v8_0},
-    __age_data_t{0xFE30, version::v1_1},        __age_data_t{0xFE45, version::v3_2},
-    __age_data_t{0xFE47, version::v4_0},        __age_data_t{0xFE49, version::v1_1},
-    __age_data_t{0xFE53, version::unassigned},  __age_data_t{0xFE54, version::v1_1},
-    __age_data_t{0xFE67, version::unassigned},  __age_data_t{0xFE68, version::v1_1},
-    __age_data_t{0xFE6C, version::unassigned},  __age_data_t{0xFE70, version::v1_1},
-    __age_data_t{0xFE73, version::v3_2},        __age_data_t{0xFE74, version::v1_1},
-    __age_data_t{0xFE75, version::unassigned},  __age_data_t{0xFE76, version::v1_1},
-    __age_data_t{0xFEFD, version::unassigned},  __age_data_t{0xFEFF, version::v1_1},
-    __age_data_t{0xFF00, version::unassigned},  __age_data_t{0xFF01, version::v1_1},
-    __age_data_t{0xFF5F, version::v3_2},        __age_data_t{0xFF61, version::v1_1},
-    __age_data_t{0xFFBF, version::unassigned},  __age_data_t{0xFFC2, version::v1_1},
-    __age_data_t{0xFFC8, version::unassigned},  __age_data_t{0xFFCA, version::v1_1},
-    __age_data_t{0xFFD0, version::unassigned},  __age_data_t{0xFFD2, version::v1_1},
-    __age_data_t{0xFFD8, version::unassigned},  __age_data_t{0xFFDA, version::v1_1},
-    __age_data_t{0xFFDD, version::unassigned},  __age_data_t{0xFFE0, version::v1_1},
-    __age_data_t{0xFFE7, version::unassigned},  __age_data_t{0xFFE8, version::v1_1},
-    __age_data_t{0xFFEF, version::unassigned},  __age_data_t{0xFFF9, version::v3_0},
-    __age_data_t{0xFFFC, version::v2_1},        __age_data_t{0xFFFD, version::v1_1},
-    __age_data_t{0xFFFE, version::unassigned},  __age_data_t{0x10000, version::v4_0},
-    __age_data_t{0x1000C, version::unassigned}, __age_data_t{0x1000D, version::v4_0},
-    __age_data_t{0x10027, version::unassigned}, __age_data_t{0x10028, version::v4_0},
-    __age_data_t{0x1003B, version::unassigned}, __age_data_t{0x1003C, version::v4_0},
-    __age_data_t{0x1003E, version::unassigned}, __age_data_t{0x1003F, version::v4_0},
-    __age_data_t{0x1004E, version::unassigned}, __age_data_t{0x10050, version::v4_0},
-    __age_data_t{0x1005E, version::unassigned}, __age_data_t{0x10080, version::v4_0},
-    __age_data_t{0x100FB, version::unassigned}, __age_data_t{0x10100, version::v4_0},
-    __age_data_t{0x10103, version::unassigned}, __age_data_t{0x10107, version::v4_0},
-    __age_data_t{0x10134, version::unassigned}, __age_data_t{0x10137, version::v4_0},
-    __age_data_t{0x10140, version::v4_1},       __age_data_t{0x1018B, version::v7_0},
-    __age_data_t{0x1018D, version::v9_0},       __age_data_t{0x1018F, version::unassigned},
-    __age_data_t{0x10190, version::v5_1},       __age_data_t{0x1019C, version::unassigned},
-    __age_data_t{0x101A0, version::v7_0},       __age_data_t{0x101A1, version::unassigned},
-    __age_data_t{0x101D0, version::v5_1},       __age_data_t{0x101FE, version::unassigned},
-    __age_data_t{0x10280, version::v5_1},       __age_data_t{0x1029D, version::unassigned},
-    __age_data_t{0x102A0, version::v5_1},       __age_data_t{0x102D1, version::unassigned},
-    __age_data_t{0x102E0, version::v7_0},       __age_data_t{0x102FC, version::unassigned},
-    __age_data_t{0x10300, version::v3_1},       __age_data_t{0x1031F, version::v7_0},
-    __age_data_t{0x10320, version::v3_1},       __age_data_t{0x10324, version::unassigned},
-    __age_data_t{0x1032D, version::v10_0},      __age_data_t{0x10330, version::v3_1},
-    __age_data_t{0x1034B, version::unassigned}, __age_data_t{0x10350, version::v7_0},
-    __age_data_t{0x1037B, version::unassigned}, __age_data_t{0x10380, version::v4_0},
-    __age_data_t{0x1039E, version::unassigned}, __age_data_t{0x1039F, version::v4_0},
-    __age_data_t{0x103A0, version::v4_1},       __age_data_t{0x103C4, version::unassigned},
-    __age_data_t{0x103C8, version::v4_1},       __age_data_t{0x103D6, version::unassigned},
-    __age_data_t{0x10400, version::v3_1},       __age_data_t{0x10426, version::v4_0},
-    __age_data_t{0x10428, version::v3_1},       __age_data_t{0x1044E, version::v4_0},
-    __age_data_t{0x1049E, version::unassigned}, __age_data_t{0x104A0, version::v4_0},
-    __age_data_t{0x104AA, version::unassigned}, __age_data_t{0x104B0, version::v9_0},
-    __age_data_t{0x104D4, version::unassigned}, __age_data_t{0x104D8, version::v9_0},
-    __age_data_t{0x104FC, version::unassigned}, __age_data_t{0x10500, version::v7_0},
-    __age_data_t{0x10528, version::unassigned}, __age_data_t{0x10530, version::v7_0},
-    __age_data_t{0x10564, version::unassigned}, __age_data_t{0x1056F, version::v7_0},
-    __age_data_t{0x10570, version::unassigned}, __age_data_t{0x10600, version::v7_0},
-    __age_data_t{0x10737, version::unassigned}, __age_data_t{0x10740, version::v7_0},
-    __age_data_t{0x10756, version::unassigned}, __age_data_t{0x10760, version::v7_0},
-    __age_data_t{0x10768, version::unassigned}, __age_data_t{0x10800, version::v4_0},
-    __age_data_t{0x10806, version::unassigned}, __age_data_t{0x10808, version::v4_0},
-    __age_data_t{0x10809, version::unassigned}, __age_data_t{0x1080A, version::v4_0},
-    __age_data_t{0x10836, version::unassigned}, __age_data_t{0x10837, version::v4_0},
-    __age_data_t{0x10839, version::unassigned}, __age_data_t{0x1083C, version::v4_0},
-    __age_data_t{0x1083D, version::unassigned}, __age_data_t{0x1083F, version::v4_0},
-    __age_data_t{0x10840, version::v5_2},       __age_data_t{0x10856, version::unassigned},
-    __age_data_t{0x10857, version::v5_2},       __age_data_t{0x10860, version::v7_0},
-    __age_data_t{0x1089F, version::unassigned}, __age_data_t{0x108A7, version::v7_0},
-    __age_data_t{0x108B0, version::unassigned}, __age_data_t{0x108E0, version::v8_0},
-    __age_data_t{0x108F3, version::unassigned}, __age_data_t{0x108F4, version::v8_0},
-    __age_data_t{0x108F6, version::unassigned}, __age_data_t{0x108FB, version::v8_0},
-    __age_data_t{0x10900, version::v5_0},       __age_data_t{0x1091A, version::v5_2},
-    __age_data_t{0x1091C, version::unassigned}, __age_data_t{0x1091F, version::v5_0},
-    __age_data_t{0x10920, version::v5_1},       __age_data_t{0x1093A, version::unassigned},
-    __age_data_t{0x1093F, version::v5_1},       __age_data_t{0x10940, version::unassigned},
-    __age_data_t{0x10980, version::v6_1},       __age_data_t{0x109B8, version::unassigned},
-    __age_data_t{0x109BC, version::v8_0},       __age_data_t{0x109BE, version::v6_1},
-    __age_data_t{0x109C0, version::v8_0},       __age_data_t{0x109D0, version::unassigned},
-    __age_data_t{0x109D2, version::v8_0},       __age_data_t{0x10A00, version::v4_1},
-    __age_data_t{0x10A04, version::unassigned}, __age_data_t{0x10A05, version::v4_1},
-    __age_data_t{0x10A07, version::unassigned}, __age_data_t{0x10A0C, version::v4_1},
-    __age_data_t{0x10A14, version::unassigned}, __age_data_t{0x10A15, version::v4_1},
-    __age_data_t{0x10A18, version::unassigned}, __age_data_t{0x10A19, version::v4_1},
-    __age_data_t{0x10A34, version::v11_0},      __age_data_t{0x10A36, version::unassigned},
-    __age_data_t{0x10A38, version::v4_1},       __age_data_t{0x10A3B, version::unassigned},
-    __age_data_t{0x10A3F, version::v4_1},       __age_data_t{0x10A48, version::v11_0},
-    __age_data_t{0x10A49, version::unassigned}, __age_data_t{0x10A50, version::v4_1},
-    __age_data_t{0x10A59, version::unassigned}, __age_data_t{0x10A60, version::v5_2},
-    __age_data_t{0x10A80, version::v7_0},       __age_data_t{0x10AA0, version::unassigned},
-    __age_data_t{0x10AC0, version::v7_0},       __age_data_t{0x10AE7, version::unassigned},
-    __age_data_t{0x10AEB, version::v7_0},       __age_data_t{0x10AF7, version::unassigned},
-    __age_data_t{0x10B00, version::v5_2},       __age_data_t{0x10B36, version::unassigned},
-    __age_data_t{0x10B39, version::v5_2},       __age_data_t{0x10B56, version::unassigned},
-    __age_data_t{0x10B58, version::v5_2},       __age_data_t{0x10B73, version::unassigned},
-    __age_data_t{0x10B78, version::v5_2},       __age_data_t{0x10B80, version::v7_0},
-    __age_data_t{0x10B92, version::unassigned}, __age_data_t{0x10B99, version::v7_0},
-    __age_data_t{0x10B9D, version::unassigned}, __age_data_t{0x10BA9, version::v7_0},
-    __age_data_t{0x10BB0, version::unassigned}, __age_data_t{0x10C00, version::v5_2},
-    __age_data_t{0x10C49, version::unassigned}, __age_data_t{0x10C80, version::v8_0},
-    __age_data_t{0x10CB3, version::unassigned}, __age_data_t{0x10CC0, version::v8_0},
-    __age_data_t{0x10CF3, version::unassigned}, __age_data_t{0x10CFA, version::v8_0},
-    __age_data_t{0x10D00, version::v11_0},      __age_data_t{0x10D28, version::unassigned},
-    __age_data_t{0x10D30, version::v11_0},      __age_data_t{0x10D3A, version::unassigned},
-    __age_data_t{0x10E60, version::v5_2},       __age_data_t{0x10E7F, version::unassigned},
-    __age_data_t{0x10F00, version::v11_0},      __age_data_t{0x10F28, version::unassigned},
-    __age_data_t{0x10F30, version::v11_0},      __age_data_t{0x10F5A, version::unassigned},
-    __age_data_t{0x10FE0, version::v12_0},      __age_data_t{0x10FF7, version::unassigned},
-    __age_data_t{0x11000, version::v6_0},       __age_data_t{0x1104E, version::unassigned},
-    __age_data_t{0x11052, version::v6_0},       __age_data_t{0x11070, version::unassigned},
-    __age_data_t{0x1107F, version::v7_0},       __age_data_t{0x11080, version::v5_2},
-    __age_data_t{0x110C2, version::unassigned}, __age_data_t{0x110CD, version::v11_0},
-    __age_data_t{0x110CE, version::unassigned}, __age_data_t{0x110D0, version::v6_1},
-    __age_data_t{0x110E9, version::unassigned}, __age_data_t{0x110F0, version::v6_1},
-    __age_data_t{0x110FA, version::unassigned}, __age_data_t{0x11100, version::v6_1},
-    __age_data_t{0x11135, version::unassigned}, __age_data_t{0x11136, version::v6_1},
-    __age_data_t{0x11144, version::v11_0},      __age_data_t{0x11147, version::unassigned},
-    __age_data_t{0x11150, version::v7_0},       __age_data_t{0x11177, version::unassigned},
-    __age_data_t{0x11180, version::v6_1},       __age_data_t{0x111C9, version::v8_0},
-    __age_data_t{0x111CD, version::v7_0},       __age_data_t{0x111CE, version::unassigned},
-    __age_data_t{0x111D0, version::v6_1},       __age_data_t{0x111DA, version::v7_0},
-    __age_data_t{0x111DB, version::v8_0},       __age_data_t{0x111E0, version::unassigned},
-    __age_data_t{0x111E1, version::v7_0},       __age_data_t{0x111F5, version::unassigned},
-    __age_data_t{0x11200, version::v7_0},       __age_data_t{0x11212, version::unassigned},
-    __age_data_t{0x11213, version::v7_0},       __age_data_t{0x1123E, version::v9_0},
-    __age_data_t{0x1123F, version::unassigned}, __age_data_t{0x11280, version::v8_0},
-    __age_data_t{0x11287, version::unassigned}, __age_data_t{0x11288, version::v8_0},
-    __age_data_t{0x11289, version::unassigned}, __age_data_t{0x1128A, version::v8_0},
-    __age_data_t{0x1128E, version::unassigned}, __age_data_t{0x1128F, version::v8_0},
-    __age_data_t{0x1129E, version::unassigned}, __age_data_t{0x1129F, version::v8_0},
-    __age_data_t{0x112AA, version::unassigned}, __age_data_t{0x112B0, version::v7_0},
-    __age_data_t{0x112EB, version::unassigned}, __age_data_t{0x112F0, version::v7_0},
-    __age_data_t{0x112FA, version::unassigned}, __age_data_t{0x11300, version::v8_0},
-    __age_data_t{0x11301, version::v7_0},       __age_data_t{0x11304, version::unassigned},
-    __age_data_t{0x11305, version::v7_0},       __age_data_t{0x1130D, version::unassigned},
-    __age_data_t{0x1130F, version::v7_0},       __age_data_t{0x11311, version::unassigned},
-    __age_data_t{0x11313, version::v7_0},       __age_data_t{0x11329, version::unassigned},
-    __age_data_t{0x1132A, version::v7_0},       __age_data_t{0x11331, version::unassigned},
-    __age_data_t{0x11332, version::v7_0},       __age_data_t{0x11334, version::unassigned},
-    __age_data_t{0x11335, version::v7_0},       __age_data_t{0x1133A, version::unassigned},
-    __age_data_t{0x1133B, version::v11_0},      __age_data_t{0x1133C, version::v7_0},
-    __age_data_t{0x11345, version::unassigned}, __age_data_t{0x11347, version::v7_0},
-    __age_data_t{0x11349, version::unassigned}, __age_data_t{0x1134B, version::v7_0},
-    __age_data_t{0x1134E, version::unassigned}, __age_data_t{0x11350, version::v8_0},
-    __age_data_t{0x11351, version::unassigned}, __age_data_t{0x11357, version::v7_0},
-    __age_data_t{0x11358, version::unassigned}, __age_data_t{0x1135D, version::v7_0},
-    __age_data_t{0x11364, version::unassigned}, __age_data_t{0x11366, version::v7_0},
-    __age_data_t{0x1136D, version::unassigned}, __age_data_t{0x11370, version::v7_0},
-    __age_data_t{0x11375, version::unassigned}, __age_data_t{0x11400, version::v9_0},
-    __age_data_t{0x1145A, version::unassigned}, __age_data_t{0x1145B, version::v9_0},
-    __age_data_t{0x1145C, version::unassigned}, __age_data_t{0x1145D, version::v9_0},
-    __age_data_t{0x1145E, version::v11_0},      __age_data_t{0x1145F, version::v12_0},
-    __age_data_t{0x11460, version::unassigned}, __age_data_t{0x11480, version::v7_0},
-    __age_data_t{0x114C8, version::unassigned}, __age_data_t{0x114D0, version::v7_0},
-    __age_data_t{0x114DA, version::unassigned}, __age_data_t{0x11580, version::v7_0},
-    __age_data_t{0x115B6, version::unassigned}, __age_data_t{0x115B8, version::v7_0},
-    __age_data_t{0x115CA, version::v8_0},       __age_data_t{0x115DE, version::unassigned},
-    __age_data_t{0x11600, version::v7_0},       __age_data_t{0x11645, version::unassigned},
-    __age_data_t{0x11650, version::v7_0},       __age_data_t{0x1165A, version::unassigned},
-    __age_data_t{0x11660, version::v9_0},       __age_data_t{0x1166D, version::unassigned},
-    __age_data_t{0x11680, version::v6_1},       __age_data_t{0x116B8, version::v12_0},
-    __age_data_t{0x116B9, version::unassigned}, __age_data_t{0x116C0, version::v6_1},
-    __age_data_t{0x116CA, version::unassigned}, __age_data_t{0x11700, version::v8_0},
-    __age_data_t{0x1171A, version::v11_0},      __age_data_t{0x1171B, version::unassigned},
-    __age_data_t{0x1171D, version::v8_0},       __age_data_t{0x1172C, version::unassigned},
-    __age_data_t{0x11730, version::v8_0},       __age_data_t{0x11740, version::unassigned},
-    __age_data_t{0x11800, version::v11_0},      __age_data_t{0x1183C, version::unassigned},
-    __age_data_t{0x118A0, version::v7_0},       __age_data_t{0x118F3, version::unassigned},
-    __age_data_t{0x118FF, version::v7_0},       __age_data_t{0x11900, version::unassigned},
-    __age_data_t{0x119A0, version::v12_0},      __age_data_t{0x119A8, version::unassigned},
-    __age_data_t{0x119AA, version::v12_0},      __age_data_t{0x119D8, version::unassigned},
-    __age_data_t{0x119DA, version::v12_0},      __age_data_t{0x119E5, version::unassigned},
-    __age_data_t{0x11A00, version::v10_0},      __age_data_t{0x11A48, version::unassigned},
-    __age_data_t{0x11A50, version::v10_0},      __age_data_t{0x11A84, version::v12_0},
-    __age_data_t{0x11A86, version::v10_0},      __age_data_t{0x11A9D, version::v11_0},
-    __age_data_t{0x11A9E, version::v10_0},      __age_data_t{0x11AA3, version::unassigned},
-    __age_data_t{0x11AC0, version::v7_0},       __age_data_t{0x11AF9, version::unassigned},
-    __age_data_t{0x11C00, version::v9_0},       __age_data_t{0x11C09, version::unassigned},
-    __age_data_t{0x11C0A, version::v9_0},       __age_data_t{0x11C37, version::unassigned},
-    __age_data_t{0x11C38, version::v9_0},       __age_data_t{0x11C46, version::unassigned},
-    __age_data_t{0x11C50, version::v9_0},       __age_data_t{0x11C6D, version::unassigned},
-    __age_data_t{0x11C70, version::v9_0},       __age_data_t{0x11C90, version::unassigned},
-    __age_data_t{0x11C92, version::v9_0},       __age_data_t{0x11CA8, version::unassigned},
-    __age_data_t{0x11CA9, version::v9_0},       __age_data_t{0x11CB7, version::unassigned},
-    __age_data_t{0x11D00, version::v10_0},      __age_data_t{0x11D07, version::unassigned},
-    __age_data_t{0x11D08, version::v10_0},      __age_data_t{0x11D0A, version::unassigned},
-    __age_data_t{0x11D0B, version::v10_0},      __age_data_t{0x11D37, version::unassigned},
-    __age_data_t{0x11D3A, version::v10_0},      __age_data_t{0x11D3B, version::unassigned},
-    __age_data_t{0x11D3C, version::v10_0},      __age_data_t{0x11D3E, version::unassigned},
-    __age_data_t{0x11D3F, version::v10_0},      __age_data_t{0x11D48, version::unassigned},
-    __age_data_t{0x11D50, version::v10_0},      __age_data_t{0x11D5A, version::unassigned},
-    __age_data_t{0x11D60, version::v11_0},      __age_data_t{0x11D66, version::unassigned},
-    __age_data_t{0x11D67, version::v11_0},      __age_data_t{0x11D69, version::unassigned},
-    __age_data_t{0x11D6A, version::v11_0},      __age_data_t{0x11D8F, version::unassigned},
-    __age_data_t{0x11D90, version::v11_0},      __age_data_t{0x11D92, version::unassigned},
-    __age_data_t{0x11D93, version::v11_0},      __age_data_t{0x11D99, version::unassigned},
-    __age_data_t{0x11DA0, version::v11_0},      __age_data_t{0x11DAA, version::unassigned},
-    __age_data_t{0x11EE0, version::v11_0},      __age_data_t{0x11EF9, version::unassigned},
-    __age_data_t{0x11FC0, version::v12_0},      __age_data_t{0x11FF2, version::unassigned},
-    __age_data_t{0x11FFF, version::v12_0},      __age_data_t{0x12000, version::v5_0},
-    __age_data_t{0x1236F, version::v7_0},       __age_data_t{0x12399, version::v8_0},
-    __age_data_t{0x1239A, version::unassigned}, __age_data_t{0x12400, version::v5_0},
-    __age_data_t{0x12463, version::v7_0},       __age_data_t{0x1246F, version::unassigned},
-    __age_data_t{0x12470, version::v5_0},       __age_data_t{0x12474, version::v7_0},
-    __age_data_t{0x12475, version::unassigned}, __age_data_t{0x12480, version::v8_0},
-    __age_data_t{0x12544, version::unassigned}, __age_data_t{0x13000, version::v5_2},
-    __age_data_t{0x1342F, version::unassigned}, __age_data_t{0x13430, version::v12_0},
-    __age_data_t{0x13439, version::unassigned}, __age_data_t{0x14400, version::v8_0},
-    __age_data_t{0x14647, version::unassigned}, __age_data_t{0x16800, version::v6_0},
-    __age_data_t{0x16A39, version::unassigned}, __age_data_t{0x16A40, version::v7_0},
-    __age_data_t{0x16A5F, version::unassigned}, __age_data_t{0x16A60, version::v7_0},
-    __age_data_t{0x16A6A, version::unassigned}, __age_data_t{0x16A6E, version::v7_0},
-    __age_data_t{0x16A70, version::unassigned}, __age_data_t{0x16AD0, version::v7_0},
-    __age_data_t{0x16AEE, version::unassigned}, __age_data_t{0x16AF0, version::v7_0},
-    __age_data_t{0x16AF6, version::unassigned}, __age_data_t{0x16B00, version::v7_0},
-    __age_data_t{0x16B46, version::unassigned}, __age_data_t{0x16B50, version::v7_0},
-    __age_data_t{0x16B5A, version::unassigned}, __age_data_t{0x16B5B, version::v7_0},
-    __age_data_t{0x16B62, version::unassigned}, __age_data_t{0x16B63, version::v7_0},
-    __age_data_t{0x16B78, version::unassigned}, __age_data_t{0x16B7D, version::v7_0},
-    __age_data_t{0x16B90, version::unassigned}, __age_data_t{0x16E40, version::v11_0},
-    __age_data_t{0x16E9B, version::unassigned}, __age_data_t{0x16F00, version::v6_1},
-    __age_data_t{0x16F45, version::v12_0},      __age_data_t{0x16F4B, version::unassigned},
-    __age_data_t{0x16F4F, version::v12_0},      __age_data_t{0x16F50, version::v6_1},
-    __age_data_t{0x16F7F, version::v12_0},      __age_data_t{0x16F88, version::unassigned},
-    __age_data_t{0x16F8F, version::v6_1},       __age_data_t{0x16FA0, version::unassigned},
-    __age_data_t{0x16FE0, version::v9_0},       __age_data_t{0x16FE1, version::v10_0},
-    __age_data_t{0x16FE2, version::v12_0},      __age_data_t{0x16FE4, version::unassigned},
-    __age_data_t{0x17000, version::v9_0},       __age_data_t{0x187ED, version::v11_0},
-    __age_data_t{0x187F2, version::v12_0},      __age_data_t{0x187F8, version::unassigned},
-    __age_data_t{0x18800, version::v9_0},       __age_data_t{0x18AF3, version::unassigned},
-    __age_data_t{0x1B000, version::v6_0},       __age_data_t{0x1B002, version::v10_0},
-    __age_data_t{0x1B11F, version::unassigned}, __age_data_t{0x1B150, version::v12_0},
-    __age_data_t{0x1B153, version::unassigned}, __age_data_t{0x1B164, version::v12_0},
-    __age_data_t{0x1B168, version::unassigned}, __age_data_t{0x1B170, version::v10_0},
-    __age_data_t{0x1B2FC, version::unassigned}, __age_data_t{0x1BC00, version::v7_0},
-    __age_data_t{0x1BC6B, version::unassigned}, __age_data_t{0x1BC70, version::v7_0},
-    __age_data_t{0x1BC7D, version::unassigned}, __age_data_t{0x1BC80, version::v7_0},
-    __age_data_t{0x1BC89, version::unassigned}, __age_data_t{0x1BC90, version::v7_0},
-    __age_data_t{0x1BC9A, version::unassigned}, __age_data_t{0x1BC9C, version::v7_0},
-    __age_data_t{0x1BCA4, version::unassigned}, __age_data_t{0x1D000, version::v3_1},
-    __age_data_t{0x1D0F6, version::unassigned}, __age_data_t{0x1D100, version::v3_1},
-    __age_data_t{0x1D127, version::unassigned}, __age_data_t{0x1D129, version::v5_1},
-    __age_data_t{0x1D12A, version::v3_1},       __age_data_t{0x1D1DE, version::v8_0},
-    __age_data_t{0x1D1E9, version::unassigned}, __age_data_t{0x1D200, version::v4_1},
-    __age_data_t{0x1D246, version::unassigned}, __age_data_t{0x1D2E0, version::v11_0},
-    __age_data_t{0x1D2F4, version::unassigned}, __age_data_t{0x1D300, version::v4_0},
-    __age_data_t{0x1D357, version::unassigned}, __age_data_t{0x1D360, version::v5_0},
-    __age_data_t{0x1D372, version::v11_0},      __age_data_t{0x1D379, version::unassigned},
-    __age_data_t{0x1D400, version::v3_1},       __age_data_t{0x1D455, version::unassigned},
-    __age_data_t{0x1D456, version::v3_1},       __age_data_t{0x1D49D, version::unassigned},
-    __age_data_t{0x1D49E, version::v3_1},       __age_data_t{0x1D4A0, version::unassigned},
-    __age_data_t{0x1D4A2, version::v3_1},       __age_data_t{0x1D4A3, version::unassigned},
-    __age_data_t{0x1D4A5, version::v3_1},       __age_data_t{0x1D4A7, version::unassigned},
-    __age_data_t{0x1D4A9, version::v3_1},       __age_data_t{0x1D4AD, version::unassigned},
-    __age_data_t{0x1D4AE, version::v3_1},       __age_data_t{0x1D4BA, version::unassigned},
-    __age_data_t{0x1D4BB, version::v3_1},       __age_data_t{0x1D4BC, version::unassigned},
-    __age_data_t{0x1D4BD, version::v3_1},       __age_data_t{0x1D4C1, version::v4_0},
-    __age_data_t{0x1D4C2, version::v3_1},       __age_data_t{0x1D4C4, version::unassigned},
-    __age_data_t{0x1D4C5, version::v3_1},       __age_data_t{0x1D506, version::unassigned},
-    __age_data_t{0x1D507, version::v3_1},       __age_data_t{0x1D50B, version::unassigned},
-    __age_data_t{0x1D50D, version::v3_1},       __age_data_t{0x1D515, version::unassigned},
-    __age_data_t{0x1D516, version::v3_1},       __age_data_t{0x1D51D, version::unassigned},
-    __age_data_t{0x1D51E, version::v3_1},       __age_data_t{0x1D53A, version::unassigned},
-    __age_data_t{0x1D53B, version::v3_1},       __age_data_t{0x1D53F, version::unassigned},
-    __age_data_t{0x1D540, version::v3_1},       __age_data_t{0x1D545, version::unassigned},
-    __age_data_t{0x1D546, version::v3_1},       __age_data_t{0x1D547, version::unassigned},
-    __age_data_t{0x1D54A, version::v3_1},       __age_data_t{0x1D551, version::unassigned},
-    __age_data_t{0x1D552, version::v3_1},       __age_data_t{0x1D6A4, version::v4_1},
-    __age_data_t{0x1D6A6, version::unassigned}, __age_data_t{0x1D6A8, version::v3_1},
-    __age_data_t{0x1D7CA, version::v5_0},       __age_data_t{0x1D7CC, version::unassigned},
-    __age_data_t{0x1D7CE, version::v3_1},       __age_data_t{0x1D800, version::v8_0},
-    __age_data_t{0x1DA8C, version::unassigned}, __age_data_t{0x1DA9B, version::v8_0},
-    __age_data_t{0x1DAA0, version::unassigned}, __age_data_t{0x1DAA1, version::v8_0},
-    __age_data_t{0x1DAB0, version::unassigned}, __age_data_t{0x1E000, version::v9_0},
-    __age_data_t{0x1E007, version::unassigned}, __age_data_t{0x1E008, version::v9_0},
-    __age_data_t{0x1E019, version::unassigned}, __age_data_t{0x1E01B, version::v9_0},
-    __age_data_t{0x1E022, version::unassigned}, __age_data_t{0x1E023, version::v9_0},
-    __age_data_t{0x1E025, version::unassigned}, __age_data_t{0x1E026, version::v9_0},
-    __age_data_t{0x1E02B, version::unassigned}, __age_data_t{0x1E100, version::v12_0},
-    __age_data_t{0x1E12D, version::unassigned}, __age_data_t{0x1E130, version::v12_0},
-    __age_data_t{0x1E13E, version::unassigned}, __age_data_t{0x1E140, version::v12_0},
-    __age_data_t{0x1E14A, version::unassigned}, __age_data_t{0x1E14E, version::v12_0},
-    __age_data_t{0x1E150, version::unassigned}, __age_data_t{0x1E2C0, version::v12_0},
-    __age_data_t{0x1E2FA, version::unassigned}, __age_data_t{0x1E2FF, version::v12_0},
-    __age_data_t{0x1E300, version::unassigned}, __age_data_t{0x1E800, version::v7_0},
-    __age_data_t{0x1E8C5, version::unassigned}, __age_data_t{0x1E8C7, version::v7_0},
-    __age_data_t{0x1E8D7, version::unassigned}, __age_data_t{0x1E900, version::v9_0},
-    __age_data_t{0x1E94B, version::v12_0},      __age_data_t{0x1E94C, version::unassigned},
-    __age_data_t{0x1E950, version::v9_0},       __age_data_t{0x1E95A, version::unassigned},
-    __age_data_t{0x1E95E, version::v9_0},       __age_data_t{0x1E960, version::unassigned},
-    __age_data_t{0x1EC71, version::v11_0},      __age_data_t{0x1ECB5, version::unassigned},
-    __age_data_t{0x1ED01, version::v12_0},      __age_data_t{0x1ED3E, version::unassigned},
-    __age_data_t{0x1EE00, version::v6_1},       __age_data_t{0x1EE04, version::unassigned},
-    __age_data_t{0x1EE05, version::v6_1},       __age_data_t{0x1EE20, version::unassigned},
-    __age_data_t{0x1EE21, version::v6_1},       __age_data_t{0x1EE23, version::unassigned},
-    __age_data_t{0x1EE24, version::v6_1},       __age_data_t{0x1EE25, version::unassigned},
-    __age_data_t{0x1EE27, version::v6_1},       __age_data_t{0x1EE28, version::unassigned},
-    __age_data_t{0x1EE29, version::v6_1},       __age_data_t{0x1EE33, version::unassigned},
-    __age_data_t{0x1EE34, version::v6_1},       __age_data_t{0x1EE38, version::unassigned},
-    __age_data_t{0x1EE39, version::v6_1},       __age_data_t{0x1EE3A, version::unassigned},
-    __age_data_t{0x1EE3B, version::v6_1},       __age_data_t{0x1EE3C, version::unassigned},
-    __age_data_t{0x1EE42, version::v6_1},       __age_data_t{0x1EE43, version::unassigned},
-    __age_data_t{0x1EE47, version::v6_1},       __age_data_t{0x1EE48, version::unassigned},
-    __age_data_t{0x1EE49, version::v6_1},       __age_data_t{0x1EE4A, version::unassigned},
-    __age_data_t{0x1EE4B, version::v6_1},       __age_data_t{0x1EE4C, version::unassigned},
-    __age_data_t{0x1EE4D, version::v6_1},       __age_data_t{0x1EE50, version::unassigned},
-    __age_data_t{0x1EE51, version::v6_1},       __age_data_t{0x1EE53, version::unassigned},
-    __age_data_t{0x1EE54, version::v6_1},       __age_data_t{0x1EE55, version::unassigned},
-    __age_data_t{0x1EE57, version::v6_1},       __age_data_t{0x1EE58, version::unassigned},
-    __age_data_t{0x1EE59, version::v6_1},       __age_data_t{0x1EE5A, version::unassigned},
-    __age_data_t{0x1EE5B, version::v6_1},       __age_data_t{0x1EE5C, version::unassigned},
-    __age_data_t{0x1EE5D, version::v6_1},       __age_data_t{0x1EE5E, version::unassigned},
-    __age_data_t{0x1EE5F, version::v6_1},       __age_data_t{0x1EE60, version::unassigned},
-    __age_data_t{0x1EE61, version::v6_1},       __age_data_t{0x1EE63, version::unassigned},
-    __age_data_t{0x1EE64, version::v6_1},       __age_data_t{0x1EE65, version::unassigned},
-    __age_data_t{0x1EE67, version::v6_1},       __age_data_t{0x1EE6B, version::unassigned},
-    __age_data_t{0x1EE6C, version::v6_1},       __age_data_t{0x1EE73, version::unassigned},
-    __age_data_t{0x1EE74, version::v6_1},       __age_data_t{0x1EE78, version::unassigned},
-    __age_data_t{0x1EE79, version::v6_1},       __age_data_t{0x1EE7D, version::unassigned},
-    __age_data_t{0x1EE7E, version::v6_1},       __age_data_t{0x1EE7F, version::unassigned},
-    __age_data_t{0x1EE80, version::v6_1},       __age_data_t{0x1EE8A, version::unassigned},
-    __age_data_t{0x1EE8B, version::v6_1},       __age_data_t{0x1EE9C, version::unassigned},
-    __age_data_t{0x1EEA1, version::v6_1},       __age_data_t{0x1EEA4, version::unassigned},
-    __age_data_t{0x1EEA5, version::v6_1},       __age_data_t{0x1EEAA, version::unassigned},
-    __age_data_t{0x1EEAB, version::v6_1},       __age_data_t{0x1EEBC, version::unassigned},
-    __age_data_t{0x1EEF0, version::v6_1},       __age_data_t{0x1EEF2, version::unassigned},
-    __age_data_t{0x1F000, version::v5_1},       __age_data_t{0x1F02C, version::unassigned},
-    __age_data_t{0x1F030, version::v5_1},       __age_data_t{0x1F094, version::unassigned},
-    __age_data_t{0x1F0A0, version::v6_0},       __age_data_t{0x1F0AF, version::unassigned},
-    __age_data_t{0x1F0B1, version::v6_0},       __age_data_t{0x1F0BF, version::v7_0},
-    __age_data_t{0x1F0C0, version::unassigned}, __age_data_t{0x1F0C1, version::v6_0},
-    __age_data_t{0x1F0D0, version::unassigned}, __age_data_t{0x1F0D1, version::v6_0},
-    __age_data_t{0x1F0E0, version::v7_0},       __age_data_t{0x1F0F6, version::unassigned},
-    __age_data_t{0x1F100, version::v5_2},       __age_data_t{0x1F10B, version::v7_0},
-    __age_data_t{0x1F10D, version::unassigned}, __age_data_t{0x1F110, version::v5_2},
-    __age_data_t{0x1F12F, version::v11_0},      __age_data_t{0x1F130, version::v6_0},
-    __age_data_t{0x1F131, version::v5_2},       __age_data_t{0x1F132, version::v6_0},
-    __age_data_t{0x1F13D, version::v5_2},       __age_data_t{0x1F13E, version::v6_0},
-    __age_data_t{0x1F13F, version::v5_2},       __age_data_t{0x1F140, version::v6_0},
-    __age_data_t{0x1F142, version::v5_2},       __age_data_t{0x1F143, version::v6_0},
-    __age_data_t{0x1F146, version::v5_2},       __age_data_t{0x1F147, version::v6_0},
-    __age_data_t{0x1F14A, version::v5_2},       __age_data_t{0x1F14F, version::v6_0},
-    __age_data_t{0x1F157, version::v5_2},       __age_data_t{0x1F158, version::v6_0},
-    __age_data_t{0x1F15F, version::v5_2},       __age_data_t{0x1F160, version::v6_0},
-    __age_data_t{0x1F16A, version::v6_1},       __age_data_t{0x1F16C, version::v12_0},
-    __age_data_t{0x1F16D, version::unassigned}, __age_data_t{0x1F170, version::v6_0},
-    __age_data_t{0x1F179, version::v5_2},       __age_data_t{0x1F17A, version::v6_0},
-    __age_data_t{0x1F17B, version::v5_2},       __age_data_t{0x1F17D, version::v6_0},
-    __age_data_t{0x1F17F, version::v5_2},       __age_data_t{0x1F180, version::v6_0},
-    __age_data_t{0x1F18A, version::v5_2},       __age_data_t{0x1F18E, version::v6_0},
-    __age_data_t{0x1F190, version::v5_2},       __age_data_t{0x1F191, version::v6_0},
-    __age_data_t{0x1F19B, version::v9_0},       __age_data_t{0x1F1AD, version::unassigned},
-    __age_data_t{0x1F1E6, version::v6_0},       __age_data_t{0x1F200, version::v5_2},
-    __age_data_t{0x1F201, version::v6_0},       __age_data_t{0x1F203, version::unassigned},
-    __age_data_t{0x1F210, version::v5_2},       __age_data_t{0x1F232, version::v6_0},
-    __age_data_t{0x1F23B, version::v9_0},       __age_data_t{0x1F23C, version::unassigned},
-    __age_data_t{0x1F240, version::v5_2},       __age_data_t{0x1F249, version::unassigned},
-    __age_data_t{0x1F250, version::v6_0},       __age_data_t{0x1F252, version::unassigned},
-    __age_data_t{0x1F260, version::v10_0},      __age_data_t{0x1F266, version::unassigned},
-    __age_data_t{0x1F300, version::v6_0},       __age_data_t{0x1F321, version::v7_0},
-    __age_data_t{0x1F32D, version::v8_0},       __age_data_t{0x1F330, version::v6_0},
-    __age_data_t{0x1F336, version::v7_0},       __age_data_t{0x1F337, version::v6_0},
-    __age_data_t{0x1F37D, version::v7_0},       __age_data_t{0x1F37E, version::v8_0},
-    __age_data_t{0x1F380, version::v6_0},       __age_data_t{0x1F394, version::v7_0},
-    __age_data_t{0x1F3A0, version::v6_0},       __age_data_t{0x1F3C5, version::v7_0},
-    __age_data_t{0x1F3C6, version::v6_0},       __age_data_t{0x1F3CB, version::v7_0},
-    __age_data_t{0x1F3CF, version::v8_0},       __age_data_t{0x1F3D4, version::v7_0},
-    __age_data_t{0x1F3E0, version::v6_0},       __age_data_t{0x1F3F1, version::v7_0},
-    __age_data_t{0x1F3F8, version::v8_0},       __age_data_t{0x1F400, version::v6_0},
-    __age_data_t{0x1F43F, version::v7_0},       __age_data_t{0x1F440, version::v6_0},
-    __age_data_t{0x1F441, version::v7_0},       __age_data_t{0x1F442, version::v6_0},
-    __age_data_t{0x1F4F8, version::v7_0},       __age_data_t{0x1F4F9, version::v6_0},
-    __age_data_t{0x1F4FD, version::v7_0},       __age_data_t{0x1F4FF, version::v8_0},
-    __age_data_t{0x1F500, version::v6_0},       __age_data_t{0x1F53E, version::v7_0},
-    __age_data_t{0x1F540, version::v6_1},       __age_data_t{0x1F544, version::v7_0},
-    __age_data_t{0x1F54B, version::v8_0},       __age_data_t{0x1F550, version::v6_0},
-    __age_data_t{0x1F568, version::v7_0},       __age_data_t{0x1F57A, version::v9_0},
-    __age_data_t{0x1F57B, version::v7_0},       __age_data_t{0x1F5A4, version::v9_0},
-    __age_data_t{0x1F5A5, version::v7_0},       __age_data_t{0x1F5FB, version::v6_0},
-    __age_data_t{0x1F600, version::v6_1},       __age_data_t{0x1F601, version::v6_0},
-    __age_data_t{0x1F611, version::v6_1},       __age_data_t{0x1F612, version::v6_0},
-    __age_data_t{0x1F615, version::v6_1},       __age_data_t{0x1F616, version::v6_0},
-    __age_data_t{0x1F617, version::v6_1},       __age_data_t{0x1F618, version::v6_0},
-    __age_data_t{0x1F619, version::v6_1},       __age_data_t{0x1F61A, version::v6_0},
-    __age_data_t{0x1F61B, version::v6_1},       __age_data_t{0x1F61C, version::v6_0},
-    __age_data_t{0x1F61F, version::v6_1},       __age_data_t{0x1F620, version::v6_0},
-    __age_data_t{0x1F626, version::v6_1},       __age_data_t{0x1F628, version::v6_0},
-    __age_data_t{0x1F62C, version::v6_1},       __age_data_t{0x1F62D, version::v6_0},
-    __age_data_t{0x1F62E, version::v6_1},       __age_data_t{0x1F630, version::v6_0},
-    __age_data_t{0x1F634, version::v6_1},       __age_data_t{0x1F635, version::v6_0},
-    __age_data_t{0x1F641, version::v7_0},       __age_data_t{0x1F643, version::v8_0},
-    __age_data_t{0x1F645, version::v6_0},       __age_data_t{0x1F650, version::v7_0},
-    __age_data_t{0x1F680, version::v6_0},       __age_data_t{0x1F6C6, version::v7_0},
-    __age_data_t{0x1F6D0, version::v8_0},       __age_data_t{0x1F6D1, version::v9_0},
-    __age_data_t{0x1F6D3, version::v10_0},      __age_data_t{0x1F6D5, version::v12_0},
-    __age_data_t{0x1F6D6, version::unassigned}, __age_data_t{0x1F6E0, version::v7_0},
-    __age_data_t{0x1F6ED, version::unassigned}, __age_data_t{0x1F6F0, version::v7_0},
-    __age_data_t{0x1F6F4, version::v9_0},       __age_data_t{0x1F6F7, version::v10_0},
-    __age_data_t{0x1F6F9, version::v11_0},      __age_data_t{0x1F6FA, version::v12_0},
-    __age_data_t{0x1F6FB, version::unassigned}, __age_data_t{0x1F700, version::v6_0},
-    __age_data_t{0x1F774, version::unassigned}, __age_data_t{0x1F780, version::v7_0},
-    __age_data_t{0x1F7D5, version::v11_0},      __age_data_t{0x1F7D9, version::unassigned},
-    __age_data_t{0x1F7E0, version::v12_0},      __age_data_t{0x1F7EC, version::unassigned},
-    __age_data_t{0x1F800, version::v7_0},       __age_data_t{0x1F80C, version::unassigned},
-    __age_data_t{0x1F810, version::v7_0},       __age_data_t{0x1F848, version::unassigned},
-    __age_data_t{0x1F850, version::v7_0},       __age_data_t{0x1F85A, version::unassigned},
-    __age_data_t{0x1F860, version::v7_0},       __age_data_t{0x1F888, version::unassigned},
-    __age_data_t{0x1F890, version::v7_0},       __age_data_t{0x1F8AE, version::unassigned},
-    __age_data_t{0x1F900, version::v10_0},      __age_data_t{0x1F90C, version::unassigned},
-    __age_data_t{0x1F90D, version::v12_0},      __age_data_t{0x1F910, version::v8_0},
-    __age_data_t{0x1F919, version::v9_0},       __age_data_t{0x1F91F, version::v10_0},
-    __age_data_t{0x1F920, version::v9_0},       __age_data_t{0x1F928, version::v10_0},
-    __age_data_t{0x1F930, version::v9_0},       __age_data_t{0x1F931, version::v10_0},
-    __age_data_t{0x1F933, version::v9_0},       __age_data_t{0x1F93F, version::v12_0},
-    __age_data_t{0x1F940, version::v9_0},       __age_data_t{0x1F94C, version::v10_0},
-    __age_data_t{0x1F94D, version::v11_0},      __age_data_t{0x1F950, version::v9_0},
-    __age_data_t{0x1F95F, version::v10_0},      __age_data_t{0x1F96C, version::v11_0},
-    __age_data_t{0x1F971, version::v12_0},      __age_data_t{0x1F972, version::unassigned},
-    __age_data_t{0x1F973, version::v11_0},      __age_data_t{0x1F977, version::unassigned},
-    __age_data_t{0x1F97A, version::v11_0},      __age_data_t{0x1F97B, version::v12_0},
-    __age_data_t{0x1F97C, version::v11_0},      __age_data_t{0x1F980, version::v8_0},
-    __age_data_t{0x1F985, version::v9_0},       __age_data_t{0x1F992, version::v10_0},
-    __age_data_t{0x1F998, version::v11_0},      __age_data_t{0x1F9A3, version::unassigned},
-    __age_data_t{0x1F9A5, version::v12_0},      __age_data_t{0x1F9AB, version::unassigned},
-    __age_data_t{0x1F9AE, version::v12_0},      __age_data_t{0x1F9B0, version::v11_0},
-    __age_data_t{0x1F9BA, version::v12_0},      __age_data_t{0x1F9C0, version::v8_0},
-    __age_data_t{0x1F9C1, version::v11_0},      __age_data_t{0x1F9C3, version::v12_0},
-    __age_data_t{0x1F9CB, version::unassigned}, __age_data_t{0x1F9CD, version::v12_0},
-    __age_data_t{0x1F9D0, version::v10_0},      __age_data_t{0x1F9E7, version::v11_0},
-    __age_data_t{0x1FA00, version::v12_0},      __age_data_t{0x1FA54, version::unassigned},
-    __age_data_t{0x1FA60, version::v11_0},      __age_data_t{0x1FA6E, version::unassigned},
-    __age_data_t{0x1FA70, version::v12_0},      __age_data_t{0x1FA74, version::unassigned},
-    __age_data_t{0x1FA78, version::v12_0},      __age_data_t{0x1FA7B, version::unassigned},
-    __age_data_t{0x1FA80, version::v12_0},      __age_data_t{0x1FA83, version::unassigned},
-    __age_data_t{0x1FA90, version::v12_0},      __age_data_t{0x1FA96, version::unassigned},
-    __age_data_t{0x20000, version::v3_1},       __age_data_t{0x20002, version::unassigned},
-    __age_data_t{0x20062, version::v3_1},       __age_data_t{0x20063, version::unassigned},
-    __age_data_t{0x20064, version::v3_1},       __age_data_t{0x20065, version::unassigned},
-    __age_data_t{0x200E0, version::v3_1},       __age_data_t{0x200E1, version::unassigned},
-    __age_data_t{0x200E2, version::v3_1},       __age_data_t{0x200E3, version::unassigned},
-    __age_data_t{0x2011F, version::v3_1},       __age_data_t{0x20120, version::unassigned},
-    __age_data_t{0x20121, version::v3_1},       __age_data_t{0x20122, version::unassigned},
-    __age_data_t{0x20928, version::v3_1},       __age_data_t{0x20929, version::unassigned},
-    __age_data_t{0x2092A, version::v3_1},       __age_data_t{0x2092B, version::unassigned},
-    __age_data_t{0x20981, version::v3_1},       __age_data_t{0x20982, version::unassigned},
-    __age_data_t{0x20983, version::v3_1},       __age_data_t{0x20984, version::unassigned},
-    __age_data_t{0x2098A, version::v3_1},       __age_data_t{0x2098B, version::unassigned},
-    __age_data_t{0x2098C, version::v3_1},       __age_data_t{0x2098D, version::unassigned},
-    __age_data_t{0x2099A, version::v3_1},       __age_data_t{0x2099B, version::unassigned},
-    __age_data_t{0x2099C, version::v3_1},       __age_data_t{0x2099D, version::unassigned},
-    __age_data_t{0x20AE8, version::v3_1},       __age_data_t{0x20AE9, version::unassigned},
-    __age_data_t{0x20AEA, version::v3_1},       __age_data_t{0x20AEB, version::unassigned},
-    __age_data_t{0x20AFB, version::v3_1},       __age_data_t{0x20AFC, version::unassigned},
-    __age_data_t{0x20AFD, version::v3_1},       __age_data_t{0x20AFE, version::unassigned},
-    __age_data_t{0x20B17, version::v3_1},       __age_data_t{0x20B18, version::unassigned},
-    __age_data_t{0x20B19, version::v3_1},       __age_data_t{0x20B1A, version::unassigned},
-    __age_data_t{0x2238E, version::v3_1},       __age_data_t{0x2238F, version::unassigned},
-    __age_data_t{0x22390, version::v3_1},       __age_data_t{0x22391, version::unassigned},
-    __age_data_t{0x22996, version::v3_1},       __age_data_t{0x22997, version::unassigned},
-    __age_data_t{0x22998, version::v3_1},       __age_data_t{0x22999, version::unassigned},
-    __age_data_t{0x23B19, version::v3_1},       __age_data_t{0x23B1A, version::unassigned},
-    __age_data_t{0x23B1B, version::v3_1},       __age_data_t{0x23B1C, version::unassigned},
-    __age_data_t{0x2626B, version::v3_1},       __age_data_t{0x2626C, version::unassigned},
-    __age_data_t{0x2626D, version::v3_1},       __age_data_t{0x2626E, version::unassigned},
-    __age_data_t{0x2A6D5, version::v3_1},       __age_data_t{0x2A6D6, version::unassigned},
-    __age_data_t{0x2B733, version::v5_2},       __age_data_t{0x2B734, version::unassigned},
-    __age_data_t{0x2B81C, version::v6_0},       __age_data_t{0x2B81D, version::unassigned},
-    __age_data_t{0x2CEA0, version::v8_0},       __age_data_t{0x2CEA1, version::unassigned},
-    __age_data_t{0x2EBDF, version::v10_0},      __age_data_t{0x2EBE0, version::unassigned},
-    __age_data_t{0x2F800, version::v3_1},       __age_data_t{0x2FA1E, version::unassigned},
-    __age_data_t{0xE0001, version::v3_1},       __age_data_t{0xE0002, version::unassigned},
-    __age_data_t{0xE0020, version::v3_1},       __age_data_t{0xE0080, version::unassigned},
-    __age_data_t{0xE0100, version::v4_0},       __age_data_t{0xE01F0, version::unassigned},
-    __age_data_t{0xFFFFC, version::v2_0},       __age_data_t{0xFFFFD, version::unassigned},
-    __age_data_t{0x10FFFC, version::v2_0},      __age_data_t{0x10FFFD, version::unassigned},
-    __age_data_t{0x110000, version::unassigned}};
+static constexpr _compact_range __age_data = {
+    0x00000001, 0x0001F604, 0x0001FA01, 0x00021804, 0x00022006, 0x00022107, 0x00022204, 0x00023407,
+    0x00023708, 0x00024209, 0x00025001, 0x0002A904, 0x0002AE07, 0x0002B001, 0x0002DF04, 0x0002E001,
+    0x0002EA04, 0x0002EF07, 0x00030001, 0x00034604, 0x00034F06, 0x00035007, 0x00035808, 0x00035D07,
+    0x00036001, 0x00036204, 0x00036306, 0x0003700A, 0x00037401, 0x0003760A, 0x00037800, 0x00037A01,
+    0x00037B09, 0x00037E01, 0x00037F10, 0x00038000, 0x00038401, 0x00038B00, 0x00038C01, 0x00038D00,
+    0x00038E01, 0x0003A200, 0x0003A301, 0x0003CF0A, 0x0003D001, 0x0003D704, 0x0003D806, 0x0003DA01,
+    0x0003DB04, 0x0003DC01, 0x0003DD04, 0x0003DE01, 0x0003DF04, 0x0003E001, 0x0003E104, 0x0003E201,
+    0x0003F405, 0x0003F606, 0x0003F707, 0x0003FC08, 0x00040004, 0x00040101, 0x00040D04, 0x00040E01,
+    0x00045004, 0x00045101, 0x00045D04, 0x00045E01, 0x0004870A, 0x00048804, 0x00048A06, 0x00048C04,
+    0x00049001, 0x0004C506, 0x0004C701, 0x0004C906, 0x0004CB01, 0x0004CD06, 0x0004CF09, 0x0004D001,
+    0x0004EC04, 0x0004EE01, 0x0004F608, 0x0004F801, 0x0004FA09, 0x00050006, 0x00051009, 0x0005140A,
+    0x0005240B, 0x0005260C, 0x00052810, 0x00053000, 0x00053101, 0x00055700, 0x00055901, 0x00056014,
+    0x00056101, 0x00058814, 0x00058901, 0x00058A04, 0x00058B00, 0x00058D10, 0x00058F0D, 0x00059000,
+    0x00059102, 0x0005A208, 0x0005A302, 0x0005B001, 0x0005BA09, 0x0005BB01, 0x0005C402, 0x0005C508,
+    0x0005C800, 0x0005D001, 0x0005EB00, 0x0005EF14, 0x0005F001, 0x0005F500, 0x00060007, 0x0006040D,
+    0x00060510, 0x0006060A, 0x00060B08, 0x00060C01, 0x00060D07, 0x0006160A, 0x00061B01, 0x00061C0F,
+    0x00061D00, 0x00061E08, 0x00061F01, 0x0006200C, 0x00062101, 0x00063B0A, 0x00064001, 0x00065304,
+    0x00065607, 0x00065908, 0x00065F0C, 0x00066001, 0x00066E06, 0x00067001, 0x0006B804, 0x0006BA01,
+    0x0006BF04, 0x0006C001, 0x0006CF04, 0x0006D001, 0x0006EE07, 0x0006F001, 0x0006FA04, 0x0006FF07,
+    0x00070004, 0x00070E00, 0x00070F04, 0x00072D07, 0x00073004, 0x00074B00, 0x00074D07, 0x00075008,
+    0x00076E0A, 0x00078004, 0x0007B106, 0x0007B200, 0x0007C009, 0x0007FB00, 0x0007FD14, 0x0008000B,
+    0x00082E00, 0x0008300B, 0x00083F00, 0x0008400C, 0x00085C00, 0x00085E0C, 0x00085F00, 0x00086013,
+    0x00086B00, 0x0008A00D, 0x0008A110, 0x0008A20D, 0x0008AD10, 0x0008B311, 0x0008B500, 0x0008B612,
+    0x0008BE00, 0x0008D314, 0x0008D412, 0x0008E311, 0x0008E40D, 0x0008FF10, 0x0009000B, 0x00090101,
+    0x00090407, 0x00090501, 0x00093A0C, 0x00093C01, 0x00094E0B, 0x00094F0C, 0x00095001, 0x0009550B,
+    0x0009560C, 0x00095801, 0x0009710A, 0x0009730C, 0x00097810, 0x0009790B, 0x00097B09, 0x00097D08,
+    0x00097E09, 0x00098010, 0x00098101, 0x00098400, 0x00098501, 0x00098D00, 0x00098F01, 0x00099100,
+    0x00099301, 0x0009A900, 0x0009AA01, 0x0009B100, 0x0009B201, 0x0009B300, 0x0009B601, 0x0009BA00,
+    0x0009BC01, 0x0009BD07, 0x0009BE01, 0x0009C500, 0x0009C701, 0x0009C900, 0x0009CB01, 0x0009CE08,
+    0x0009CF00, 0x0009D701, 0x0009D800, 0x0009DC01, 0x0009DE00, 0x0009DF01, 0x0009E400, 0x0009E601,
+    0x0009FB0B, 0x0009FC13, 0x0009FE14, 0x0009FF00, 0x000A0107, 0x000A0201, 0x000A0307, 0x000A0400,
+    0x000A0501, 0x000A0B00, 0x000A0F01, 0x000A1100, 0x000A1301, 0x000A2900, 0x000A2A01, 0x000A3100,
+    0x000A3201, 0x000A3400, 0x000A3501, 0x000A3700, 0x000A3801, 0x000A3A00, 0x000A3C01, 0x000A3D00,
+    0x000A3E01, 0x000A4300, 0x000A4701, 0x000A4900, 0x000A4B01, 0x000A4E00, 0x000A510A, 0x000A5200,
+    0x000A5901, 0x000A5D00, 0x000A5E01, 0x000A5F00, 0x000A6601, 0x000A750A, 0x000A7614, 0x000A7700,
+    0x000A8101, 0x000A8400, 0x000A8501, 0x000A8C07, 0x000A8D01, 0x000A8E00, 0x000A8F01, 0x000A9200,
+    0x000A9301, 0x000AA900, 0x000AAA01, 0x000AB100, 0x000AB201, 0x000AB400, 0x000AB501, 0x000ABA00,
+    0x000ABC01, 0x000AC600, 0x000AC701, 0x000ACA00, 0x000ACB01, 0x000ACE00, 0x000AD001, 0x000AD100,
+    0x000AE001, 0x000AE107, 0x000AE400, 0x000AE601, 0x000AF00D, 0x000AF107, 0x000AF200, 0x000AF911,
+    0x000AFA13, 0x000B0000, 0x000B0101, 0x000B0400, 0x000B0501, 0x000B0D00, 0x000B0F01, 0x000B1100,
+    0x000B1301, 0x000B2900, 0x000B2A01, 0x000B3100, 0x000B3201, 0x000B3400, 0x000B3507, 0x000B3601,
+    0x000B3A00, 0x000B3C01, 0x000B440A, 0x000B4500, 0x000B4701, 0x000B4900, 0x000B4B01, 0x000B4E00,
+    0x000B5601, 0x000B5800, 0x000B5C01, 0x000B5E00, 0x000B5F01, 0x000B620A, 0x000B6400, 0x000B6601,
+    0x000B7107, 0x000B720C, 0x000B7800, 0x000B8201, 0x000B8400, 0x000B8501, 0x000B8B00, 0x000B8E01,
+    0x000B9100, 0x000B9201, 0x000B9600, 0x000B9901, 0x000B9B00, 0x000B9C01, 0x000B9D00, 0x000B9E01,
+    0x000BA000, 0x000BA301, 0x000BA500, 0x000BA801, 0x000BAB00, 0x000BAE01, 0x000BB608, 0x000BB701,
+    0x000BBA00, 0x000BBE01, 0x000BC300, 0x000BC601, 0x000BC900, 0x000BCA01, 0x000BCE00, 0x000BD00A,
+    0x000BD100, 0x000BD701, 0x000BD800, 0x000BE608, 0x000BE701, 0x000BF307, 0x000BFB00, 0x000C0010,
+    0x000C0101, 0x000C0414, 0x000C0501, 0x000C0D00, 0x000C0E01, 0x000C1100, 0x000C1201, 0x000C2900,
+    0x000C2A01, 0x000C3410, 0x000C3501, 0x000C3A00, 0x000C3D0A, 0x000C3E01, 0x000C4500, 0x000C4601,
+    0x000C4900, 0x000C4A01, 0x000C4E00, 0x000C5501, 0x000C5700, 0x000C580A, 0x000C5A11, 0x000C5B00,
+    0x000C6001, 0x000C620A, 0x000C6400, 0x000C6601, 0x000C7000, 0x000C7715, 0x000C780A, 0x000C8012,
+    0x000C8110, 0x000C8201, 0x000C8414, 0x000C8501, 0x000C8D00, 0x000C8E01, 0x000C9100, 0x000C9201,
+    0x000CA900, 0x000CAA01, 0x000CB400, 0x000CB501, 0x000CBA00, 0x000CBC07, 0x000CBE01, 0x000CC500,
+    0x000CC601, 0x000CC900, 0x000CCA01, 0x000CCE00, 0x000CD501, 0x000CD700, 0x000CDE01, 0x000CDF00,
+    0x000CE001, 0x000CE209, 0x000CE400, 0x000CE601, 0x000CF000, 0x000CF109, 0x000CF300, 0x000D0013,
+    0x000D0110, 0x000D0201, 0x000D0400, 0x000D0501, 0x000D0D00, 0x000D0E01, 0x000D1100, 0x000D1201,
+    0x000D290C, 0x000D2A01, 0x000D3A0C, 0x000D3B13, 0x000D3D0A, 0x000D3E01, 0x000D440A, 0x000D4500,
+    0x000D4601, 0x000D4900, 0x000D4A01, 0x000D4E0C, 0x000D4F12, 0x000D5000, 0x000D5412, 0x000D5701,
+    0x000D5812, 0x000D5F11, 0x000D6001, 0x000D620A, 0x000D6400, 0x000D6601, 0x000D700A, 0x000D7612,
+    0x000D790A, 0x000D8000, 0x000D8204, 0x000D8400, 0x000D8504, 0x000D9700, 0x000D9A04, 0x000DB200,
+    0x000DB304, 0x000DBC00, 0x000DBD04, 0x000DBE00, 0x000DC004, 0x000DC700, 0x000DCA04, 0x000DCB00,
+    0x000DCF04, 0x000DD500, 0x000DD604, 0x000DD700, 0x000DD804, 0x000DE000, 0x000DE610, 0x000DF000,
+    0x000DF204, 0x000DF500, 0x000E0101, 0x000E3B00, 0x000E3F01, 0x000E5C00, 0x000E8101, 0x000E8300,
+    0x000E8401, 0x000E8500, 0x000E8615, 0x000E8701, 0x000E8915, 0x000E8A01, 0x000E8B00, 0x000E8C15,
+    0x000E8D01, 0x000E8E15, 0x000E9401, 0x000E9815, 0x000E9901, 0x000EA015, 0x000EA101, 0x000EA400,
+    0x000EA501, 0x000EA600, 0x000EA701, 0x000EA815, 0x000EAA01, 0x000EAC15, 0x000EAD01, 0x000EBA15,
+    0x000EBB01, 0x000EBE00, 0x000EC001, 0x000EC500, 0x000EC601, 0x000EC700, 0x000EC801, 0x000ECE00,
+    0x000ED001, 0x000EDA00, 0x000EDC01, 0x000EDE0D, 0x000EE000, 0x000F0002, 0x000F4800, 0x000F4902,
+    0x000F6A04, 0x000F6B0A, 0x000F6D00, 0x000F7102, 0x000F8C0C, 0x000F9002, 0x000F9604, 0x000F9702,
+    0x000F9800, 0x000F9902, 0x000FAE04, 0x000FB102, 0x000FB804, 0x000FB902, 0x000FBA04, 0x000FBD00,
+    0x000FBE04, 0x000FCD00, 0x000FCE0A, 0x000FCF04, 0x000FD008, 0x000FD20A, 0x000FD50B, 0x000FD90C,
+    0x000FDB00, 0x00100004, 0x0010220A, 0x00102304, 0x0010280A, 0x00102904, 0x00102B0A, 0x00102C04,
+    0x0010330A, 0x00103604, 0x00103A0A, 0x00104004, 0x00105A0A, 0x00109A0B, 0x00109E0A, 0x0010A001,
+    0x0010C600, 0x0010C70D, 0x0010C800, 0x0010CD0D, 0x0010CE00, 0x0010D001, 0x0010F706, 0x0010F908,
+    0x0010FB01, 0x0010FC08, 0x0010FD0D, 0x00110001, 0x00115A0B, 0x00115F01, 0x0011A30B, 0x0011A801,
+    0x0011FA0B, 0x00120004, 0x00120708, 0x00120804, 0x00124708, 0x00124804, 0x00124900, 0x00124A04,
+    0x00124E00, 0x00125004, 0x00125700, 0x00125804, 0x00125900, 0x00125A04, 0x00125E00, 0x00126004,
+    0x00128708, 0x00128804, 0x00128900, 0x00128A04, 0x00128E00, 0x00129004, 0x0012AF08, 0x0012B004,
+    0x0012B100, 0x0012B204, 0x0012B600, 0x0012B804, 0x0012BF00, 0x0012C004, 0x0012C100, 0x0012C204,
+    0x0012C600, 0x0012C804, 0x0012CF08, 0x0012D004, 0x0012D700, 0x0012D804, 0x0012EF08, 0x0012F004,
+    0x00130F08, 0x00131004, 0x00131100, 0x00131204, 0x00131600, 0x00131804, 0x00131F08, 0x00132004,
+    0x00134708, 0x00134804, 0x00135B00, 0x00135D0C, 0x00135F08, 0x00136104, 0x00137D00, 0x00138008,
+    0x00139A00, 0x0013A004, 0x0013F511, 0x0013F600, 0x0013F811, 0x0013FE00, 0x0014000B, 0x00140104,
+    0x0016770B, 0x00168004, 0x00169D00, 0x0016A004, 0x0016F110, 0x0016F900, 0x00170006, 0x00170D00,
+    0x00170E06, 0x00171500, 0x00172006, 0x00173700, 0x00174006, 0x00175400, 0x00176006, 0x00176D00,
+    0x00176E06, 0x00177100, 0x00177206, 0x00177400, 0x00178004, 0x0017DD07, 0x0017DE00, 0x0017E004,
+    0x0017EA00, 0x0017F007, 0x0017FA00, 0x00180004, 0x00180F00, 0x00181004, 0x00181A00, 0x00182004,
+    0x00187814, 0x00187900, 0x00188004, 0x0018AA0A, 0x0018AB00, 0x0018B00B, 0x0018F600, 0x00190007,
+    0x00191D10, 0x00191F00, 0x00192007, 0x00192C00, 0x00193007, 0x00193C00, 0x00194007, 0x00194100,
+    0x00194407, 0x00196E00, 0x00197007, 0x00197500, 0x00198008, 0x0019AA0B, 0x0019AC00, 0x0019B008,
+    0x0019CA00, 0x0019D008, 0x0019DA0B, 0x0019DB00, 0x0019DE08, 0x0019E007, 0x001A0008, 0x001A1C00,
+    0x001A1E08, 0x001A200B, 0x001A5F00, 0x001A600B, 0x001A7D00, 0x001A7F0B, 0x001A8A00, 0x001A900B,
+    0x001A9A00, 0x001AA00B, 0x001AAE00, 0x001AB010, 0x001ABF00, 0x001B0009, 0x001B4C00, 0x001B5009,
+    0x001B7D00, 0x001B800A, 0x001BAB0D, 0x001BAE0A, 0x001BBA0D, 0x001BC00C, 0x001BF400, 0x001BFC0C,
+    0x001C000A, 0x001C3800, 0x001C3B0A, 0x001C4A00, 0x001C4D0A, 0x001C8012, 0x001C8900, 0x001C9014,
+    0x001CBB00, 0x001CBD14, 0x001CC00D, 0x001CC800, 0x001CD00B, 0x001CF30D, 0x001CF713, 0x001CF810,
+    0x001CFA15, 0x001CFB00, 0x001D0007, 0x001D6C08, 0x001DC409, 0x001DCB0A, 0x001DE710, 0x001DF613,
+    0x001DFA00, 0x001DFB12, 0x001DFC0C, 0x001DFD0B, 0x001DFE09, 0x001E0001, 0x001E9B02, 0x001E9C0A,
+    0x001EA001, 0x001EFA0A, 0x001F0001, 0x001F1600, 0x001F1801, 0x001F1E00, 0x001F2001, 0x001F4600,
+    0x001F4801, 0x001F4E00, 0x001F5001, 0x001F5800, 0x001F5901, 0x001F5A00, 0x001F5B01, 0x001F5C00,
+    0x001F5D01, 0x001F5E00, 0x001F5F01, 0x001F7E00, 0x001F8001, 0x001FB500, 0x001FB601, 0x001FC500,
+    0x001FC601, 0x001FD400, 0x001FD601, 0x001FDC00, 0x001FDD01, 0x001FF000, 0x001FF201, 0x001FF500,
+    0x001FF601, 0x001FFF00, 0x00200001, 0x00202F04, 0x00203001, 0x00204706, 0x00204804, 0x00204E06,
+    0x00205307, 0x00205508, 0x00205706, 0x00205808, 0x00205F06, 0x0020640A, 0x00206500, 0x0020660F,
+    0x00206A01, 0x00207106, 0x00207200, 0x00207401, 0x00208F00, 0x00209008, 0x0020950C, 0x00209D00,
+    0x0020A001, 0x0020AB02, 0x0020AC03, 0x0020AD04, 0x0020B006, 0x0020B208, 0x0020B60B, 0x0020B90C,
+    0x0020BA0E, 0x0020BB10, 0x0020BE11, 0x0020BF13, 0x0020C000, 0x0020D001, 0x0020E204, 0x0020E406,
+    0x0020EB08, 0x0020EC09, 0x0020F00A, 0x0020F100, 0x00210001, 0x00213904, 0x00213B07, 0x00213C08,
+    0x00213D06, 0x00214C08, 0x00214D09, 0x00214F0A, 0x0021500B, 0x00215301, 0x00218304, 0x00218409,
+    0x0021850A, 0x0021890B, 0x00218A11, 0x00218C00, 0x00219001, 0x0021EB04, 0x0021F406, 0x00220001,
+    0x0022F206, 0x00230001, 0x00230104, 0x00230201, 0x00237B04, 0x00237C06, 0x00237D04, 0x00239B06,
+    0x0023CF07, 0x0023D108, 0x0023DC09, 0x0023E80B, 0x0023E90C, 0x0023F410, 0x0023FB12, 0x0023FF13,
+    0x00240001, 0x00242504, 0x00242700, 0x00244001, 0x00244B00, 0x00246001, 0x0024EB06, 0x0024FF07,
+    0x00250001, 0x00259606, 0x0025A001, 0x0025F004, 0x0025F806, 0x00260001, 0x00261407, 0x00261606,
+    0x00261808, 0x00261904, 0x00261A01, 0x00267004, 0x00267206, 0x00267E08, 0x00268006, 0x00268A07,
+    0x00269208, 0x00269D0A, 0x00269E0B, 0x0026A007, 0x0026A208, 0x0026B209, 0x0026B30A, 0x0026BD0B,
+    0x0026C00A, 0x0026C40B, 0x0026CE0C, 0x0026CF0B, 0x0026E20C, 0x0026E30B, 0x0026E40C, 0x0026E80B,
+    0x00270010, 0x00270101, 0x0027050C, 0x00270601, 0x00270A0C, 0x00270C01, 0x0027280C, 0x00272901,
+    0x00274C0C, 0x00274D01, 0x00274E0C, 0x00274F01, 0x0027530C, 0x00275601, 0x0027570B, 0x00275801,
+    0x00275F0C, 0x00276101, 0x00276806, 0x00277601, 0x0027950C, 0x00279801, 0x0027B00C, 0x0027B101,
+    0x0027BF0C, 0x0027C008, 0x0027C709, 0x0027CB0D, 0x0027CC0A, 0x0027CD0D, 0x0027CE0C, 0x0027D006,
+    0x0027EC0A, 0x0027F006, 0x00280004, 0x00290006, 0x002B0007, 0x002B0E08, 0x002B1409, 0x002B1B0A,
+    0x002B2009, 0x002B240A, 0x002B4D10, 0x002B500A, 0x002B550B, 0x002B5A10, 0x002B7400, 0x002B7610,
+    0x002B9600, 0x002B9810, 0x002BBA14, 0x002BBD10, 0x002BC915, 0x002BCA10, 0x002BD213, 0x002BD314,
+    0x002BEC11, 0x002BF014, 0x002BFF15, 0x002C0008, 0x002C2F00, 0x002C3008, 0x002C5F00, 0x002C6009,
+    0x002C6D0A, 0x002C700B, 0x002C710A, 0x002C7409, 0x002C780A, 0x002C7E0B, 0x002C8008, 0x002CEB0B,
+    0x002CF20D, 0x002CF400, 0x002CF908, 0x002D2600, 0x002D270D, 0x002D2800, 0x002D2D0D, 0x002D2E00,
+    0x002D3008, 0x002D660D, 0x002D6800, 0x002D6F08, 0x002D700C, 0x002D7100, 0x002D7F0C, 0x002D8008,
+    0x002D9700, 0x002DA008, 0x002DA700, 0x002DA808, 0x002DAF00, 0x002DB008, 0x002DB700, 0x002DB808,
+    0x002DBF00, 0x002DC008, 0x002DC700, 0x002DC808, 0x002DCF00, 0x002DD008, 0x002DD700, 0x002DD808,
+    0x002DDF00, 0x002DE00A, 0x002E0008, 0x002E180A, 0x002E1C08, 0x002E1E0A, 0x002E310B, 0x002E320D,
+    0x002E3C10, 0x002E4312, 0x002E4513, 0x002E4A14, 0x002E4F15, 0x002E5000, 0x002E8004, 0x002E9A00,
+    0x002E9B04, 0x002EF400, 0x002F0004, 0x002FD600, 0x002FF004, 0x002FFC00, 0x00300001, 0x00303804,
+    0x00303B06, 0x00303E04, 0x00303F01, 0x00304000, 0x00304101, 0x00309506, 0x00309700, 0x00309901,
+    0x00309F06, 0x0030A101, 0x0030FF06, 0x00310000, 0x00310501, 0x00312D0A, 0x00312E13, 0x00312F14,
+    0x00313000, 0x00313101, 0x00318F00, 0x00319001, 0x0031A004, 0x0031B80C, 0x0031BB00, 0x0031C008,
+    0x0031D00A, 0x0031E400, 0x0031F006, 0x00320001, 0x00321D07, 0x00321F00, 0x00322001, 0x0032440B,
+    0x00325007, 0x00325106, 0x00326001, 0x00327C07, 0x00327E08, 0x00327F01, 0x0032B106, 0x0032C001,
+    0x0032CC07, 0x0032D001, 0x0032FF00, 0x00330001, 0x00337707, 0x00337B01, 0x0033DE07, 0x0033E001,
+    0x0033FF07, 0x00340000, 0x00340304, 0x00340400, 0x00340504, 0x00340600, 0x00348104, 0x00348200,
+    0x00348304, 0x00348400, 0x00382804, 0x00382900, 0x00382A04, 0x00382B00, 0x003B4B04, 0x003B4C00,
+    0x003B4D04, 0x003B4E00, 0x004DB404, 0x004DB500, 0x004DC007, 0x004E0001, 0x004E0200, 0x004E0301,
+    0x004E0400, 0x004E0501, 0x004E0600, 0x004E0701, 0x004E0A00, 0x004E5B01, 0x004E5C00, 0x004E5D01,
+    0x004E5E00, 0x004E8A01, 0x004E8B00, 0x004E8C01, 0x004E8D00, 0x004E9201, 0x004E9300, 0x004E9401,
+    0x004E9700, 0x004EBD01, 0x004EBE00, 0x004EBF01, 0x004EC100, 0x004EDD01, 0x004EDE00, 0x004EDF01,
+    0x004EE000, 0x004EE601, 0x004EE700, 0x004EE801, 0x004EE900, 0x004F0B01, 0x004F0C00, 0x004F0D01,
+    0x004F0E00, 0x004F6E01, 0x004F6F00, 0x004F7001, 0x004F7100, 0x00510201, 0x00510300, 0x00510401,
+    0x00510500, 0x00514401, 0x00514500, 0x00514601, 0x00514700, 0x00516701, 0x00516800, 0x00516901,
+    0x00516E00, 0x00533F01, 0x00534000, 0x00534101, 0x00534600, 0x00534A01, 0x00534B00, 0x00534C01,
+    0x00534D00, 0x0053BF01, 0x0053C000, 0x0053C101, 0x0053C500, 0x0056D901, 0x0056DA00, 0x0056DB01,
+    0x0056DC00, 0x0058EF01, 0x0058F000, 0x0058F101, 0x0058F200, 0x0058F701, 0x0058F800, 0x0058F901,
+    0x0058FA00, 0x005E7801, 0x005E7900, 0x005E7A01, 0x005E7B00, 0x005EFC01, 0x005EFD00, 0x005EFE01,
+    0x005F0000, 0x005F0A01, 0x005F0B00, 0x005F0C01, 0x005F1100, 0x0062FC01, 0x0062FD00, 0x0062FE01,
+    0x0062FF00, 0x00634A01, 0x00634B00, 0x00634C01, 0x00634D00, 0x0067D001, 0x0067D100, 0x0067D201,
+    0x0067D300, 0x006F0401, 0x006F0500, 0x006F0601, 0x006F0700, 0x00739401, 0x00739500, 0x00739601,
+    0x00739700, 0x00767C01, 0x00767D00, 0x00767E01, 0x00767F00, 0x00808401, 0x00808500, 0x00808601,
+    0x00808700, 0x00842A01, 0x00842B00, 0x00842C01, 0x00842D00, 0x008CAC01, 0x008CAD00, 0x008CAE01,
+    0x008CAF00, 0x008CB101, 0x008CB200, 0x008CB301, 0x008CB400, 0x008D2E01, 0x008D2F00, 0x008D3001,
+    0x008D3100, 0x00961F01, 0x00962000, 0x00962101, 0x00962200, 0x00964401, 0x00964500, 0x00964601,
+    0x00964700, 0x00964A01, 0x00964B00, 0x00964C01, 0x00964D00, 0x00967601, 0x00967700, 0x00967801,
+    0x00967900, 0x0096F401, 0x0096F500, 0x0096F601, 0x0096F700, 0x009FA401, 0x009FA500, 0x009FBA08,
+    0x009FBB00, 0x009FC20A, 0x009FC300, 0x009FCA0B, 0x009FCB00, 0x009FCC0D, 0x009FCD00, 0x009FD411,
+    0x009FD500, 0x009FE913, 0x009FEA00, 0x009FEE14, 0x009FEF00, 0x00A00004, 0x00A48D00, 0x00A49004,
+    0x00A4A206, 0x00A4A404, 0x00A4B406, 0x00A4B504, 0x00A4C106, 0x00A4C204, 0x00A4C506, 0x00A4C604,
+    0x00A4C700, 0x00A4D00B, 0x00A5000A, 0x00A62C00, 0x00A6400A, 0x00A6600C, 0x00A6620A, 0x00A6740D,
+    0x00A67C0A, 0x00A69810, 0x00A69E11, 0x00A69F0D, 0x00A6A00B, 0x00A6F800, 0x00A70008, 0x00A71709,
+    0x00A71B0A, 0x00A72009, 0x00A7220A, 0x00A78D0C, 0x00A78F11, 0x00A7900C, 0x00A7920D, 0x00A79410,
+    0x00A7A00C, 0x00A7AA0D, 0x00A7AB10, 0x00A7AE12, 0x00A7AF14, 0x00A7B010, 0x00A7B211, 0x00A7B814,
+    0x00A7BA15, 0x00A7C000, 0x00A7C215, 0x00A7C700, 0x00A7F710, 0x00A7F80D, 0x00A7FA0C, 0x00A7FB0A,
+    0x00A80008, 0x00A82C00, 0x00A8300B, 0x00A83A00, 0x00A84009, 0x00A87800, 0x00A8800A, 0x00A8C512,
+    0x00A8C600, 0x00A8CE0A, 0x00A8DA00, 0x00A8E00B, 0x00A8FC11, 0x00A8FE14, 0x00A9000A, 0x00A95400,
+    0x00A95F0A, 0x00A9600B, 0x00A97D00, 0x00A9800B, 0x00A9CE00, 0x00A9CF0B, 0x00A9DA00, 0x00A9DE0B,
+    0x00A9E010, 0x00A9FF00, 0x00AA000A, 0x00AA3700, 0x00AA400A, 0x00AA4E00, 0x00AA500A, 0x00AA5A00,
+    0x00AA5C0A, 0x00AA600B, 0x00AA7C10, 0x00AA800B, 0x00AAC300, 0x00AADB0B, 0x00AAE00D, 0x00AAF700,
+    0x00AB010C, 0x00AB0700, 0x00AB090C, 0x00AB0F00, 0x00AB110C, 0x00AB1700, 0x00AB200C, 0x00AB2700,
+    0x00AB280C, 0x00AB2F00, 0x00AB3010, 0x00AB6011, 0x00AB6410, 0x00AB6615, 0x00AB6800, 0x00AB7011,
+    0x00ABC00B, 0x00ABEE00, 0x00ABF00B, 0x00ABFA00, 0x00AC0002, 0x00D7A400, 0x00D7B00B, 0x00D7C700,
+    0x00D7CB0B, 0x00D7FC00, 0x00DB7E02, 0x00DB7F00, 0x00DBFE02, 0x00DBFF00, 0x00DFFE02, 0x00DFFF00,
+    0x00F8FE01, 0x00F8FF00, 0x00F90001, 0x00FA2E0D, 0x00FA3006, 0x00FA6B0B, 0x00FA6E00, 0x00FA7008,
+    0x00FADA00, 0x00FB0001, 0x00FB0700, 0x00FB1301, 0x00FB1800, 0x00FB1D04, 0x00FB1E01, 0x00FB3700,
+    0x00FB3801, 0x00FB3D00, 0x00FB3E01, 0x00FB3F00, 0x00FB4001, 0x00FB4200, 0x00FB4301, 0x00FB4500,
+    0x00FB4601, 0x00FBB20C, 0x00FBC200, 0x00FBD301, 0x00FD4000, 0x00FD5001, 0x00FD9000, 0x00FD9201,
+    0x00FDC800, 0x00FDF001, 0x00FDFC06, 0x00FDFD07, 0x00FDFE00, 0x00FE0006, 0x00FE1008, 0x00FE1A00,
+    0x00FE2001, 0x00FE240A, 0x00FE2710, 0x00FE2E11, 0x00FE3001, 0x00FE4506, 0x00FE4707, 0x00FE4901,
+    0x00FE5300, 0x00FE5401, 0x00FE6700, 0x00FE6801, 0x00FE6C00, 0x00FE7001, 0x00FE7306, 0x00FE7401,
+    0x00FE7500, 0x00FE7601, 0x00FEFD00, 0x00FEFF01, 0x00FF0000, 0x00FF0101, 0x00FF5F06, 0x00FF6101,
+    0x00FFBF00, 0x00FFC201, 0x00FFC800, 0x00FFCA01, 0x00FFD000, 0x00FFD201, 0x00FFD800, 0x00FFDA01,
+    0x00FFDD00, 0x00FFE001, 0x00FFE700, 0x00FFE801, 0x00FFEF00, 0x00FFF904, 0x00FFFC03, 0x00FFFD01,
+    0x00FFFE00, 0x01000007, 0x01000C00, 0x01000D07, 0x01002700, 0x01002807, 0x01003B00, 0x01003C07,
+    0x01003E00, 0x01003F07, 0x01004E00, 0x01005007, 0x01005E00, 0x01008007, 0x0100FB00, 0x01010007,
+    0x01010300, 0x01010707, 0x01013400, 0x01013707, 0x01014008, 0x01018B10, 0x01018D12, 0x01018F00,
+    0x0101900A, 0x01019C00, 0x0101A010, 0x0101A100, 0x0101D00A, 0x0101FE00, 0x0102800A, 0x01029D00,
+    0x0102A00A, 0x0102D100, 0x0102E010, 0x0102FC00, 0x01030005, 0x01031F10, 0x01032005, 0x01032400,
+    0x01032D13, 0x01033005, 0x01034B00, 0x01035010, 0x01037B00, 0x01038007, 0x01039E00, 0x01039F07,
+    0x0103A008, 0x0103C400, 0x0103C808, 0x0103D600, 0x01040005, 0x01042607, 0x01042805, 0x01044E07,
+    0x01049E00, 0x0104A007, 0x0104AA00, 0x0104B012, 0x0104D400, 0x0104D812, 0x0104FC00, 0x01050010,
+    0x01052800, 0x01053010, 0x01056400, 0x01056F10, 0x01057000, 0x01060010, 0x01073700, 0x01074010,
+    0x01075600, 0x01076010, 0x01076800, 0x01080007, 0x01080600, 0x01080807, 0x01080900, 0x01080A07,
+    0x01083600, 0x01083707, 0x01083900, 0x01083C07, 0x01083D00, 0x01083F07, 0x0108400B, 0x01085600,
+    0x0108570B, 0x01086010, 0x01089F00, 0x0108A710, 0x0108B000, 0x0108E011, 0x0108F300, 0x0108F411,
+    0x0108F600, 0x0108FB11, 0x01090009, 0x01091A0B, 0x01091C00, 0x01091F09, 0x0109200A, 0x01093A00,
+    0x01093F0A, 0x01094000, 0x0109800D, 0x0109B800, 0x0109BC11, 0x0109BE0D, 0x0109C011, 0x0109D000,
+    0x0109D211, 0x010A0008, 0x010A0400, 0x010A0508, 0x010A0700, 0x010A0C08, 0x010A1400, 0x010A1508,
+    0x010A1800, 0x010A1908, 0x010A3414, 0x010A3600, 0x010A3808, 0x010A3B00, 0x010A3F08, 0x010A4814,
+    0x010A4900, 0x010A5008, 0x010A5900, 0x010A600B, 0x010A8010, 0x010AA000, 0x010AC010, 0x010AE700,
+    0x010AEB10, 0x010AF700, 0x010B000B, 0x010B3600, 0x010B390B, 0x010B5600, 0x010B580B, 0x010B7300,
+    0x010B780B, 0x010B8010, 0x010B9200, 0x010B9910, 0x010B9D00, 0x010BA910, 0x010BB000, 0x010C000B,
+    0x010C4900, 0x010C8011, 0x010CB300, 0x010CC011, 0x010CF300, 0x010CFA11, 0x010D0014, 0x010D2800,
+    0x010D3014, 0x010D3A00, 0x010E600B, 0x010E7F00, 0x010F0014, 0x010F2800, 0x010F3014, 0x010F5A00,
+    0x010FE015, 0x010FF700, 0x0110000C, 0x01104E00, 0x0110520C, 0x01107000, 0x01107F10, 0x0110800B,
+    0x0110C200, 0x0110CD14, 0x0110CE00, 0x0110D00D, 0x0110E900, 0x0110F00D, 0x0110FA00, 0x0111000D,
+    0x01113500, 0x0111360D, 0x01114414, 0x01114700, 0x01115010, 0x01117700, 0x0111800D, 0x0111C911,
+    0x0111CD10, 0x0111CE00, 0x0111D00D, 0x0111DA10, 0x0111DB11, 0x0111E000, 0x0111E110, 0x0111F500,
+    0x01120010, 0x01121200, 0x01121310, 0x01123E12, 0x01123F00, 0x01128011, 0x01128700, 0x01128811,
+    0x01128900, 0x01128A11, 0x01128E00, 0x01128F11, 0x01129E00, 0x01129F11, 0x0112AA00, 0x0112B010,
+    0x0112EB00, 0x0112F010, 0x0112FA00, 0x01130011, 0x01130110, 0x01130400, 0x01130510, 0x01130D00,
+    0x01130F10, 0x01131100, 0x01131310, 0x01132900, 0x01132A10, 0x01133100, 0x01133210, 0x01133400,
+    0x01133510, 0x01133A00, 0x01133B14, 0x01133C10, 0x01134500, 0x01134710, 0x01134900, 0x01134B10,
+    0x01134E00, 0x01135011, 0x01135100, 0x01135710, 0x01135800, 0x01135D10, 0x01136400, 0x01136610,
+    0x01136D00, 0x01137010, 0x01137500, 0x01140012, 0x01145A00, 0x01145B12, 0x01145C00, 0x01145D12,
+    0x01145E14, 0x01145F15, 0x01146000, 0x01148010, 0x0114C800, 0x0114D010, 0x0114DA00, 0x01158010,
+    0x0115B600, 0x0115B810, 0x0115CA11, 0x0115DE00, 0x01160010, 0x01164500, 0x01165010, 0x01165A00,
+    0x01166012, 0x01166D00, 0x0116800D, 0x0116B815, 0x0116B900, 0x0116C00D, 0x0116CA00, 0x01170011,
+    0x01171A14, 0x01171B00, 0x01171D11, 0x01172C00, 0x01173011, 0x01174000, 0x01180014, 0x01183C00,
+    0x0118A010, 0x0118F300, 0x0118FF10, 0x01190000, 0x0119A015, 0x0119A800, 0x0119AA15, 0x0119D800,
+    0x0119DA15, 0x0119E500, 0x011A0013, 0x011A4800, 0x011A5013, 0x011A8415, 0x011A8613, 0x011A9D14,
+    0x011A9E13, 0x011AA300, 0x011AC010, 0x011AF900, 0x011C0012, 0x011C0900, 0x011C0A12, 0x011C3700,
+    0x011C3812, 0x011C4600, 0x011C5012, 0x011C6D00, 0x011C7012, 0x011C9000, 0x011C9212, 0x011CA800,
+    0x011CA912, 0x011CB700, 0x011D0013, 0x011D0700, 0x011D0813, 0x011D0A00, 0x011D0B13, 0x011D3700,
+    0x011D3A13, 0x011D3B00, 0x011D3C13, 0x011D3E00, 0x011D3F13, 0x011D4800, 0x011D5013, 0x011D5A00,
+    0x011D6014, 0x011D6600, 0x011D6714, 0x011D6900, 0x011D6A14, 0x011D8F00, 0x011D9014, 0x011D9200,
+    0x011D9314, 0x011D9900, 0x011DA014, 0x011DAA00, 0x011EE014, 0x011EF900, 0x011FC015, 0x011FF200,
+    0x011FFF15, 0x01200009, 0x01236F10, 0x01239911, 0x01239A00, 0x01240009, 0x01246310, 0x01246F00,
+    0x01247009, 0x01247410, 0x01247500, 0x01248011, 0x01254400, 0x0130000B, 0x01342F00, 0x01343015,
+    0x01343900, 0x01440011, 0x01464700, 0x0168000C, 0x016A3900, 0x016A4010, 0x016A5F00, 0x016A6010,
+    0x016A6A00, 0x016A6E10, 0x016A7000, 0x016AD010, 0x016AEE00, 0x016AF010, 0x016AF600, 0x016B0010,
+    0x016B4600, 0x016B5010, 0x016B5A00, 0x016B5B10, 0x016B6200, 0x016B6310, 0x016B7800, 0x016B7D10,
+    0x016B9000, 0x016E4014, 0x016E9B00, 0x016F000D, 0x016F4515, 0x016F4B00, 0x016F4F15, 0x016F500D,
+    0x016F7F15, 0x016F8800, 0x016F8F0D, 0x016FA000, 0x016FE012, 0x016FE113, 0x016FE215, 0x016FE400,
+    0x01700012, 0x0187ED14, 0x0187F215, 0x0187F800, 0x01880012, 0x018AF300, 0x01B0000C, 0x01B00213,
+    0x01B11F00, 0x01B15015, 0x01B15300, 0x01B16415, 0x01B16800, 0x01B17013, 0x01B2FC00, 0x01BC0010,
+    0x01BC6B00, 0x01BC7010, 0x01BC7D00, 0x01BC8010, 0x01BC8900, 0x01BC9010, 0x01BC9A00, 0x01BC9C10,
+    0x01BCA400, 0x01D00005, 0x01D0F600, 0x01D10005, 0x01D12700, 0x01D1290A, 0x01D12A05, 0x01D1DE11,
+    0x01D1E900, 0x01D20008, 0x01D24600, 0x01D2E014, 0x01D2F400, 0x01D30007, 0x01D35700, 0x01D36009,
+    0x01D37214, 0x01D37900, 0x01D40005, 0x01D45500, 0x01D45605, 0x01D49D00, 0x01D49E05, 0x01D4A000,
+    0x01D4A205, 0x01D4A300, 0x01D4A505, 0x01D4A700, 0x01D4A905, 0x01D4AD00, 0x01D4AE05, 0x01D4BA00,
+    0x01D4BB05, 0x01D4BC00, 0x01D4BD05, 0x01D4C107, 0x01D4C205, 0x01D4C400, 0x01D4C505, 0x01D50600,
+    0x01D50705, 0x01D50B00, 0x01D50D05, 0x01D51500, 0x01D51605, 0x01D51D00, 0x01D51E05, 0x01D53A00,
+    0x01D53B05, 0x01D53F00, 0x01D54005, 0x01D54500, 0x01D54605, 0x01D54700, 0x01D54A05, 0x01D55100,
+    0x01D55205, 0x01D6A408, 0x01D6A600, 0x01D6A805, 0x01D7CA09, 0x01D7CC00, 0x01D7CE05, 0x01D80011,
+    0x01DA8C00, 0x01DA9B11, 0x01DAA000, 0x01DAA111, 0x01DAB000, 0x01E00012, 0x01E00700, 0x01E00812,
+    0x01E01900, 0x01E01B12, 0x01E02200, 0x01E02312, 0x01E02500, 0x01E02612, 0x01E02B00, 0x01E10015,
+    0x01E12D00, 0x01E13015, 0x01E13E00, 0x01E14015, 0x01E14A00, 0x01E14E15, 0x01E15000, 0x01E2C015,
+    0x01E2FA00, 0x01E2FF15, 0x01E30000, 0x01E80010, 0x01E8C500, 0x01E8C710, 0x01E8D700, 0x01E90012,
+    0x01E94B15, 0x01E94C00, 0x01E95012, 0x01E95A00, 0x01E95E12, 0x01E96000, 0x01EC7114, 0x01ECB500,
+    0x01ED0115, 0x01ED3E00, 0x01EE000D, 0x01EE0400, 0x01EE050D, 0x01EE2000, 0x01EE210D, 0x01EE2300,
+    0x01EE240D, 0x01EE2500, 0x01EE270D, 0x01EE2800, 0x01EE290D, 0x01EE3300, 0x01EE340D, 0x01EE3800,
+    0x01EE390D, 0x01EE3A00, 0x01EE3B0D, 0x01EE3C00, 0x01EE420D, 0x01EE4300, 0x01EE470D, 0x01EE4800,
+    0x01EE490D, 0x01EE4A00, 0x01EE4B0D, 0x01EE4C00, 0x01EE4D0D, 0x01EE5000, 0x01EE510D, 0x01EE5300,
+    0x01EE540D, 0x01EE5500, 0x01EE570D, 0x01EE5800, 0x01EE590D, 0x01EE5A00, 0x01EE5B0D, 0x01EE5C00,
+    0x01EE5D0D, 0x01EE5E00, 0x01EE5F0D, 0x01EE6000, 0x01EE610D, 0x01EE6300, 0x01EE640D, 0x01EE6500,
+    0x01EE670D, 0x01EE6B00, 0x01EE6C0D, 0x01EE7300, 0x01EE740D, 0x01EE7800, 0x01EE790D, 0x01EE7D00,
+    0x01EE7E0D, 0x01EE7F00, 0x01EE800D, 0x01EE8A00, 0x01EE8B0D, 0x01EE9C00, 0x01EEA10D, 0x01EEA400,
+    0x01EEA50D, 0x01EEAA00, 0x01EEAB0D, 0x01EEBC00, 0x01EEF00D, 0x01EEF200, 0x01F0000A, 0x01F02C00,
+    0x01F0300A, 0x01F09400, 0x01F0A00C, 0x01F0AF00, 0x01F0B10C, 0x01F0BF10, 0x01F0C000, 0x01F0C10C,
+    0x01F0D000, 0x01F0D10C, 0x01F0E010, 0x01F0F600, 0x01F1000B, 0x01F10B10, 0x01F10D00, 0x01F1100B,
+    0x01F12F14, 0x01F1300C, 0x01F1310B, 0x01F1320C, 0x01F13D0B, 0x01F13E0C, 0x01F13F0B, 0x01F1400C,
+    0x01F1420B, 0x01F1430C, 0x01F1460B, 0x01F1470C, 0x01F14A0B, 0x01F14F0C, 0x01F1570B, 0x01F1580C,
+    0x01F15F0B, 0x01F1600C, 0x01F16A0D, 0x01F16C15, 0x01F16D00, 0x01F1700C, 0x01F1790B, 0x01F17A0C,
+    0x01F17B0B, 0x01F17D0C, 0x01F17F0B, 0x01F1800C, 0x01F18A0B, 0x01F18E0C, 0x01F1900B, 0x01F1910C,
+    0x01F19B12, 0x01F1AD00, 0x01F1E60C, 0x01F2000B, 0x01F2010C, 0x01F20300, 0x01F2100B, 0x01F2320C,
+    0x01F23B12, 0x01F23C00, 0x01F2400B, 0x01F24900, 0x01F2500C, 0x01F25200, 0x01F26013, 0x01F26600,
+    0x01F3000C, 0x01F32110, 0x01F32D11, 0x01F3300C, 0x01F33610, 0x01F3370C, 0x01F37D10, 0x01F37E11,
+    0x01F3800C, 0x01F39410, 0x01F3A00C, 0x01F3C510, 0x01F3C60C, 0x01F3CB10, 0x01F3CF11, 0x01F3D410,
+    0x01F3E00C, 0x01F3F110, 0x01F3F811, 0x01F4000C, 0x01F43F10, 0x01F4400C, 0x01F44110, 0x01F4420C,
+    0x01F4F810, 0x01F4F90C, 0x01F4FD10, 0x01F4FF11, 0x01F5000C, 0x01F53E10, 0x01F5400D, 0x01F54410,
+    0x01F54B11, 0x01F5500C, 0x01F56810, 0x01F57A12, 0x01F57B10, 0x01F5A412, 0x01F5A510, 0x01F5FB0C,
+    0x01F6000D, 0x01F6010C, 0x01F6110D, 0x01F6120C, 0x01F6150D, 0x01F6160C, 0x01F6170D, 0x01F6180C,
+    0x01F6190D, 0x01F61A0C, 0x01F61B0D, 0x01F61C0C, 0x01F61F0D, 0x01F6200C, 0x01F6260D, 0x01F6280C,
+    0x01F62C0D, 0x01F62D0C, 0x01F62E0D, 0x01F6300C, 0x01F6340D, 0x01F6350C, 0x01F64110, 0x01F64311,
+    0x01F6450C, 0x01F65010, 0x01F6800C, 0x01F6C610, 0x01F6D011, 0x01F6D112, 0x01F6D313, 0x01F6D515,
+    0x01F6D600, 0x01F6E010, 0x01F6ED00, 0x01F6F010, 0x01F6F412, 0x01F6F713, 0x01F6F914, 0x01F6FA15,
+    0x01F6FB00, 0x01F7000C, 0x01F77400, 0x01F78010, 0x01F7D514, 0x01F7D900, 0x01F7E015, 0x01F7EC00,
+    0x01F80010, 0x01F80C00, 0x01F81010, 0x01F84800, 0x01F85010, 0x01F85A00, 0x01F86010, 0x01F88800,
+    0x01F89010, 0x01F8AE00, 0x01F90013, 0x01F90C00, 0x01F90D15, 0x01F91011, 0x01F91912, 0x01F91F13,
+    0x01F92012, 0x01F92813, 0x01F93012, 0x01F93113, 0x01F93312, 0x01F93F15, 0x01F94012, 0x01F94C13,
+    0x01F94D14, 0x01F95012, 0x01F95F13, 0x01F96C14, 0x01F97115, 0x01F97200, 0x01F97314, 0x01F97700,
+    0x01F97A14, 0x01F97B15, 0x01F97C14, 0x01F98011, 0x01F98512, 0x01F99213, 0x01F99814, 0x01F9A300,
+    0x01F9A515, 0x01F9AB00, 0x01F9AE15, 0x01F9B014, 0x01F9BA15, 0x01F9C011, 0x01F9C114, 0x01F9C315,
+    0x01F9CB00, 0x01F9CD15, 0x01F9D013, 0x01F9E714, 0x01FA0015, 0x01FA5400, 0x01FA6014, 0x01FA6E00,
+    0x01FA7015, 0x01FA7400, 0x01FA7815, 0x01FA7B00, 0x01FA8015, 0x01FA8300, 0x01FA9015, 0x01FA9600,
+    0x02000005, 0x02000200, 0x02006205, 0x02006300, 0x02006405, 0x02006500, 0x0200E005, 0x0200E100,
+    0x0200E205, 0x0200E300, 0x02011F05, 0x02012000, 0x02012105, 0x02012200, 0x02092805, 0x02092900,
+    0x02092A05, 0x02092B00, 0x02098105, 0x02098200, 0x02098305, 0x02098400, 0x02098A05, 0x02098B00,
+    0x02098C05, 0x02098D00, 0x02099A05, 0x02099B00, 0x02099C05, 0x02099D00, 0x020AE805, 0x020AE900,
+    0x020AEA05, 0x020AEB00, 0x020AFB05, 0x020AFC00, 0x020AFD05, 0x020AFE00, 0x020B1705, 0x020B1800,
+    0x020B1905, 0x020B1A00, 0x02238E05, 0x02238F00, 0x02239005, 0x02239100, 0x02299605, 0x02299700,
+    0x02299805, 0x02299900, 0x023B1905, 0x023B1A00, 0x023B1B05, 0x023B1C00, 0x02626B05, 0x02626C00,
+    0x02626D05, 0x02626E00, 0x02A6D505, 0x02A6D600, 0x02B7330B, 0x02B73400, 0x02B81C0C, 0x02B81D00,
+    0x02CEA011, 0x02CEA100, 0x02EBDF13, 0x02EBE000, 0x02F80005, 0x02FA1E00, 0x0E000105, 0x0E000200,
+    0x0E002005, 0x0E008000, 0x0E010007, 0x0E01F000, 0x0FFFFC02, 0x0FFFFD00, 0x10FFFC02, 0x10FFFD00,
+    0xFFFFFFFF};
 enum class category {
     c,
     other = c,
@@ -3011,18 +2132,10 @@ static constexpr const std::array __categories_names = {
     __string_with_idx{"zl", 35},
     __string_with_idx{"zp", 36},
     __string_with_idx{"zs", 37}};
-static constexpr __range_array<4> __cat_cc = {
-    {__range_array_elem{0x0000, 1} /*32*/, __range_array_elem{0x0020, 0} /*95*/,
-     __range_array_elem{0x007F, 1} /*33*/, __range_array_elem{0x00A0, 0} /*1113951*/}};
-static constexpr __range_array<15> __cat_zs = {
-    {__range_array_elem{0x0000, 0} /*32*/, __range_array_elem{0x0020, 1} /*1*/,
-     __range_array_elem{0x0021, 0} /*127*/, __range_array_elem{0x00A0, 1} /*1*/,
-     __range_array_elem{0x00A1, 0} /*5599*/, __range_array_elem{0x1680, 1} /*1*/,
-     __range_array_elem{0x1681, 0} /*2431*/, __range_array_elem{0x2000, 1} /*11*/,
-     __range_array_elem{0x200B, 0} /*36*/, __range_array_elem{0x202F, 1} /*1*/,
-     __range_array_elem{0x2030, 0} /*47*/, __range_array_elem{0x205F, 1} /*1*/,
-     __range_array_elem{0x2060, 0} /*4000*/, __range_array_elem{0x3000, 1} /*1*/,
-     __range_array_elem{0x3001, 0} /*1101822*/}};
+static constexpr __range_array __cat_cc = {0x00000001, 0x00002000, 0x00007F01, 0x0000A000};
+static constexpr __range_array __cat_zs = {
+    0x00000000, 0x00002001, 0x00002100, 0x0000A001, 0x0000A100, 0x00168001, 0x00168100, 0x00200001,
+    0x00200B00, 0x00202F01, 0x00203000, 0x00205F01, 0x00206000, 0x00300001, 0x00300100};
 static constexpr __bool_trie<32, 991, 1, 0, 51, 255, 1, 0, 482, 4, 26, 39> __cat_po{
     {0x8c00d4ee00000000, 0x0000000010000001, 0x80c0008200000000, 0x0000000000000000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -3123,49 +2236,13 @@ static constexpr __bool_trie<32, 991, 1, 0, 51, 255, 1, 0, 482, 4, 26, 39> __cat
      0x00000007dc000000, 0x000300000000003e, 0x0180000000000000, 0x001f000000000000,
      0x0000c00000000000, 0x0020000000000000, 0x0f80000000000000, 0x0000000000000010,
      0x0000000007800000, 0x0000000000000f80, 0x00000000c0000000}};
-static constexpr __range_array<43> __cat_sc = {{__range_array_elem{0x0000, 0} /*36*/,
-                                                __range_array_elem{0x0024, 1} /*1*/,
-                                                __range_array_elem{0x0025, 0} /*125*/,
-                                                __range_array_elem{0x00A2, 1} /*4*/,
-                                                __range_array_elem{0x00A6, 0} /*1257*/,
-                                                __range_array_elem{0x058F, 1} /*1*/,
-                                                __range_array_elem{0x0590, 0} /*123*/,
-                                                __range_array_elem{0x060B, 1} /*1*/,
-                                                __range_array_elem{0x060C, 0} /*498*/,
-                                                __range_array_elem{0x07FE, 1} /*2*/,
-                                                __range_array_elem{0x0800, 0} /*498*/,
-                                                __range_array_elem{0x09F2, 1} /*2*/,
-                                                __range_array_elem{0x09F4, 0} /*7*/,
-                                                __range_array_elem{0x09FB, 1} /*1*/,
-                                                __range_array_elem{0x09FC, 0} /*245*/,
-                                                __range_array_elem{0x0AF1, 1} /*1*/,
-                                                __range_array_elem{0x0AF2, 0} /*263*/,
-                                                __range_array_elem{0x0BF9, 1} /*1*/,
-                                                __range_array_elem{0x0BFA, 0} /*581*/,
-                                                __range_array_elem{0x0E3F, 1} /*1*/,
-                                                __range_array_elem{0x0E40, 0} /*2459*/,
-                                                __range_array_elem{0x17DB, 1} /*1*/,
-                                                __range_array_elem{0x17DC, 0} /*2244*/,
-                                                __range_array_elem{0x20A0, 1} /*32*/,
-                                                __range_array_elem{0x20C0, 0} /*34680*/,
-                                                __range_array_elem{0xA838, 1} /*1*/,
-                                                __range_array_elem{0xA839, 0} /*21955*/,
-                                                __range_array_elem{0xFDFC, 1} /*1*/,
-                                                __range_array_elem{0xFDFD, 0} /*108*/,
-                                                __range_array_elem{0xFE69, 1} /*1*/,
-                                                __range_array_elem{0xFE6A, 0} /*154*/,
-                                                __range_array_elem{0xFF04, 1} /*1*/,
-                                                __range_array_elem{0xFF05, 0} /*219*/,
-                                                __range_array_elem{0xFFE0, 1} /*2*/,
-                                                __range_array_elem{0xFFE2, 0} /*3*/,
-                                                __range_array_elem{0xFFE5, 1} /*2*/,
-                                                __range_array_elem{0xFFE7, 0} /*8182*/,
-                                                __range_array_elem{0x11FDD, 1} /*4*/,
-                                                __range_array_elem{0x11FE1, 0} /*49950*/,
-                                                __range_array_elem{0x1E2FF, 1} /*1*/,
-                                                __range_array_elem{0x1E300, 0} /*2480*/,
-                                                __range_array_elem{0x1ECB0, 1} /*1*/,
-                                                __range_array_elem{0x1ECB1, 0} /*987982*/}};
+static constexpr __range_array __cat_sc = {
+    0x00000000, 0x00002401, 0x00002500, 0x0000A201, 0x0000A600, 0x00058F01, 0x00059000, 0x00060B01,
+    0x00060C00, 0x0007FE01, 0x00080000, 0x0009F201, 0x0009F400, 0x0009FB01, 0x0009FC00, 0x000AF101,
+    0x000AF200, 0x000BF901, 0x000BFA00, 0x000E3F01, 0x000E4000, 0x0017DB01, 0x0017DC00, 0x0020A001,
+    0x0020C000, 0x00A83801, 0x00A83900, 0x00FDFC01, 0x00FDFD00, 0x00FE6901, 0x00FE6A00, 0x00FF0401,
+    0x00FF0500, 0x00FFE001, 0x00FFE200, 0x00FFE501, 0x00FFE700, 0x011FDD01, 0x011FE100, 0x01E2FF01,
+    0x01E30000, 0x01ECB001, 0x01ECB100};
 static constexpr __bool_trie<32, 962, 28, 2, 19, 0, 0, 0, 0, 0, 0, 0> __cat_ps{
     {0x0000010000000000, 0x0800000008000000, 0x0000000000000000, 0x0000000000000000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -3896,47 +2973,13 @@ static constexpr __bool_trie<32, 991, 1, 0, 145, 255, 1, 0, 1279, 1, 0, 104> __c
      0x0008000000000000, 0x0000000010000000, 0x0000000100000000, 0x0000000080000000}};
 static constexpr flat_array<12> __cat_pi{{0x00AB, 0x2018, 0x201B, 0x201C, 0x201F, 0x2039, 0x2E02,
                                           0x2E04, 0x2E09, 0x2E0C, 0x2E1C, 0x2E20}};
-static constexpr __range_array<41> __cat_cf = {{__range_array_elem{0x0000, 0} /*173*/,
-                                                __range_array_elem{0x00AD, 1} /*1*/,
-                                                __range_array_elem{0x00AE, 0} /*1362*/,
-                                                __range_array_elem{0x0600, 1} /*6*/,
-                                                __range_array_elem{0x0606, 0} /*22*/,
-                                                __range_array_elem{0x061C, 1} /*1*/,
-                                                __range_array_elem{0x061D, 0} /*192*/,
-                                                __range_array_elem{0x06DD, 1} /*1*/,
-                                                __range_array_elem{0x06DE, 0} /*49*/,
-                                                __range_array_elem{0x070F, 1} /*1*/,
-                                                __range_array_elem{0x0710, 0} /*466*/,
-                                                __range_array_elem{0x08E2, 1} /*1*/,
-                                                __range_array_elem{0x08E3, 0} /*3883*/,
-                                                __range_array_elem{0x180E, 1} /*1*/,
-                                                __range_array_elem{0x180F, 0} /*2044*/,
-                                                __range_array_elem{0x200B, 1} /*5*/,
-                                                __range_array_elem{0x2010, 0} /*26*/,
-                                                __range_array_elem{0x202A, 1} /*5*/,
-                                                __range_array_elem{0x202F, 0} /*49*/,
-                                                __range_array_elem{0x2060, 1} /*5*/,
-                                                __range_array_elem{0x2065, 0} /*1*/,
-                                                __range_array_elem{0x2066, 1} /*10*/,
-                                                __range_array_elem{0x2070, 0} /*56975*/,
-                                                __range_array_elem{0xFEFF, 1} /*1*/,
-                                                __range_array_elem{0xFF00, 0} /*249*/,
-                                                __range_array_elem{0xFFF9, 1} /*3*/,
-                                                __range_array_elem{0xFFFC, 0} /*4289*/,
-                                                __range_array_elem{0x110BD, 1} /*1*/,
-                                                __range_array_elem{0x110BE, 0} /*15*/,
-                                                __range_array_elem{0x110CD, 1} /*1*/,
-                                                __range_array_elem{0x110CE, 0} /*9058*/,
-                                                __range_array_elem{0x13430, 1} /*9*/,
-                                                __range_array_elem{0x13439, 0} /*34919*/,
-                                                __range_array_elem{0x1BCA0, 1} /*4*/,
-                                                __range_array_elem{0x1BCA4, 0} /*5327*/,
-                                                __range_array_elem{0x1D173, 1} /*8*/,
-                                                __range_array_elem{0x1D17B, 0} /*798342*/,
-                                                __range_array_elem{0xE0001, 1} /*1*/,
-                                                __range_array_elem{0xE0002, 0} /*30*/,
-                                                __range_array_elem{0xE0020, 1} /*96*/,
-                                                __range_array_elem{0xE0080, 0} /*196479*/}};
+static constexpr __range_array __cat_cf = {
+    0x00000000, 0x0000AD01, 0x0000AE00, 0x00060001, 0x00060600, 0x00061C01, 0x00061D00,
+    0x0006DD01, 0x0006DE00, 0x00070F01, 0x00071000, 0x0008E201, 0x0008E300, 0x00180E01,
+    0x00180F00, 0x00200B01, 0x00201000, 0x00202A01, 0x00202F00, 0x00206001, 0x00206500,
+    0x00206601, 0x00207000, 0x00FEFF01, 0x00FF0000, 0x00FFF901, 0x00FFFC00, 0x0110BD01,
+    0x0110BE00, 0x0110CD01, 0x0110CE00, 0x01343001, 0x01343900, 0x01BCA001, 0x01BCA400,
+    0x01D17301, 0x01D17B00, 0x0E000101, 0x0E000200, 0x0E002001, 0x0E008000};
 static constexpr __bool_trie<32, 634, 7, 351, 25, 255, 1, 0, 385, 4, 59, 36> __cat_no{
     {0x0000000000000000, 0x0000000000000000, 0x720c000000000000, 0x0000000000000000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -4010,18 +3053,10 @@ static constexpr __bool_trie<32, 634, 7, 351, 25, 255, 1, 0, 385, 4, 59, 36> __c
      0xfffe000000000000, 0x001eefffffffffff, 0x3fffbffffffffffe, 0x0000000000001fff}};
 static constexpr flat_array<10> __cat_pf{
     {0x00BB, 0x2019, 0x201D, 0x203A, 0x2E03, 0x2E05, 0x2E0A, 0x2E0D, 0x2E1D, 0x2E21}};
-static constexpr __range_array<21> __cat_lt = {
-    {__range_array_elem{0x0000, 0} /*453*/,  __range_array_elem{0x01C5, 1} /*1*/,
-     __range_array_elem{0x01C6, 0} /*2*/,    __range_array_elem{0x01C8, 1} /*1*/,
-     __range_array_elem{0x01C9, 0} /*2*/,    __range_array_elem{0x01CB, 1} /*1*/,
-     __range_array_elem{0x01CC, 0} /*38*/,   __range_array_elem{0x01F2, 1} /*1*/,
-     __range_array_elem{0x01F3, 0} /*7573*/, __range_array_elem{0x1F88, 1} /*8*/,
-     __range_array_elem{0x1F90, 0} /*8*/,    __range_array_elem{0x1F98, 1} /*8*/,
-     __range_array_elem{0x1FA0, 0} /*8*/,    __range_array_elem{0x1FA8, 1} /*8*/,
-     __range_array_elem{0x1FB0, 0} /*12*/,   __range_array_elem{0x1FBC, 1} /*1*/,
-     __range_array_elem{0x1FBD, 0} /*15*/,   __range_array_elem{0x1FCC, 1} /*1*/,
-     __range_array_elem{0x1FCD, 0} /*47*/,   __range_array_elem{0x1FFC, 1} /*1*/,
-     __range_array_elem{0x1FFD, 0} /*1105922*/}};
+static constexpr __range_array __cat_lt = {
+    0x00000000, 0x0001C501, 0x0001C600, 0x0001C801, 0x0001C900, 0x0001CB01, 0x0001CC00,
+    0x0001F201, 0x0001F300, 0x001F8801, 0x001F9000, 0x001F9801, 0x001FA000, 0x001FA801,
+    0x001FB000, 0x001FBC01, 0x001FBD00, 0x001FCC01, 0x001FCD00, 0x001FFC01, 0x001FFD00};
 static constexpr __bool_trie<32, 991, 1, 0, 31, 9, 6, 241, 57, 109, 26, 6> __cat_lm{
     {0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -4194,13 +3229,9 @@ static constexpr __bool_trie<32, 991, 1, 0, 72, 255, 1, 0, 449, 7, 56, 57> __cat
      0xf87fffffffffffff, 0x00201fffffffffff, 0x0000fffef8000010, 0x000007dbf9ffff7f,
      0x0000f00000000000, 0x00000000007f0000, 0x00000000000007f0, 0xffffffffffffffff,
      0x0000ffffffffffff}};
-static constexpr __range_array<11> __cat_me = {
-    {__range_array_elem{0x0000, 0} /*1160*/, __range_array_elem{0x0488, 1} /*2*/,
-     __range_array_elem{0x048A, 0} /*5684*/, __range_array_elem{0x1ABE, 1} /*1*/,
-     __range_array_elem{0x1ABF, 0} /*1566*/, __range_array_elem{0x20DD, 1} /*4*/,
-     __range_array_elem{0x20E1, 0} /*1*/, __range_array_elem{0x20E2, 1} /*3*/,
-     __range_array_elem{0x20E5, 0} /*34187*/, __range_array_elem{0xA670, 1} /*3*/,
-     __range_array_elem{0xA673, 0} /*1071500*/}};
+static constexpr __range_array __cat_me = {0x00000000, 0x00048801, 0x00048A00, 0x001ABE01,
+                                           0x001ABF00, 0x0020DD01, 0x0020E100, 0x0020E201,
+                                           0x0020E500, 0x00A67001, 0x00A67300};
 static constexpr __bool_trie<0, 652, 4, 336, 42, 13, 1, 242, 134, 64, 58, 31> __cat_mc{
     {},
     {1,  2,  3, 4,  5,  6,  5,  7, 8,  4,  9, 10, 11, 12, 8,  13, 3,  14, 15, 16, 0,  0, 0,  0,  9,
@@ -4256,20 +3287,11 @@ static constexpr __bool_trie<0, 652, 4, 336, 42, 13, 1, 242, 134, 64, 58, 31> __
      0x00000010f00e0000, 0x0200000000000000, 0x0000000001800000, 0x0000000000800000,
      0x4000800000000000, 0x0012020000000000, 0x0000000000587c00, 0x0060000000000000,
      0xfffffffffffe0000, 0x00000000000000ff, 0x0007e06000000000}};
-static constexpr __range_array<25> __cat_nl = {
-    {__range_array_elem{0x0000, 0} /*5870*/,  __range_array_elem{0x16EE, 1} /*3*/,
-     __range_array_elem{0x16F1, 0} /*2671*/,  __range_array_elem{0x2160, 1} /*35*/,
-     __range_array_elem{0x2183, 0} /*2*/,     __range_array_elem{0x2185, 1} /*4*/,
-     __range_array_elem{0x2189, 0} /*3710*/,  __range_array_elem{0x3007, 1} /*1*/,
-     __range_array_elem{0x3008, 0} /*25*/,    __range_array_elem{0x3021, 1} /*9*/,
-     __range_array_elem{0x302A, 0} /*14*/,    __range_array_elem{0x3038, 1} /*3*/,
-     __range_array_elem{0x303B, 0} /*30379*/, __range_array_elem{0xA6E6, 1} /*10*/,
-     __range_array_elem{0xA6F0, 0} /*23120*/, __range_array_elem{0x10140, 1} /*53*/,
-     __range_array_elem{0x10175, 0} /*460*/,  __range_array_elem{0x10341, 1} /*1*/,
-     __range_array_elem{0x10342, 0} /*8*/,    __range_array_elem{0x1034A, 1} /*1*/,
-     __range_array_elem{0x1034B, 0} /*134*/,  __range_array_elem{0x103D1, 1} /*5*/,
-     __range_array_elem{0x103D6, 0} /*8234*/, __range_array_elem{0x12400, 1} /*111*/,
-     __range_array_elem{0x1246F, 0} /*1039248*/}};
+static constexpr __range_array __cat_nl = {
+    0x00000000, 0x0016EE01, 0x0016F100, 0x00216001, 0x00218300, 0x00218501, 0x00218900,
+    0x00300701, 0x00300800, 0x00302101, 0x00302A00, 0x00303801, 0x00303B00, 0x00A6E601,
+    0x00A6F000, 0x01014001, 0x01017500, 0x01034101, 0x01034200, 0x01034A01, 0x01034B00,
+    0x0103D101, 0x0103D600, 0x01240001, 0x01246F00};
 static constexpr flat_array<1> __cat_zl{{0x2028}};
 static constexpr flat_array<1> __cat_zp{{0x2029}};
 static constexpr flat_array<3> __cat_cs{{0xDB7E, 0xDBFE, 0xDFFE}};
@@ -7927,2051 +6949,766 @@ static constexpr const std::array __scripts_names = {
     __string_with_idx{"zinh", 151},
     __string_with_idx{"zyyy", 152},
     __string_with_idx{"zzzz", 153}};
-struct __script_data_t {
-    char32_t first;
-    script s;
-};
 template<auto N>
 struct __script_data;
 template<>
 struct __script_data<0> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zyyy},  __script_data_t{0x0041, script::latn},
-        __script_data_t{0x005B, script::zyyy},  __script_data_t{0x0061, script::latn},
-        __script_data_t{0x007B, script::zyyy},  __script_data_t{0x00AA, script::latn},
-        __script_data_t{0x00AB, script::zyyy},  __script_data_t{0x00BA, script::latn},
-        __script_data_t{0x00BB, script::zyyy},  __script_data_t{0x00C0, script::latn},
-        __script_data_t{0x00D7, script::zyyy},  __script_data_t{0x00D8, script::latn},
-        __script_data_t{0x00F7, script::zyyy},  __script_data_t{0x00F8, script::latn},
-        __script_data_t{0x02B9, script::zyyy},  __script_data_t{0x02E0, script::latn},
-        __script_data_t{0x02E5, script::zyyy},  __script_data_t{0x02EA, script::bopo},
-        __script_data_t{0x02EC, script::zyyy},  __script_data_t{0x0300, script::zinh},
-        __script_data_t{0x0370, script::grek},  __script_data_t{0x0374, script::zyyy},
-        __script_data_t{0x0375, script::grek},  __script_data_t{0x0378, script::zzzz},
-        __script_data_t{0x037A, script::grek},  __script_data_t{0x037E, script::zyyy},
-        __script_data_t{0x037F, script::grek},  __script_data_t{0x0380, script::zzzz},
-        __script_data_t{0x0384, script::grek},  __script_data_t{0x0385, script::zyyy},
-        __script_data_t{0x0386, script::grek},  __script_data_t{0x0387, script::zyyy},
-        __script_data_t{0x0388, script::grek},  __script_data_t{0x038B, script::zzzz},
-        __script_data_t{0x038C, script::grek},  __script_data_t{0x038D, script::zzzz},
-        __script_data_t{0x038E, script::grek},  __script_data_t{0x03A2, script::zzzz},
-        __script_data_t{0x03A3, script::grek},  __script_data_t{0x03E2, script::copt},
-        __script_data_t{0x03F0, script::grek},  __script_data_t{0x0400, script::cyrl},
-        __script_data_t{0x0485, script::zinh},  __script_data_t{0x0487, script::cyrl},
-        __script_data_t{0x0530, script::zzzz},  __script_data_t{0x0531, script::armn},
-        __script_data_t{0x0557, script::zzzz},  __script_data_t{0x0559, script::armn},
-        __script_data_t{0x0589, script::zyyy},  __script_data_t{0x058A, script::armn},
-        __script_data_t{0x058B, script::zzzz},  __script_data_t{0x058D, script::armn},
-        __script_data_t{0x0590, script::zzzz},  __script_data_t{0x0591, script::hebr},
-        __script_data_t{0x05C8, script::zzzz},  __script_data_t{0x05D0, script::hebr},
-        __script_data_t{0x05EB, script::zzzz},  __script_data_t{0x05EF, script::hebr},
-        __script_data_t{0x05F5, script::zzzz},  __script_data_t{0x0600, script::arab},
-        __script_data_t{0x0605, script::zyyy},  __script_data_t{0x0606, script::arab},
-        __script_data_t{0x060C, script::zyyy},  __script_data_t{0x060D, script::arab},
-        __script_data_t{0x061B, script::zyyy},  __script_data_t{0x061C, script::arab},
-        __script_data_t{0x061D, script::zzzz},  __script_data_t{0x061E, script::arab},
-        __script_data_t{0x061F, script::zyyy},  __script_data_t{0x0620, script::arab},
-        __script_data_t{0x0640, script::zyyy},  __script_data_t{0x0641, script::arab},
-        __script_data_t{0x064B, script::zinh},  __script_data_t{0x0656, script::arab},
-        __script_data_t{0x0670, script::zinh},  __script_data_t{0x0671, script::arab},
-        __script_data_t{0x06DD, script::zyyy},  __script_data_t{0x06DE, script::arab},
-        __script_data_t{0x0700, script::syrc},  __script_data_t{0x070E, script::zzzz},
-        __script_data_t{0x070F, script::syrc},  __script_data_t{0x074B, script::zzzz},
-        __script_data_t{0x074D, script::syrc},  __script_data_t{0x0750, script::arab},
-        __script_data_t{0x0780, script::thaa},  __script_data_t{0x07B2, script::zzzz},
-        __script_data_t{0x07C0, script::nkoo},  __script_data_t{0x07FB, script::zzzz},
-        __script_data_t{0x07FD, script::nkoo},  __script_data_t{0x0800, script::samr},
-        __script_data_t{0x082E, script::zzzz},  __script_data_t{0x0830, script::samr},
-        __script_data_t{0x083F, script::zzzz},  __script_data_t{0x0840, script::mand},
-        __script_data_t{0x085C, script::zzzz},  __script_data_t{0x085E, script::mand},
-        __script_data_t{0x085F, script::zzzz},  __script_data_t{0x0860, script::syrc},
-        __script_data_t{0x086B, script::zzzz},  __script_data_t{0x08A0, script::arab},
-        __script_data_t{0x08B5, script::zzzz},  __script_data_t{0x08B6, script::arab},
-        __script_data_t{0x08BE, script::zzzz},  __script_data_t{0x08D3, script::arab},
-        __script_data_t{0x08E2, script::zyyy},  __script_data_t{0x08E3, script::arab},
-        __script_data_t{0x0900, script::deva},  __script_data_t{0x0951, script::zinh},
-        __script_data_t{0x0955, script::deva},  __script_data_t{0x0964, script::zyyy},
-        __script_data_t{0x0966, script::deva},  __script_data_t{0x0980, script::beng},
-        __script_data_t{0x0984, script::zzzz},  __script_data_t{0x0985, script::beng},
-        __script_data_t{0x098D, script::zzzz},  __script_data_t{0x098F, script::beng},
-        __script_data_t{0x0991, script::zzzz},  __script_data_t{0x0993, script::beng},
-        __script_data_t{0x09A9, script::zzzz},  __script_data_t{0x09AA, script::beng},
-        __script_data_t{0x09B1, script::zzzz},  __script_data_t{0x09B2, script::beng},
-        __script_data_t{0x09B3, script::zzzz},  __script_data_t{0x09B6, script::beng},
-        __script_data_t{0x09BA, script::zzzz},  __script_data_t{0x09BC, script::beng},
-        __script_data_t{0x09C5, script::zzzz},  __script_data_t{0x09C7, script::beng},
-        __script_data_t{0x09C9, script::zzzz},  __script_data_t{0x09CB, script::beng},
-        __script_data_t{0x09CF, script::zzzz},  __script_data_t{0x09D7, script::beng},
-        __script_data_t{0x09D8, script::zzzz},  __script_data_t{0x09DC, script::beng},
-        __script_data_t{0x09DE, script::zzzz},  __script_data_t{0x09DF, script::beng},
-        __script_data_t{0x09E4, script::zzzz},  __script_data_t{0x09E6, script::beng},
-        __script_data_t{0x09FF, script::zzzz},  __script_data_t{0x0A01, script::guru},
-        __script_data_t{0x0A04, script::zzzz},  __script_data_t{0x0A05, script::guru},
-        __script_data_t{0x0A0B, script::zzzz},  __script_data_t{0x0A0F, script::guru},
-        __script_data_t{0x0A11, script::zzzz},  __script_data_t{0x0A13, script::guru},
-        __script_data_t{0x0A29, script::zzzz},  __script_data_t{0x0A2A, script::guru},
-        __script_data_t{0x0A31, script::zzzz},  __script_data_t{0x0A32, script::guru},
-        __script_data_t{0x0A34, script::zzzz},  __script_data_t{0x0A35, script::guru},
-        __script_data_t{0x0A37, script::zzzz},  __script_data_t{0x0A38, script::guru},
-        __script_data_t{0x0A3A, script::zzzz},  __script_data_t{0x0A3C, script::guru},
-        __script_data_t{0x0A3D, script::zzzz},  __script_data_t{0x0A3E, script::guru},
-        __script_data_t{0x0A43, script::zzzz},  __script_data_t{0x0A47, script::guru},
-        __script_data_t{0x0A49, script::zzzz},  __script_data_t{0x0A4B, script::guru},
-        __script_data_t{0x0A4E, script::zzzz},  __script_data_t{0x0A51, script::guru},
-        __script_data_t{0x0A52, script::zzzz},  __script_data_t{0x0A59, script::guru},
-        __script_data_t{0x0A5D, script::zzzz},  __script_data_t{0x0A5E, script::guru},
-        __script_data_t{0x0A5F, script::zzzz},  __script_data_t{0x0A66, script::guru},
-        __script_data_t{0x0A77, script::zzzz},  __script_data_t{0x0A81, script::gujr},
-        __script_data_t{0x0A84, script::zzzz},  __script_data_t{0x0A85, script::gujr},
-        __script_data_t{0x0A8E, script::zzzz},  __script_data_t{0x0A8F, script::gujr},
-        __script_data_t{0x0A92, script::zzzz},  __script_data_t{0x0A93, script::gujr},
-        __script_data_t{0x0AA9, script::zzzz},  __script_data_t{0x0AAA, script::gujr},
-        __script_data_t{0x0AB1, script::zzzz},  __script_data_t{0x0AB2, script::gujr},
-        __script_data_t{0x0AB4, script::zzzz},  __script_data_t{0x0AB5, script::gujr},
-        __script_data_t{0x0ABA, script::zzzz},  __script_data_t{0x0ABC, script::gujr},
-        __script_data_t{0x0AC6, script::zzzz},  __script_data_t{0x0AC7, script::gujr},
-        __script_data_t{0x0ACA, script::zzzz},  __script_data_t{0x0ACB, script::gujr},
-        __script_data_t{0x0ACE, script::zzzz},  __script_data_t{0x0AD0, script::gujr},
-        __script_data_t{0x0AD1, script::zzzz},  __script_data_t{0x0AE0, script::gujr},
-        __script_data_t{0x0AE4, script::zzzz},  __script_data_t{0x0AE6, script::gujr},
-        __script_data_t{0x0AF2, script::zzzz},  __script_data_t{0x0AF9, script::gujr},
-        __script_data_t{0x0B00, script::zzzz},  __script_data_t{0x0B01, script::orya},
-        __script_data_t{0x0B04, script::zzzz},  __script_data_t{0x0B05, script::orya},
-        __script_data_t{0x0B0D, script::zzzz},  __script_data_t{0x0B0F, script::orya},
-        __script_data_t{0x0B11, script::zzzz},  __script_data_t{0x0B13, script::orya},
-        __script_data_t{0x0B29, script::zzzz},  __script_data_t{0x0B2A, script::orya},
-        __script_data_t{0x0B31, script::zzzz},  __script_data_t{0x0B32, script::orya},
-        __script_data_t{0x0B34, script::zzzz},  __script_data_t{0x0B35, script::orya},
-        __script_data_t{0x0B3A, script::zzzz},  __script_data_t{0x0B3C, script::orya},
-        __script_data_t{0x0B45, script::zzzz},  __script_data_t{0x0B47, script::orya},
-        __script_data_t{0x0B49, script::zzzz},  __script_data_t{0x0B4B, script::orya},
-        __script_data_t{0x0B4E, script::zzzz},  __script_data_t{0x0B56, script::orya},
-        __script_data_t{0x0B58, script::zzzz},  __script_data_t{0x0B5C, script::orya},
-        __script_data_t{0x0B5E, script::zzzz},  __script_data_t{0x0B5F, script::orya},
-        __script_data_t{0x0B64, script::zzzz},  __script_data_t{0x0B66, script::orya},
-        __script_data_t{0x0B78, script::zzzz},  __script_data_t{0x0B82, script::taml},
-        __script_data_t{0x0B84, script::zzzz},  __script_data_t{0x0B85, script::taml},
-        __script_data_t{0x0B8B, script::zzzz},  __script_data_t{0x0B8E, script::taml},
-        __script_data_t{0x0B91, script::zzzz},  __script_data_t{0x0B92, script::taml},
-        __script_data_t{0x0B96, script::zzzz},  __script_data_t{0x0B99, script::taml},
-        __script_data_t{0x0B9B, script::zzzz},  __script_data_t{0x0B9C, script::taml},
-        __script_data_t{0x0B9D, script::zzzz},  __script_data_t{0x0B9E, script::taml},
-        __script_data_t{0x0BA0, script::zzzz},  __script_data_t{0x0BA3, script::taml},
-        __script_data_t{0x0BA5, script::zzzz},  __script_data_t{0x0BA8, script::taml},
-        __script_data_t{0x0BAB, script::zzzz},  __script_data_t{0x0BAE, script::taml},
-        __script_data_t{0x0BBA, script::zzzz},  __script_data_t{0x0BBE, script::taml},
-        __script_data_t{0x0BC3, script::zzzz},  __script_data_t{0x0BC6, script::taml},
-        __script_data_t{0x0BC9, script::zzzz},  __script_data_t{0x0BCA, script::taml},
-        __script_data_t{0x0BCE, script::zzzz},  __script_data_t{0x0BD0, script::taml},
-        __script_data_t{0x0BD1, script::zzzz},  __script_data_t{0x0BD7, script::taml},
-        __script_data_t{0x0BD8, script::zzzz},  __script_data_t{0x0BE6, script::taml},
-        __script_data_t{0x0BFB, script::zzzz},  __script_data_t{0x0C00, script::telu},
-        __script_data_t{0x0C0D, script::zzzz},  __script_data_t{0x0C0E, script::telu},
-        __script_data_t{0x0C11, script::zzzz},  __script_data_t{0x0C12, script::telu},
-        __script_data_t{0x0C29, script::zzzz},  __script_data_t{0x0C2A, script::telu},
-        __script_data_t{0x0C3A, script::zzzz},  __script_data_t{0x0C3D, script::telu},
-        __script_data_t{0x0C45, script::zzzz},  __script_data_t{0x0C46, script::telu},
-        __script_data_t{0x0C49, script::zzzz},  __script_data_t{0x0C4A, script::telu},
-        __script_data_t{0x0C4E, script::zzzz},  __script_data_t{0x0C55, script::telu},
-        __script_data_t{0x0C57, script::zzzz},  __script_data_t{0x0C58, script::telu},
-        __script_data_t{0x0C5B, script::zzzz},  __script_data_t{0x0C60, script::telu},
-        __script_data_t{0x0C64, script::zzzz},  __script_data_t{0x0C66, script::telu},
-        __script_data_t{0x0C70, script::zzzz},  __script_data_t{0x0C77, script::telu},
-        __script_data_t{0x0C80, script::knda},  __script_data_t{0x0C8D, script::zzzz},
-        __script_data_t{0x0C8E, script::knda},  __script_data_t{0x0C91, script::zzzz},
-        __script_data_t{0x0C92, script::knda},  __script_data_t{0x0CA9, script::zzzz},
-        __script_data_t{0x0CAA, script::knda},  __script_data_t{0x0CB4, script::zzzz},
-        __script_data_t{0x0CB5, script::knda},  __script_data_t{0x0CBA, script::zzzz},
-        __script_data_t{0x0CBC, script::knda},  __script_data_t{0x0CC5, script::zzzz},
-        __script_data_t{0x0CC6, script::knda},  __script_data_t{0x0CC9, script::zzzz},
-        __script_data_t{0x0CCA, script::knda},  __script_data_t{0x0CCE, script::zzzz},
-        __script_data_t{0x0CD5, script::knda},  __script_data_t{0x0CD7, script::zzzz},
-        __script_data_t{0x0CDE, script::knda},  __script_data_t{0x0CDF, script::zzzz},
-        __script_data_t{0x0CE0, script::knda},  __script_data_t{0x0CE4, script::zzzz},
-        __script_data_t{0x0CE6, script::knda},  __script_data_t{0x0CF0, script::zzzz},
-        __script_data_t{0x0CF1, script::knda},  __script_data_t{0x0CF3, script::zzzz},
-        __script_data_t{0x0D00, script::mlym},  __script_data_t{0x0D04, script::zzzz},
-        __script_data_t{0x0D05, script::mlym},  __script_data_t{0x0D0D, script::zzzz},
-        __script_data_t{0x0D0E, script::mlym},  __script_data_t{0x0D11, script::zzzz},
-        __script_data_t{0x0D12, script::mlym},  __script_data_t{0x0D45, script::zzzz},
-        __script_data_t{0x0D46, script::mlym},  __script_data_t{0x0D49, script::zzzz},
-        __script_data_t{0x0D4A, script::mlym},  __script_data_t{0x0D50, script::zzzz},
-        __script_data_t{0x0D54, script::mlym},  __script_data_t{0x0D64, script::zzzz},
-        __script_data_t{0x0D66, script::mlym},  __script_data_t{0x0D80, script::zzzz},
-        __script_data_t{0x0D82, script::sinh},  __script_data_t{0x0D84, script::zzzz},
-        __script_data_t{0x0D85, script::sinh},  __script_data_t{0x0D97, script::zzzz},
-        __script_data_t{0x0D9A, script::sinh},  __script_data_t{0x0DB2, script::zzzz},
-        __script_data_t{0x0DB3, script::sinh},  __script_data_t{0x0DBC, script::zzzz},
-        __script_data_t{0x0DBD, script::sinh},  __script_data_t{0x0DBE, script::zzzz},
-        __script_data_t{0x0DC0, script::sinh},  __script_data_t{0x0DC7, script::zzzz},
-        __script_data_t{0x0DCA, script::sinh},  __script_data_t{0x0DCB, script::zzzz},
-        __script_data_t{0x0DCF, script::sinh},  __script_data_t{0x0DD5, script::zzzz},
-        __script_data_t{0x0DD6, script::sinh},  __script_data_t{0x0DD7, script::zzzz},
-        __script_data_t{0x0DD8, script::sinh},  __script_data_t{0x0DE0, script::zzzz},
-        __script_data_t{0x0DE6, script::sinh},  __script_data_t{0x0DF0, script::zzzz},
-        __script_data_t{0x0DF2, script::sinh},  __script_data_t{0x0DF5, script::zzzz},
-        __script_data_t{0x0E01, script::thai},  __script_data_t{0x0E3B, script::zzzz},
-        __script_data_t{0x0E3F, script::zyyy},  __script_data_t{0x0E40, script::thai},
-        __script_data_t{0x0E5C, script::zzzz},  __script_data_t{0x0E81, script::laoo},
-        __script_data_t{0x0E83, script::zzzz},  __script_data_t{0x0E84, script::laoo},
-        __script_data_t{0x0E85, script::zzzz},  __script_data_t{0x0E86, script::laoo},
-        __script_data_t{0x0E8B, script::zzzz},  __script_data_t{0x0E8C, script::laoo},
-        __script_data_t{0x0EA4, script::zzzz},  __script_data_t{0x0EA5, script::laoo},
-        __script_data_t{0x0EA6, script::zzzz},  __script_data_t{0x0EA7, script::laoo},
-        __script_data_t{0x0EBE, script::zzzz},  __script_data_t{0x0EC0, script::laoo},
-        __script_data_t{0x0EC5, script::zzzz},  __script_data_t{0x0EC6, script::laoo},
-        __script_data_t{0x0EC7, script::zzzz},  __script_data_t{0x0EC8, script::laoo},
-        __script_data_t{0x0ECE, script::zzzz},  __script_data_t{0x0ED0, script::laoo},
-        __script_data_t{0x0EDA, script::zzzz},  __script_data_t{0x0EDC, script::laoo},
-        __script_data_t{0x0EE0, script::zzzz},  __script_data_t{0x0F00, script::tibt},
-        __script_data_t{0x0F48, script::zzzz},  __script_data_t{0x0F49, script::tibt},
-        __script_data_t{0x0F6D, script::zzzz},  __script_data_t{0x0F71, script::tibt},
-        __script_data_t{0x0F98, script::zzzz},  __script_data_t{0x0F99, script::tibt},
-        __script_data_t{0x0FBD, script::zzzz},  __script_data_t{0x0FBE, script::tibt},
-        __script_data_t{0x0FCD, script::zzzz},  __script_data_t{0x0FCE, script::tibt},
-        __script_data_t{0x0FD5, script::zyyy},  __script_data_t{0x0FD9, script::tibt},
-        __script_data_t{0x0FDB, script::zzzz},  __script_data_t{0x1000, script::mymr},
-        __script_data_t{0x10A0, script::geor},  __script_data_t{0x10C6, script::zzzz},
-        __script_data_t{0x10C7, script::geor},  __script_data_t{0x10C8, script::zzzz},
-        __script_data_t{0x10CD, script::geor},  __script_data_t{0x10CE, script::zzzz},
-        __script_data_t{0x10D0, script::geor},  __script_data_t{0x10FB, script::zyyy},
-        __script_data_t{0x10FC, script::geor},  __script_data_t{0x1100, script::hang},
-        __script_data_t{0x1200, script::ethi},  __script_data_t{0x1249, script::zzzz},
-        __script_data_t{0x124A, script::ethi},  __script_data_t{0x124E, script::zzzz},
-        __script_data_t{0x1250, script::ethi},  __script_data_t{0x1257, script::zzzz},
-        __script_data_t{0x1258, script::ethi},  __script_data_t{0x1259, script::zzzz},
-        __script_data_t{0x125A, script::ethi},  __script_data_t{0x125E, script::zzzz},
-        __script_data_t{0x1260, script::ethi},  __script_data_t{0x1289, script::zzzz},
-        __script_data_t{0x128A, script::ethi},  __script_data_t{0x128E, script::zzzz},
-        __script_data_t{0x1290, script::ethi},  __script_data_t{0x12B1, script::zzzz},
-        __script_data_t{0x12B2, script::ethi},  __script_data_t{0x12B6, script::zzzz},
-        __script_data_t{0x12B8, script::ethi},  __script_data_t{0x12BF, script::zzzz},
-        __script_data_t{0x12C0, script::ethi},  __script_data_t{0x12C1, script::zzzz},
-        __script_data_t{0x12C2, script::ethi},  __script_data_t{0x12C6, script::zzzz},
-        __script_data_t{0x12C8, script::ethi},  __script_data_t{0x12D7, script::zzzz},
-        __script_data_t{0x12D8, script::ethi},  __script_data_t{0x1311, script::zzzz},
-        __script_data_t{0x1312, script::ethi},  __script_data_t{0x1316, script::zzzz},
-        __script_data_t{0x1318, script::ethi},  __script_data_t{0x135B, script::zzzz},
-        __script_data_t{0x135D, script::ethi},  __script_data_t{0x137D, script::zzzz},
-        __script_data_t{0x1380, script::ethi},  __script_data_t{0x139A, script::zzzz},
-        __script_data_t{0x13A0, script::cher},  __script_data_t{0x13F6, script::zzzz},
-        __script_data_t{0x13F8, script::cher},  __script_data_t{0x13FE, script::zzzz},
-        __script_data_t{0x1400, script::cans},  __script_data_t{0x1680, script::ogam},
-        __script_data_t{0x169D, script::zzzz},  __script_data_t{0x16A0, script::runr},
-        __script_data_t{0x16EB, script::zyyy},  __script_data_t{0x16EE, script::runr},
-        __script_data_t{0x16F9, script::zzzz},  __script_data_t{0x1700, script::tglg},
-        __script_data_t{0x170D, script::zzzz},  __script_data_t{0x170E, script::tglg},
-        __script_data_t{0x1715, script::zzzz},  __script_data_t{0x1720, script::hano},
-        __script_data_t{0x1735, script::zyyy},  __script_data_t{0x1737, script::zzzz},
-        __script_data_t{0x1740, script::buhd},  __script_data_t{0x1754, script::zzzz},
-        __script_data_t{0x1760, script::tagb},  __script_data_t{0x176D, script::zzzz},
-        __script_data_t{0x176E, script::tagb},  __script_data_t{0x1771, script::zzzz},
-        __script_data_t{0x1772, script::tagb},  __script_data_t{0x1774, script::zzzz},
-        __script_data_t{0x1780, script::khmr},  __script_data_t{0x17DE, script::zzzz},
-        __script_data_t{0x17E0, script::khmr},  __script_data_t{0x17EA, script::zzzz},
-        __script_data_t{0x17F0, script::khmr},  __script_data_t{0x17FA, script::zzzz},
-        __script_data_t{0x1800, script::mong},  __script_data_t{0x1802, script::zyyy},
-        __script_data_t{0x1804, script::mong},  __script_data_t{0x1805, script::zyyy},
-        __script_data_t{0x1806, script::mong},  __script_data_t{0x180F, script::zzzz},
-        __script_data_t{0x1810, script::mong},  __script_data_t{0x181A, script::zzzz},
-        __script_data_t{0x1820, script::mong},  __script_data_t{0x1879, script::zzzz},
-        __script_data_t{0x1880, script::mong},  __script_data_t{0x18AB, script::zzzz},
-        __script_data_t{0x18B0, script::cans},  __script_data_t{0x18F6, script::zzzz},
-        __script_data_t{0x1900, script::limb},  __script_data_t{0x191F, script::zzzz},
-        __script_data_t{0x1920, script::limb},  __script_data_t{0x192C, script::zzzz},
-        __script_data_t{0x1930, script::limb},  __script_data_t{0x193C, script::zzzz},
-        __script_data_t{0x1940, script::limb},  __script_data_t{0x1941, script::zzzz},
-        __script_data_t{0x1944, script::limb},  __script_data_t{0x1950, script::tale},
-        __script_data_t{0x196E, script::zzzz},  __script_data_t{0x1970, script::tale},
-        __script_data_t{0x1975, script::zzzz},  __script_data_t{0x1980, script::talu},
-        __script_data_t{0x19AC, script::zzzz},  __script_data_t{0x19B0, script::talu},
-        __script_data_t{0x19CA, script::zzzz},  __script_data_t{0x19D0, script::talu},
-        __script_data_t{0x19DB, script::zzzz},  __script_data_t{0x19DE, script::talu},
-        __script_data_t{0x19E0, script::khmr},  __script_data_t{0x1A00, script::bugi},
-        __script_data_t{0x1A1C, script::zzzz},  __script_data_t{0x1A1E, script::bugi},
-        __script_data_t{0x1A20, script::lana},  __script_data_t{0x1A5F, script::zzzz},
-        __script_data_t{0x1A60, script::lana},  __script_data_t{0x1A7D, script::zzzz},
-        __script_data_t{0x1A7F, script::lana},  __script_data_t{0x1A8A, script::zzzz},
-        __script_data_t{0x1A90, script::lana},  __script_data_t{0x1A9A, script::zzzz},
-        __script_data_t{0x1AA0, script::lana},  __script_data_t{0x1AAE, script::zzzz},
-        __script_data_t{0x1AB0, script::zinh},  __script_data_t{0x1ABF, script::zzzz},
-        __script_data_t{0x1B00, script::bali},  __script_data_t{0x1B4C, script::zzzz},
-        __script_data_t{0x1B50, script::bali},  __script_data_t{0x1B7D, script::zzzz},
-        __script_data_t{0x1B80, script::sund},  __script_data_t{0x1BC0, script::batk},
-        __script_data_t{0x1BF4, script::zzzz},  __script_data_t{0x1BFC, script::batk},
-        __script_data_t{0x1C00, script::lepc},  __script_data_t{0x1C38, script::zzzz},
-        __script_data_t{0x1C3B, script::lepc},  __script_data_t{0x1C4A, script::zzzz},
-        __script_data_t{0x1C4D, script::lepc},  __script_data_t{0x1C50, script::olck},
-        __script_data_t{0x1C80, script::cyrl},  __script_data_t{0x1C89, script::zzzz},
-        __script_data_t{0x1C90, script::geor},  __script_data_t{0x1CBB, script::zzzz},
-        __script_data_t{0x1CBD, script::geor},  __script_data_t{0x1CC0, script::sund},
-        __script_data_t{0x1CC8, script::zzzz},  __script_data_t{0x1CD0, script::zinh},
-        __script_data_t{0x1CD3, script::zyyy},  __script_data_t{0x1CD4, script::zinh},
-        __script_data_t{0x1CE1, script::zyyy},  __script_data_t{0x1CE2, script::zinh},
-        __script_data_t{0x1CE9, script::zyyy},  __script_data_t{0x1CED, script::zinh},
-        __script_data_t{0x1CEE, script::zyyy},  __script_data_t{0x1CF4, script::zinh},
-        __script_data_t{0x1CF5, script::zyyy},  __script_data_t{0x1CF8, script::zinh},
-        __script_data_t{0x1CFA, script::zyyy},  __script_data_t{0x1CFB, script::zzzz},
-        __script_data_t{0x1D00, script::latn},  __script_data_t{0x1D26, script::grek},
-        __script_data_t{0x1D2B, script::cyrl},  __script_data_t{0x1D2C, script::latn},
-        __script_data_t{0x1D5D, script::grek},  __script_data_t{0x1D62, script::latn},
-        __script_data_t{0x1D66, script::grek},  __script_data_t{0x1D6B, script::latn},
-        __script_data_t{0x1D78, script::cyrl},  __script_data_t{0x1D79, script::latn},
-        __script_data_t{0x1DBF, script::grek},  __script_data_t{0x1DC0, script::zinh},
-        __script_data_t{0x1DFA, script::zzzz},  __script_data_t{0x1DFB, script::zinh},
-        __script_data_t{0x1E00, script::latn},  __script_data_t{0x1F00, script::grek},
-        __script_data_t{0x1F16, script::zzzz},  __script_data_t{0x1F18, script::grek},
-        __script_data_t{0x1F1E, script::zzzz},  __script_data_t{0x1F20, script::grek},
-        __script_data_t{0x1F46, script::zzzz},  __script_data_t{0x1F48, script::grek},
-        __script_data_t{0x1F4E, script::zzzz},  __script_data_t{0x1F50, script::grek},
-        __script_data_t{0x1F58, script::zzzz},  __script_data_t{0x1F59, script::grek},
-        __script_data_t{0x1F5A, script::zzzz},  __script_data_t{0x1F5B, script::grek},
-        __script_data_t{0x1F5C, script::zzzz},  __script_data_t{0x1F5D, script::grek},
-        __script_data_t{0x1F5E, script::zzzz},  __script_data_t{0x1F5F, script::grek},
-        __script_data_t{0x1F7E, script::zzzz},  __script_data_t{0x1F80, script::grek},
-        __script_data_t{0x1FB5, script::zzzz},  __script_data_t{0x1FB6, script::grek},
-        __script_data_t{0x1FC5, script::zzzz},  __script_data_t{0x1FC6, script::grek},
-        __script_data_t{0x1FD4, script::zzzz},  __script_data_t{0x1FD6, script::grek},
-        __script_data_t{0x1FDC, script::zzzz},  __script_data_t{0x1FDD, script::grek},
-        __script_data_t{0x1FF0, script::zzzz},  __script_data_t{0x1FF2, script::grek},
-        __script_data_t{0x1FF5, script::zzzz},  __script_data_t{0x1FF6, script::grek},
-        __script_data_t{0x1FFF, script::zzzz},  __script_data_t{0x2000, script::zyyy},
-        __script_data_t{0x200C, script::zinh},  __script_data_t{0x200E, script::zyyy},
-        __script_data_t{0x2065, script::zzzz},  __script_data_t{0x2066, script::zyyy},
-        __script_data_t{0x2071, script::latn},  __script_data_t{0x2072, script::zzzz},
-        __script_data_t{0x2074, script::zyyy},  __script_data_t{0x207F, script::latn},
-        __script_data_t{0x2080, script::zyyy},  __script_data_t{0x208F, script::zzzz},
-        __script_data_t{0x2090, script::latn},  __script_data_t{0x209D, script::zzzz},
-        __script_data_t{0x20A0, script::zyyy},  __script_data_t{0x20C0, script::zzzz},
-        __script_data_t{0x20D0, script::zinh},  __script_data_t{0x20F1, script::zzzz},
-        __script_data_t{0x2100, script::zyyy},  __script_data_t{0x2126, script::grek},
-        __script_data_t{0x2127, script::zyyy},  __script_data_t{0x212A, script::latn},
-        __script_data_t{0x212C, script::zyyy},  __script_data_t{0x2132, script::latn},
-        __script_data_t{0x2133, script::zyyy},  __script_data_t{0x214E, script::latn},
-        __script_data_t{0x214F, script::zyyy},  __script_data_t{0x2160, script::latn},
-        __script_data_t{0x2189, script::zyyy},  __script_data_t{0x218C, script::zzzz},
-        __script_data_t{0x2190, script::zyyy},  __script_data_t{0x2427, script::zzzz},
-        __script_data_t{0x2440, script::zyyy},  __script_data_t{0x244B, script::zzzz},
-        __script_data_t{0x2460, script::zyyy},  __script_data_t{0x2800, script::brai},
-        __script_data_t{0x2900, script::zyyy},  __script_data_t{0x2B74, script::zzzz},
-        __script_data_t{0x2B76, script::zyyy},  __script_data_t{0x2B96, script::zzzz},
-        __script_data_t{0x2B98, script::zyyy},  __script_data_t{0x2C00, script::glag},
-        __script_data_t{0x2C2F, script::zzzz},  __script_data_t{0x2C30, script::glag},
-        __script_data_t{0x2C5F, script::zzzz},  __script_data_t{0x2C60, script::latn},
-        __script_data_t{0x2C80, script::copt},  __script_data_t{0x2CF4, script::zzzz},
-        __script_data_t{0x2CF9, script::copt},  __script_data_t{0x2D00, script::geor},
-        __script_data_t{0x2D26, script::zzzz},  __script_data_t{0x2D27, script::geor},
-        __script_data_t{0x2D28, script::zzzz},  __script_data_t{0x2D2D, script::geor},
-        __script_data_t{0x2D2E, script::zzzz},  __script_data_t{0x2D30, script::tfng},
-        __script_data_t{0x2D68, script::zzzz},  __script_data_t{0x2D6F, script::tfng},
-        __script_data_t{0x2D71, script::zzzz},  __script_data_t{0x2D7F, script::tfng},
-        __script_data_t{0x2D80, script::ethi},  __script_data_t{0x2D97, script::zzzz},
-        __script_data_t{0x2DA0, script::ethi},  __script_data_t{0x2DA7, script::zzzz},
-        __script_data_t{0x2DA8, script::ethi},  __script_data_t{0x2DAF, script::zzzz},
-        __script_data_t{0x2DB0, script::ethi},  __script_data_t{0x2DB7, script::zzzz},
-        __script_data_t{0x2DB8, script::ethi},  __script_data_t{0x2DBF, script::zzzz},
-        __script_data_t{0x2DC0, script::ethi},  __script_data_t{0x2DC7, script::zzzz},
-        __script_data_t{0x2DC8, script::ethi},  __script_data_t{0x2DCF, script::zzzz},
-        __script_data_t{0x2DD0, script::ethi},  __script_data_t{0x2DD7, script::zzzz},
-        __script_data_t{0x2DD8, script::ethi},  __script_data_t{0x2DDF, script::zzzz},
-        __script_data_t{0x2DE0, script::cyrl},  __script_data_t{0x2E00, script::zyyy},
-        __script_data_t{0x2E50, script::zzzz},  __script_data_t{0x2E80, script::hani},
-        __script_data_t{0x2E9A, script::zzzz},  __script_data_t{0x2E9B, script::hani},
-        __script_data_t{0x2EF4, script::zzzz},  __script_data_t{0x2F00, script::hani},
-        __script_data_t{0x2FD6, script::zzzz},  __script_data_t{0x2FF0, script::zyyy},
-        __script_data_t{0x2FFC, script::zzzz},  __script_data_t{0x3000, script::zyyy},
-        __script_data_t{0x3005, script::hani},  __script_data_t{0x3006, script::zyyy},
-        __script_data_t{0x3007, script::hani},  __script_data_t{0x3008, script::zyyy},
-        __script_data_t{0x3021, script::hani},  __script_data_t{0x302A, script::zinh},
-        __script_data_t{0x302E, script::hang},  __script_data_t{0x3030, script::zyyy},
-        __script_data_t{0x3038, script::hani},  __script_data_t{0x303C, script::zyyy},
-        __script_data_t{0x3040, script::zzzz},  __script_data_t{0x3041, script::hira},
-        __script_data_t{0x3097, script::zzzz},  __script_data_t{0x3099, script::zinh},
-        __script_data_t{0x309B, script::zyyy},  __script_data_t{0x309D, script::hira},
-        __script_data_t{0x30A0, script::zyyy},  __script_data_t{0x30A1, script::kana},
-        __script_data_t{0x30FB, script::zyyy},  __script_data_t{0x30FD, script::kana},
-        __script_data_t{0x3100, script::zzzz},  __script_data_t{0x3105, script::bopo},
-        __script_data_t{0x3130, script::zzzz},  __script_data_t{0x3131, script::hang},
-        __script_data_t{0x318F, script::zzzz},  __script_data_t{0x3190, script::zyyy},
-        __script_data_t{0x31A0, script::bopo},  __script_data_t{0x31BB, script::zzzz},
-        __script_data_t{0x31C0, script::zyyy},  __script_data_t{0x31E4, script::zzzz},
-        __script_data_t{0x31F0, script::kana},  __script_data_t{0x3200, script::hang},
-        __script_data_t{0x321F, script::zzzz},  __script_data_t{0x3220, script::zyyy},
-        __script_data_t{0x3260, script::hang},  __script_data_t{0x327F, script::zyyy},
-        __script_data_t{0x32D0, script::kana},  __script_data_t{0x32FF, script::zzzz},
-        __script_data_t{0x3300, script::kana},  __script_data_t{0x3358, script::zyyy},
-        __script_data_t{0x3400, script::zzzz},  __script_data_t{0x3403, script::hani},
-        __script_data_t{0x3404, script::zzzz},  __script_data_t{0x3405, script::hani},
-        __script_data_t{0x3406, script::zzzz},  __script_data_t{0x3481, script::hani},
-        __script_data_t{0x3482, script::zzzz},  __script_data_t{0x3483, script::hani},
-        __script_data_t{0x3484, script::zzzz},  __script_data_t{0x3828, script::hani},
-        __script_data_t{0x3829, script::zzzz},  __script_data_t{0x382A, script::hani},
-        __script_data_t{0x382B, script::zzzz},  __script_data_t{0x3B4B, script::hani},
-        __script_data_t{0x3B4C, script::zzzz},  __script_data_t{0x3B4D, script::hani},
-        __script_data_t{0x3B4E, script::zzzz},  __script_data_t{0x4DB4, script::hani},
-        __script_data_t{0x4DB5, script::zzzz},  __script_data_t{0x4DC0, script::zyyy},
-        __script_data_t{0x4E00, script::hani},  __script_data_t{0x4E02, script::zzzz},
-        __script_data_t{0x4E03, script::hani},  __script_data_t{0x4E04, script::zzzz},
-        __script_data_t{0x4E05, script::hani},  __script_data_t{0x4E06, script::zzzz},
-        __script_data_t{0x4E07, script::hani},  __script_data_t{0x4E0A, script::zzzz},
-        __script_data_t{0x4E5B, script::hani},  __script_data_t{0x4E5C, script::zzzz},
-        __script_data_t{0x4E5D, script::hani},  __script_data_t{0x4E5E, script::zzzz},
-        __script_data_t{0x4E8A, script::hani},  __script_data_t{0x4E8B, script::zzzz},
-        __script_data_t{0x4E8C, script::hani},  __script_data_t{0x4E8D, script::zzzz},
-        __script_data_t{0x4E92, script::hani},  __script_data_t{0x4E93, script::zzzz},
-        __script_data_t{0x4E94, script::hani},  __script_data_t{0x4E97, script::zzzz},
-        __script_data_t{0x4EBD, script::hani},  __script_data_t{0x4EBE, script::zzzz},
-        __script_data_t{0x4EBF, script::hani},  __script_data_t{0x4EC1, script::zzzz},
-        __script_data_t{0x4EDD, script::hani},  __script_data_t{0x4EDE, script::zzzz},
-        __script_data_t{0x4EDF, script::hani},  __script_data_t{0x4EE0, script::zzzz},
-        __script_data_t{0x4EE6, script::hani},  __script_data_t{0x4EE7, script::zzzz},
-        __script_data_t{0x4EE8, script::hani},  __script_data_t{0x4EE9, script::zzzz},
-        __script_data_t{0x4F0B, script::hani},  __script_data_t{0x4F0C, script::zzzz},
-        __script_data_t{0x4F0D, script::hani},  __script_data_t{0x4F0E, script::zzzz},
-        __script_data_t{0x4F6E, script::hani},  __script_data_t{0x4F6F, script::zzzz},
-        __script_data_t{0x4F70, script::hani},  __script_data_t{0x4F71, script::zzzz},
-        __script_data_t{0x5102, script::hani},  __script_data_t{0x5103, script::zzzz},
-        __script_data_t{0x5104, script::hani},  __script_data_t{0x5105, script::zzzz},
-        __script_data_t{0x5144, script::hani},  __script_data_t{0x5145, script::zzzz},
-        __script_data_t{0x5146, script::hani},  __script_data_t{0x5147, script::zzzz},
-        __script_data_t{0x5167, script::hani},  __script_data_t{0x5168, script::zzzz},
-        __script_data_t{0x5169, script::hani},  __script_data_t{0x516E, script::zzzz},
-        __script_data_t{0x533F, script::hani},  __script_data_t{0x5340, script::zzzz},
-        __script_data_t{0x5341, script::hani},  __script_data_t{0x5346, script::zzzz},
-        __script_data_t{0x534A, script::hani},  __script_data_t{0x534B, script::zzzz},
-        __script_data_t{0x534C, script::hani},  __script_data_t{0x534D, script::zzzz},
-        __script_data_t{0x53BF, script::hani},  __script_data_t{0x53C0, script::zzzz},
-        __script_data_t{0x53C1, script::hani},  __script_data_t{0x53C5, script::zzzz},
-        __script_data_t{0x56D9, script::hani},  __script_data_t{0x56DA, script::zzzz},
-        __script_data_t{0x56DB, script::hani},  __script_data_t{0x56DC, script::zzzz},
-        __script_data_t{0x58EF, script::hani},  __script_data_t{0x58F0, script::zzzz},
-        __script_data_t{0x58F1, script::hani},  __script_data_t{0x58F2, script::zzzz},
-        __script_data_t{0x58F7, script::hani},  __script_data_t{0x58F8, script::zzzz},
-        __script_data_t{0x58F9, script::hani},  __script_data_t{0x58FA, script::zzzz},
-        __script_data_t{0x5E78, script::hani},  __script_data_t{0x5E79, script::zzzz},
-        __script_data_t{0x5E7A, script::hani},  __script_data_t{0x5E7B, script::zzzz},
-        __script_data_t{0x5EFC, script::hani},  __script_data_t{0x5EFD, script::zzzz},
-        __script_data_t{0x5EFE, script::hani},  __script_data_t{0x5F00, script::zzzz},
-        __script_data_t{0x5F0A, script::hani},  __script_data_t{0x5F0B, script::zzzz},
-        __script_data_t{0x5F0C, script::hani},  __script_data_t{0x5F11, script::zzzz},
-        __script_data_t{0x62FC, script::hani},  __script_data_t{0x62FD, script::zzzz},
-        __script_data_t{0x62FE, script::hani},  __script_data_t{0x62FF, script::zzzz},
-        __script_data_t{0x634A, script::hani},  __script_data_t{0x634B, script::zzzz},
-        __script_data_t{0x634C, script::hani},  __script_data_t{0x634D, script::zzzz},
-        __script_data_t{0x67D0, script::hani},  __script_data_t{0x67D1, script::zzzz},
-        __script_data_t{0x67D2, script::hani},  __script_data_t{0x67D3, script::zzzz},
-        __script_data_t{0x6F04, script::hani},  __script_data_t{0x6F05, script::zzzz},
-        __script_data_t{0x6F06, script::hani},  __script_data_t{0x6F07, script::zzzz},
-        __script_data_t{0x7394, script::hani},  __script_data_t{0x7395, script::zzzz},
-        __script_data_t{0x7396, script::hani},  __script_data_t{0x7397, script::zzzz},
-        __script_data_t{0x767C, script::hani},  __script_data_t{0x767D, script::zzzz},
-        __script_data_t{0x767E, script::hani},  __script_data_t{0x767F, script::zzzz},
-        __script_data_t{0x8084, script::hani},  __script_data_t{0x8085, script::zzzz},
-        __script_data_t{0x8086, script::hani},  __script_data_t{0x8087, script::zzzz},
-        __script_data_t{0x842A, script::hani},  __script_data_t{0x842B, script::zzzz},
-        __script_data_t{0x842C, script::hani},  __script_data_t{0x842D, script::zzzz},
-        __script_data_t{0x8CAC, script::hani},  __script_data_t{0x8CAD, script::zzzz},
-        __script_data_t{0x8CAE, script::hani},  __script_data_t{0x8CAF, script::zzzz},
-        __script_data_t{0x8CB1, script::hani},  __script_data_t{0x8CB2, script::zzzz},
-        __script_data_t{0x8CB3, script::hani},  __script_data_t{0x8CB4, script::zzzz},
-        __script_data_t{0x8D2E, script::hani},  __script_data_t{0x8D2F, script::zzzz},
-        __script_data_t{0x8D30, script::hani},  __script_data_t{0x8D31, script::zzzz},
-        __script_data_t{0x961F, script::hani},  __script_data_t{0x9620, script::zzzz},
-        __script_data_t{0x9621, script::hani},  __script_data_t{0x9622, script::zzzz},
-        __script_data_t{0x9644, script::hani},  __script_data_t{0x9645, script::zzzz},
-        __script_data_t{0x9646, script::hani},  __script_data_t{0x9647, script::zzzz},
-        __script_data_t{0x964A, script::hani},  __script_data_t{0x964B, script::zzzz},
-        __script_data_t{0x964C, script::hani},  __script_data_t{0x964D, script::zzzz},
-        __script_data_t{0x9676, script::hani},  __script_data_t{0x9677, script::zzzz},
-        __script_data_t{0x9678, script::hani},  __script_data_t{0x9679, script::zzzz},
-        __script_data_t{0x96F4, script::hani},  __script_data_t{0x96F5, script::zzzz},
-        __script_data_t{0x96F6, script::hani},  __script_data_t{0x96F7, script::zzzz},
-        __script_data_t{0x9FA4, script::hani},  __script_data_t{0x9FA5, script::zzzz},
-        __script_data_t{0x9FBA, script::hani},  __script_data_t{0x9FBB, script::zzzz},
-        __script_data_t{0x9FC2, script::hani},  __script_data_t{0x9FC3, script::zzzz},
-        __script_data_t{0x9FCA, script::hani},  __script_data_t{0x9FCB, script::zzzz},
-        __script_data_t{0x9FCC, script::hani},  __script_data_t{0x9FCD, script::zzzz},
-        __script_data_t{0x9FD4, script::hani},  __script_data_t{0x9FD5, script::zzzz},
-        __script_data_t{0x9FE9, script::hani},  __script_data_t{0x9FEA, script::zzzz},
-        __script_data_t{0x9FEE, script::hani},  __script_data_t{0x9FEF, script::zzzz},
-        __script_data_t{0xA000, script::yiii},  __script_data_t{0xA48D, script::zzzz},
-        __script_data_t{0xA490, script::yiii},  __script_data_t{0xA4C7, script::zzzz},
-        __script_data_t{0xA4D0, script::lisu},  __script_data_t{0xA500, script::vaii},
-        __script_data_t{0xA62C, script::zzzz},  __script_data_t{0xA640, script::cyrl},
-        __script_data_t{0xA6A0, script::bamu},  __script_data_t{0xA6F8, script::zzzz},
-        __script_data_t{0xA700, script::zyyy},  __script_data_t{0xA722, script::latn},
-        __script_data_t{0xA788, script::zyyy},  __script_data_t{0xA78B, script::latn},
-        __script_data_t{0xA7C0, script::zzzz},  __script_data_t{0xA7C2, script::latn},
-        __script_data_t{0xA7C7, script::zzzz},  __script_data_t{0xA7F7, script::latn},
-        __script_data_t{0xA800, script::sylo},  __script_data_t{0xA82C, script::zzzz},
-        __script_data_t{0xA830, script::zyyy},  __script_data_t{0xA83A, script::zzzz},
-        __script_data_t{0xA840, script::phag},  __script_data_t{0xA878, script::zzzz},
-        __script_data_t{0xA880, script::saur},  __script_data_t{0xA8C6, script::zzzz},
-        __script_data_t{0xA8CE, script::saur},  __script_data_t{0xA8DA, script::zzzz},
-        __script_data_t{0xA8E0, script::deva},  __script_data_t{0xA900, script::kali},
-        __script_data_t{0xA92E, script::zyyy},  __script_data_t{0xA92F, script::kali},
-        __script_data_t{0xA930, script::rjng},  __script_data_t{0xA954, script::zzzz},
-        __script_data_t{0xA95F, script::rjng},  __script_data_t{0xA960, script::hang},
-        __script_data_t{0xA97D, script::zzzz},  __script_data_t{0xA980, script::java},
-        __script_data_t{0xA9CE, script::zzzz},  __script_data_t{0xA9CF, script::zyyy},
-        __script_data_t{0xA9D0, script::java},  __script_data_t{0xA9DA, script::zzzz},
-        __script_data_t{0xA9DE, script::java},  __script_data_t{0xA9E0, script::mymr},
-        __script_data_t{0xA9FF, script::zzzz},  __script_data_t{0xAA00, script::cham},
-        __script_data_t{0xAA37, script::zzzz},  __script_data_t{0xAA40, script::cham},
-        __script_data_t{0xAA4E, script::zzzz},  __script_data_t{0xAA50, script::cham},
-        __script_data_t{0xAA5A, script::zzzz},  __script_data_t{0xAA5C, script::cham},
-        __script_data_t{0xAA60, script::mymr},  __script_data_t{0xAA80, script::tavt},
-        __script_data_t{0xAAC3, script::zzzz},  __script_data_t{0xAADB, script::tavt},
-        __script_data_t{0xAAE0, script::mtei},  __script_data_t{0xAAF7, script::zzzz},
-        __script_data_t{0xAB01, script::ethi},  __script_data_t{0xAB07, script::zzzz},
-        __script_data_t{0xAB09, script::ethi},  __script_data_t{0xAB0F, script::zzzz},
-        __script_data_t{0xAB11, script::ethi},  __script_data_t{0xAB17, script::zzzz},
-        __script_data_t{0xAB20, script::ethi},  __script_data_t{0xAB27, script::zzzz},
-        __script_data_t{0xAB28, script::ethi},  __script_data_t{0xAB2F, script::zzzz},
-        __script_data_t{0xAB30, script::latn},  __script_data_t{0xAB5B, script::zyyy},
-        __script_data_t{0xAB5C, script::latn},  __script_data_t{0xAB65, script::grek},
-        __script_data_t{0xAB66, script::latn},  __script_data_t{0xAB68, script::zzzz},
-        __script_data_t{0xAB70, script::cher},  __script_data_t{0xABC0, script::mtei},
-        __script_data_t{0xABEE, script::zzzz},  __script_data_t{0xABF0, script::mtei},
-        __script_data_t{0xABFA, script::zzzz},  __script_data_t{0xAC00, script::hang},
-        __script_data_t{0xD7A4, script::zzzz},  __script_data_t{0xD7B0, script::hang},
-        __script_data_t{0xD7C7, script::zzzz},  __script_data_t{0xD7CB, script::hang},
-        __script_data_t{0xD7FC, script::zzzz},  __script_data_t{0xF900, script::hani},
-        __script_data_t{0xFA6E, script::zzzz},  __script_data_t{0xFA70, script::hani},
-        __script_data_t{0xFADA, script::zzzz},  __script_data_t{0xFB00, script::latn},
-        __script_data_t{0xFB07, script::zzzz},  __script_data_t{0xFB13, script::armn},
-        __script_data_t{0xFB18, script::zzzz},  __script_data_t{0xFB1D, script::hebr},
-        __script_data_t{0xFB37, script::zzzz},  __script_data_t{0xFB38, script::hebr},
-        __script_data_t{0xFB3D, script::zzzz},  __script_data_t{0xFB3E, script::hebr},
-        __script_data_t{0xFB3F, script::zzzz},  __script_data_t{0xFB40, script::hebr},
-        __script_data_t{0xFB42, script::zzzz},  __script_data_t{0xFB43, script::hebr},
-        __script_data_t{0xFB45, script::zzzz},  __script_data_t{0xFB46, script::hebr},
-        __script_data_t{0xFB50, script::arab},  __script_data_t{0xFBC2, script::zzzz},
-        __script_data_t{0xFBD3, script::arab},  __script_data_t{0xFD3E, script::zyyy},
-        __script_data_t{0xFD40, script::zzzz},  __script_data_t{0xFD50, script::arab},
-        __script_data_t{0xFD90, script::zzzz},  __script_data_t{0xFD92, script::arab},
-        __script_data_t{0xFDC8, script::zzzz},  __script_data_t{0xFDF0, script::arab},
-        __script_data_t{0xFDFE, script::zzzz},  __script_data_t{0xFE00, script::zinh},
-        __script_data_t{0xFE10, script::zyyy},  __script_data_t{0xFE1A, script::zzzz},
-        __script_data_t{0xFE20, script::zinh},  __script_data_t{0xFE2E, script::cyrl},
-        __script_data_t{0xFE30, script::zyyy},  __script_data_t{0xFE53, script::zzzz},
-        __script_data_t{0xFE54, script::zyyy},  __script_data_t{0xFE67, script::zzzz},
-        __script_data_t{0xFE68, script::zyyy},  __script_data_t{0xFE6C, script::zzzz},
-        __script_data_t{0xFE70, script::arab},  __script_data_t{0xFE75, script::zzzz},
-        __script_data_t{0xFE76, script::arab},  __script_data_t{0xFEFD, script::zzzz},
-        __script_data_t{0xFEFF, script::zyyy},  __script_data_t{0xFF00, script::zzzz},
-        __script_data_t{0xFF01, script::zyyy},  __script_data_t{0xFF21, script::latn},
-        __script_data_t{0xFF3B, script::zyyy},  __script_data_t{0xFF41, script::latn},
-        __script_data_t{0xFF5B, script::zyyy},  __script_data_t{0xFF66, script::kana},
-        __script_data_t{0xFF70, script::zyyy},  __script_data_t{0xFF71, script::kana},
-        __script_data_t{0xFF9E, script::zyyy},  __script_data_t{0xFFA0, script::hang},
-        __script_data_t{0xFFBF, script::zzzz},  __script_data_t{0xFFC2, script::hang},
-        __script_data_t{0xFFC8, script::zzzz},  __script_data_t{0xFFCA, script::hang},
-        __script_data_t{0xFFD0, script::zzzz},  __script_data_t{0xFFD2, script::hang},
-        __script_data_t{0xFFD8, script::zzzz},  __script_data_t{0xFFDA, script::hang},
-        __script_data_t{0xFFDD, script::zzzz},  __script_data_t{0xFFE0, script::zyyy},
-        __script_data_t{0xFFE7, script::zzzz},  __script_data_t{0xFFE8, script::zyyy},
-        __script_data_t{0xFFEF, script::zzzz},  __script_data_t{0xFFF9, script::zyyy},
-        __script_data_t{0xFFFE, script::zzzz},  __script_data_t{0x10000, script::linb},
-        __script_data_t{0x1000C, script::zzzz}, __script_data_t{0x1000D, script::linb},
-        __script_data_t{0x10027, script::zzzz}, __script_data_t{0x10028, script::linb},
-        __script_data_t{0x1003B, script::zzzz}, __script_data_t{0x1003C, script::linb},
-        __script_data_t{0x1003E, script::zzzz}, __script_data_t{0x1003F, script::linb},
-        __script_data_t{0x1004E, script::zzzz}, __script_data_t{0x10050, script::linb},
-        __script_data_t{0x1005E, script::zzzz}, __script_data_t{0x10080, script::linb},
-        __script_data_t{0x100FB, script::zzzz}, __script_data_t{0x10100, script::zyyy},
-        __script_data_t{0x10103, script::zzzz}, __script_data_t{0x10107, script::zyyy},
-        __script_data_t{0x10134, script::zzzz}, __script_data_t{0x10137, script::zyyy},
-        __script_data_t{0x10140, script::grek}, __script_data_t{0x1018F, script::zzzz},
-        __script_data_t{0x10190, script::zyyy}, __script_data_t{0x1019C, script::zzzz},
-        __script_data_t{0x101A0, script::grek}, __script_data_t{0x101A1, script::zzzz},
-        __script_data_t{0x101D0, script::zyyy}, __script_data_t{0x101FD, script::zinh},
-        __script_data_t{0x101FE, script::zzzz}, __script_data_t{0x10280, script::lyci},
-        __script_data_t{0x1029D, script::zzzz}, __script_data_t{0x102A0, script::cari},
-        __script_data_t{0x102D1, script::zzzz}, __script_data_t{0x102E0, script::zinh},
-        __script_data_t{0x102E1, script::zyyy}, __script_data_t{0x102FC, script::zzzz},
-        __script_data_t{0x10300, script::ital}, __script_data_t{0x10324, script::zzzz},
-        __script_data_t{0x1032D, script::ital}, __script_data_t{0x10330, script::goth},
-        __script_data_t{0x1034B, script::zzzz}, __script_data_t{0x10350, script::perm},
-        __script_data_t{0x1037B, script::zzzz}, __script_data_t{0x10380, script::ugar},
-        __script_data_t{0x1039E, script::zzzz}, __script_data_t{0x1039F, script::ugar},
-        __script_data_t{0x103A0, script::xpeo}, __script_data_t{0x103C4, script::zzzz},
-        __script_data_t{0x103C8, script::xpeo}, __script_data_t{0x103D6, script::zzzz},
-        __script_data_t{0x10400, script::dsrt}, __script_data_t{0x10450, script::shaw},
-        __script_data_t{0x10480, script::osma}, __script_data_t{0x1049E, script::zzzz},
-        __script_data_t{0x104A0, script::osma}, __script_data_t{0x104AA, script::zzzz},
-        __script_data_t{0x104B0, script::osge}, __script_data_t{0x104D4, script::zzzz},
-        __script_data_t{0x104D8, script::osge}, __script_data_t{0x104FC, script::zzzz},
-        __script_data_t{0x10500, script::elba}, __script_data_t{0x10528, script::zzzz},
-        __script_data_t{0x10530, script::aghb}, __script_data_t{0x10564, script::zzzz},
-        __script_data_t{0x1056F, script::aghb}, __script_data_t{0x10570, script::zzzz},
-        __script_data_t{0x10600, script::lina}, __script_data_t{0x10737, script::zzzz},
-        __script_data_t{0x10740, script::lina}, __script_data_t{0x10756, script::zzzz},
-        __script_data_t{0x10760, script::lina}, __script_data_t{0x10768, script::zzzz},
-        __script_data_t{0x10800, script::cprt}, __script_data_t{0x10806, script::zzzz},
-        __script_data_t{0x10808, script::cprt}, __script_data_t{0x10809, script::zzzz},
-        __script_data_t{0x1080A, script::cprt}, __script_data_t{0x10836, script::zzzz},
-        __script_data_t{0x10837, script::cprt}, __script_data_t{0x10839, script::zzzz},
-        __script_data_t{0x1083C, script::cprt}, __script_data_t{0x1083D, script::zzzz},
-        __script_data_t{0x1083F, script::cprt}, __script_data_t{0x10840, script::armi},
-        __script_data_t{0x10856, script::zzzz}, __script_data_t{0x10857, script::armi},
-        __script_data_t{0x10860, script::palm}, __script_data_t{0x10880, script::nbat},
-        __script_data_t{0x1089F, script::zzzz}, __script_data_t{0x108A7, script::nbat},
-        __script_data_t{0x108B0, script::zzzz}, __script_data_t{0x108E0, script::hatr},
-        __script_data_t{0x108F3, script::zzzz}, __script_data_t{0x108F4, script::hatr},
-        __script_data_t{0x108F6, script::zzzz}, __script_data_t{0x108FB, script::hatr},
-        __script_data_t{0x10900, script::phnx}, __script_data_t{0x1091C, script::zzzz},
-        __script_data_t{0x1091F, script::phnx}, __script_data_t{0x10920, script::lydi},
-        __script_data_t{0x1093A, script::zzzz}, __script_data_t{0x1093F, script::lydi},
-        __script_data_t{0x10940, script::zzzz}, __script_data_t{0x10980, script::mero},
-        __script_data_t{0x109A0, script::merc}, __script_data_t{0x109B8, script::zzzz},
-        __script_data_t{0x109BC, script::merc}, __script_data_t{0x109D0, script::zzzz},
-        __script_data_t{0x109D2, script::merc}, __script_data_t{0x10A00, script::khar},
-        __script_data_t{0x10A04, script::zzzz}, __script_data_t{0x10A05, script::khar},
-        __script_data_t{0x10A07, script::zzzz}, __script_data_t{0x10A0C, script::khar},
-        __script_data_t{0x10A14, script::zzzz}, __script_data_t{0x10A15, script::khar},
-        __script_data_t{0x10A18, script::zzzz}, __script_data_t{0x10A19, script::khar},
-        __script_data_t{0x10A36, script::zzzz}, __script_data_t{0x10A38, script::khar},
-        __script_data_t{0x10A3B, script::zzzz}, __script_data_t{0x10A3F, script::khar},
-        __script_data_t{0x10A49, script::zzzz}, __script_data_t{0x10A50, script::khar},
-        __script_data_t{0x10A59, script::zzzz}, __script_data_t{0x10A60, script::sarb},
-        __script_data_t{0x10A80, script::narb}, __script_data_t{0x10AA0, script::zzzz},
-        __script_data_t{0x10AC0, script::mani}, __script_data_t{0x10AE7, script::zzzz},
-        __script_data_t{0x10AEB, script::mani}, __script_data_t{0x10AF7, script::zzzz},
-        __script_data_t{0x10B00, script::avst}, __script_data_t{0x10B36, script::zzzz},
-        __script_data_t{0x10B39, script::avst}, __script_data_t{0x10B40, script::prti},
-        __script_data_t{0x10B56, script::zzzz}, __script_data_t{0x10B58, script::prti},
-        __script_data_t{0x10B60, script::phli}, __script_data_t{0x10B73, script::zzzz},
-        __script_data_t{0x10B78, script::phli}, __script_data_t{0x10B80, script::phlp},
-        __script_data_t{0x10B92, script::zzzz}, __script_data_t{0x10B99, script::phlp},
-        __script_data_t{0x10B9D, script::zzzz}, __script_data_t{0x10BA9, script::phlp},
-        __script_data_t{0x10BB0, script::zzzz}, __script_data_t{0x10C00, script::orkh},
-        __script_data_t{0x10C49, script::zzzz}, __script_data_t{0x10C80, script::hung},
-        __script_data_t{0x10CB3, script::zzzz}, __script_data_t{0x10CC0, script::hung},
-        __script_data_t{0x10CF3, script::zzzz}, __script_data_t{0x10CFA, script::hung},
-        __script_data_t{0x10D00, script::rohg}, __script_data_t{0x10D28, script::zzzz},
-        __script_data_t{0x10D30, script::rohg}, __script_data_t{0x10D3A, script::zzzz},
-        __script_data_t{0x10E60, script::arab}, __script_data_t{0x10E7F, script::zzzz},
-        __script_data_t{0x10F00, script::sogo}, __script_data_t{0x10F28, script::zzzz},
-        __script_data_t{0x10F30, script::sogd}, __script_data_t{0x10F5A, script::zzzz},
-        __script_data_t{0x10FE0, script::elym}, __script_data_t{0x10FF7, script::zzzz},
-        __script_data_t{0x11000, script::brah}, __script_data_t{0x1104E, script::zzzz},
-        __script_data_t{0x11052, script::brah}, __script_data_t{0x11070, script::zzzz},
-        __script_data_t{0x1107F, script::brah}, __script_data_t{0x11080, script::kthi},
-        __script_data_t{0x110C2, script::zzzz}, __script_data_t{0x110CD, script::kthi},
-        __script_data_t{0x110CE, script::zzzz}, __script_data_t{0x110D0, script::sora},
-        __script_data_t{0x110E9, script::zzzz}, __script_data_t{0x110F0, script::sora},
-        __script_data_t{0x110FA, script::zzzz}, __script_data_t{0x11100, script::cakm},
-        __script_data_t{0x11135, script::zzzz}, __script_data_t{0x11136, script::cakm},
-        __script_data_t{0x11147, script::zzzz}, __script_data_t{0x11150, script::mahj},
-        __script_data_t{0x11177, script::zzzz}, __script_data_t{0x11180, script::shrd},
-        __script_data_t{0x111CE, script::zzzz}, __script_data_t{0x111D0, script::shrd},
-        __script_data_t{0x111E0, script::zzzz}, __script_data_t{0x111E1, script::sinh},
-        __script_data_t{0x111F5, script::zzzz}, __script_data_t{0x11200, script::khoj},
-        __script_data_t{0x11212, script::zzzz}, __script_data_t{0x11213, script::khoj},
-        __script_data_t{0x1123F, script::zzzz}, __script_data_t{0x11280, script::mult},
-        __script_data_t{0x11287, script::zzzz}, __script_data_t{0x11288, script::mult},
-        __script_data_t{0x11289, script::zzzz}, __script_data_t{0x1128A, script::mult},
-        __script_data_t{0x1128E, script::zzzz}, __script_data_t{0x1128F, script::mult},
-        __script_data_t{0x1129E, script::zzzz}, __script_data_t{0x1129F, script::mult},
-        __script_data_t{0x112AA, script::zzzz}, __script_data_t{0x112B0, script::sind},
-        __script_data_t{0x112EB, script::zzzz}, __script_data_t{0x112F0, script::sind},
-        __script_data_t{0x112FA, script::zzzz}, __script_data_t{0x11300, script::gran},
-        __script_data_t{0x11304, script::zzzz}, __script_data_t{0x11305, script::gran},
-        __script_data_t{0x1130D, script::zzzz}, __script_data_t{0x1130F, script::gran},
-        __script_data_t{0x11311, script::zzzz}, __script_data_t{0x11313, script::gran},
-        __script_data_t{0x11329, script::zzzz}, __script_data_t{0x1132A, script::gran},
-        __script_data_t{0x11331, script::zzzz}, __script_data_t{0x11332, script::gran},
-        __script_data_t{0x11334, script::zzzz}, __script_data_t{0x11335, script::gran},
-        __script_data_t{0x1133A, script::zzzz}, __script_data_t{0x1133B, script::zinh},
-        __script_data_t{0x1133C, script::gran}, __script_data_t{0x11345, script::zzzz},
-        __script_data_t{0x11347, script::gran}, __script_data_t{0x11349, script::zzzz},
-        __script_data_t{0x1134B, script::gran}, __script_data_t{0x1134E, script::zzzz},
-        __script_data_t{0x11350, script::gran}, __script_data_t{0x11351, script::zzzz},
-        __script_data_t{0x11357, script::gran}, __script_data_t{0x11358, script::zzzz},
-        __script_data_t{0x1135D, script::gran}, __script_data_t{0x11364, script::zzzz},
-        __script_data_t{0x11366, script::gran}, __script_data_t{0x1136D, script::zzzz},
-        __script_data_t{0x11370, script::gran}, __script_data_t{0x11375, script::zzzz},
-        __script_data_t{0x11400, script::newa}, __script_data_t{0x1145A, script::zzzz},
-        __script_data_t{0x1145B, script::newa}, __script_data_t{0x1145C, script::zzzz},
-        __script_data_t{0x1145D, script::newa}, __script_data_t{0x11460, script::zzzz},
-        __script_data_t{0x11480, script::tirh}, __script_data_t{0x114C8, script::zzzz},
-        __script_data_t{0x114D0, script::tirh}, __script_data_t{0x114DA, script::zzzz},
-        __script_data_t{0x11580, script::sidd}, __script_data_t{0x115B6, script::zzzz},
-        __script_data_t{0x115B8, script::sidd}, __script_data_t{0x115DE, script::zzzz},
-        __script_data_t{0x11600, script::modi}, __script_data_t{0x11645, script::zzzz},
-        __script_data_t{0x11650, script::modi}, __script_data_t{0x1165A, script::zzzz},
-        __script_data_t{0x11660, script::mong}, __script_data_t{0x1166D, script::zzzz},
-        __script_data_t{0x11680, script::takr}, __script_data_t{0x116B9, script::zzzz},
-        __script_data_t{0x116C0, script::takr}, __script_data_t{0x116CA, script::zzzz},
-        __script_data_t{0x11700, script::ahom}, __script_data_t{0x1171B, script::zzzz},
-        __script_data_t{0x1171D, script::ahom}, __script_data_t{0x1172C, script::zzzz},
-        __script_data_t{0x11730, script::ahom}, __script_data_t{0x11740, script::zzzz},
-        __script_data_t{0x11800, script::dogr}, __script_data_t{0x1183C, script::zzzz},
-        __script_data_t{0x118A0, script::wara}, __script_data_t{0x118F3, script::zzzz},
-        __script_data_t{0x118FF, script::wara}, __script_data_t{0x11900, script::zzzz},
-        __script_data_t{0x119A0, script::nand}, __script_data_t{0x119A8, script::zzzz},
-        __script_data_t{0x119AA, script::nand}, __script_data_t{0x119D8, script::zzzz},
-        __script_data_t{0x119DA, script::nand}, __script_data_t{0x119E5, script::zzzz},
-        __script_data_t{0x11A00, script::zanb}, __script_data_t{0x11A48, script::zzzz},
-        __script_data_t{0x11A50, script::soyo}, __script_data_t{0x11AA3, script::zzzz},
-        __script_data_t{0x11AC0, script::pauc}, __script_data_t{0x11AF9, script::zzzz},
-        __script_data_t{0x11C00, script::bhks}, __script_data_t{0x11C09, script::zzzz},
-        __script_data_t{0x11C0A, script::bhks}, __script_data_t{0x11C37, script::zzzz},
-        __script_data_t{0x11C38, script::bhks}, __script_data_t{0x11C46, script::zzzz},
-        __script_data_t{0x11C50, script::bhks}, __script_data_t{0x11C6D, script::zzzz},
-        __script_data_t{0x11C70, script::marc}, __script_data_t{0x11C90, script::zzzz},
-        __script_data_t{0x11C92, script::marc}, __script_data_t{0x11CA8, script::zzzz},
-        __script_data_t{0x11CA9, script::marc}, __script_data_t{0x11CB7, script::zzzz},
-        __script_data_t{0x11D00, script::gonm}, __script_data_t{0x11D07, script::zzzz},
-        __script_data_t{0x11D08, script::gonm}, __script_data_t{0x11D0A, script::zzzz},
-        __script_data_t{0x11D0B, script::gonm}, __script_data_t{0x11D37, script::zzzz},
-        __script_data_t{0x11D3A, script::gonm}, __script_data_t{0x11D3B, script::zzzz},
-        __script_data_t{0x11D3C, script::gonm}, __script_data_t{0x11D3E, script::zzzz},
-        __script_data_t{0x11D3F, script::gonm}, __script_data_t{0x11D48, script::zzzz},
-        __script_data_t{0x11D50, script::gonm}, __script_data_t{0x11D5A, script::zzzz},
-        __script_data_t{0x11D60, script::gong}, __script_data_t{0x11D66, script::zzzz},
-        __script_data_t{0x11D67, script::gong}, __script_data_t{0x11D69, script::zzzz},
-        __script_data_t{0x11D6A, script::gong}, __script_data_t{0x11D8F, script::zzzz},
-        __script_data_t{0x11D90, script::gong}, __script_data_t{0x11D92, script::zzzz},
-        __script_data_t{0x11D93, script::gong}, __script_data_t{0x11D99, script::zzzz},
-        __script_data_t{0x11DA0, script::gong}, __script_data_t{0x11DAA, script::zzzz},
-        __script_data_t{0x11EE0, script::maka}, __script_data_t{0x11EF9, script::zzzz},
-        __script_data_t{0x11FC0, script::taml}, __script_data_t{0x11FF2, script::zzzz},
-        __script_data_t{0x11FFF, script::taml}, __script_data_t{0x12000, script::xsux},
-        __script_data_t{0x1239A, script::zzzz}, __script_data_t{0x12400, script::xsux},
-        __script_data_t{0x1246F, script::zzzz}, __script_data_t{0x12470, script::xsux},
-        __script_data_t{0x12475, script::zzzz}, __script_data_t{0x12480, script::xsux},
-        __script_data_t{0x12544, script::zzzz}, __script_data_t{0x13000, script::egyp},
-        __script_data_t{0x1342F, script::zzzz}, __script_data_t{0x13430, script::egyp},
-        __script_data_t{0x13439, script::zzzz}, __script_data_t{0x14400, script::hluw},
-        __script_data_t{0x14647, script::zzzz}, __script_data_t{0x16800, script::bamu},
-        __script_data_t{0x16A39, script::zzzz}, __script_data_t{0x16A40, script::mroo},
-        __script_data_t{0x16A5F, script::zzzz}, __script_data_t{0x16A60, script::mroo},
-        __script_data_t{0x16A6A, script::zzzz}, __script_data_t{0x16A6E, script::mroo},
-        __script_data_t{0x16A70, script::zzzz}, __script_data_t{0x16AD0, script::bass},
-        __script_data_t{0x16AEE, script::zzzz}, __script_data_t{0x16AF0, script::bass},
-        __script_data_t{0x16AF6, script::zzzz}, __script_data_t{0x16B00, script::hmng},
-        __script_data_t{0x16B46, script::zzzz}, __script_data_t{0x16B50, script::hmng},
-        __script_data_t{0x16B5A, script::zzzz}, __script_data_t{0x16B5B, script::hmng},
-        __script_data_t{0x16B62, script::zzzz}, __script_data_t{0x16B63, script::hmng},
-        __script_data_t{0x16B78, script::zzzz}, __script_data_t{0x16B7D, script::hmng},
-        __script_data_t{0x16B90, script::zzzz}, __script_data_t{0x16E40, script::medf},
-        __script_data_t{0x16E9B, script::zzzz}, __script_data_t{0x16F00, script::plrd},
-        __script_data_t{0x16F4B, script::zzzz}, __script_data_t{0x16F4F, script::plrd},
-        __script_data_t{0x16F88, script::zzzz}, __script_data_t{0x16F8F, script::plrd},
-        __script_data_t{0x16FA0, script::zzzz}, __script_data_t{0x16FE0, script::tang},
-        __script_data_t{0x16FE1, script::nshu}, __script_data_t{0x16FE2, script::zyyy},
-        __script_data_t{0x16FE4, script::zzzz}, __script_data_t{0x17000, script::tang},
-        __script_data_t{0x187F8, script::zzzz}, __script_data_t{0x18800, script::tang},
-        __script_data_t{0x18AF3, script::zzzz}, __script_data_t{0x1B000, script::kana},
-        __script_data_t{0x1B001, script::hira}, __script_data_t{0x1B11F, script::zzzz},
-        __script_data_t{0x1B150, script::hira}, __script_data_t{0x1B153, script::zzzz},
-        __script_data_t{0x1B164, script::kana}, __script_data_t{0x1B168, script::zzzz},
-        __script_data_t{0x1B170, script::nshu}, __script_data_t{0x1B2FC, script::zzzz},
-        __script_data_t{0x1BC00, script::dupl}, __script_data_t{0x1BC6B, script::zzzz},
-        __script_data_t{0x1BC70, script::dupl}, __script_data_t{0x1BC7D, script::zzzz},
-        __script_data_t{0x1BC80, script::dupl}, __script_data_t{0x1BC89, script::zzzz},
-        __script_data_t{0x1BC90, script::dupl}, __script_data_t{0x1BC9A, script::zzzz},
-        __script_data_t{0x1BC9C, script::dupl}, __script_data_t{0x1BCA0, script::zyyy},
-        __script_data_t{0x1BCA4, script::zzzz}, __script_data_t{0x1D000, script::zyyy},
-        __script_data_t{0x1D0F6, script::zzzz}, __script_data_t{0x1D100, script::zyyy},
-        __script_data_t{0x1D127, script::zzzz}, __script_data_t{0x1D129, script::zyyy},
-        __script_data_t{0x1D167, script::zinh}, __script_data_t{0x1D16A, script::zyyy},
-        __script_data_t{0x1D17B, script::zinh}, __script_data_t{0x1D183, script::zyyy},
-        __script_data_t{0x1D185, script::zinh}, __script_data_t{0x1D18C, script::zyyy},
-        __script_data_t{0x1D1AA, script::zinh}, __script_data_t{0x1D1AE, script::zyyy},
-        __script_data_t{0x1D1E9, script::zzzz}, __script_data_t{0x1D200, script::grek},
-        __script_data_t{0x1D246, script::zzzz}, __script_data_t{0x1D2E0, script::zyyy},
-        __script_data_t{0x1D2F4, script::zzzz}, __script_data_t{0x1D300, script::zyyy},
-        __script_data_t{0x1D357, script::zzzz}, __script_data_t{0x1D360, script::zyyy},
-        __script_data_t{0x1D379, script::zzzz}, __script_data_t{0x1D400, script::zyyy},
-        __script_data_t{0x1D455, script::zzzz}, __script_data_t{0x1D456, script::zyyy},
-        __script_data_t{0x1D49D, script::zzzz}, __script_data_t{0x1D49E, script::zyyy},
-        __script_data_t{0x1D4A0, script::zzzz}, __script_data_t{0x1D4A2, script::zyyy},
-        __script_data_t{0x1D4A3, script::zzzz}, __script_data_t{0x1D4A5, script::zyyy},
-        __script_data_t{0x1D4A7, script::zzzz}, __script_data_t{0x1D4A9, script::zyyy},
-        __script_data_t{0x1D4AD, script::zzzz}, __script_data_t{0x1D4AE, script::zyyy},
-        __script_data_t{0x1D4BA, script::zzzz}, __script_data_t{0x1D4BB, script::zyyy},
-        __script_data_t{0x1D4BC, script::zzzz}, __script_data_t{0x1D4BD, script::zyyy},
-        __script_data_t{0x1D4C4, script::zzzz}, __script_data_t{0x1D4C5, script::zyyy},
-        __script_data_t{0x1D506, script::zzzz}, __script_data_t{0x1D507, script::zyyy},
-        __script_data_t{0x1D50B, script::zzzz}, __script_data_t{0x1D50D, script::zyyy},
-        __script_data_t{0x1D515, script::zzzz}, __script_data_t{0x1D516, script::zyyy},
-        __script_data_t{0x1D51D, script::zzzz}, __script_data_t{0x1D51E, script::zyyy},
-        __script_data_t{0x1D53A, script::zzzz}, __script_data_t{0x1D53B, script::zyyy},
-        __script_data_t{0x1D53F, script::zzzz}, __script_data_t{0x1D540, script::zyyy},
-        __script_data_t{0x1D545, script::zzzz}, __script_data_t{0x1D546, script::zyyy},
-        __script_data_t{0x1D547, script::zzzz}, __script_data_t{0x1D54A, script::zyyy},
-        __script_data_t{0x1D551, script::zzzz}, __script_data_t{0x1D552, script::zyyy},
-        __script_data_t{0x1D6A6, script::zzzz}, __script_data_t{0x1D6A8, script::zyyy},
-        __script_data_t{0x1D7CC, script::zzzz}, __script_data_t{0x1D7CE, script::zyyy},
-        __script_data_t{0x1D800, script::sgnw}, __script_data_t{0x1DA8C, script::zzzz},
-        __script_data_t{0x1DA9B, script::sgnw}, __script_data_t{0x1DAA0, script::zzzz},
-        __script_data_t{0x1DAA1, script::sgnw}, __script_data_t{0x1DAB0, script::zzzz},
-        __script_data_t{0x1E000, script::glag}, __script_data_t{0x1E007, script::zzzz},
-        __script_data_t{0x1E008, script::glag}, __script_data_t{0x1E019, script::zzzz},
-        __script_data_t{0x1E01B, script::glag}, __script_data_t{0x1E022, script::zzzz},
-        __script_data_t{0x1E023, script::glag}, __script_data_t{0x1E025, script::zzzz},
-        __script_data_t{0x1E026, script::glag}, __script_data_t{0x1E02B, script::zzzz},
-        __script_data_t{0x1E100, script::hmnp}, __script_data_t{0x1E12D, script::zzzz},
-        __script_data_t{0x1E130, script::hmnp}, __script_data_t{0x1E13E, script::zzzz},
-        __script_data_t{0x1E140, script::hmnp}, __script_data_t{0x1E14A, script::zzzz},
-        __script_data_t{0x1E14E, script::hmnp}, __script_data_t{0x1E150, script::zzzz},
-        __script_data_t{0x1E2C0, script::wcho}, __script_data_t{0x1E2FA, script::zzzz},
-        __script_data_t{0x1E2FF, script::wcho}, __script_data_t{0x1E300, script::zzzz},
-        __script_data_t{0x1E800, script::mend}, __script_data_t{0x1E8C5, script::zzzz},
-        __script_data_t{0x1E8C7, script::mend}, __script_data_t{0x1E8D7, script::zzzz},
-        __script_data_t{0x1E900, script::adlm}, __script_data_t{0x1E94C, script::zzzz},
-        __script_data_t{0x1E950, script::adlm}, __script_data_t{0x1E95A, script::zzzz},
-        __script_data_t{0x1E95E, script::adlm}, __script_data_t{0x1E960, script::zzzz},
-        __script_data_t{0x1EC71, script::zyyy}, __script_data_t{0x1ECB5, script::zzzz},
-        __script_data_t{0x1ED01, script::zyyy}, __script_data_t{0x1ED3E, script::zzzz},
-        __script_data_t{0x1EE00, script::arab}, __script_data_t{0x1EE04, script::zzzz},
-        __script_data_t{0x1EE05, script::arab}, __script_data_t{0x1EE20, script::zzzz},
-        __script_data_t{0x1EE21, script::arab}, __script_data_t{0x1EE23, script::zzzz},
-        __script_data_t{0x1EE24, script::arab}, __script_data_t{0x1EE25, script::zzzz},
-        __script_data_t{0x1EE27, script::arab}, __script_data_t{0x1EE28, script::zzzz},
-        __script_data_t{0x1EE29, script::arab}, __script_data_t{0x1EE33, script::zzzz},
-        __script_data_t{0x1EE34, script::arab}, __script_data_t{0x1EE38, script::zzzz},
-        __script_data_t{0x1EE39, script::arab}, __script_data_t{0x1EE3A, script::zzzz},
-        __script_data_t{0x1EE3B, script::arab}, __script_data_t{0x1EE3C, script::zzzz},
-        __script_data_t{0x1EE42, script::arab}, __script_data_t{0x1EE43, script::zzzz},
-        __script_data_t{0x1EE47, script::arab}, __script_data_t{0x1EE48, script::zzzz},
-        __script_data_t{0x1EE49, script::arab}, __script_data_t{0x1EE4A, script::zzzz},
-        __script_data_t{0x1EE4B, script::arab}, __script_data_t{0x1EE4C, script::zzzz},
-        __script_data_t{0x1EE4D, script::arab}, __script_data_t{0x1EE50, script::zzzz},
-        __script_data_t{0x1EE51, script::arab}, __script_data_t{0x1EE53, script::zzzz},
-        __script_data_t{0x1EE54, script::arab}, __script_data_t{0x1EE55, script::zzzz},
-        __script_data_t{0x1EE57, script::arab}, __script_data_t{0x1EE58, script::zzzz},
-        __script_data_t{0x1EE59, script::arab}, __script_data_t{0x1EE5A, script::zzzz},
-        __script_data_t{0x1EE5B, script::arab}, __script_data_t{0x1EE5C, script::zzzz},
-        __script_data_t{0x1EE5D, script::arab}, __script_data_t{0x1EE5E, script::zzzz},
-        __script_data_t{0x1EE5F, script::arab}, __script_data_t{0x1EE60, script::zzzz},
-        __script_data_t{0x1EE61, script::arab}, __script_data_t{0x1EE63, script::zzzz},
-        __script_data_t{0x1EE64, script::arab}, __script_data_t{0x1EE65, script::zzzz},
-        __script_data_t{0x1EE67, script::arab}, __script_data_t{0x1EE6B, script::zzzz},
-        __script_data_t{0x1EE6C, script::arab}, __script_data_t{0x1EE73, script::zzzz},
-        __script_data_t{0x1EE74, script::arab}, __script_data_t{0x1EE78, script::zzzz},
-        __script_data_t{0x1EE79, script::arab}, __script_data_t{0x1EE7D, script::zzzz},
-        __script_data_t{0x1EE7E, script::arab}, __script_data_t{0x1EE7F, script::zzzz},
-        __script_data_t{0x1EE80, script::arab}, __script_data_t{0x1EE8A, script::zzzz},
-        __script_data_t{0x1EE8B, script::arab}, __script_data_t{0x1EE9C, script::zzzz},
-        __script_data_t{0x1EEA1, script::arab}, __script_data_t{0x1EEA4, script::zzzz},
-        __script_data_t{0x1EEA5, script::arab}, __script_data_t{0x1EEAA, script::zzzz},
-        __script_data_t{0x1EEAB, script::arab}, __script_data_t{0x1EEBC, script::zzzz},
-        __script_data_t{0x1EEF0, script::arab}, __script_data_t{0x1EEF2, script::zzzz},
-        __script_data_t{0x1F000, script::zyyy}, __script_data_t{0x1F02C, script::zzzz},
-        __script_data_t{0x1F030, script::zyyy}, __script_data_t{0x1F094, script::zzzz},
-        __script_data_t{0x1F0A0, script::zyyy}, __script_data_t{0x1F0AF, script::zzzz},
-        __script_data_t{0x1F0B1, script::zyyy}, __script_data_t{0x1F0C0, script::zzzz},
-        __script_data_t{0x1F0C1, script::zyyy}, __script_data_t{0x1F0D0, script::zzzz},
-        __script_data_t{0x1F0D1, script::zyyy}, __script_data_t{0x1F0F6, script::zzzz},
-        __script_data_t{0x1F100, script::zyyy}, __script_data_t{0x1F10D, script::zzzz},
-        __script_data_t{0x1F110, script::zyyy}, __script_data_t{0x1F16D, script::zzzz},
-        __script_data_t{0x1F170, script::zyyy}, __script_data_t{0x1F1AD, script::zzzz},
-        __script_data_t{0x1F1E6, script::zyyy}, __script_data_t{0x1F200, script::hira},
-        __script_data_t{0x1F201, script::zyyy}, __script_data_t{0x1F203, script::zzzz},
-        __script_data_t{0x1F210, script::zyyy}, __script_data_t{0x1F23C, script::zzzz},
-        __script_data_t{0x1F240, script::zyyy}, __script_data_t{0x1F249, script::zzzz},
-        __script_data_t{0x1F250, script::zyyy}, __script_data_t{0x1F252, script::zzzz},
-        __script_data_t{0x1F260, script::zyyy}, __script_data_t{0x1F266, script::zzzz},
-        __script_data_t{0x1F300, script::zyyy}, __script_data_t{0x1F6D6, script::zzzz},
-        __script_data_t{0x1F6E0, script::zyyy}, __script_data_t{0x1F6ED, script::zzzz},
-        __script_data_t{0x1F6F0, script::zyyy}, __script_data_t{0x1F6FB, script::zzzz},
-        __script_data_t{0x1F700, script::zyyy}, __script_data_t{0x1F774, script::zzzz},
-        __script_data_t{0x1F780, script::zyyy}, __script_data_t{0x1F7D9, script::zzzz},
-        __script_data_t{0x1F7E0, script::zyyy}, __script_data_t{0x1F7EC, script::zzzz},
-        __script_data_t{0x1F800, script::zyyy}, __script_data_t{0x1F80C, script::zzzz},
-        __script_data_t{0x1F810, script::zyyy}, __script_data_t{0x1F848, script::zzzz},
-        __script_data_t{0x1F850, script::zyyy}, __script_data_t{0x1F85A, script::zzzz},
-        __script_data_t{0x1F860, script::zyyy}, __script_data_t{0x1F888, script::zzzz},
-        __script_data_t{0x1F890, script::zyyy}, __script_data_t{0x1F8AE, script::zzzz},
-        __script_data_t{0x1F900, script::zyyy}, __script_data_t{0x1F90C, script::zzzz},
-        __script_data_t{0x1F90D, script::zyyy}, __script_data_t{0x1F972, script::zzzz},
-        __script_data_t{0x1F973, script::zyyy}, __script_data_t{0x1F977, script::zzzz},
-        __script_data_t{0x1F97A, script::zyyy}, __script_data_t{0x1F9A3, script::zzzz},
-        __script_data_t{0x1F9A5, script::zyyy}, __script_data_t{0x1F9AB, script::zzzz},
-        __script_data_t{0x1F9AE, script::zyyy}, __script_data_t{0x1F9CB, script::zzzz},
-        __script_data_t{0x1F9CD, script::zyyy}, __script_data_t{0x1FA54, script::zzzz},
-        __script_data_t{0x1FA60, script::zyyy}, __script_data_t{0x1FA6E, script::zzzz},
-        __script_data_t{0x1FA70, script::zyyy}, __script_data_t{0x1FA74, script::zzzz},
-        __script_data_t{0x1FA78, script::zyyy}, __script_data_t{0x1FA7B, script::zzzz},
-        __script_data_t{0x1FA80, script::zyyy}, __script_data_t{0x1FA83, script::zzzz},
-        __script_data_t{0x1FA90, script::zyyy}, __script_data_t{0x1FA96, script::zzzz},
-        __script_data_t{0x20000, script::hani}, __script_data_t{0x20002, script::zzzz},
-        __script_data_t{0x20062, script::hani}, __script_data_t{0x20063, script::zzzz},
-        __script_data_t{0x20064, script::hani}, __script_data_t{0x20065, script::zzzz},
-        __script_data_t{0x200E0, script::hani}, __script_data_t{0x200E1, script::zzzz},
-        __script_data_t{0x200E2, script::hani}, __script_data_t{0x200E3, script::zzzz},
-        __script_data_t{0x2011F, script::hani}, __script_data_t{0x20120, script::zzzz},
-        __script_data_t{0x20121, script::hani}, __script_data_t{0x20122, script::zzzz},
-        __script_data_t{0x20928, script::hani}, __script_data_t{0x20929, script::zzzz},
-        __script_data_t{0x2092A, script::hani}, __script_data_t{0x2092B, script::zzzz},
-        __script_data_t{0x20981, script::hani}, __script_data_t{0x20982, script::zzzz},
-        __script_data_t{0x20983, script::hani}, __script_data_t{0x20984, script::zzzz},
-        __script_data_t{0x2098A, script::hani}, __script_data_t{0x2098B, script::zzzz},
-        __script_data_t{0x2098C, script::hani}, __script_data_t{0x2098D, script::zzzz},
-        __script_data_t{0x2099A, script::hani}, __script_data_t{0x2099B, script::zzzz},
-        __script_data_t{0x2099C, script::hani}, __script_data_t{0x2099D, script::zzzz},
-        __script_data_t{0x20AE8, script::hani}, __script_data_t{0x20AE9, script::zzzz},
-        __script_data_t{0x20AEA, script::hani}, __script_data_t{0x20AEB, script::zzzz},
-        __script_data_t{0x20AFB, script::hani}, __script_data_t{0x20AFC, script::zzzz},
-        __script_data_t{0x20AFD, script::hani}, __script_data_t{0x20AFE, script::zzzz},
-        __script_data_t{0x20B17, script::hani}, __script_data_t{0x20B18, script::zzzz},
-        __script_data_t{0x20B19, script::hani}, __script_data_t{0x20B1A, script::zzzz},
-        __script_data_t{0x2238E, script::hani}, __script_data_t{0x2238F, script::zzzz},
-        __script_data_t{0x22390, script::hani}, __script_data_t{0x22391, script::zzzz},
-        __script_data_t{0x22996, script::hani}, __script_data_t{0x22997, script::zzzz},
-        __script_data_t{0x22998, script::hani}, __script_data_t{0x22999, script::zzzz},
-        __script_data_t{0x23B19, script::hani}, __script_data_t{0x23B1A, script::zzzz},
-        __script_data_t{0x23B1B, script::hani}, __script_data_t{0x23B1C, script::zzzz},
-        __script_data_t{0x2626B, script::hani}, __script_data_t{0x2626C, script::zzzz},
-        __script_data_t{0x2626D, script::hani}, __script_data_t{0x2626E, script::zzzz},
-        __script_data_t{0x2A6D5, script::hani}, __script_data_t{0x2A6D6, script::zzzz},
-        __script_data_t{0x2B733, script::hani}, __script_data_t{0x2B734, script::zzzz},
-        __script_data_t{0x2B81C, script::hani}, __script_data_t{0x2B81D, script::zzzz},
-        __script_data_t{0x2CEA0, script::hani}, __script_data_t{0x2CEA1, script::zzzz},
-        __script_data_t{0x2EBDF, script::hani}, __script_data_t{0x2EBE0, script::zzzz},
-        __script_data_t{0x2F800, script::hani}, __script_data_t{0x2FA1E, script::zzzz},
-        __script_data_t{0xE0001, script::zyyy}, __script_data_t{0xE0002, script::zzzz},
-        __script_data_t{0xE0020, script::zyyy}, __script_data_t{0xE0080, script::zzzz},
-        __script_data_t{0xE0100, script::zinh}, __script_data_t{0xE01F0, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2387, script::deva},
-        std::pair<char32_t, script>{2388, script::deva}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000098, 0x00004141, 0x00005B98, 0x00006141, 0x00007B98, 0x0000AA41, 0x0000AB98,
+        0x0000BA41, 0x0000BB98, 0x0000C041, 0x0000D798, 0x0000D841, 0x0000F798, 0x0000F841,
+        0x0002B998, 0x0002E041, 0x0002E598, 0x0002EA0D, 0x0002EC98, 0x00030097, 0x00037028,
+        0x00037498, 0x00037528, 0x00037899, 0x00037A28, 0x00037E98, 0x00037F28, 0x00038099,
+        0x00038428, 0x00038598, 0x00038628, 0x00038798, 0x00038828, 0x00038B99, 0x00038C28,
+        0x00038D99, 0x00038E28, 0x0003A299, 0x0003A328, 0x0003E217, 0x0003F028, 0x00040019,
+        0x00048597, 0x00048719, 0x00053099, 0x00053105, 0x00055799, 0x00055905, 0x00058998,
+        0x00058A05, 0x00058B99, 0x00058D05, 0x00059099, 0x0005912F, 0x0005C899, 0x0005D02F,
+        0x0005EB99, 0x0005EF2F, 0x0005F599, 0x00060003, 0x00060598, 0x00060603, 0x00060C98,
+        0x00060D03, 0x00061B98, 0x00061C03, 0x00061D99, 0x00061E03, 0x00061F98, 0x00062003,
+        0x00064098, 0x00064103, 0x00064B97, 0x00065603, 0x00067097, 0x00067103, 0x0006DD98,
+        0x0006DE03, 0x00070080, 0x00070E99, 0x00070F80, 0x00074B99, 0x00074D80, 0x00075003,
+        0x0007808B, 0x0007B299, 0x0007C05D, 0x0007FB99, 0x0007FD5D, 0x00080071, 0x00082E99,
+        0x00083071, 0x00083F99, 0x0008404B, 0x00085C99, 0x00085E4B, 0x00085F99, 0x00086080,
+        0x00086B99, 0x0008A003, 0x0008B599, 0x0008B603, 0x0008BE99, 0x0008D303, 0x0008E298,
+        0x0008E303, 0x0009001A, 0x00095197, 0x0009551A, 0x00096498, 0x0009661A, 0x0009800B,
+        0x00098499, 0x0009850B, 0x00098D99, 0x00098F0B, 0x00099199, 0x0009930B, 0x0009A999,
+        0x0009AA0B, 0x0009B199, 0x0009B20B, 0x0009B399, 0x0009B60B, 0x0009BA99, 0x0009BC0B,
+        0x0009C599, 0x0009C70B, 0x0009C999, 0x0009CB0B, 0x0009CF99, 0x0009D70B, 0x0009D899,
+        0x0009DC0B, 0x0009DE99, 0x0009DF0B, 0x0009E499, 0x0009E60B, 0x0009FF99, 0x000A012A,
+        0x000A0499, 0x000A052A, 0x000A0B99, 0x000A0F2A, 0x000A1199, 0x000A132A, 0x000A2999,
+        0x000A2A2A, 0x000A3199, 0x000A322A, 0x000A3499, 0x000A352A, 0x000A3799, 0x000A382A,
+        0x000A3A99, 0x000A3C2A, 0x000A3D99, 0x000A3E2A, 0x000A4399, 0x000A472A, 0x000A4999,
+        0x000A4B2A, 0x000A4E99, 0x000A512A, 0x000A5299, 0x000A592A, 0x000A5D99, 0x000A5E2A,
+        0x000A5F99, 0x000A662A, 0x000A7799, 0x000A8129, 0x000A8499, 0x000A8529, 0x000A8E99,
+        0x000A8F29, 0x000A9299, 0x000A9329, 0x000AA999, 0x000AAA29, 0x000AB199, 0x000AB229,
+        0x000AB499, 0x000AB529, 0x000ABA99, 0x000ABC29, 0x000AC699, 0x000AC729, 0x000ACA99,
+        0x000ACB29, 0x000ACE99, 0x000AD029, 0x000AD199, 0x000AE029, 0x000AE499, 0x000AE629,
+        0x000AF299, 0x000AF929, 0x000B0099, 0x000B0162, 0x000B0499, 0x000B0562, 0x000B0D99,
+        0x000B0F62, 0x000B1199, 0x000B1362, 0x000B2999, 0x000B2A62, 0x000B3199, 0x000B3262,
+        0x000B3499, 0x000B3562, 0x000B3A99, 0x000B3C62, 0x000B4599, 0x000B4762, 0x000B4999,
+        0x000B4B62, 0x000B4E99, 0x000B5662, 0x000B5899, 0x000B5C62, 0x000B5E99, 0x000B5F62,
+        0x000B6499, 0x000B6662, 0x000B7899, 0x000B8285, 0x000B8499, 0x000B8585, 0x000B8B99,
+        0x000B8E85, 0x000B9199, 0x000B9285, 0x000B9699, 0x000B9985, 0x000B9B99, 0x000B9C85,
+        0x000B9D99, 0x000B9E85, 0x000BA099, 0x000BA385, 0x000BA599, 0x000BA885, 0x000BAB99,
+        0x000BAE85, 0x000BBA99, 0x000BBE85, 0x000BC399, 0x000BC685, 0x000BC999, 0x000BCA85,
+        0x000BCE99, 0x000BD085, 0x000BD199, 0x000BD785, 0x000BD899, 0x000BE685, 0x000BFB99,
+        0x000C0088, 0x000C0D99, 0x000C0E88, 0x000C1199, 0x000C1288, 0x000C2999, 0x000C2A88,
+        0x000C3A99, 0x000C3D88, 0x000C4599, 0x000C4688, 0x000C4999, 0x000C4A88, 0x000C4E99,
+        0x000C5588, 0x000C5799, 0x000C5888, 0x000C5B99, 0x000C6088, 0x000C6499, 0x000C6688,
+        0x000C7099, 0x000C7788, 0x000C803D, 0x000C8D99, 0x000C8E3D, 0x000C9199, 0x000C923D,
+        0x000CA999, 0x000CAA3D, 0x000CB499, 0x000CB53D, 0x000CBA99, 0x000CBC3D, 0x000CC599,
+        0x000CC63D, 0x000CC999, 0x000CCA3D, 0x000CCE99, 0x000CD53D, 0x000CD799, 0x000CDE3D,
+        0x000CDF99, 0x000CE03D, 0x000CE499, 0x000CE63D, 0x000CF099, 0x000CF13D, 0x000CF399,
+        0x000D0052, 0x000D0499, 0x000D0552, 0x000D0D99, 0x000D0E52, 0x000D1199, 0x000D1252,
+        0x000D4599, 0x000D4652, 0x000D4999, 0x000D4A52, 0x000D5099, 0x000D5452, 0x000D6499,
+        0x000D6652, 0x000D8099, 0x000D8279, 0x000D8499, 0x000D8579, 0x000D9799, 0x000D9A79,
+        0x000DB299, 0x000DB379, 0x000DBC99, 0x000DBD79, 0x000DBE99, 0x000DC079, 0x000DC799,
+        0x000DCA79, 0x000DCB99, 0x000DCF79, 0x000DD599, 0x000DD679, 0x000DD799, 0x000DD879,
+        0x000DE099, 0x000DE679, 0x000DF099, 0x000DF279, 0x000DF599, 0x000E018C, 0x000E3B99,
+        0x000E3F98, 0x000E408C, 0x000E5C99, 0x000E8140, 0x000E8399, 0x000E8440, 0x000E8599,
+        0x000E8640, 0x000E8B99, 0x000E8C40, 0x000EA499, 0x000EA540, 0x000EA699, 0x000EA740,
+        0x000EBE99, 0x000EC040, 0x000EC599, 0x000EC640, 0x000EC799, 0x000EC840, 0x000ECE99,
+        0x000ED040, 0x000EDA99, 0x000EDC40, 0x000EE099, 0x000F008D, 0x000F4899, 0x000F498D,
+        0x000F6D99, 0x000F718D, 0x000F9899, 0x000F998D, 0x000FBD99, 0x000FBE8D, 0x000FCD99,
+        0x000FCE8D, 0x000FD598, 0x000FD98D, 0x000FDB99, 0x00100058, 0x0010A022, 0x0010C699,
+        0x0010C722, 0x0010C899, 0x0010CD22, 0x0010CE99, 0x0010D022, 0x0010FB98, 0x0010FC22,
+        0x0011002B, 0x00120021, 0x00124999, 0x00124A21, 0x00124E99, 0x00125021, 0x00125799,
+        0x00125821, 0x00125999, 0x00125A21, 0x00125E99, 0x00126021, 0x00128999, 0x00128A21,
+        0x00128E99, 0x00129021, 0x0012B199, 0x0012B221, 0x0012B699, 0x0012B821, 0x0012BF99,
+        0x0012C021, 0x0012C199, 0x0012C221, 0x0012C699, 0x0012C821, 0x0012D799, 0x0012D821,
+        0x00131199, 0x00131221, 0x00131699, 0x00131821, 0x00135B99, 0x00135D21, 0x00137D99,
+        0x00138021, 0x00139A99, 0x0013A016, 0x0013F699, 0x0013F816, 0x0013FE99, 0x00140013,
+        0x0016805F, 0x00169D99, 0x0016A070, 0x0016EB98, 0x0016EE70, 0x0016F999, 0x0017008A,
+        0x00170D99, 0x00170E8A, 0x00171599, 0x0017202D, 0x00173598, 0x00173799, 0x00174011,
+        0x00175499, 0x00176081, 0x00176D99, 0x00176E81, 0x00177199, 0x00177281, 0x00177499,
+        0x0017803B, 0x0017DE99, 0x0017E03B, 0x0017EA99, 0x0017F03B, 0x0017FA99, 0x00180054,
+        0x00180298, 0x00180454, 0x00180598, 0x00180654, 0x00180F99, 0x00181054, 0x00181A99,
+        0x00182054, 0x00187999, 0x00188054, 0x0018AB99, 0x0018B013, 0x0018F699, 0x00190043,
+        0x00191F99, 0x00192043, 0x00192C99, 0x00193043, 0x00193C99, 0x00194043, 0x00194199,
+        0x00194443, 0x00195083, 0x00196E99, 0x00197083, 0x00197599, 0x00198084, 0x0019AC99,
+        0x0019B084, 0x0019CA99, 0x0019D084, 0x0019DB99, 0x0019DE84, 0x0019E03B, 0x001A0010,
+        0x001A1C99, 0x001A1E10, 0x001A203F, 0x001A5F99, 0x001A603F, 0x001A7D99, 0x001A7F3F,
+        0x001A8A99, 0x001A903F, 0x001A9A99, 0x001AA03F, 0x001AAE99, 0x001AB097, 0x001ABF99,
+        0x001B0007, 0x001B4C99, 0x001B5007, 0x001B7D99, 0x001B807E, 0x001BC00A, 0x001BF499,
+        0x001BFC0A, 0x001C0042, 0x001C3899, 0x001C3B42, 0x001C4A99, 0x001C4D42, 0x001C5060,
+        0x001C8019, 0x001C8999, 0x001C9022, 0x001CBB99, 0x001CBD22, 0x001CC07E, 0x001CC899,
+        0x001CD097, 0x001CD398, 0x001CD497, 0x001CE198, 0x001CE297, 0x001CE998, 0x001CED97,
+        0x001CEE98, 0x001CF497, 0x001CF598, 0x001CF897, 0x001CFA98, 0x001CFB99, 0x001D0041,
+        0x001D2628, 0x001D2B19, 0x001D2C41, 0x001D5D28, 0x001D6241, 0x001D6628, 0x001D6B41,
+        0x001D7819, 0x001D7941, 0x001DBF28, 0x001DC097, 0x001DFA99, 0x001DFB97, 0x001E0041,
+        0x001F0028, 0x001F1699, 0x001F1828, 0x001F1E99, 0x001F2028, 0x001F4699, 0x001F4828,
+        0x001F4E99, 0x001F5028, 0x001F5899, 0x001F5928, 0x001F5A99, 0x001F5B28, 0x001F5C99,
+        0x001F5D28, 0x001F5E99, 0x001F5F28, 0x001F7E99, 0x001F8028, 0x001FB599, 0x001FB628,
+        0x001FC599, 0x001FC628, 0x001FD499, 0x001FD628, 0x001FDC99, 0x001FDD28, 0x001FF099,
+        0x001FF228, 0x001FF599, 0x001FF628, 0x001FFF99, 0x00200098, 0x00200C97, 0x00200E98,
+        0x00206599, 0x00206698, 0x00207141, 0x00207299, 0x00207498, 0x00207F41, 0x00208098,
+        0x00208F99, 0x00209041, 0x00209D99, 0x0020A098, 0x0020C099, 0x0020D097, 0x0020F199,
+        0x00210098, 0x00212628, 0x00212798, 0x00212A41, 0x00212C98, 0x00213241, 0x00213398,
+        0x00214E41, 0x00214F98, 0x00216041, 0x00218998, 0x00218C99, 0x00219098, 0x00242799,
+        0x00244098, 0x00244B99, 0x00246098, 0x0028000F, 0x00290098, 0x002B7499, 0x002B7698,
+        0x002B9699, 0x002B9898, 0x002C0023, 0x002C2F99, 0x002C3023, 0x002C5F99, 0x002C6041,
+        0x002C8017, 0x002CF499, 0x002CF917, 0x002D0022, 0x002D2699, 0x002D2722, 0x002D2899,
+        0x002D2D22, 0x002D2E99, 0x002D3089, 0x002D6899, 0x002D6F89, 0x002D7199, 0x002D7F89,
+        0x002D8021, 0x002D9799, 0x002DA021, 0x002DA799, 0x002DA821, 0x002DAF99, 0x002DB021,
+        0x002DB799, 0x002DB821, 0x002DBF99, 0x002DC021, 0x002DC799, 0x002DC821, 0x002DCF99,
+        0x002DD021, 0x002DD799, 0x002DD821, 0x002DDF99, 0x002DE019, 0x002E0098, 0x002E5099,
+        0x002E802C, 0x002E9A99, 0x002E9B2C, 0x002EF499, 0x002F002C, 0x002FD699, 0x002FF098,
+        0x002FFC99, 0x00300098, 0x0030052C, 0x00300698, 0x0030072C, 0x00300898, 0x0030212C,
+        0x00302A97, 0x00302E2B, 0x00303098, 0x0030382C, 0x00303C98, 0x00304099, 0x00304130,
+        0x00309799, 0x00309997, 0x00309B98, 0x00309D30, 0x0030A098, 0x0030A139, 0x0030FB98,
+        0x0030FD39, 0x00310099, 0x0031050D, 0x00313099, 0x0031312B, 0x00318F99, 0x00319098,
+        0x0031A00D, 0x0031BB99, 0x0031C098, 0x0031E499, 0x0031F039, 0x0032002B, 0x00321F99,
+        0x00322098, 0x0032602B, 0x00327F98, 0x0032D039, 0x0032FF99, 0x00330039, 0x00335898,
+        0x00340099, 0x0034032C, 0x00340499, 0x0034052C, 0x00340699, 0x0034812C, 0x00348299,
+        0x0034832C, 0x00348499, 0x0038282C, 0x00382999, 0x00382A2C, 0x00382B99, 0x003B4B2C,
+        0x003B4C99, 0x003B4D2C, 0x003B4E99, 0x004DB42C, 0x004DB599, 0x004DC098, 0x004E002C,
+        0x004E0299, 0x004E032C, 0x004E0499, 0x004E052C, 0x004E0699, 0x004E072C, 0x004E0A99,
+        0x004E5B2C, 0x004E5C99, 0x004E5D2C, 0x004E5E99, 0x004E8A2C, 0x004E8B99, 0x004E8C2C,
+        0x004E8D99, 0x004E922C, 0x004E9399, 0x004E942C, 0x004E9799, 0x004EBD2C, 0x004EBE99,
+        0x004EBF2C, 0x004EC199, 0x004EDD2C, 0x004EDE99, 0x004EDF2C, 0x004EE099, 0x004EE62C,
+        0x004EE799, 0x004EE82C, 0x004EE999, 0x004F0B2C, 0x004F0C99, 0x004F0D2C, 0x004F0E99,
+        0x004F6E2C, 0x004F6F99, 0x004F702C, 0x004F7199, 0x0051022C, 0x00510399, 0x0051042C,
+        0x00510599, 0x0051442C, 0x00514599, 0x0051462C, 0x00514799, 0x0051672C, 0x00516899,
+        0x0051692C, 0x00516E99, 0x00533F2C, 0x00534099, 0x0053412C, 0x00534699, 0x00534A2C,
+        0x00534B99, 0x00534C2C, 0x00534D99, 0x0053BF2C, 0x0053C099, 0x0053C12C, 0x0053C599,
+        0x0056D92C, 0x0056DA99, 0x0056DB2C, 0x0056DC99, 0x0058EF2C, 0x0058F099, 0x0058F12C,
+        0x0058F299, 0x0058F72C, 0x0058F899, 0x0058F92C, 0x0058FA99, 0x005E782C, 0x005E7999,
+        0x005E7A2C, 0x005E7B99, 0x005EFC2C, 0x005EFD99, 0x005EFE2C, 0x005F0099, 0x005F0A2C,
+        0x005F0B99, 0x005F0C2C, 0x005F1199, 0x0062FC2C, 0x0062FD99, 0x0062FE2C, 0x0062FF99,
+        0x00634A2C, 0x00634B99, 0x00634C2C, 0x00634D99, 0x0067D02C, 0x0067D199, 0x0067D22C,
+        0x0067D399, 0x006F042C, 0x006F0599, 0x006F062C, 0x006F0799, 0x0073942C, 0x00739599,
+        0x0073962C, 0x00739799, 0x00767C2C, 0x00767D99, 0x00767E2C, 0x00767F99, 0x0080842C,
+        0x00808599, 0x0080862C, 0x00808799, 0x00842A2C, 0x00842B99, 0x00842C2C, 0x00842D99,
+        0x008CAC2C, 0x008CAD99, 0x008CAE2C, 0x008CAF99, 0x008CB12C, 0x008CB299, 0x008CB32C,
+        0x008CB499, 0x008D2E2C, 0x008D2F99, 0x008D302C, 0x008D3199, 0x00961F2C, 0x00962099,
+        0x0096212C, 0x00962299, 0x0096442C, 0x00964599, 0x0096462C, 0x00964799, 0x00964A2C,
+        0x00964B99, 0x00964C2C, 0x00964D99, 0x0096762C, 0x00967799, 0x0096782C, 0x00967999,
+        0x0096F42C, 0x0096F599, 0x0096F62C, 0x0096F799, 0x009FA42C, 0x009FA599, 0x009FBA2C,
+        0x009FBB99, 0x009FC22C, 0x009FC399, 0x009FCA2C, 0x009FCB99, 0x009FCC2C, 0x009FCD99,
+        0x009FD42C, 0x009FD599, 0x009FE92C, 0x009FEA99, 0x009FEE2C, 0x009FEF99, 0x00A00095,
+        0x00A48D99, 0x00A49095, 0x00A4C799, 0x00A4D046, 0x00A50090, 0x00A62C99, 0x00A64019,
+        0x00A6A008, 0x00A6F899, 0x00A70098, 0x00A72241, 0x00A78898, 0x00A78B41, 0x00A7C099,
+        0x00A7C241, 0x00A7C799, 0x00A7F741, 0x00A8007F, 0x00A82C99, 0x00A83098, 0x00A83A99,
+        0x00A84068, 0x00A87899, 0x00A88073, 0x00A8C699, 0x00A8CE73, 0x00A8DA99, 0x00A8E01A,
+        0x00A90038, 0x00A92E98, 0x00A92F38, 0x00A9306E, 0x00A95499, 0x00A95F6E, 0x00A9602B,
+        0x00A97D99, 0x00A98037, 0x00A9CE99, 0x00A9CF98, 0x00A9D037, 0x00A9DA99, 0x00A9DE37,
+        0x00A9E058, 0x00A9FF99, 0x00AA0015, 0x00AA3799, 0x00AA4015, 0x00AA4E99, 0x00AA5015,
+        0x00AA5A99, 0x00AA5C15, 0x00AA6058, 0x00AA8087, 0x00AAC399, 0x00AADB87, 0x00AAE056,
+        0x00AAF799, 0x00AB0121, 0x00AB0799, 0x00AB0921, 0x00AB0F99, 0x00AB1121, 0x00AB1799,
+        0x00AB2021, 0x00AB2799, 0x00AB2821, 0x00AB2F99, 0x00AB3041, 0x00AB5B98, 0x00AB5C41,
+        0x00AB6528, 0x00AB6641, 0x00AB6899, 0x00AB7016, 0x00ABC056, 0x00ABEE99, 0x00ABF056,
+        0x00ABFA99, 0x00AC002B, 0x00D7A499, 0x00D7B02B, 0x00D7C799, 0x00D7CB2B, 0x00D7FC99,
+        0x00F9002C, 0x00FA6E99, 0x00FA702C, 0x00FADA99, 0x00FB0041, 0x00FB0799, 0x00FB1305,
+        0x00FB1899, 0x00FB1D2F, 0x00FB3799, 0x00FB382F, 0x00FB3D99, 0x00FB3E2F, 0x00FB3F99,
+        0x00FB402F, 0x00FB4299, 0x00FB432F, 0x00FB4599, 0x00FB462F, 0x00FB5003, 0x00FBC299,
+        0x00FBD303, 0x00FD3E98, 0x00FD4099, 0x00FD5003, 0x00FD9099, 0x00FD9203, 0x00FDC899,
+        0x00FDF003, 0x00FDFE99, 0x00FE0097, 0x00FE1098, 0x00FE1A99, 0x00FE2097, 0x00FE2E19,
+        0x00FE3098, 0x00FE5399, 0x00FE5498, 0x00FE6799, 0x00FE6898, 0x00FE6C99, 0x00FE7003,
+        0x00FE7599, 0x00FE7603, 0x00FEFD99, 0x00FEFF98, 0x00FF0099, 0x00FF0198, 0x00FF2141,
+        0x00FF3B98, 0x00FF4141, 0x00FF5B98, 0x00FF6639, 0x00FF7098, 0x00FF7139, 0x00FF9E98,
+        0x00FFA02B, 0x00FFBF99, 0x00FFC22B, 0x00FFC899, 0x00FFCA2B, 0x00FFD099, 0x00FFD22B,
+        0x00FFD899, 0x00FFDA2B, 0x00FFDD99, 0x00FFE098, 0x00FFE799, 0x00FFE898, 0x00FFEF99,
+        0x00FFF998, 0x00FFFE99, 0x01000045, 0x01000C99, 0x01000D45, 0x01002799, 0x01002845,
+        0x01003B99, 0x01003C45, 0x01003E99, 0x01003F45, 0x01004E99, 0x01005045, 0x01005E99,
+        0x01008045, 0x0100FB99, 0x01010098, 0x01010399, 0x01010798, 0x01013499, 0x01013798,
+        0x01014028, 0x01018F99, 0x01019098, 0x01019C99, 0x0101A028, 0x0101A199, 0x0101D098,
+        0x0101FD97, 0x0101FE99, 0x01028047, 0x01029D99, 0x0102A014, 0x0102D199, 0x0102E097,
+        0x0102E198, 0x0102FC99, 0x01030036, 0x01032499, 0x01032D36, 0x01033026, 0x01034B99,
+        0x01035067, 0x01037B99, 0x0103808F, 0x01039E99, 0x01039F8F, 0x0103A093, 0x0103C499,
+        0x0103C893, 0x0103D699, 0x0104001C, 0x01045075, 0x01048064, 0x01049E99, 0x0104A064,
+        0x0104AA99, 0x0104B063, 0x0104D499, 0x0104D863, 0x0104FC99, 0x0105001F, 0x01052899,
+        0x01053001, 0x01056499, 0x01056F01, 0x01057099, 0x01060044, 0x01073799, 0x01074044,
+        0x01075699, 0x01076044, 0x01076899, 0x01080018, 0x01080699, 0x01080818, 0x01080999,
+        0x01080A18, 0x01083699, 0x01083718, 0x01083999, 0x01083C18, 0x01083D99, 0x01083F18,
+        0x01084004, 0x01085699, 0x01085704, 0x01086065, 0x0108805B, 0x01089F99, 0x0108A75B,
+        0x0108B099, 0x0108E02E, 0x0108F399, 0x0108F42E, 0x0108F699, 0x0108FB2E, 0x0109006B,
+        0x01091C99, 0x01091F6B, 0x01092048, 0x01093A99, 0x01093F48, 0x01094099, 0x01098051,
+        0x0109A050, 0x0109B899, 0x0109BC50, 0x0109D099, 0x0109D250, 0x010A003A, 0x010A0499,
+        0x010A053A, 0x010A0799, 0x010A0C3A, 0x010A1499, 0x010A153A, 0x010A1899, 0x010A193A,
+        0x010A3699, 0x010A383A, 0x010A3B99, 0x010A3F3A, 0x010A4999, 0x010A503A, 0x010A5999,
+        0x010A6072, 0x010A805A, 0x010AA099, 0x010AC04C, 0x010AE799, 0x010AEB4C, 0x010AF799,
+        0x010B0006, 0x010B3699, 0x010B3906, 0x010B406D, 0x010B5699, 0x010B586D, 0x010B6069,
+        0x010B7399, 0x010B7869, 0x010B806A, 0x010B9299, 0x010B996A, 0x010B9D99, 0x010BA96A,
+        0x010BB099, 0x010C0061, 0x010C4999, 0x010C8035, 0x010CB399, 0x010CC035, 0x010CF399,
+        0x010CFA35, 0x010D006F, 0x010D2899, 0x010D306F, 0x010D3A99, 0x010E6003, 0x010E7F99,
+        0x010F007B, 0x010F2899, 0x010F307A, 0x010F5A99, 0x010FE020, 0x010FF799, 0x0110000E,
+        0x01104E99, 0x0110520E, 0x01107099, 0x01107F0E, 0x0110803E, 0x0110C299, 0x0110CD3E,
+        0x0110CE99, 0x0110D07C, 0x0110E999, 0x0110F07C, 0x0110FA99, 0x01110012, 0x01113599,
+        0x01113612, 0x01114799, 0x01115049, 0x01117799, 0x01118076, 0x0111CE99, 0x0111D076,
+        0x0111E099, 0x0111E179, 0x0111F599, 0x0112003C, 0x01121299, 0x0112133C, 0x01123F99,
+        0x01128057, 0x01128799, 0x01128857, 0x01128999, 0x01128A57, 0x01128E99, 0x01128F57,
+        0x01129E99, 0x01129F57, 0x0112AA99, 0x0112B078, 0x0112EB99, 0x0112F078, 0x0112FA99,
+        0x01130027, 0x01130499, 0x01130527, 0x01130D99, 0x01130F27, 0x01131199, 0x01131327,
+        0x01132999, 0x01132A27, 0x01133199, 0x01133227, 0x01133499, 0x01133527, 0x01133A99,
+        0x01133B97, 0x01133C27, 0x01134599, 0x01134727, 0x01134999, 0x01134B27, 0x01134E99,
+        0x01135027, 0x01135199, 0x01135727, 0x01135899, 0x01135D27, 0x01136499, 0x01136627,
+        0x01136D99, 0x01137027, 0x01137599, 0x0114005C, 0x01145A99, 0x01145B5C, 0x01145C99,
+        0x01145D5C, 0x01146099, 0x0114808E, 0x0114C899, 0x0114D08E, 0x0114DA99, 0x01158077,
+        0x0115B699, 0x0115B877, 0x0115DE99, 0x01160053, 0x01164599, 0x01165053, 0x01165A99,
+        0x01166054, 0x01166D99, 0x01168082, 0x0116B999, 0x0116C082, 0x0116CA99, 0x01170002,
+        0x01171B99, 0x01171D02, 0x01172C99, 0x01173002, 0x01174099, 0x0118001B, 0x01183C99,
+        0x0118A091, 0x0118F399, 0x0118FF91, 0x01190099, 0x0119A059, 0x0119A899, 0x0119AA59,
+        0x0119D899, 0x0119DA59, 0x0119E599, 0x011A0096, 0x011A4899, 0x011A507D, 0x011AA399,
+        0x011AC066, 0x011AF999, 0x011C000C, 0x011C0999, 0x011C0A0C, 0x011C3799, 0x011C380C,
+        0x011C4699, 0x011C500C, 0x011C6D99, 0x011C704D, 0x011C9099, 0x011C924D, 0x011CA899,
+        0x011CA94D, 0x011CB799, 0x011D0025, 0x011D0799, 0x011D0825, 0x011D0A99, 0x011D0B25,
+        0x011D3799, 0x011D3A25, 0x011D3B99, 0x011D3C25, 0x011D3E99, 0x011D3F25, 0x011D4899,
+        0x011D5025, 0x011D5A99, 0x011D6024, 0x011D6699, 0x011D6724, 0x011D6999, 0x011D6A24,
+        0x011D8F99, 0x011D9024, 0x011D9299, 0x011D9324, 0x011D9999, 0x011DA024, 0x011DAA99,
+        0x011EE04A, 0x011EF999, 0x011FC085, 0x011FF299, 0x011FFF85, 0x01200094, 0x01239A99,
+        0x01240094, 0x01246F99, 0x01247094, 0x01247599, 0x01248094, 0x01254499, 0x0130001E,
+        0x01342F99, 0x0134301E, 0x01343999, 0x01440031, 0x01464799, 0x01680008, 0x016A3999,
+        0x016A4055, 0x016A5F99, 0x016A6055, 0x016A6A99, 0x016A6E55, 0x016A7099, 0x016AD009,
+        0x016AEE99, 0x016AF009, 0x016AF699, 0x016B0032, 0x016B4699, 0x016B5032, 0x016B5A99,
+        0x016B5B32, 0x016B6299, 0x016B6332, 0x016B7899, 0x016B7D32, 0x016B9099, 0x016E404E,
+        0x016E9B99, 0x016F006C, 0x016F4B99, 0x016F4F6C, 0x016F8899, 0x016F8F6C, 0x016FA099,
+        0x016FE086, 0x016FE15E, 0x016FE298, 0x016FE499, 0x01700086, 0x0187F899, 0x01880086,
+        0x018AF399, 0x01B00039, 0x01B00130, 0x01B11F99, 0x01B15030, 0x01B15399, 0x01B16439,
+        0x01B16899, 0x01B1705E, 0x01B2FC99, 0x01BC001D, 0x01BC6B99, 0x01BC701D, 0x01BC7D99,
+        0x01BC801D, 0x01BC8999, 0x01BC901D, 0x01BC9A99, 0x01BC9C1D, 0x01BCA098, 0x01BCA499,
+        0x01D00098, 0x01D0F699, 0x01D10098, 0x01D12799, 0x01D12998, 0x01D16797, 0x01D16A98,
+        0x01D17B97, 0x01D18398, 0x01D18597, 0x01D18C98, 0x01D1AA97, 0x01D1AE98, 0x01D1E999,
+        0x01D20028, 0x01D24699, 0x01D2E098, 0x01D2F499, 0x01D30098, 0x01D35799, 0x01D36098,
+        0x01D37999, 0x01D40098, 0x01D45599, 0x01D45698, 0x01D49D99, 0x01D49E98, 0x01D4A099,
+        0x01D4A298, 0x01D4A399, 0x01D4A598, 0x01D4A799, 0x01D4A998, 0x01D4AD99, 0x01D4AE98,
+        0x01D4BA99, 0x01D4BB98, 0x01D4BC99, 0x01D4BD98, 0x01D4C499, 0x01D4C598, 0x01D50699,
+        0x01D50798, 0x01D50B99, 0x01D50D98, 0x01D51599, 0x01D51698, 0x01D51D99, 0x01D51E98,
+        0x01D53A99, 0x01D53B98, 0x01D53F99, 0x01D54098, 0x01D54599, 0x01D54698, 0x01D54799,
+        0x01D54A98, 0x01D55199, 0x01D55298, 0x01D6A699, 0x01D6A898, 0x01D7CC99, 0x01D7CE98,
+        0x01D80074, 0x01DA8C99, 0x01DA9B74, 0x01DAA099, 0x01DAA174, 0x01DAB099, 0x01E00023,
+        0x01E00799, 0x01E00823, 0x01E01999, 0x01E01B23, 0x01E02299, 0x01E02323, 0x01E02599,
+        0x01E02623, 0x01E02B99, 0x01E10033, 0x01E12D99, 0x01E13033, 0x01E13E99, 0x01E14033,
+        0x01E14A99, 0x01E14E33, 0x01E15099, 0x01E2C092, 0x01E2FA99, 0x01E2FF92, 0x01E30099,
+        0x01E8004F, 0x01E8C599, 0x01E8C74F, 0x01E8D799, 0x01E90000, 0x01E94C99, 0x01E95000,
+        0x01E95A99, 0x01E95E00, 0x01E96099, 0x01EC7198, 0x01ECB599, 0x01ED0198, 0x01ED3E99,
+        0x01EE0003, 0x01EE0499, 0x01EE0503, 0x01EE2099, 0x01EE2103, 0x01EE2399, 0x01EE2403,
+        0x01EE2599, 0x01EE2703, 0x01EE2899, 0x01EE2903, 0x01EE3399, 0x01EE3403, 0x01EE3899,
+        0x01EE3903, 0x01EE3A99, 0x01EE3B03, 0x01EE3C99, 0x01EE4203, 0x01EE4399, 0x01EE4703,
+        0x01EE4899, 0x01EE4903, 0x01EE4A99, 0x01EE4B03, 0x01EE4C99, 0x01EE4D03, 0x01EE5099,
+        0x01EE5103, 0x01EE5399, 0x01EE5403, 0x01EE5599, 0x01EE5703, 0x01EE5899, 0x01EE5903,
+        0x01EE5A99, 0x01EE5B03, 0x01EE5C99, 0x01EE5D03, 0x01EE5E99, 0x01EE5F03, 0x01EE6099,
+        0x01EE6103, 0x01EE6399, 0x01EE6403, 0x01EE6599, 0x01EE6703, 0x01EE6B99, 0x01EE6C03,
+        0x01EE7399, 0x01EE7403, 0x01EE7899, 0x01EE7903, 0x01EE7D99, 0x01EE7E03, 0x01EE7F99,
+        0x01EE8003, 0x01EE8A99, 0x01EE8B03, 0x01EE9C99, 0x01EEA103, 0x01EEA499, 0x01EEA503,
+        0x01EEAA99, 0x01EEAB03, 0x01EEBC99, 0x01EEF003, 0x01EEF299, 0x01F00098, 0x01F02C99,
+        0x01F03098, 0x01F09499, 0x01F0A098, 0x01F0AF99, 0x01F0B198, 0x01F0C099, 0x01F0C198,
+        0x01F0D099, 0x01F0D198, 0x01F0F699, 0x01F10098, 0x01F10D99, 0x01F11098, 0x01F16D99,
+        0x01F17098, 0x01F1AD99, 0x01F1E698, 0x01F20030, 0x01F20198, 0x01F20399, 0x01F21098,
+        0x01F23C99, 0x01F24098, 0x01F24999, 0x01F25098, 0x01F25299, 0x01F26098, 0x01F26699,
+        0x01F30098, 0x01F6D699, 0x01F6E098, 0x01F6ED99, 0x01F6F098, 0x01F6FB99, 0x01F70098,
+        0x01F77499, 0x01F78098, 0x01F7D999, 0x01F7E098, 0x01F7EC99, 0x01F80098, 0x01F80C99,
+        0x01F81098, 0x01F84899, 0x01F85098, 0x01F85A99, 0x01F86098, 0x01F88899, 0x01F89098,
+        0x01F8AE99, 0x01F90098, 0x01F90C99, 0x01F90D98, 0x01F97299, 0x01F97398, 0x01F97799,
+        0x01F97A98, 0x01F9A399, 0x01F9A598, 0x01F9AB99, 0x01F9AE98, 0x01F9CB99, 0x01F9CD98,
+        0x01FA5499, 0x01FA6098, 0x01FA6E99, 0x01FA7098, 0x01FA7499, 0x01FA7898, 0x01FA7B99,
+        0x01FA8098, 0x01FA8399, 0x01FA9098, 0x01FA9699, 0x0200002C, 0x02000299, 0x0200622C,
+        0x02006399, 0x0200642C, 0x02006599, 0x0200E02C, 0x0200E199, 0x0200E22C, 0x0200E399,
+        0x02011F2C, 0x02012099, 0x0201212C, 0x02012299, 0x0209282C, 0x02092999, 0x02092A2C,
+        0x02092B99, 0x0209812C, 0x02098299, 0x0209832C, 0x02098499, 0x02098A2C, 0x02098B99,
+        0x02098C2C, 0x02098D99, 0x02099A2C, 0x02099B99, 0x02099C2C, 0x02099D99, 0x020AE82C,
+        0x020AE999, 0x020AEA2C, 0x020AEB99, 0x020AFB2C, 0x020AFC99, 0x020AFD2C, 0x020AFE99,
+        0x020B172C, 0x020B1899, 0x020B192C, 0x020B1A99, 0x02238E2C, 0x02238F99, 0x0223902C,
+        0x02239199, 0x0229962C, 0x02299799, 0x0229982C, 0x02299999, 0x023B192C, 0x023B1A99,
+        0x023B1B2C, 0x023B1C99, 0x02626B2C, 0x02626C99, 0x02626D2C, 0x02626E99, 0x02A6D52C,
+        0x02A6D699, 0x02B7332C, 0x02B73499, 0x02B81C2C, 0x02B81D99, 0x02CEA02C, 0x02CEA199,
+        0x02EBDF2C, 0x02EBE099, 0x02F8002C, 0x02FA1E99, 0x0E000198, 0x0E000299, 0x0E002098,
+        0x0E008099, 0x0E010097, 0x0E01F099, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x0009531A, 0x0009541A};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<1> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x0342, script::grek},
-        __script_data_t{0x0343, script::zzzz},  __script_data_t{0x0345, script::grek},
-        __script_data_t{0x0346, script::zzzz},  __script_data_t{0x0363, script::latn},
-        __script_data_t{0x0370, script::zzzz},  __script_data_t{0x0483, script::cyrl},
-        __script_data_t{0x0488, script::zzzz},  __script_data_t{0x0589, script::armn},
-        __script_data_t{0x058A, script::zzzz},  __script_data_t{0x060C, script::arab},
-        __script_data_t{0x060D, script::zzzz},  __script_data_t{0x061B, script::arab},
-        __script_data_t{0x061D, script::zzzz},  __script_data_t{0x061F, script::arab},
-        __script_data_t{0x0620, script::zzzz},  __script_data_t{0x0640, script::adlm},
-        __script_data_t{0x0641, script::zzzz},  __script_data_t{0x064B, script::arab},
-        __script_data_t{0x0656, script::zzzz},  __script_data_t{0x0660, script::arab},
-        __script_data_t{0x066A, script::zzzz},  __script_data_t{0x0670, script::arab},
-        __script_data_t{0x0671, script::zzzz},  __script_data_t{0x06D4, script::arab},
-        __script_data_t{0x06D5, script::zzzz},  __script_data_t{0x0951, script::beng},
-        __script_data_t{0x0953, script::zzzz},  __script_data_t{0x0964, script::beng},
-        __script_data_t{0x0966, script::deva},  __script_data_t{0x0970, script::zzzz},
-        __script_data_t{0x09E6, script::beng},  __script_data_t{0x09F0, script::zzzz},
-        __script_data_t{0x0A66, script::guru},  __script_data_t{0x0A70, script::zzzz},
-        __script_data_t{0x0AE6, script::gujr},  __script_data_t{0x0AF0, script::zzzz},
-        __script_data_t{0x0BE6, script::gran},  __script_data_t{0x0BF4, script::zzzz},
-        __script_data_t{0x0CE6, script::knda},  __script_data_t{0x0CF0, script::zzzz},
-        __script_data_t{0x1040, script::cakm},  __script_data_t{0x104A, script::zzzz},
-        __script_data_t{0x10FB, script::geor},  __script_data_t{0x10FC, script::zzzz},
-        __script_data_t{0x1735, script::buhd},  __script_data_t{0x1737, script::zzzz},
-        __script_data_t{0x1802, script::mong},  __script_data_t{0x1804, script::zzzz},
-        __script_data_t{0x1805, script::mong},  __script_data_t{0x1806, script::zzzz},
-        __script_data_t{0x1CD0, script::beng},  __script_data_t{0x1CD1, script::deva},
-        __script_data_t{0x1CD2, script::beng},  __script_data_t{0x1CD3, script::deva},
-        __script_data_t{0x1CD5, script::beng},  __script_data_t{0x1CD7, script::deva},
-        __script_data_t{0x1CD8, script::beng},  __script_data_t{0x1CD9, script::deva},
-        __script_data_t{0x1CE1, script::beng},  __script_data_t{0x1CE2, script::deva},
-        __script_data_t{0x1CEA, script::beng},  __script_data_t{0x1CEB, script::deva},
-        __script_data_t{0x1CED, script::beng},  __script_data_t{0x1CEE, script::deva},
-        __script_data_t{0x1CF2, script::beng},  __script_data_t{0x1CF3, script::deva},
-        __script_data_t{0x1CF5, script::beng},  __script_data_t{0x1CF8, script::deva},
-        __script_data_t{0x1CFA, script::nand},  __script_data_t{0x1CFB, script::zzzz},
-        __script_data_t{0x1DC0, script::grek},  __script_data_t{0x1DC2, script::zzzz},
-        __script_data_t{0x202F, script::latn},  __script_data_t{0x2030, script::zzzz},
-        __script_data_t{0x20F0, script::deva},  __script_data_t{0x20F1, script::zzzz},
-        __script_data_t{0x2E43, script::cyrl},  __script_data_t{0x2E44, script::zzzz},
-        __script_data_t{0x3001, script::bopo},  __script_data_t{0x3004, script::zzzz},
-        __script_data_t{0x3006, script::hani},  __script_data_t{0x3007, script::zzzz},
-        __script_data_t{0x3008, script::bopo},  __script_data_t{0x3012, script::zzzz},
-        __script_data_t{0x3013, script::bopo},  __script_data_t{0x3020, script::zzzz},
-        __script_data_t{0x302A, script::bopo},  __script_data_t{0x302E, script::zzzz},
-        __script_data_t{0x3030, script::bopo},  __script_data_t{0x3031, script::hira},
-        __script_data_t{0x3036, script::zzzz},  __script_data_t{0x3037, script::bopo},
-        __script_data_t{0x3038, script::zzzz},  __script_data_t{0x303C, script::hani},
-        __script_data_t{0x3040, script::zzzz},  __script_data_t{0x3099, script::hira},
-        __script_data_t{0x309D, script::zzzz},  __script_data_t{0x30A0, script::hira},
-        __script_data_t{0x30A1, script::zzzz},  __script_data_t{0x30FB, script::bopo},
-        __script_data_t{0x30FC, script::hira},  __script_data_t{0x30FD, script::zzzz},
-        __script_data_t{0x3190, script::hani},  __script_data_t{0x31A0, script::zzzz},
-        __script_data_t{0x31C0, script::hani},  __script_data_t{0x31E4, script::zzzz},
-        __script_data_t{0x3220, script::hani},  __script_data_t{0x3248, script::zzzz},
-        __script_data_t{0x3280, script::hani},  __script_data_t{0x32B1, script::zzzz},
-        __script_data_t{0x32C0, script::hani},  __script_data_t{0x32CC, script::zzzz},
-        __script_data_t{0x3358, script::hani},  __script_data_t{0x3371, script::zzzz},
-        __script_data_t{0x337B, script::hani},  __script_data_t{0x3380, script::zzzz},
-        __script_data_t{0x33E0, script::hani},  __script_data_t{0x33FF, script::zzzz},
-        __script_data_t{0xA66F, script::cyrl},  __script_data_t{0xA670, script::zzzz},
-        __script_data_t{0xA830, script::deva},  __script_data_t{0xA83A, script::zzzz},
-        __script_data_t{0xA8F1, script::beng},  __script_data_t{0xA8F2, script::zzzz},
-        __script_data_t{0xA8F3, script::deva},  __script_data_t{0xA8F4, script::zzzz},
-        __script_data_t{0xA92E, script::kali},  __script_data_t{0xA92F, script::zzzz},
-        __script_data_t{0xA9CF, script::bugi},  __script_data_t{0xA9D0, script::zzzz},
-        __script_data_t{0xFDF2, script::arab},  __script_data_t{0xFDF3, script::zzzz},
-        __script_data_t{0xFDFD, script::arab},  __script_data_t{0xFDFE, script::zzzz},
-        __script_data_t{0xFE45, script::bopo},  __script_data_t{0xFE47, script::zzzz},
-        __script_data_t{0xFF61, script::bopo},  __script_data_t{0xFF66, script::zzzz},
-        __script_data_t{0xFF70, script::hira},  __script_data_t{0xFF71, script::zzzz},
-        __script_data_t{0xFF9E, script::hira},  __script_data_t{0xFFA0, script::zzzz},
-        __script_data_t{0x10100, script::cprt}, __script_data_t{0x10103, script::zzzz},
-        __script_data_t{0x10107, script::cprt}, __script_data_t{0x10134, script::zzzz},
-        __script_data_t{0x10137, script::cprt}, __script_data_t{0x10140, script::zzzz},
-        __script_data_t{0x102E0, script::arab}, __script_data_t{0x102FC, script::zzzz},
-        __script_data_t{0x11301, script::gran}, __script_data_t{0x11302, script::zzzz},
-        __script_data_t{0x11303, script::gran}, __script_data_t{0x11304, script::zzzz},
-        __script_data_t{0x1133B, script::gran}, __script_data_t{0x1133D, script::zzzz},
-        __script_data_t{0x11FD0, script::gran}, __script_data_t{0x11FD2, script::zzzz},
-        __script_data_t{0x11FD3, script::gran}, __script_data_t{0x11FD4, script::zzzz},
-        __script_data_t{0x1BCA0, script::dupl}, __script_data_t{0x1BCA4, script::zzzz},
-        __script_data_t{0x1D360, script::hani}, __script_data_t{0x1D372, script::zzzz},
-        __script_data_t{0x1F250, script::hani}, __script_data_t{0x1F252, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{3302, script::zzzz},
-        std::pair<char32_t, script>{3303, script::zzzz},
-        std::pair<char32_t, script>{3304, script::zzzz},
-        std::pair<char32_t, script>{3305, script::zzzz},
-        std::pair<char32_t, script>{3306, script::zzzz},
-        std::pair<char32_t, script>{3307, script::zzzz},
-        std::pair<char32_t, script>{3308, script::zzzz},
-        std::pair<char32_t, script>{3309, script::zzzz},
-        std::pair<char32_t, script>{3310, script::zzzz},
-        std::pair<char32_t, script>{3311, script::zzzz},
-        std::pair<char32_t, script>{7410, script::deva},
-        std::pair<char32_t, script>{8239, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{1748, script::zzzz},
-        std::pair<char32_t, script>{2986, script::gran},
-        std::pair<char32_t, script>{2997, script::gran},
-        std::pair<char32_t, script>{3059, script::zzzz},
-        std::pair<char32_t, script>{7376, script::deva},
-        std::pair<char32_t, script>{7378, script::deva},
-        std::pair<char32_t, script>{7381, script::deva},
-        std::pair<char32_t, script>{7382, script::deva},
-        std::pair<char32_t, script>{7384, script::deva},
-        std::pair<char32_t, script>{7393, script::deva},
-        std::pair<char32_t, script>{7402, script::deva},
-        std::pair<char32_t, script>{7405, script::deva},
-        std::pair<char32_t, script>{7413, script::deva},
-        std::pair<char32_t, script>{7414, script::deva}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00034228, 0x00034399, 0x00034528, 0x00034699, 0x00036341, 0x00037099,
+        0x00048319, 0x00048899, 0x00058905, 0x00058A99, 0x00060C03, 0x00060D99, 0x00061B03,
+        0x00061D99, 0x00061F03, 0x00062099, 0x00064000, 0x00064199, 0x00064B03, 0x00065699,
+        0x00066003, 0x00066A99, 0x00067003, 0x00067199, 0x0006D403, 0x0006D599, 0x0009510B,
+        0x00095399, 0x0009640B, 0x0009661A, 0x00097099, 0x0009E60B, 0x0009F099, 0x000A662A,
+        0x000A7099, 0x000AE629, 0x000AF099, 0x000BE627, 0x000BF499, 0x000CE63D, 0x000CF099,
+        0x00104012, 0x00104A99, 0x0010FB22, 0x0010FC99, 0x00173511, 0x00173799, 0x00180254,
+        0x00180499, 0x00180554, 0x00180699, 0x001CD00B, 0x001CD11A, 0x001CD20B, 0x001CD31A,
+        0x001CD50B, 0x001CD71A, 0x001CD80B, 0x001CD91A, 0x001CE10B, 0x001CE21A, 0x001CEA0B,
+        0x001CEB1A, 0x001CED0B, 0x001CEE1A, 0x001CF20B, 0x001CF31A, 0x001CF50B, 0x001CF81A,
+        0x001CFA59, 0x001CFB99, 0x001DC028, 0x001DC299, 0x00202F41, 0x00203099, 0x0020F01A,
+        0x0020F199, 0x002E4319, 0x002E4499, 0x0030010D, 0x00300499, 0x0030062C, 0x00300799,
+        0x0030080D, 0x00301299, 0x0030130D, 0x00302099, 0x00302A0D, 0x00302E99, 0x0030300D,
+        0x00303130, 0x00303699, 0x0030370D, 0x00303899, 0x00303C2C, 0x00304099, 0x00309930,
+        0x00309D99, 0x0030A030, 0x0030A199, 0x0030FB0D, 0x0030FC30, 0x0030FD99, 0x0031902C,
+        0x0031A099, 0x0031C02C, 0x0031E499, 0x0032202C, 0x00324899, 0x0032802C, 0x0032B199,
+        0x0032C02C, 0x0032CC99, 0x0033582C, 0x00337199, 0x00337B2C, 0x00338099, 0x0033E02C,
+        0x0033FF99, 0x00A66F19, 0x00A67099, 0x00A8301A, 0x00A83A99, 0x00A8F10B, 0x00A8F299,
+        0x00A8F31A, 0x00A8F499, 0x00A92E38, 0x00A92F99, 0x00A9CF10, 0x00A9D099, 0x00FDF203,
+        0x00FDF399, 0x00FDFD03, 0x00FDFE99, 0x00FE450D, 0x00FE4799, 0x00FF610D, 0x00FF6699,
+        0x00FF7030, 0x00FF7199, 0x00FF9E30, 0x00FFA099, 0x01010018, 0x01010399, 0x01010718,
+        0x01013499, 0x01013718, 0x01014099, 0x0102E003, 0x0102FC99, 0x01130127, 0x01130299,
+        0x01130327, 0x01130499, 0x01133B27, 0x01133D99, 0x011FD027, 0x011FD299, 0x011FD327,
+        0x011FD499, 0x01BCA01D, 0x01BCA499, 0x01D3602C, 0x01D37299, 0x01F2502C, 0x01F25299,
+        0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {
+        0x000CE699, 0x000CE799, 0x000CE899, 0x000CE999, 0x000CEA99, 0x000CEB99,
+        0x000CEC99, 0x000CED99, 0x000CEE99, 0x000CEF99, 0x001CF21A, 0x00202F99};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x0006D499, 0x000BAA27, 0x000BB527, 0x000BF399, 0x001CD01A, 0x001CD21A, 0x001CD51A,
+        0x001CD61A, 0x001CD81A, 0x001CE11A, 0x001CEA1A, 0x001CED1A, 0x001CF51A, 0x001CF61A};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<2> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x0483, script::perm},
-        __script_data_t{0x0484, script::glag},  __script_data_t{0x0485, script::latn},
-        __script_data_t{0x0487, script::glag},  __script_data_t{0x0488, script::zzzz},
-        __script_data_t{0x0589, script::geor},  __script_data_t{0x058A, script::zzzz},
-        __script_data_t{0x060C, script::rohg},  __script_data_t{0x060D, script::zzzz},
-        __script_data_t{0x061B, script::rohg},  __script_data_t{0x061C, script::syrc},
-        __script_data_t{0x061D, script::zzzz},  __script_data_t{0x061F, script::rohg},
-        __script_data_t{0x0620, script::zzzz},  __script_data_t{0x0640, script::arab},
-        __script_data_t{0x0641, script::zzzz},  __script_data_t{0x064B, script::syrc},
-        __script_data_t{0x0656, script::zzzz},  __script_data_t{0x0660, script::thaa},
-        __script_data_t{0x066A, script::zzzz},  __script_data_t{0x0670, script::syrc},
-        __script_data_t{0x0671, script::zzzz},  __script_data_t{0x06D4, script::rohg},
-        __script_data_t{0x06D5, script::zzzz},  __script_data_t{0x0951, script::deva},
-        __script_data_t{0x0953, script::zzzz},  __script_data_t{0x0964, script::deva},
-        __script_data_t{0x0966, script::dogr},  __script_data_t{0x0970, script::zzzz},
-        __script_data_t{0x09E6, script::cakm},  __script_data_t{0x09F0, script::zzzz},
-        __script_data_t{0x0A66, script::mult},  __script_data_t{0x0A70, script::zzzz},
-        __script_data_t{0x0AE6, script::khoj},  __script_data_t{0x0AF0, script::zzzz},
-        __script_data_t{0x0BE6, script::taml},  __script_data_t{0x0BF4, script::zzzz},
-        __script_data_t{0x0CE6, script::nand},  __script_data_t{0x0CF0, script::zzzz},
-        __script_data_t{0x1040, script::mymr},  __script_data_t{0x104A, script::zzzz},
-        __script_data_t{0x10FB, script::latn},  __script_data_t{0x10FC, script::zzzz},
-        __script_data_t{0x1735, script::hano},  __script_data_t{0x1737, script::zzzz},
-        __script_data_t{0x1802, script::phag},  __script_data_t{0x1804, script::zzzz},
-        __script_data_t{0x1805, script::phag},  __script_data_t{0x1806, script::zzzz},
-        __script_data_t{0x1CD0, script::deva},  __script_data_t{0x1CD1, script::zzzz},
-        __script_data_t{0x1CD2, script::deva},  __script_data_t{0x1CD3, script::gran},
-        __script_data_t{0x1CD4, script::zzzz},  __script_data_t{0x1CD5, script::deva},
-        __script_data_t{0x1CD7, script::shrd},  __script_data_t{0x1CD8, script::deva},
-        __script_data_t{0x1CD9, script::shrd},  __script_data_t{0x1CDA, script::knda},
-        __script_data_t{0x1CDB, script::zzzz},  __script_data_t{0x1CDC, script::shrd},
-        __script_data_t{0x1CDE, script::zzzz},  __script_data_t{0x1CE0, script::shrd},
-        __script_data_t{0x1CE1, script::deva},  __script_data_t{0x1CE2, script::zzzz},
-        __script_data_t{0x1CE9, script::nand},  __script_data_t{0x1CEA, script::deva},
-        __script_data_t{0x1CEB, script::zzzz},  __script_data_t{0x1CED, script::deva},
-        __script_data_t{0x1CEE, script::zzzz},  __script_data_t{0x1CF2, script::deva},
-        __script_data_t{0x1CF3, script::gran},  __script_data_t{0x1CF5, script::deva},
-        __script_data_t{0x1CF7, script::zzzz},  __script_data_t{0x1CF8, script::gran},
-        __script_data_t{0x1CFA, script::zzzz},  __script_data_t{0x202F, script::mong},
-        __script_data_t{0x2030, script::zzzz},  __script_data_t{0x20F0, script::gran},
-        __script_data_t{0x20F1, script::zzzz},  __script_data_t{0x2E43, script::glag},
-        __script_data_t{0x2E44, script::zzzz},  __script_data_t{0x3001, script::hang},
-        __script_data_t{0x3004, script::zzzz},  __script_data_t{0x3008, script::hang},
-        __script_data_t{0x3012, script::zzzz},  __script_data_t{0x3013, script::hang},
-        __script_data_t{0x3020, script::zzzz},  __script_data_t{0x302A, script::hani},
-        __script_data_t{0x302E, script::zzzz},  __script_data_t{0x3030, script::hang},
-        __script_data_t{0x3031, script::kana},  __script_data_t{0x3036, script::zzzz},
-        __script_data_t{0x3037, script::hang},  __script_data_t{0x3038, script::zzzz},
-        __script_data_t{0x303C, script::hira},  __script_data_t{0x303E, script::zzzz},
-        __script_data_t{0x3099, script::kana},  __script_data_t{0x309D, script::zzzz},
-        __script_data_t{0x30A0, script::kana},  __script_data_t{0x30A1, script::zzzz},
-        __script_data_t{0x30FB, script::hang},  __script_data_t{0x30FC, script::kana},
-        __script_data_t{0x30FD, script::zzzz},  __script_data_t{0xA66F, script::glag},
-        __script_data_t{0xA670, script::zzzz},  __script_data_t{0xA830, script::dogr},
-        __script_data_t{0xA83A, script::zzzz},  __script_data_t{0xA8F1, script::deva},
-        __script_data_t{0xA8F2, script::zzzz},  __script_data_t{0xA8F3, script::taml},
-        __script_data_t{0xA8F4, script::zzzz},  __script_data_t{0xA92E, script::latn},
-        __script_data_t{0xA92F, script::zzzz},  __script_data_t{0xA9CF, script::java},
-        __script_data_t{0xA9D0, script::zzzz},  __script_data_t{0xFDF2, script::thaa},
-        __script_data_t{0xFDF3, script::zzzz},  __script_data_t{0xFDFD, script::thaa},
-        __script_data_t{0xFDFE, script::zzzz},  __script_data_t{0xFE45, script::hang},
-        __script_data_t{0xFE47, script::zzzz},  __script_data_t{0xFF61, script::hang},
-        __script_data_t{0xFF66, script::zzzz},  __script_data_t{0xFF70, script::kana},
-        __script_data_t{0xFF71, script::zzzz},  __script_data_t{0xFF9E, script::kana},
-        __script_data_t{0xFFA0, script::zzzz},  __script_data_t{0x10100, script::linb},
-        __script_data_t{0x10103, script::zzzz}, __script_data_t{0x10107, script::lina},
-        __script_data_t{0x10134, script::zzzz}, __script_data_t{0x10137, script::linb},
-        __script_data_t{0x10140, script::zzzz}, __script_data_t{0x102E0, script::copt},
-        __script_data_t{0x102FC, script::zzzz}, __script_data_t{0x11301, script::taml},
-        __script_data_t{0x11302, script::zzzz}, __script_data_t{0x11303, script::taml},
-        __script_data_t{0x11304, script::zzzz}, __script_data_t{0x1133B, script::taml},
-        __script_data_t{0x1133D, script::zzzz}, __script_data_t{0x11FD0, script::taml},
-        __script_data_t{0x11FD2, script::zzzz}, __script_data_t{0x11FD3, script::taml},
-        __script_data_t{0x11FD4, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{3302, script::zzzz},
-        std::pair<char32_t, script>{3303, script::zzzz},
-        std::pair<char32_t, script>{3304, script::zzzz},
-        std::pair<char32_t, script>{3305, script::zzzz},
-        std::pair<char32_t, script>{3306, script::zzzz},
-        std::pair<char32_t, script>{3307, script::zzzz},
-        std::pair<char32_t, script>{3308, script::zzzz},
-        std::pair<char32_t, script>{3309, script::zzzz},
-        std::pair<char32_t, script>{3310, script::zzzz},
-        std::pair<char32_t, script>{3311, script::zzzz},
-        std::pair<char32_t, script>{7401, script::zzzz},
-        std::pair<char32_t, script>{7410, script::gran},
-        std::pair<char32_t, script>{8239, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{1548, script::syrc},
-        std::pair<char32_t, script>{1563, script::syrc},
-        std::pair<char32_t, script>{1567, script::syrc},
-        std::pair<char32_t, script>{1748, script::zzzz},
-        std::pair<char32_t, script>{2406, script::kthi},
-        std::pair<char32_t, script>{2407, script::kthi},
-        std::pair<char32_t, script>{2408, script::kthi},
-        std::pair<char32_t, script>{2409, script::kthi},
-        std::pair<char32_t, script>{2410, script::kthi},
-        std::pair<char32_t, script>{2411, script::kthi},
-        std::pair<char32_t, script>{2412, script::kthi},
-        std::pair<char32_t, script>{2413, script::kthi},
-        std::pair<char32_t, script>{2414, script::kthi},
-        std::pair<char32_t, script>{2415, script::kthi},
-        std::pair<char32_t, script>{2986, script::taml},
-        std::pair<char32_t, script>{2997, script::taml},
-        std::pair<char32_t, script>{3059, script::zzzz},
-        std::pair<char32_t, script>{7376, script::gran},
-        std::pair<char32_t, script>{7378, script::gran},
-        std::pair<char32_t, script>{7381, script::zzzz},
-        std::pair<char32_t, script>{7382, script::zzzz},
-        std::pair<char32_t, script>{7384, script::zzzz},
-        std::pair<char32_t, script>{7393, script::zzzz},
-        std::pair<char32_t, script>{7402, script::zzzz},
-        std::pair<char32_t, script>{7405, script::zzzz},
-        std::pair<char32_t, script>{7413, script::knda},
-        std::pair<char32_t, script>{7414, script::zzzz},
-        std::pair<char32_t, script>{43056, script::gujr},
-        std::pair<char32_t, script>{43057, script::gujr},
-        std::pair<char32_t, script>{43058, script::gujr},
-        std::pair<char32_t, script>{43059, script::gujr},
-        std::pair<char32_t, script>{43060, script::gujr},
-        std::pair<char32_t, script>{43061, script::gujr},
-        std::pair<char32_t, script>{43062, script::gujr},
-        std::pair<char32_t, script>{43063, script::gujr},
-        std::pair<char32_t, script>{43064, script::gujr},
-        std::pair<char32_t, script>{43065, script::gujr}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00048367, 0x00048423, 0x00048541, 0x00048723, 0x00048899, 0x00058922,
+        0x00058A99, 0x00060C6F, 0x00060D99, 0x00061B6F, 0x00061C80, 0x00061D99, 0x00061F6F,
+        0x00062099, 0x00064003, 0x00064199, 0x00064B80, 0x00065699, 0x0006608B, 0x00066A99,
+        0x00067080, 0x00067199, 0x0006D46F, 0x0006D599, 0x0009511A, 0x00095399, 0x0009641A,
+        0x0009661B, 0x00097099, 0x0009E612, 0x0009F099, 0x000A6657, 0x000A7099, 0x000AE63C,
+        0x000AF099, 0x000BE685, 0x000BF499, 0x000CE659, 0x000CF099, 0x00104058, 0x00104A99,
+        0x0010FB41, 0x0010FC99, 0x0017352D, 0x00173799, 0x00180268, 0x00180499, 0x00180568,
+        0x00180699, 0x001CD01A, 0x001CD199, 0x001CD21A, 0x001CD327, 0x001CD499, 0x001CD51A,
+        0x001CD776, 0x001CD81A, 0x001CD976, 0x001CDA3D, 0x001CDB99, 0x001CDC76, 0x001CDE99,
+        0x001CE076, 0x001CE11A, 0x001CE299, 0x001CE959, 0x001CEA1A, 0x001CEB99, 0x001CED1A,
+        0x001CEE99, 0x001CF21A, 0x001CF327, 0x001CF51A, 0x001CF799, 0x001CF827, 0x001CFA99,
+        0x00202F54, 0x00203099, 0x0020F027, 0x0020F199, 0x002E4323, 0x002E4499, 0x0030012B,
+        0x00300499, 0x0030082B, 0x00301299, 0x0030132B, 0x00302099, 0x00302A2C, 0x00302E99,
+        0x0030302B, 0x00303139, 0x00303699, 0x0030372B, 0x00303899, 0x00303C30, 0x00303E99,
+        0x00309939, 0x00309D99, 0x0030A039, 0x0030A199, 0x0030FB2B, 0x0030FC39, 0x0030FD99,
+        0x00A66F23, 0x00A67099, 0x00A8301B, 0x00A83A99, 0x00A8F11A, 0x00A8F299, 0x00A8F385,
+        0x00A8F499, 0x00A92E41, 0x00A92F99, 0x00A9CF37, 0x00A9D099, 0x00FDF28B, 0x00FDF399,
+        0x00FDFD8B, 0x00FDFE99, 0x00FE452B, 0x00FE4799, 0x00FF612B, 0x00FF6699, 0x00FF7039,
+        0x00FF7199, 0x00FF9E39, 0x00FFA099, 0x01010045, 0x01010399, 0x01010744, 0x01013499,
+        0x01013745, 0x01014099, 0x0102E017, 0x0102FC99, 0x01130185, 0x01130299, 0x01130385,
+        0x01130499, 0x01133B85, 0x01133D99, 0x011FD085, 0x011FD299, 0x011FD385, 0x011FD499,
+        0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {
+        0x000CE699, 0x000CE799, 0x000CE899, 0x000CE999, 0x000CEA99, 0x000CEB99, 0x000CEC99,
+        0x000CED99, 0x000CEE99, 0x000CEF99, 0x001CE999, 0x001CF227, 0x00202F99};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00060C80, 0x00061B80, 0x00061F80, 0x0006D499, 0x0009663E, 0x0009673E, 0x0009683E,
+        0x0009693E, 0x00096A3E, 0x00096B3E, 0x00096C3E, 0x00096D3E, 0x00096E3E, 0x00096F3E,
+        0x000BAA85, 0x000BB585, 0x000BF399, 0x001CD027, 0x001CD227, 0x001CD599, 0x001CD699,
+        0x001CD899, 0x001CE199, 0x001CEA99, 0x001CED99, 0x001CF53D, 0x001CF699, 0x00A83029,
+        0x00A83129, 0x00A83229, 0x00A83329, 0x00A83429, 0x00A83529, 0x00A83629, 0x00A83729,
+        0x00A83829, 0x00A83929};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<3> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x060C, script::syrc},
-        __script_data_t{0x060D, script::zzzz},  __script_data_t{0x061B, script::syrc},
-        __script_data_t{0x061C, script::thaa},  __script_data_t{0x061D, script::zzzz},
-        __script_data_t{0x061F, script::syrc},  __script_data_t{0x0620, script::zzzz},
-        __script_data_t{0x0640, script::mand},  __script_data_t{0x0641, script::zzzz},
-        __script_data_t{0x0951, script::gran},  __script_data_t{0x0953, script::zzzz},
-        __script_data_t{0x0964, script::dogr},  __script_data_t{0x0966, script::kthi},
-        __script_data_t{0x0970, script::zzzz},  __script_data_t{0x09E6, script::sylo},
-        __script_data_t{0x09F0, script::zzzz},  __script_data_t{0x1040, script::tale},
-        __script_data_t{0x104A, script::zzzz},  __script_data_t{0x1735, script::tagb},
-        __script_data_t{0x1737, script::zzzz},  __script_data_t{0x1CD0, script::gran},
-        __script_data_t{0x1CD1, script::zzzz},  __script_data_t{0x1CD2, script::gran},
-        __script_data_t{0x1CD3, script::zzzz},  __script_data_t{0x1CDA, script::mlym},
-        __script_data_t{0x1CDB, script::zzzz},  __script_data_t{0x1CF2, script::gran},
-        __script_data_t{0x1CF3, script::zzzz},  __script_data_t{0x1CF4, script::knda},
-        __script_data_t{0x1CF5, script::zzzz},  __script_data_t{0x20F0, script::latn},
-        __script_data_t{0x20F1, script::zzzz},  __script_data_t{0x3001, script::hani},
-        __script_data_t{0x3004, script::zzzz},  __script_data_t{0x3008, script::hani},
-        __script_data_t{0x3012, script::zzzz},  __script_data_t{0x3013, script::hani},
-        __script_data_t{0x3020, script::zzzz},  __script_data_t{0x3030, script::hani},
-        __script_data_t{0x3031, script::zzzz},  __script_data_t{0x3037, script::hani},
-        __script_data_t{0x3038, script::zzzz},  __script_data_t{0x303C, script::kana},
-        __script_data_t{0x303E, script::zzzz},  __script_data_t{0x30FB, script::hani},
-        __script_data_t{0x30FC, script::zzzz},  __script_data_t{0xA830, script::gujr},
-        __script_data_t{0xA83A, script::zzzz},  __script_data_t{0xA92E, script::mymr},
-        __script_data_t{0xA92F, script::zzzz},  __script_data_t{0xFE45, script::hani},
-        __script_data_t{0xFE47, script::zzzz},  __script_data_t{0xFF61, script::hani},
-        __script_data_t{0xFF66, script::zzzz},  __script_data_t{0x10107, script::linb},
-        __script_data_t{0x10134, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{7410, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{1548, script::thaa},
-        std::pair<char32_t, script>{1563, script::thaa},
-        std::pair<char32_t, script>{1567, script::thaa},
-        std::pair<char32_t, script>{2404, script::gran},
-        std::pair<char32_t, script>{2405, script::gran},
-        std::pair<char32_t, script>{2406, script::mahj},
-        std::pair<char32_t, script>{2407, script::mahj},
-        std::pair<char32_t, script>{2408, script::mahj},
-        std::pair<char32_t, script>{2409, script::mahj},
-        std::pair<char32_t, script>{2410, script::mahj},
-        std::pair<char32_t, script>{2411, script::mahj},
-        std::pair<char32_t, script>{2412, script::mahj},
-        std::pair<char32_t, script>{2413, script::mahj},
-        std::pair<char32_t, script>{2414, script::mahj},
-        std::pair<char32_t, script>{2415, script::mahj},
-        std::pair<char32_t, script>{7376, script::zzzz},
-        std::pair<char32_t, script>{7378, script::zzzz},
-        std::pair<char32_t, script>{7412, script::zzzz},
-        std::pair<char32_t, script>{43056, script::guru},
-        std::pair<char32_t, script>{43057, script::guru},
-        std::pair<char32_t, script>{43058, script::guru},
-        std::pair<char32_t, script>{43059, script::guru},
-        std::pair<char32_t, script>{43060, script::guru},
-        std::pair<char32_t, script>{43061, script::guru},
-        std::pair<char32_t, script>{43062, script::guru},
-        std::pair<char32_t, script>{43063, script::guru},
-        std::pair<char32_t, script>{43064, script::guru},
-        std::pair<char32_t, script>{43065, script::guru}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00060C80, 0x00060D99, 0x00061B80, 0x00061C8B, 0x00061D99, 0x00061F80,
+        0x00062099, 0x0006404B, 0x00064199, 0x00095127, 0x00095399, 0x0009641B, 0x0009663E,
+        0x00097099, 0x0009E67F, 0x0009F099, 0x00104083, 0x00104A99, 0x00173581, 0x00173799,
+        0x001CD027, 0x001CD199, 0x001CD227, 0x001CD399, 0x001CDA52, 0x001CDB99, 0x001CF227,
+        0x001CF399, 0x001CF43D, 0x001CF599, 0x0020F041, 0x0020F199, 0x0030012C, 0x00300499,
+        0x0030082C, 0x00301299, 0x0030132C, 0x00302099, 0x0030302C, 0x00303199, 0x0030372C,
+        0x00303899, 0x00303C39, 0x00303E99, 0x0030FB2C, 0x0030FC99, 0x00A83029, 0x00A83A99,
+        0x00A92E58, 0x00A92F99, 0x00FE452C, 0x00FE4799, 0x00FF612C, 0x00FF6699, 0x01010745,
+        0x01013499, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x001CF299};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00060C8B, 0x00061B8B, 0x00061F8B, 0x00096427, 0x00096527, 0x00096649, 0x00096749,
+        0x00096849, 0x00096949, 0x00096A49, 0x00096B49, 0x00096C49, 0x00096D49, 0x00096E49,
+        0x00096F49, 0x001CD099, 0x001CD299, 0x001CF499, 0x00A8302A, 0x00A8312A, 0x00A8322A,
+        0x00A8332A, 0x00A8342A, 0x00A8352A, 0x00A8362A, 0x00A8372A, 0x00A8382A, 0x00A8392A};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<4> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x060C, script::thaa},
-        __script_data_t{0x060D, script::zzzz},  __script_data_t{0x061B, script::thaa},
-        __script_data_t{0x061C, script::zzzz},  __script_data_t{0x061F, script::thaa},
-        __script_data_t{0x0620, script::zzzz},  __script_data_t{0x0640, script::mani},
-        __script_data_t{0x0641, script::zzzz},  __script_data_t{0x0951, script::gujr},
-        __script_data_t{0x0953, script::zzzz},  __script_data_t{0x0964, script::gong},
-        __script_data_t{0x0966, script::mahj},  __script_data_t{0x0970, script::zzzz},
-        __script_data_t{0x1735, script::tglg},  __script_data_t{0x1737, script::zzzz},
-        __script_data_t{0x1CD0, script::knda},  __script_data_t{0x1CD1, script::zzzz},
-        __script_data_t{0x1CD2, script::knda},  __script_data_t{0x1CD3, script::zzzz},
-        __script_data_t{0x1CDA, script::orya},  __script_data_t{0x1CDB, script::zzzz},
-        __script_data_t{0x1CF2, script::knda},  __script_data_t{0x1CF3, script::zzzz},
-        __script_data_t{0x3001, script::hira},  __script_data_t{0x3004, script::zzzz},
-        __script_data_t{0x3008, script::hira},  __script_data_t{0x3012, script::zzzz},
-        __script_data_t{0x3013, script::hira},  __script_data_t{0x3020, script::zzzz},
-        __script_data_t{0x3030, script::hira},  __script_data_t{0x3031, script::zzzz},
-        __script_data_t{0x3037, script::hira},  __script_data_t{0x3038, script::zzzz},
-        __script_data_t{0x30FB, script::hira},  __script_data_t{0x30FC, script::zzzz},
-        __script_data_t{0xA830, script::guru},  __script_data_t{0xA83A, script::zzzz},
-        __script_data_t{0xFE45, script::hira},  __script_data_t{0xFE47, script::zzzz},
-        __script_data_t{0xFF61, script::hira},  __script_data_t{0xFF66, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{7410, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{1548, script::zzzz},
-        std::pair<char32_t, script>{1563, script::zzzz},
-        std::pair<char32_t, script>{1567, script::zzzz},
-        std::pair<char32_t, script>{2404, script::gujr},
-        std::pair<char32_t, script>{2405, script::gujr},
-        std::pair<char32_t, script>{2406, script::zzzz},
-        std::pair<char32_t, script>{2407, script::zzzz},
-        std::pair<char32_t, script>{2408, script::zzzz},
-        std::pair<char32_t, script>{2409, script::zzzz},
-        std::pair<char32_t, script>{2410, script::zzzz},
-        std::pair<char32_t, script>{2411, script::zzzz},
-        std::pair<char32_t, script>{2412, script::zzzz},
-        std::pair<char32_t, script>{2413, script::zzzz},
-        std::pair<char32_t, script>{2414, script::zzzz},
-        std::pair<char32_t, script>{2415, script::zzzz},
-        std::pair<char32_t, script>{7376, script::zzzz},
-        std::pair<char32_t, script>{7378, script::zzzz},
-        std::pair<char32_t, script>{7386, script::taml},
-        std::pair<char32_t, script>{43056, script::knda},
-        std::pair<char32_t, script>{43057, script::knda},
-        std::pair<char32_t, script>{43058, script::knda},
-        std::pair<char32_t, script>{43059, script::knda},
-        std::pair<char32_t, script>{43060, script::knda},
-        std::pair<char32_t, script>{43061, script::knda},
-        std::pair<char32_t, script>{43062, script::kthi},
-        std::pair<char32_t, script>{43063, script::kthi},
-        std::pair<char32_t, script>{43064, script::kthi},
-        std::pair<char32_t, script>{43065, script::kthi}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00060C8B, 0x00060D99, 0x00061B8B, 0x00061C99, 0x00061F8B, 0x00062099,
+        0x0006404C, 0x00064199, 0x00095129, 0x00095399, 0x00096424, 0x00096649, 0x00097099,
+        0x0017358A, 0x00173799, 0x001CD03D, 0x001CD199, 0x001CD23D, 0x001CD399, 0x001CDA62,
+        0x001CDB99, 0x001CF23D, 0x001CF399, 0x00300130, 0x00300499, 0x00300830, 0x00301299,
+        0x00301330, 0x00302099, 0x00303030, 0x00303199, 0x00303730, 0x00303899, 0x0030FB30,
+        0x0030FC99, 0x00A8302A, 0x00A83A99, 0x00FE4530, 0x00FE4799, 0x00FF6130, 0x00FF6699,
+        0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x001CF299};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00060C99, 0x00061B99, 0x00061F99, 0x00096429, 0x00096529, 0x00096699, 0x00096799,
+        0x00096899, 0x00096999, 0x00096A99, 0x00096B99, 0x00096C99, 0x00096D99, 0x00096E99,
+        0x00096F99, 0x001CD099, 0x001CD299, 0x001CDA85, 0x00A8303D, 0x00A8313D, 0x00A8323D,
+        0x00A8333D, 0x00A8343D, 0x00A8353D, 0x00A8363E, 0x00A8373E, 0x00A8383E, 0x00A8393E};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<5> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0640, script::phlp},
-        __script_data_t{0x0641, script::zzzz}, __script_data_t{0x0951, script::guru},
-        __script_data_t{0x0953, script::zzzz}, __script_data_t{0x0964, script::gonm},
-        __script_data_t{0x0966, script::zzzz}, __script_data_t{0x1CDA, script::taml},
-        __script_data_t{0x1CDB, script::zzzz}, __script_data_t{0x1CF2, script::nand},
-        __script_data_t{0x1CF3, script::zzzz}, __script_data_t{0x3001, script::kana},
-        __script_data_t{0x3004, script::zzzz}, __script_data_t{0x3008, script::kana},
-        __script_data_t{0x3012, script::zzzz}, __script_data_t{0x3013, script::kana},
-        __script_data_t{0x3020, script::zzzz}, __script_data_t{0x3030, script::kana},
-        __script_data_t{0x3031, script::zzzz}, __script_data_t{0x3037, script::kana},
-        __script_data_t{0x3038, script::zzzz}, __script_data_t{0x30FB, script::kana},
-        __script_data_t{0x30FC, script::zzzz}, __script_data_t{0xA830, script::khoj},
-        __script_data_t{0xA83A, script::zzzz}, __script_data_t{0xFE45, script::kana},
-        __script_data_t{0xFE47, script::zzzz}, __script_data_t{0xFF61, script::kana},
-        __script_data_t{0xFF66, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::gran},
-        std::pair<char32_t, script>{2405, script::gran},
-        std::pair<char32_t, script>{7410, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::guru},
-        std::pair<char32_t, script>{2405, script::guru},
-        std::pair<char32_t, script>{7386, script::telu},
-        std::pair<char32_t, script>{43056, script::kthi},
-        std::pair<char32_t, script>{43057, script::kthi},
-        std::pair<char32_t, script>{43058, script::kthi},
-        std::pair<char32_t, script>{43059, script::kthi},
-        std::pair<char32_t, script>{43060, script::kthi},
-        std::pair<char32_t, script>{43061, script::kthi},
-        std::pair<char32_t, script>{43062, script::mahj},
-        std::pair<char32_t, script>{43063, script::mahj},
-        std::pair<char32_t, script>{43064, script::mahj},
-        std::pair<char32_t, script>{43065, script::mahj}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x0006406A, 0x00064199, 0x0009512A, 0x00095399, 0x00096425,
+        0x00096699, 0x001CDA85, 0x001CDB99, 0x001CF259, 0x001CF399, 0x00300139,
+        0x00300499, 0x00300839, 0x00301299, 0x00301339, 0x00302099, 0x00303039,
+        0x00303199, 0x00303739, 0x00303899, 0x0030FB39, 0x0030FC99, 0x00A8303C,
+        0x00A83A99, 0x00FE4539, 0x00FE4799, 0x00FF6139, 0x00FF6699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096427, 0x00096527,
+                                                                      0x001CF299};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x0009642A, 0x0009652A, 0x001CDA88, 0x00A8303E, 0x00A8313E, 0x00A8323E, 0x00A8333E,
+        0x00A8343E, 0x00A8353E, 0x00A83649, 0x00A83749, 0x00A83849, 0x00A83949};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<6> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x0640, script::rohg},
-        __script_data_t{0x0641, script::zzzz},  __script_data_t{0x0951, script::knda},
-        __script_data_t{0x0953, script::zzzz},  __script_data_t{0x0964, script::gran},
-        __script_data_t{0x0966, script::zzzz},  __script_data_t{0x1CDA, script::telu},
-        __script_data_t{0x1CDB, script::zzzz},  __script_data_t{0x1CF2, script::orya},
-        __script_data_t{0x1CF3, script::zzzz},  __script_data_t{0x3001, script::yiii},
-        __script_data_t{0x3003, script::zzzz},  __script_data_t{0x3008, script::yiii},
-        __script_data_t{0x3012, script::zzzz},  __script_data_t{0x3014, script::yiii},
-        __script_data_t{0x301C, script::zzzz},  __script_data_t{0x30FB, script::yiii},
-        __script_data_t{0x30FC, script::zzzz},  __script_data_t{0xA830, script::knda},
-        __script_data_t{0xA836, script::kthi},  __script_data_t{0xA83A, script::zzzz},
-        __script_data_t{0xFF61, script::yiii},  __script_data_t{0xFF66, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::gujr},
-        std::pair<char32_t, script>{2405, script::gujr},
-        std::pair<char32_t, script>{7410, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{1600, script::syrc},
-        std::pair<char32_t, script>{2404, script::knda},
-        std::pair<char32_t, script>{2405, script::knda},
-        std::pair<char32_t, script>{7386, script::zzzz},
-        std::pair<char32_t, script>{43056, script::mahj},
-        std::pair<char32_t, script>{43057, script::mahj},
-        std::pair<char32_t, script>{43058, script::mahj},
-        std::pair<char32_t, script>{43059, script::mahj},
-        std::pair<char32_t, script>{43060, script::mahj},
-        std::pair<char32_t, script>{43061, script::mahj},
-        std::pair<char32_t, script>{43062, script::modi},
-        std::pair<char32_t, script>{43063, script::modi},
-        std::pair<char32_t, script>{43064, script::modi},
-        std::pair<char32_t, script>{43065, script::modi}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x0006406F, 0x00064199, 0x0009513D, 0x00095399, 0x00096427, 0x00096699,
+        0x001CDA88, 0x001CDB99, 0x001CF262, 0x001CF399, 0x00300195, 0x00300399, 0x00300895,
+        0x00301299, 0x00301495, 0x00301C99, 0x0030FB95, 0x0030FC99, 0x00A8303D, 0x00A8363E,
+        0x00A83A99, 0x00FF6195, 0x00FF6699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096429, 0x00096529,
+                                                                      0x001CF299};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00064080, 0x0009643D, 0x0009653D, 0x001CDA99, 0x00A83049, 0x00A83149, 0x00A83249,
+        0x00A83349, 0x00A83449, 0x00A83549, 0x00A83653, 0x00A83753, 0x00A83853, 0x00A83953};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<7> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x0640, script::sogd},
-        __script_data_t{0x0641, script::zzzz},  __script_data_t{0x0951, script::latn},
-        __script_data_t{0x0953, script::zzzz},  __script_data_t{0x0964, script::gujr},
-        __script_data_t{0x0966, script::zzzz},  __script_data_t{0x1CF2, script::telu},
-        __script_data_t{0x1CF3, script::zzzz},  __script_data_t{0xA830, script::kthi},
-        __script_data_t{0xA836, script::mahj},  __script_data_t{0xA83A, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::guru},
-        std::pair<char32_t, script>{2405, script::guru},
-        std::pair<char32_t, script>{7410, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{1600, script::zzzz},
-        std::pair<char32_t, script>{2404, script::mahj},
-        std::pair<char32_t, script>{2405, script::limb},
-        std::pair<char32_t, script>{43056, script::modi},
-        std::pair<char32_t, script>{43057, script::modi},
-        std::pair<char32_t, script>{43058, script::modi},
-        std::pair<char32_t, script>{43059, script::modi},
-        std::pair<char32_t, script>{43060, script::modi},
-        std::pair<char32_t, script>{43061, script::modi},
-        std::pair<char32_t, script>{43062, script::sind},
-        std::pair<char32_t, script>{43063, script::sind},
-        std::pair<char32_t, script>{43064, script::sind},
-        std::pair<char32_t, script>{43065, script::sind}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x0006407A, 0x00064199, 0x00095141, 0x00095399, 0x00096429, 0x00096699,
+        0x001CF288, 0x001CF399, 0x00A8303E, 0x00A83649, 0x00A83A99, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x0009642A, 0x0009652A,
+                                                                      0x001CF299};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00064099, 0x00096449, 0x00096543, 0x00A83053, 0x00A83153, 0x00A83253, 0x00A83353,
+        0x00A83453, 0x00A83553, 0x00A83678, 0x00A83778, 0x00A83878, 0x00A83978};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<8> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x0640, script::syrc},
-        __script_data_t{0x0641, script::zzzz},  __script_data_t{0x0951, script::mlym},
-        __script_data_t{0x0953, script::zzzz},  __script_data_t{0x0964, script::guru},
-        __script_data_t{0x0966, script::zzzz},  __script_data_t{0x1CF2, script::tirh},
-        __script_data_t{0x1CF3, script::zzzz},  __script_data_t{0xA830, script::mahj},
-        __script_data_t{0xA836, script::modi},  __script_data_t{0xA83A, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::knda},
-        std::pair<char32_t, script>{2405, script::knda},
-        std::pair<char32_t, script>{7410, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{1600, script::zzzz},
-        std::pair<char32_t, script>{2404, script::mlym},
-        std::pair<char32_t, script>{2405, script::mahj},
-        std::pair<char32_t, script>{43056, script::sind},
-        std::pair<char32_t, script>{43057, script::sind},
-        std::pair<char32_t, script>{43058, script::sind},
-        std::pair<char32_t, script>{43059, script::sind},
-        std::pair<char32_t, script>{43060, script::sind},
-        std::pair<char32_t, script>{43061, script::sind},
-        std::pair<char32_t, script>{43062, script::takr},
-        std::pair<char32_t, script>{43063, script::takr},
-        std::pair<char32_t, script>{43064, script::takr},
-        std::pair<char32_t, script>{43065, script::takr}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00064080, 0x00064199, 0x00095152, 0x00095399, 0x0009642A, 0x00096699,
+        0x001CF28E, 0x001CF399, 0x00A83049, 0x00A83653, 0x00A83A99, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x0009643D, 0x0009653D,
+                                                                      0x001CF299};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00064099, 0x00096452, 0x00096549, 0x00A83078, 0x00A83178, 0x00A83278, 0x00A83378,
+        0x00A83478, 0x00A83578, 0x00A83682, 0x00A83782, 0x00A83882, 0x00A83982};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<9> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0951, script::orya},
-        __script_data_t{0x0953, script::zzzz}, __script_data_t{0x0964, script::knda},
-        __script_data_t{0x0966, script::zzzz}, __script_data_t{0xA830, script::mlym},
-        __script_data_t{0xA833, script::modi}, __script_data_t{0xA836, script::sind},
-        __script_data_t{0xA83A, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::mahj},
-        std::pair<char32_t, script>{2405, script::limb}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::orya},
-        std::pair<char32_t, script>{2405, script::mlym},
-        std::pair<char32_t, script>{43056, script::takr},
-        std::pair<char32_t, script>{43057, script::takr},
-        std::pair<char32_t, script>{43058, script::takr},
-        std::pair<char32_t, script>{43059, script::takr},
-        std::pair<char32_t, script>{43060, script::takr},
-        std::pair<char32_t, script>{43061, script::takr},
-        std::pair<char32_t, script>{43062, script::tirh},
-        std::pair<char32_t, script>{43063, script::tirh},
-        std::pair<char32_t, script>{43064, script::tirh},
-        std::pair<char32_t, script>{43065, script::tirh}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00095162, 0x00095399, 0x0009643D, 0x00096699,
+        0x00A83052, 0x00A83353, 0x00A83678, 0x00A83A99, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096449, 0x00096543};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00096462, 0x00096552, 0x00A83082, 0x00A83182, 0x00A83282, 0x00A83382,
+        0x00A83482, 0x00A83582, 0x00A8368E, 0x00A8378E, 0x00A8388E, 0x00A8398E};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<10> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0951, script::shrd},
-        __script_data_t{0x0952, script::taml}, __script_data_t{0x0953, script::zzzz},
-        __script_data_t{0x0964, script::mahj}, __script_data_t{0x0965, script::limb},
-        __script_data_t{0x0966, script::zzzz}, __script_data_t{0xA830, script::modi},
-        __script_data_t{0xA833, script::nand}, __script_data_t{0xA836, script::takr},
-        __script_data_t{0xA83A, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::mlym},
-        std::pair<char32_t, script>{2405, script::mahj},
-        std::pair<char32_t, script>{43059, script::sind},
-        std::pair<char32_t, script>{43060, script::sind},
-        std::pair<char32_t, script>{43061, script::sind}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::sind},
-        std::pair<char32_t, script>{2405, script::orya},
-        std::pair<char32_t, script>{43056, script::tirh},
-        std::pair<char32_t, script>{43057, script::tirh},
-        std::pair<char32_t, script>{43058, script::tirh},
-        std::pair<char32_t, script>{43059, script::tirh},
-        std::pair<char32_t, script>{43060, script::tirh},
-        std::pair<char32_t, script>{43061, script::tirh},
-        std::pair<char32_t, script>{43062, script::zzzz},
-        std::pair<char32_t, script>{43063, script::zzzz},
-        std::pair<char32_t, script>{43064, script::zzzz},
-        std::pair<char32_t, script>{43065, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00095176, 0x00095285, 0x00095399, 0x00096449, 0x00096543,
+        0x00096699, 0x00A83053, 0x00A83359, 0x00A83682, 0x00A83A99, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {
+        0x00096452, 0x00096549, 0x00A83378, 0x00A83478, 0x00A83578};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00096478, 0x00096562, 0x00A8308E, 0x00A8318E, 0x00A8328E, 0x00A8338E,
+        0x00A8348E, 0x00A8358E, 0x00A83699, 0x00A83799, 0x00A83899, 0x00A83999};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<11> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0951, script::taml},
-        __script_data_t{0x0952, script::telu}, __script_data_t{0x0953, script::zzzz},
-        __script_data_t{0x0964, script::mlym}, __script_data_t{0x0965, script::mahj},
-        __script_data_t{0x0966, script::zzzz}, __script_data_t{0xA830, script::nand},
-        __script_data_t{0xA833, script::sind}, __script_data_t{0xA836, script::tirh},
-        __script_data_t{0xA83A, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::orya},
-        std::pair<char32_t, script>{2405, script::mlym},
-        std::pair<char32_t, script>{43056, script::sind},
-        std::pair<char32_t, script>{43057, script::sind},
-        std::pair<char32_t, script>{43058, script::sind},
-        std::pair<char32_t, script>{43059, script::takr},
-        std::pair<char32_t, script>{43060, script::takr},
-        std::pair<char32_t, script>{43061, script::takr}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::sinh},
-        std::pair<char32_t, script>{2405, script::sind},
-        std::pair<char32_t, script>{43056, script::zzzz},
-        std::pair<char32_t, script>{43057, script::zzzz},
-        std::pair<char32_t, script>{43058, script::zzzz},
-        std::pair<char32_t, script>{43059, script::zzzz},
-        std::pair<char32_t, script>{43060, script::zzzz},
-        std::pair<char32_t, script>{43061, script::zzzz},
-        std::pair<char32_t, script>{43062, script::zzzz},
-        std::pair<char32_t, script>{43063, script::zzzz},
-        std::pair<char32_t, script>{43064, script::zzzz},
-        std::pair<char32_t, script>{43065, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00095185, 0x00095288, 0x00095399, 0x00096452, 0x00096549,
+        0x00096699, 0x00A83059, 0x00A83378, 0x00A8368E, 0x00A83A99, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {
+        0x00096462, 0x00096552, 0x00A83078, 0x00A83178,
+        0x00A83278, 0x00A83382, 0x00A83482, 0x00A83582};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00096479, 0x00096578, 0x00A83099, 0x00A83199, 0x00A83299, 0x00A83399,
+        0x00A83499, 0x00A83599, 0x00A83699, 0x00A83799, 0x00A83899, 0x00A83999};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<12> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x0951, script::telu},
-        __script_data_t{0x0952, script::tirh},  __script_data_t{0x0953, script::zzzz},
-        __script_data_t{0x0964, script::nand},  __script_data_t{0x0965, script::mlym},
-        __script_data_t{0x0966, script::zzzz},  __script_data_t{0xA830, script::sind},
-        __script_data_t{0xA833, script::takr},  __script_data_t{0xA836, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::sind},
-        std::pair<char32_t, script>{2405, script::orya},
-        std::pair<char32_t, script>{43056, script::takr},
-        std::pair<char32_t, script>{43057, script::takr},
-        std::pair<char32_t, script>{43058, script::takr},
-        std::pair<char32_t, script>{43059, script::tirh},
-        std::pair<char32_t, script>{43060, script::tirh},
-        std::pair<char32_t, script>{43061, script::tirh}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2386, script::zzzz},
-        std::pair<char32_t, script>{2404, script::sylo},
-        std::pair<char32_t, script>{2405, script::sinh},
-        std::pair<char32_t, script>{43056, script::zzzz},
-        std::pair<char32_t, script>{43057, script::zzzz},
-        std::pair<char32_t, script>{43058, script::zzzz},
-        std::pair<char32_t, script>{43059, script::zzzz},
-        std::pair<char32_t, script>{43060, script::zzzz},
-        std::pair<char32_t, script>{43061, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00095188, 0x0009528E, 0x00095399, 0x00096459, 0x00096552,
+        0x00096699, 0x00A83078, 0x00A83382, 0x00A83699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {
+        0x00096478, 0x00096562, 0x00A83082, 0x00A83182,
+        0x00A83282, 0x00A8338E, 0x00A8348E, 0x00A8358E};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00095299, 0x0009647F, 0x00096579, 0x00A83099, 0x00A83199,
+        0x00A83299, 0x00A83399, 0x00A83499, 0x00A83599};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<13> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0951, script::tirh},
-        __script_data_t{0x0952, script::zzzz}, __script_data_t{0x0964, script::orya},
-        __script_data_t{0x0965, script::nand}, __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0xA830, script::takr}, __script_data_t{0xA833, script::tirh},
-        __script_data_t{0xA836, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::sinh},
-        std::pair<char32_t, script>{2405, script::sind},
-        std::pair<char32_t, script>{43056, script::tirh},
-        std::pair<char32_t, script>{43057, script::tirh},
-        std::pair<char32_t, script>{43058, script::tirh},
-        std::pair<char32_t, script>{43059, script::zzzz},
-        std::pair<char32_t, script>{43060, script::zzzz},
-        std::pair<char32_t, script>{43061, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2385, script::zzzz},
-        std::pair<char32_t, script>{2404, script::takr},
-        std::pair<char32_t, script>{2405, script::sylo},
-        std::pair<char32_t, script>{43056, script::zzzz},
-        std::pair<char32_t, script>{43057, script::zzzz},
-        std::pair<char32_t, script>{43058, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x0009518E, 0x00095299, 0x00096462, 0x00096559,
+        0x00096699, 0x00A83082, 0x00A8338E, 0x00A83699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {
+        0x00096479, 0x00096578, 0x00A8308E, 0x00A8318E,
+        0x00A8328E, 0x00A83399, 0x00A83499, 0x00A83599};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {
+        0x00095199, 0x00096482, 0x0009657F, 0x00A83099, 0x00A83199, 0x00A83299};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<14> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz},  __script_data_t{0x0964, script::sind},
-        __script_data_t{0x0965, script::orya},  __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0xA830, script::tirh},  __script_data_t{0xA833, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::sylo},
-        std::pair<char32_t, script>{2405, script::sinh},
-        std::pair<char32_t, script>{43056, script::zzzz},
-        std::pair<char32_t, script>{43057, script::zzzz},
-        std::pair<char32_t, script>{43058, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::taml},
-        std::pair<char32_t, script>{2405, script::takr}};
+    static constexpr const _compact_range scripts_data = {
+        0x00000099, 0x00096478, 0x00096562, 0x00096699, 0x00A8308E, 0x00A83399, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {
+        0x0009647F, 0x00096579, 0x00A83099, 0x00A83199, 0x00A83299};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {0x00096485, 0x00096582};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<15> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0964, script::sinh},
-        __script_data_t{0x0965, script::sind}, __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::takr},
-        std::pair<char32_t, script>{2405, script::sylo}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::telu},
-        std::pair<char32_t, script>{2405, script::taml}};
+    static constexpr const _compact_range scripts_data = {0x00000099, 0x00096479, 0x00096578,
+                                                          0x00096699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096482, 0x0009657F};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {0x00096488, 0x00096585};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<16> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0964, script::sylo},
-        __script_data_t{0x0965, script::sinh}, __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::taml},
-        std::pair<char32_t, script>{2405, script::takr}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::tirh},
-        std::pair<char32_t, script>{2405, script::telu}};
+    static constexpr const _compact_range scripts_data = {0x00000099, 0x0009647F, 0x00096579,
+                                                          0x00096699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096485, 0x00096582};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {0x0009648E, 0x00096588};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<17> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0964, script::takr},
-        __script_data_t{0x0965, script::sylo}, __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::telu},
-        std::pair<char32_t, script>{2405, script::taml}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::zzzz},
-        std::pair<char32_t, script>{2405, script::tirh}};
+    static constexpr const _compact_range scripts_data = {0x00000099, 0x00096482, 0x0009657F,
+                                                          0x00096699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096488, 0x00096585};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {0x00096499, 0x0009658E};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<18> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0964, script::taml},
-        __script_data_t{0x0965, script::takr}, __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::tirh},
-        std::pair<char32_t, script>{2405, script::telu}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2404, script::zzzz},
-        std::pair<char32_t, script>{2405, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {0x00000099, 0x00096485, 0x00096582,
+                                                          0x00096699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x0009648E, 0x00096588};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {0x00096499, 0x00096599};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<19> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0964, script::telu},
-        __script_data_t{0x0965, script::taml}, __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::zzzz},
-        std::pair<char32_t, script>{2405, script::tirh}};
-    static constexpr const std::array scripts_data_compat_v10_0 = {
-        std::pair<char32_t, script>{2405, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {0x00000099, 0x00096488, 0x00096585,
+                                                          0x00096699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096499, 0x0009658E};
+    static constexpr const _compact_list scripts_data_compat_v10_0 = {0x00096599};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
 
         if constexpr(v <= uni::version::v10_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v10_0.begin(), scripts_data_compat_v10_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v10_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v10_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<20> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0964, script::tirh},
-        __script_data_t{0x0965, script::telu}, __script_data_t{0x0966, script::zzzz},
-        __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2404, script::zzzz},
-        std::pair<char32_t, script>{2405, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {0x00000099, 0x0009648E, 0x00096588,
+                                                          0x00096699, 0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096499, 0x00096599};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<>
 struct __script_data<21> {
-    static constexpr const std::array scripts_data = {
-        __script_data_t{0x0000, script::zzzz}, __script_data_t{0x0965, script::tirh},
-        __script_data_t{0x0966, script::zzzz}, __script_data_t{0x110000, script::zzzz}};
-    static constexpr const std::array scripts_data_compat_v11_0 = {
-        std::pair<char32_t, script>{2405, script::zzzz}};
+    static constexpr const _compact_range scripts_data = {0x00000099, 0x0009658E, 0x00096699,
+                                                          0xFFFFFFFF};
+    static constexpr const _compact_list scripts_data_compat_v11_0 = {0x00096599};
     template<uni::version v>
-    constexpr script older_cp_script(char32_t cp, script c) {
+    constexpr script older_cp_script(char32_t cp, script sc) {
         if constexpr(v <= uni::version::v11_0) {
-            const auto it =
-                uni::lower_bound(scripts_data_compat_v11_0.begin(), scripts_data_compat_v11_0.end(),
-                                 cp, [](const auto& e, char32_t cp) { return e.first < cp; });
-            if(it != scripts_data_compat_v11_0.end() && cp == it->first)
-                c = it->second;
+            sc = static_cast<uni::script>(scripts_data_compat_v11_0.value(cp, uint8_t(sc)));
         }
-        return c;
+        return sc;
     }
 };
 template<auto N, uni::version v = uni::version::standard_unicode_version>
@@ -9979,16 +7716,12 @@ constexpr script __cp_script(char32_t cp) {
     if(cp > 0x10FFFF)
         return script::unknown;
 
-    constexpr const auto end = __script_data<N>::scripts_data.end();
-    auto it = uni::upper_bound(__script_data<N>::scripts_data.begin(), end, cp,
-                               [](char32_t cp, const __script_data_t& s) { return cp < s.first; });
-    if(it == end)
-        return script::unknown;
-    it--;
+    uni::script sc = static_cast<uni::script>(
+        __script_data<N>::scripts_data.value(cp, uint8_t(script::unknown)));
     if constexpr(v < uni::version::v12_0) {
-        return __script_data<N>::older_cp_script(cp, it->s);
+        return __script_data<N>::older_cp_script(cp, sc);
     }
-    return it->s;
+    return sc;
 }
 template<uni::version v = uni::version::standard_unicode_version>
 constexpr script __get_cp_script(char32_t cp, int idx) {
@@ -11115,11 +8848,8 @@ enum class property {
     xid_start = xids,
     __max
 };
-static constexpr __range_array<7> __prop_ahex_data = {
-    {__range_array_elem{0x0000, 0} /*48*/, __range_array_elem{0x0030, 1} /*10*/,
-     __range_array_elem{0x003A, 0} /*7*/, __range_array_elem{0x0041, 1} /*6*/,
-     __range_array_elem{0x0047, 0} /*26*/, __range_array_elem{0x0061, 1} /*6*/,
-     __range_array_elem{0x0067, 0} /*1114008*/}};
+static constexpr __range_array __prop_ahex_data = {0x00000000, 0x00003001, 0x00003A00, 0x00004101,
+                                                   0x00004700, 0x00006101, 0x00006700};
 static constexpr __bool_trie<32, 991, 1, 0, 166, 255, 1, 0, 1407, 1, 0, 125> __prop_alpha_data{
     {0x0000000000000000, 0x07fffffe07fffffe, 0x0420040000000000, 0xff7fffffff7fffff,
      0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff,
@@ -11337,12 +9067,9 @@ static constexpr __bool_trie<32, 991, 1, 0, 166, 255, 1, 0, 1407, 1, 0, 125> __p
      0x0000000001400000, 0x000000000a000000, 0x0000280000000000, 0x0000000000200000,
      0x0008000000000000, 0x0000000010000000, 0x0000000100000000, 0x0000000080000000,
      0x000000003fffffff}};
-static constexpr __range_array<9> __prop_bidi_c_data = {
-    {__range_array_elem{0x0000, 0} /*1564*/, __range_array_elem{0x061C, 1} /*1*/,
-     __range_array_elem{0x061D, 0} /*6641*/, __range_array_elem{0x200E, 1} /*2*/,
-     __range_array_elem{0x2010, 0} /*26*/, __range_array_elem{0x202A, 1} /*5*/,
-     __range_array_elem{0x202F, 0} /*55*/, __range_array_elem{0x2066, 1} /*4*/,
-     __range_array_elem{0x206A, 0} /*1105813*/}};
+static constexpr __range_array __prop_bidi_c_data = {0x00000000, 0x00061C01, 0x00061D00,
+                                                     0x00200E01, 0x00201000, 0x00202A01,
+                                                     0x00202F00, 0x00206601, 0x00206A00};
 static constexpr __bool_trie<32, 962, 28, 2, 26, 1, 13, 242, 5, 91, 32, 6> __prop_bidi_m_data{
     {0x5000030000000000, 0x2800000028000000, 0x0800080000000000, 0x0000000000000000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -11623,58 +9350,17 @@ static constexpr __bool_trie<32, 39, 102, 851, 15, 1, 15, 240, 38, 69, 21, 28> _
      0x0006000000603c00, 0xf8000000700e001c, 0xffefcfff701dfffe, 0x000000000000ffff,
      0x01f0183f0006f83f, 0x00000fff00000000, 0x77feffff7fffe000, 0xf079ffffffffefbf,
      0xffffc7e7ffffffff, 0xffffffffffffe7fe, 0x070f000000000000, 0x00000000003f0007}};
-static constexpr __range_array<11> __prop_emoji_component_data = {
-    {__range_array_elem{0x0000, 0} /*48*/, __range_array_elem{0x0030, 1} /*10*/,
-     __range_array_elem{0x003A, 0} /*127404*/, __range_array_elem{0x1F1E6, 1} /*26*/,
-     __range_array_elem{0x1F200, 0} /*507*/, __range_array_elem{0x1F3FB, 1} /*5*/,
-     __range_array_elem{0x1F400, 0} /*1456*/, __range_array_elem{0x1F9B0, 1} /*4*/,
-     __range_array_elem{0x1F9B4, 0} /*788076*/, __range_array_elem{0xE0020, 1} /*96*/,
-     __range_array_elem{0xE0080, 0} /*196479*/}};
-static constexpr __range_array<3> __prop_emoji_modifier_data = {
-    {__range_array_elem{0x0000, 0} /*127995*/, __range_array_elem{0x1F3FB, 1} /*5*/,
-     __range_array_elem{0x1F400, 0} /*986111*/}};
-static constexpr __range_array<41> __prop_emoji_modifier_base_data = {
-    {__range_array_elem{0x0000, 0} /*9994*/,
-     __range_array_elem{0x270A, 1} /*4*/,
-     __range_array_elem{0x270E, 0} /*117940*/,
-     __range_array_elem{0x1F3C2, 1} /*3*/,
-     __range_array_elem{0x1F3C5, 0} /*6*/,
-     __range_array_elem{0x1F3CB, 1} /*2*/,
-     __range_array_elem{0x1F3CD, 0} /*117*/,
-     __range_array_elem{0x1F442, 1} /*2*/,
-     __range_array_elem{0x1F444, 0} /*2*/,
-     __range_array_elem{0x1F446, 1} /*11*/,
-     __range_array_elem{0x1F451, 0} /*21*/,
-     __range_array_elem{0x1F466, 1} /*19*/,
-     __range_array_elem{0x1F479, 0} /*8*/,
-     __range_array_elem{0x1F481, 1} /*3*/,
-     __range_array_elem{0x1F484, 0} /*1*/,
-     __range_array_elem{0x1F485, 1} /*3*/,
-     __range_array_elem{0x1F488, 0} /*236*/,
-     __range_array_elem{0x1F574, 1} /*2*/,
-     __range_array_elem{0x1F576, 0} /*31*/,
-     __range_array_elem{0x1F595, 1} /*2*/,
-     __range_array_elem{0x1F597, 0} /*174*/,
-     __range_array_elem{0x1F645, 1} /*3*/,
-     __range_array_elem{0x1F648, 0} /*3*/,
-     __range_array_elem{0x1F64B, 1} /*5*/,
-     __range_array_elem{0x1F650, 0} /*100*/,
-     __range_array_elem{0x1F6B4, 1} /*3*/,
-     __range_array_elem{0x1F6B7, 0} /*610*/,
-     __range_array_elem{0x1F919, 1} /*6*/,
-     __range_array_elem{0x1F91F, 0} /*18*/,
-     __range_array_elem{0x1F931, 1} /*9*/,
-     __range_array_elem{0x1F93A, 0} /*2*/,
-     __range_array_elem{0x1F93C, 1} /*3*/,
-     __range_array_elem{0x1F93F, 0} /*118*/,
-     __range_array_elem{0x1F9B5, 1} /*2*/,
-     __range_array_elem{0x1F9B7, 0} /*1*/,
-     __range_array_elem{0x1F9B8, 1} /*2*/,
-     __range_array_elem{0x1F9BA, 0} /*19*/,
-     __range_array_elem{0x1F9CD, 1} /*3*/,
-     __range_array_elem{0x1F9D0, 0} /*1*/,
-     __range_array_elem{0x1F9D1, 1} /*13*/,
-     __range_array_elem{0x1F9DE, 0} /*984609*/}};
+static constexpr __range_array __prop_emoji_component_data = {
+    0x00000000, 0x00003001, 0x00003A00, 0x01F1E601, 0x01F20000, 0x01F3FB01,
+    0x01F40000, 0x01F9B001, 0x01F9B400, 0x0E002001, 0x0E008000};
+static constexpr __range_array __prop_emoji_modifier_data = {0x00000000, 0x01F3FB01, 0x01F40000};
+static constexpr __range_array __prop_emoji_modifier_base_data = {
+    0x00000000, 0x00270A01, 0x00270E00, 0x01F3C201, 0x01F3C500, 0x01F3CB01, 0x01F3CD00,
+    0x01F44201, 0x01F44400, 0x01F44601, 0x01F45100, 0x01F46601, 0x01F47900, 0x01F48101,
+    0x01F48400, 0x01F48501, 0x01F48800, 0x01F57401, 0x01F57600, 0x01F59501, 0x01F59700,
+    0x01F64501, 0x01F64800, 0x01F64B01, 0x01F65000, 0x01F6B401, 0x01F6B700, 0x01F91901,
+    0x01F91F00, 0x01F93101, 0x01F93A00, 0x01F93C01, 0x01F93F00, 0x01F9B501, 0x01F9B700,
+    0x01F9B801, 0x01F9BA00, 0x01F9CD01, 0x01F9D000, 0x01F9D101, 0x01F9DE00};
 static constexpr __bool_trie<0, 33, 108, 851, 12, 1, 15, 240, 37, 70, 21, 27>
     __prop_emoji_presentation_data{
         {},
@@ -12062,14 +9748,9 @@ static constexpr __bool_trie<32, 991, 1, 0, 74, 255, 1, 0, 449, 7, 56, 58> __pro
      0xf87fffffffffffff, 0x00201fffffffffff, 0x0000fffef8000010, 0x000007dbf9ffff7f,
      0x0000f00000000000, 0x00000000007f0000, 0x00000000000007f0, 0xffffffff00000000,
      0xffffffffffffffff, 0x0000ffffffffffff}};
-static constexpr __range_array<13> __prop_hex_data = {
-    {__range_array_elem{0x0000, 0} /*48*/, __range_array_elem{0x0030, 1} /*10*/,
-     __range_array_elem{0x003A, 0} /*7*/, __range_array_elem{0x0041, 1} /*6*/,
-     __range_array_elem{0x0047, 0} /*26*/, __range_array_elem{0x0061, 1} /*6*/,
-     __range_array_elem{0x0067, 0} /*65193*/, __range_array_elem{0xFF10, 1} /*10*/,
-     __range_array_elem{0xFF1A, 0} /*7*/, __range_array_elem{0xFF21, 1} /*6*/,
-     __range_array_elem{0xFF27, 0} /*26*/, __range_array_elem{0xFF41, 1} /*6*/,
-     __range_array_elem{0xFF47, 0} /*1048760*/}};
+static constexpr __range_array __prop_hex_data = {
+    0x00000000, 0x00003001, 0x00003A00, 0x00004101, 0x00004700, 0x00006101, 0x00006700,
+    0x00FF1001, 0x00FF1A00, 0x00FF2101, 0x00FF2700, 0x00FF4101, 0x00FF4700};
 static constexpr __bool_trie<0, 812, 160, 20, 37, 25, 7, 224, 745, 64, 23, 24> __prop_ideo_data{
     {},
     {1,  0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  2,  0,  3,  0, 0,  0,  0,  0,  0,
@@ -12149,21 +9830,13 @@ static constexpr __bool_trie<0, 812, 160, 20, 37, 25, 7, 224, 745, 64, 23, 24> _
      0x2800050000000000, 0x0000000002800000, 0x0000000000014000, 0x0000000001400000,
      0x000000000a000000, 0x0000280000000000, 0x0000000000200000, 0x0008000000000000,
      0x0000000010000000, 0x0000000100000000, 0x0000000080000000, 0x000000003fffffff}};
-static constexpr __range_array<5> __prop_idsb_data = {
-    {__range_array_elem{0x0000, 0} /*12272*/, __range_array_elem{0x2FF0, 1} /*2*/,
-     __range_array_elem{0x2FF2, 0} /*2*/, __range_array_elem{0x2FF4, 1} /*8*/,
-     __range_array_elem{0x2FFC, 0} /*1101827*/}};
+static constexpr __range_array __prop_idsb_data = {0x00000000, 0x002FF001, 0x002FF200, 0x002FF401,
+                                                   0x002FFC00};
 static constexpr flat_array<2> __prop_idst_data{{0x2FF2, 0x2FF3}};
 static constexpr flat_array<2> __prop_join_c_data{{0x200C, 0x200D}};
-static constexpr __range_array<15> __prop_loe_data = {
-    {__range_array_elem{0x0000, 0} /*3648*/, __range_array_elem{0x0E40, 1} /*5*/,
-     __range_array_elem{0x0E45, 0} /*123*/, __range_array_elem{0x0EC0, 1} /*5*/,
-     __range_array_elem{0x0EC5, 0} /*2800*/, __range_array_elem{0x19B5, 1} /*3*/,
-     __range_array_elem{0x19B8, 0} /*2*/, __range_array_elem{0x19BA, 1} /*1*/,
-     __range_array_elem{0x19BB, 0} /*37114*/, __range_array_elem{0xAAB5, 1} /*2*/,
-     __range_array_elem{0xAAB7, 0} /*2*/, __range_array_elem{0xAAB9, 1} /*1*/,
-     __range_array_elem{0xAABA, 0} /*1*/, __range_array_elem{0xAABB, 1} /*2*/,
-     __range_array_elem{0xAABD, 0} /*1070402*/}};
+static constexpr __range_array __prop_loe_data = {
+    0x00000000, 0x000E4001, 0x000E4500, 0x000EC001, 0x000EC500, 0x0019B501, 0x0019B800, 0x0019BA01,
+    0x0019BB00, 0x00AAB501, 0x00AAB700, 0x00AAB901, 0x00AABA00, 0x00AABB01, 0x00AABD00};
 static constexpr __bool_trie<32, 991, 1, 0, 55, 255, 1, 0, 378, 13, 57, 42> __prop_oalpha_data{
     {0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -12266,105 +9939,25 @@ static constexpr __bool_trie<32, 991, 1, 0, 55, 255, 1, 0, 378, 13, 57, 42> __pr
      0xffff03ffffff03ff, 0x00000000000003ff}};
 static constexpr flat_array<7> __prop_odi_data{
     {0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x3164, 0xFFA0}};
-static constexpr __range_array<49> __prop_ogr_ext_data = {
-    {__range_array_elem{0x0000, 0} /*2494*/,
-     __range_array_elem{0x09BE, 1} /*1*/,
-     __range_array_elem{0x09BF, 0} /*24*/,
-     __range_array_elem{0x09D7, 1} /*1*/,
-     __range_array_elem{0x09D8, 0} /*358*/,
-     __range_array_elem{0x0B3E, 1} /*1*/,
-     __range_array_elem{0x0B3F, 0} /*24*/,
-     __range_array_elem{0x0B57, 1} /*1*/,
-     __range_array_elem{0x0B58, 0} /*102*/,
-     __range_array_elem{0x0BBE, 1} /*1*/,
-     __range_array_elem{0x0BBF, 0} /*24*/,
-     __range_array_elem{0x0BD7, 1} /*1*/,
-     __range_array_elem{0x0BD8, 0} /*234*/,
-     __range_array_elem{0x0CC2, 1} /*1*/,
-     __range_array_elem{0x0CC3, 0} /*18*/,
-     __range_array_elem{0x0CD5, 1} /*2*/,
-     __range_array_elem{0x0CD7, 0} /*103*/,
-     __range_array_elem{0x0D3E, 1} /*1*/,
-     __range_array_elem{0x0D3F, 0} /*24*/,
-     __range_array_elem{0x0D57, 1} /*1*/,
-     __range_array_elem{0x0D58, 0} /*119*/,
-     __range_array_elem{0x0DCF, 1} /*1*/,
-     __range_array_elem{0x0DD0, 0} /*15*/,
-     __range_array_elem{0x0DDF, 1} /*1*/,
-     __range_array_elem{0x0DE0, 0} /*3413*/,
-     __range_array_elem{0x1B35, 1} /*1*/,
-     __range_array_elem{0x1B36, 0} /*1238*/,
-     __range_array_elem{0x200C, 1} /*1*/,
-     __range_array_elem{0x200D, 0} /*4129*/,
-     __range_array_elem{0x302E, 1} /*2*/,
-     __range_array_elem{0x3030, 0} /*53102*/,
-     __range_array_elem{0xFF9E, 1} /*2*/,
-     __range_array_elem{0xFFA0, 0} /*5022*/,
-     __range_array_elem{0x1133E, 1} /*1*/,
-     __range_array_elem{0x1133F, 0} /*24*/,
-     __range_array_elem{0x11357, 1} /*1*/,
-     __range_array_elem{0x11358, 0} /*344*/,
-     __range_array_elem{0x114B0, 1} /*1*/,
-     __range_array_elem{0x114B1, 0} /*12*/,
-     __range_array_elem{0x114BD, 1} /*1*/,
-     __range_array_elem{0x114BE, 0} /*241*/,
-     __range_array_elem{0x115AF, 1} /*1*/,
-     __range_array_elem{0x115B0, 0} /*48053*/,
-     __range_array_elem{0x1D165, 1} /*1*/,
-     __range_array_elem{0x1D166, 0} /*8*/,
-     __range_array_elem{0x1D16E, 1} /*5*/,
-     __range_array_elem{0x1D173, 0} /*798381*/,
-     __range_array_elem{0xE0020, 1} /*96*/,
-     __range_array_elem{0xE0080, 0} /*196479*/}};
-static constexpr __range_array<9> __prop_oidc_data = {
-    {__range_array_elem{0x0000, 0} /*183*/, __range_array_elem{0x00B7, 1} /*1*/,
-     __range_array_elem{0x00B8, 0} /*719*/, __range_array_elem{0x0387, 1} /*1*/,
-     __range_array_elem{0x0388, 0} /*4065*/, __range_array_elem{0x1369, 1} /*9*/,
-     __range_array_elem{0x1372, 0} /*1640*/, __range_array_elem{0x19DA, 1} /*1*/,
-     __range_array_elem{0x19DB, 0} /*1107492*/}};
+static constexpr __range_array __prop_ogr_ext_data = {
+    0x00000000, 0x0009BE01, 0x0009BF00, 0x0009D701, 0x0009D800, 0x000B3E01, 0x000B3F00,
+    0x000B5701, 0x000B5800, 0x000BBE01, 0x000BBF00, 0x000BD701, 0x000BD800, 0x000CC201,
+    0x000CC300, 0x000CD501, 0x000CD700, 0x000D3E01, 0x000D3F00, 0x000D5701, 0x000D5800,
+    0x000DCF01, 0x000DD000, 0x000DDF01, 0x000DE000, 0x001B3501, 0x001B3600, 0x00200C01,
+    0x00200D00, 0x00302E01, 0x00303000, 0x00FF9E01, 0x00FFA000, 0x01133E01, 0x01133F00,
+    0x01135701, 0x01135800, 0x0114B001, 0x0114B100, 0x0114BD01, 0x0114BE00, 0x0115AF01,
+    0x0115B000, 0x01D16501, 0x01D16600, 0x01D16E01, 0x01D17300, 0x0E002001, 0x0E008000};
+static constexpr __range_array __prop_oidc_data = {0x00000000, 0x0000B701, 0x0000B800,
+                                                   0x00038701, 0x00038800, 0x00136901,
+                                                   0x00137200, 0x0019DA01, 0x0019DB00};
 static constexpr flat_array<6> __prop_oids_data{{0x1885, 0x1886, 0x2118, 0x212E, 0x309B, 0x309C}};
-static constexpr __range_array<41> __prop_olower_data = {
-    {__range_array_elem{0x0000, 0} /*170*/,
-     __range_array_elem{0x00AA, 1} /*1*/,
-     __range_array_elem{0x00AB, 0} /*15*/,
-     __range_array_elem{0x00BA, 1} /*1*/,
-     __range_array_elem{0x00BB, 0} /*501*/,
-     __range_array_elem{0x02B0, 1} /*9*/,
-     __range_array_elem{0x02B9, 0} /*7*/,
-     __range_array_elem{0x02C0, 1} /*2*/,
-     __range_array_elem{0x02C2, 0} /*30*/,
-     __range_array_elem{0x02E0, 1} /*5*/,
-     __range_array_elem{0x02E5, 0} /*96*/,
-     __range_array_elem{0x0345, 1} /*1*/,
-     __range_array_elem{0x0346, 0} /*52*/,
-     __range_array_elem{0x037A, 1} /*1*/,
-     __range_array_elem{0x037B, 0} /*6577*/,
-     __range_array_elem{0x1D2C, 1} /*63*/,
-     __range_array_elem{0x1D6B, 0} /*13*/,
-     __range_array_elem{0x1D78, 1} /*1*/,
-     __range_array_elem{0x1D79, 0} /*34*/,
-     __range_array_elem{0x1D9B, 1} /*37*/,
-     __range_array_elem{0x1DC0, 0} /*689*/,
-     __range_array_elem{0x2071, 1} /*1*/,
-     __range_array_elem{0x2072, 0} /*13*/,
-     __range_array_elem{0x207F, 1} /*1*/,
-     __range_array_elem{0x2080, 0} /*16*/,
-     __range_array_elem{0x2090, 1} /*13*/,
-     __range_array_elem{0x209D, 0} /*211*/,
-     __range_array_elem{0x2170, 1} /*16*/,
-     __range_array_elem{0x2180, 0} /*848*/,
-     __range_array_elem{0x24D0, 1} /*26*/,
-     __range_array_elem{0x24EA, 0} /*1938*/,
-     __range_array_elem{0x2C7C, 1} /*2*/,
-     __range_array_elem{0x2C7E, 0} /*31262*/,
-     __range_array_elem{0xA69C, 1} /*2*/,
-     __range_array_elem{0xA69E, 0} /*210*/,
-     __range_array_elem{0xA770, 1} /*1*/,
-     __range_array_elem{0xA771, 0} /*135*/,
-     __range_array_elem{0xA7F8, 1} /*2*/,
-     __range_array_elem{0xA7FA, 0} /*866*/,
-     __range_array_elem{0xAB5C, 1} /*4*/,
-     __range_array_elem{0xAB60, 0} /*1070239*/}};
+static constexpr __range_array __prop_olower_data = {
+    0x00000000, 0x0000AA01, 0x0000AB00, 0x0000BA01, 0x0000BB00, 0x0002B001, 0x0002B900,
+    0x0002C001, 0x0002C200, 0x0002E001, 0x0002E500, 0x00034501, 0x00034600, 0x00037A01,
+    0x00037B00, 0x001D2C01, 0x001D6B00, 0x001D7801, 0x001D7900, 0x001D9B01, 0x001DC000,
+    0x00207101, 0x00207200, 0x00207F01, 0x00208000, 0x00209001, 0x00209D00, 0x00217001,
+    0x00218000, 0x0024D001, 0x0024EA00, 0x002C7C01, 0x002C7E00, 0x00A69C01, 0x00A69E00,
+    0x00A77001, 0x00A77100, 0x00A7F801, 0x00A7FA00, 0x00AB5C01, 0x00AB6000};
 static constexpr __bool_trie<32, 893, 96, 3, 21, 2, 13, 241, 107, 80, 5, 16> __prop_omath_data{
     {0x0000000000000000, 0x0000000040000000, 0x0000000000000000, 0x0000000000000000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -12421,13 +10014,9 @@ static constexpr __bool_trie<32, 893, 96, 3, 21, 2, 13, 241, 107, 80, 5, 16> __p
      0xffffffffffffffef, 0x7bffffffdfdfe7bf, 0xfffffffffffdfc5f, 0xffffff3fffffffff,
      0xf7fffffff7fffffd, 0xffdfffffffdfffff, 0xffff7fffffff7fff, 0xfffffdfffffffdff,
      0xffffffffffffcff7, 0x0af7fe96ffffffef, 0x5ef7f796aa96ea84, 0x0ffffbee0ffffbff}};
-static constexpr __range_array<11> __prop_oupper_data = {
-    {__range_array_elem{0x0000, 0} /*8544*/, __range_array_elem{0x2160, 1} /*16*/,
-     __range_array_elem{0x2170, 0} /*838*/, __range_array_elem{0x24B6, 1} /*26*/,
-     __range_array_elem{0x24D0, 0} /*117856*/, __range_array_elem{0x1F130, 1} /*26*/,
-     __range_array_elem{0x1F14A, 0} /*6*/, __range_array_elem{0x1F150, 1} /*26*/,
-     __range_array_elem{0x1F16A, 0} /*6*/, __range_array_elem{0x1F170, 1} /*26*/,
-     __range_array_elem{0x1F18A, 0} /*986741*/}};
+static constexpr __range_array __prop_oupper_data = {0x00000000, 0x00216001, 0x00217000, 0x0024B601,
+                                                     0x0024D000, 0x01F13001, 0x01F14A00, 0x01F15001,
+                                                     0x01F16A00, 0x01F17001, 0x01F18A00};
 static constexpr __bool_trie<32, 890, 96, 6, 15, 0, 0, 0, 0, 0, 0, 0> __prop_pat_syn_data{
     {0xfc00fffe00000000, 0x7800000178000001, 0x88435afe00000000, 0x0080000000800000,
      0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -12478,42 +10067,14 @@ static constexpr flat_array<11> __prop_pat_ws_data{
     {0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x0020, 0x0085, 0x200E, 0x200F, 0x2028, 0x2029}};
 static constexpr flat_array<11> __prop_pcm_data{
     {0x0600, 0x0601, 0x0602, 0x0603, 0x0604, 0x0605, 0x06DD, 0x070F, 0x08E2, 0x110BD, 0x110CD}};
-static constexpr __range_array<27> __prop_qmark_data = {
-    {__range_array_elem{0x0000, 0} /*34*/,
-     __range_array_elem{0x0022, 1} /*1*/,
-     __range_array_elem{0x0023, 0} /*4*/,
-     __range_array_elem{0x0027, 1} /*1*/,
-     __range_array_elem{0x0028, 0} /*131*/,
-     __range_array_elem{0x00AB, 1} /*1*/,
-     __range_array_elem{0x00AC, 0} /*15*/,
-     __range_array_elem{0x00BB, 1} /*1*/,
-     __range_array_elem{0x00BC, 0} /*8028*/,
-     __range_array_elem{0x2018, 1} /*8*/,
-     __range_array_elem{0x2020, 0} /*25*/,
-     __range_array_elem{0x2039, 1} /*2*/,
-     __range_array_elem{0x203B, 0} /*3591*/,
-     __range_array_elem{0x2E42, 1} /*1*/,
-     __range_array_elem{0x2E43, 0} /*457*/,
-     __range_array_elem{0x300C, 1} /*4*/,
-     __range_array_elem{0x3010, 0} /*13*/,
-     __range_array_elem{0x301D, 1} /*3*/,
-     __range_array_elem{0x3020, 0} /*52769*/,
-     __range_array_elem{0xFE41, 1} /*4*/,
-     __range_array_elem{0xFE45, 0} /*189*/,
-     __range_array_elem{0xFF02, 1} /*1*/,
-     __range_array_elem{0xFF03, 0} /*4*/,
-     __range_array_elem{0xFF07, 1} /*1*/,
-     __range_array_elem{0xFF08, 0} /*90*/,
-     __range_array_elem{0xFF62, 1} /*2*/,
-     __range_array_elem{0xFF64, 0} /*1048731*/}};
-static constexpr __range_array<7> __prop_radical_data = {
-    {__range_array_elem{0x0000, 0} /*11904*/, __range_array_elem{0x2E80, 1} /*26*/,
-     __range_array_elem{0x2E9A, 0} /*1*/, __range_array_elem{0x2E9B, 1} /*89*/,
-     __range_array_elem{0x2EF4, 0} /*12*/, __range_array_elem{0x2F00, 1} /*214*/,
-     __range_array_elem{0x2FD6, 0} /*1101865*/}};
-static constexpr __range_array<3> __prop_ri_data = {{__range_array_elem{0x0000, 0} /*127462*/,
-                                                     __range_array_elem{0x1F1E6, 1} /*26*/,
-                                                     __range_array_elem{0x1F200, 0} /*986623*/}};
+static constexpr __range_array __prop_qmark_data = {
+    0x00000000, 0x00002201, 0x00002300, 0x00002701, 0x00002800, 0x0000AB01, 0x0000AC00,
+    0x0000BB01, 0x0000BC00, 0x00201801, 0x00202000, 0x00203901, 0x00203B00, 0x002E4201,
+    0x002E4300, 0x00300C01, 0x00301000, 0x00301D01, 0x00302000, 0x00FE4101, 0x00FE4500,
+    0x00FF0201, 0x00FF0300, 0x00FF0701, 0x00FF0800, 0x00FF6201, 0x00FF6400};
+static constexpr __range_array __prop_radical_data = {
+    0x00000000, 0x002E8001, 0x002E9A00, 0x002E9B01, 0x002EF400, 0x002F0001, 0x002FD600};
+static constexpr __range_array __prop_ri_data = {0x00000000, 0x01F1E601, 0x01F20000};
 static constexpr flat_array<46> __prop_sd_data{
     {0x0069,  0x006A,  0x012F,  0x0249,  0x0268,  0x029D,  0x02B2,  0x03F3,  0x0456,  0x0458,
      0x1D62,  0x1D96,  0x1DA4,  0x1DA8,  0x1E2D,  0x1ECB,  0x2071,  0x2148,  0x2149,  0x2C7C,
@@ -12756,23 +10317,12 @@ static constexpr __bool_trie<0, 793, 176, 23, 34, 15, 16, 225, 496, 64, 16, 18> 
      0x0000000002800000, 0x0000000000014000, 0x0000000001400000, 0x000000000a000000,
      0x0000280000000000, 0x0000000000200000, 0x0008000000000000, 0x0000000010000000,
      0x0000000100000000, 0x0000000080000000}};
-static constexpr __range_array<7> __prop_vs_data = {
-    {__range_array_elem{0x0000, 0} /*6155*/, __range_array_elem{0x180B, 1} /*3*/,
-     __range_array_elem{0x180E, 0} /*58866*/, __range_array_elem{0xFE00, 1} /*16*/,
-     __range_array_elem{0xFE10, 0} /*852720*/, __range_array_elem{0xE0100, 1} /*240*/,
-     __range_array_elem{0xE01F0, 0} /*196111*/}};
-static constexpr __range_array<21> __prop_wspace_data = {
-    {__range_array_elem{0x0000, 0} /*9*/,    __range_array_elem{0x0009, 1} /*5*/,
-     __range_array_elem{0x000E, 0} /*18*/,   __range_array_elem{0x0020, 1} /*1*/,
-     __range_array_elem{0x0021, 0} /*100*/,  __range_array_elem{0x0085, 1} /*1*/,
-     __range_array_elem{0x0086, 0} /*26*/,   __range_array_elem{0x00A0, 1} /*1*/,
-     __range_array_elem{0x00A1, 0} /*5599*/, __range_array_elem{0x1680, 1} /*1*/,
-     __range_array_elem{0x1681, 0} /*2431*/, __range_array_elem{0x2000, 1} /*11*/,
-     __range_array_elem{0x200B, 0} /*29*/,   __range_array_elem{0x2028, 1} /*2*/,
-     __range_array_elem{0x202A, 0} /*5*/,    __range_array_elem{0x202F, 1} /*1*/,
-     __range_array_elem{0x2030, 0} /*47*/,   __range_array_elem{0x205F, 1} /*1*/,
-     __range_array_elem{0x2060, 0} /*4000*/, __range_array_elem{0x3000, 1} /*1*/,
-     __range_array_elem{0x3001, 0} /*1101822*/}};
+static constexpr __range_array __prop_vs_data = {0x00000000, 0x00180B01, 0x00180E00, 0x00FE0001,
+                                                 0x00FE1000, 0x0E010001, 0x0E01F000};
+static constexpr __range_array __prop_wspace_data = {
+    0x00000000, 0x00000901, 0x00000E00, 0x00002001, 0x00002100, 0x00008501, 0x00008600,
+    0x0000A001, 0x0000A100, 0x00168001, 0x00168100, 0x00200001, 0x00200B00, 0x00202801,
+    0x00202A00, 0x00202F01, 0x00203000, 0x00205F01, 0x00206000, 0x00300001, 0x00300100};
 static constexpr __bool_trie<32, 991, 1, 0, 160, 255, 1, 0, 1407, 1, 0, 130> __prop_xidc_data{
     {0x03ff000000000000, 0x07fffffe87fffffe, 0x04a0040000000000, 0xff7fffffff7fffff,
      0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff,
@@ -15398,6 +12948,7 @@ static constexpr __bool_trie<32, 991, 1, 0, 149, 255, 1, 0, 1471, 1, 0, 158> __p
      0x0008000000000000, 0x0000000010000000, 0x0000000100000000, 0x0000000080000000,
      0xffffffff00000002, 0x0000ffffffffffff}};
 }    // namespace uni
+
 #include <string_view>
 
 namespace uni {
@@ -15495,9 +13046,17 @@ struct script_extensions_view {
             return m_script;
         };
 
-        constexpr void operator++() {
+        constexpr iterator& operator++(int) {
             idx++;
             m_script = __get_cp_script<v>(m_c, idx);
+            return this;
+        }
+
+        constexpr iterator operator++() {
+            auto c = *this;
+            idx++;
+            m_script = __get_cp_script<v>(m_c, idx);
+            return c;
         }
 
         constexpr bool operator==(sentinel) const {
@@ -15542,12 +13101,7 @@ constexpr auto cp_script_extensions(char32_t cp) {
 }
 
 constexpr version cp_age(char32_t cp) {
-    auto it = uni::upper_bound(__age_data.begin(), __age_data.end(), cp,
-                               [](char32_t cp, const __age_data_t& a) { return cp < a.first; });
-    if(it == __age_data.begin())
-        return version::unassigned;
-    it--;
-    return it->a;
+    return static_cast<version>(uni::__age_data.value(cp, uint8_t(version::unassigned)));
 }
 
 constexpr block cp_block(char32_t cp) {
@@ -15661,18 +13215,6 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
 }
 
 }    // namespace uni
-
-static_assert(uni::cp_script('C') == uni::script::latin);
-static_assert(uni::cp_block(U'🎉') == uni::block::misc_pictographs);
-static_assert(!uni::cp_is<uni::property::xid_start>('1'));
-static_assert(uni::cp_is<uni::property::xid_continue>('1'));
-static_assert(uni::cp_age(U'🤩') == uni::version::v10_0);
-static_assert(uni::cp_is<uni::property::alphabetic>(U'ß'));
-static_assert(uni::cp_category(U'🦝') == uni::category::so);
-static_assert(uni::cp_is<uni::category::lowercase_letter>('a'));
-static_assert(uni::cp_is<uni::category::letter>('a'));
-
-static_assert(uni::__get_binary_prop<uni::__binary_prop_from_string("Emoji")>(U'🤩'));
 
 namespace ctre {
 
