@@ -48,9 +48,9 @@ template <auto V, auto... Value, auto... Name, typename... Ts, typename Paramete
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
 	
-	constexpr auto p = uni::__category_from_string(get_string_view(name));
+	constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
 	
-	if constexpr (p == uni::category::unassigned) {
+	if constexpr (p == uni::__binary_prop::unknown) {
 		return ctll::reject{};
 	} else {
 		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};

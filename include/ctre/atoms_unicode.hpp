@@ -66,7 +66,7 @@ template <> struct binary_property<special_binary_property::ascii> {
 // unicode TS#18 level 1.2.2
 
 enum class property_type {
-	script, script_extension, unknown
+	script, script_extension, age, block, unknown
 };
 
 // unicode TS#18 level 1.2.2
@@ -86,6 +86,18 @@ template <uni::script Script> struct property<property_type::script_extension, S
 	}
 };
 
+template <uni::version Age> struct binary_property<Age> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_age(c) <= Age;
+	}
+};
+
+template <uni::block Block> struct binary_property<Block> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_block(c) == Block;
+	}
+};
+
 // nonbinary properties
 
 constexpr property_type property_type_from_name(std::string_view str) noexcept {
@@ -94,6 +106,10 @@ constexpr property_type property_type_from_name(std::string_view str) noexcept {
 		return property_type::script;
 	} else if (uni::__pronamecomp(str, "script_extension"sv) == 0 || uni::__pronamecomp(str, "scx"sv) == 0) {
 		return property_type::script_extension;
+	} else if (uni::__pronamecomp(str, "age"sv) == 0) {
+		return property_type::age;
+	} else if (uni::__pronamecomp(str, "block"sv) == 0) {
+		return property_type::block;
 	} else {
 		return property_type::unknown;
 	}
@@ -142,6 +158,29 @@ template <> struct property_type_builder<property_type::script_extension> {
 	}
 };
 
+template <> struct property_type_builder<property_type::age> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto age = uni::__age_from_string(get_string_view(value));
+		if constexpr (age == uni::version::unassigned) {
+			return ctll::reject{};
+		} else {
+			return binary_property<age>();
+		}
+	}
+};
+
+template <> struct property_type_builder<property_type::block> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto block = uni::__block_from_string(get_string_view(value));
+		if constexpr (block == uni::block::no_block) {
+			return ctll::reject{};
+		} else {
+			return binary_property<block>();
+		}
+	}
+};
 
 }
 
