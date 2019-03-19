@@ -1,9 +1,15 @@
 #include <ctre.hpp>
+#include <optional>
+#include <iostream>
 
-std::optional<std::string_view> match(std::string_view sv) {
-	if (auto match = regex<"^(name:[a-z]+):">(sv); match) {
-		return {true, match.get<"name">().first()};
+std::string match(std::string_view sv) {
+	if (auto match = ctre::match<"[a-z]+">(sv); match) {
+		return match.to_string();
 	} else {
-		return std::nullopt;
+		return "not_match";
 	}
 } 
+
+int main() {
+	std::cout << match("hello") << "\n";
+}

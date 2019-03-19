@@ -61,6 +61,12 @@ $(LIBRARIES:%=%.run): %.run: % header
 	./$< $(FILE) benchmark "${${<}_NAME}" 2>/dev/null >>result.csv
 
 run: $(LIBRARIES:%=%.run)
+	
+node:
+	node node-v8.js path=${FILE} pattern="${PATTERN}"
+
+jsc:
+	jsc jsc.js -- path=${FILE} pattern="${PATTERN}"
 
 result.csv: header.csv $(LIBRARIES:%=%.run)
 	touch result.csv

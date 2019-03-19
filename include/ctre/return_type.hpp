@@ -64,7 +64,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
-			return std::basic_string<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+			return std::basic_string<char_type>(begin(), end());
 		}
 		
 		constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
