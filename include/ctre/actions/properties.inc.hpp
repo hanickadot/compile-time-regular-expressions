@@ -28,7 +28,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 	if constexpr (p == uni::__binary_prop::unknown) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(binary_property<p>(), subject.stack), subject.parameters};
+		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
@@ -39,7 +39,7 @@ template <auto V, auto... Value, auto... Name, typename... Ts, typename Paramete
 	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(prop, subject.stack), subject.parameters};
+		return pcre_context{ctll::push_front(prop, ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
@@ -53,7 +53,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 	if constexpr (p == uni::category::unassigned) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(negate<binary_property<p>>(), subject.stack), subject.parameters};
+		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
@@ -64,7 +64,7 @@ template <auto V, auto... Value, auto... Name, typename... Ts, typename Paramete
 	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(negate<decltype(prop)>(), subject.stack), subject.parameters};
+		return pcre_context{ctll::push_front(negate<decltype(prop)>(), ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
