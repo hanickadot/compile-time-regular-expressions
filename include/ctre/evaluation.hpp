@@ -33,7 +33,11 @@ constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pat
 }
 
 
-
+// sink for making the errors shorter
+template <typename R, typename Iterator, typename EndIterator> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R captures, ...) noexcept {
+	return R{};
+}
 
 // if we found "accept" object on stack => ACCEPT
 template <typename R, typename Iterator, typename EndIterator> 

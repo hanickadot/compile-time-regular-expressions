@@ -23,12 +23,18 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
 	
-	constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+	constexpr auto special = special_binary_property_from_string(get_string_view(name));
 	
-	if constexpr (p == uni::__binary_prop::unknown) {
-		return ctll::reject{};
+	if constexpr (special != special_binary_property::unknown) {
+		return pcre_context{ctll::push_front(binary_property<special>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
-		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+		constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+	
+		if constexpr (p == uni::__binary_prop::unknown) {
+			return ctll::reject{};
+		} else {
+			return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+		}
 	}
 }
 
@@ -47,13 +53,19 @@ template <auto V, auto... Value, auto... Name, typename... Ts, typename Paramete
 // make_property_negative
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
-	
-	constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
-	
-	if constexpr (p == uni::__binary_prop::unknown) {
-		return ctll::reject{};
+
+	constexpr auto special = special_binary_property_from_string(get_string_view(name));
+
+	if constexpr (special != special_binary_property::unknown) {
+		return pcre_context{ctll::push_front(negate<binary_property<special>>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
-		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+		constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+
+		if constexpr (p == uni::__binary_prop::unknown) {
+			return ctll::reject{};
+		} else {
+			return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+		}
 	}
 }
 

@@ -3296,8 +3296,6 @@ static constexpr flat_array<1> __cat_zl{{0x2028}};
 static constexpr flat_array<1> __cat_zp{{0x2029}};
 static constexpr flat_array<3> __cat_cs{{0xDB7E, 0xDBFE, 0xDFFE}};
 static constexpr flat_array<3> __cat_co{{0xF8FE, 0xFFFFC, 0x10FFFC}};
-template<uni::version v = uni::version::standard_unicode_version>
-constexpr category cp_category(char32_t cp);
 template<version v>
 constexpr category __get_category_for_version(char32_t, category c);
 template<version v>
@@ -3364,6 +3362,18 @@ constexpr category __get_category(char32_t c) {
     if(__cat_zl.lookup(c))
         return category::zl;
     return category::cn;
+}
+template<uni::version v = uni::version::standard_unicode_version>
+constexpr category cp_category(char32_t cp) {
+    static_assert(v >= uni::version::minimum_version,
+                  "This version of the Unicode Database is not supported");
+    if constexpr(v != uni::version::latest_version) {
+        if(cp_age(cp) > v)
+            return category::cn;
+    }
+    if(cp > 0x10FFFF)
+        return category::unassigned;
+    return __get_category<uni::version::latest_version>(cp);
 }
 template<category category_, version v = uni::version::standard_unicode_version,
          std::enable_if_t<category_ == category::co, int> = 0>
@@ -3795,7 +3805,7 @@ static constexpr std::array __cat_version_data_v10_0{
     std::pair{0x111C9, category::po}, std::pair{0x11A07, category::mc},
     std::pair{0x11A08, category::mc}};
 template<version v>
-constexpr category __get_category_for_version(char32_t cp, category c) {
+constexpr category __get_category_for_version([[maybe_unused]] char32_t cp, category c) {
     if constexpr(v <= uni::version::v11_0) {
         const auto it =
             uni::lower_bound(__cat_version_data_v11_0.begin(), __cat_version_data_v11_0.end(), cp,
@@ -9939,7 +9949,7 @@ static constexpr __bool_trie<32, 991, 1, 0, 55, 255, 1, 0, 378, 13, 57, 42> __pr
      0xffff03ffffff03ff, 0x00000000000003ff}};
 static constexpr flat_array<7> __prop_odi_data{
     {0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x3164, 0xFFA0}};
-static constexpr __range_array __prop_ogr_ext_data = {
+static constexpr __range_array __prop_ogr_ext_data [[maybe_unused]] = {
     0x00000000, 0x0009BE01, 0x0009BF00, 0x0009D701, 0x0009D800, 0x000B3E01, 0x000B3F00,
     0x000B5701, 0x000B5800, 0x000BBE01, 0x000BBF00, 0x000BD701, 0x000BD800, 0x000CC201,
     0x000CC300, 0x000CD501, 0x000CD700, 0x000D3E01, 0x000D3F00, 0x000D5701, 0x000D5800,
@@ -11134,7 +11144,15 @@ template<uni::__binary_prop p>
 constexpr bool __get_binary_prop(char32_t) = delete;
 // Forward declared - defined in unicode.h
 template<uni::version v = uni::version::standard_unicode_version>
-constexpr script cp_script(char32_t cp);
+constexpr script cp_script(char32_t cp) {
+    static_assert(v >= uni::version::minimum_version,
+                  "This version of the Unicode Database is not supported");
+    if constexpr(v != uni::version::latest_version) {
+        if(cp_age(cp) > v)
+            return script::zzzz;
+    }
+    return __cp_script<0, v>(cp);
+}
 
 template<>
 constexpr bool __get_binary_prop<__binary_prop::ahex>(char32_t c) {
@@ -12955,19 +12973,6 @@ namespace uni {
 
 enum class property;
 
-template<uni::version v>
-constexpr category cp_category(char32_t cp) {
-    static_assert(v >= uni::version::minimum_version,
-                  "This version of the Unicode Database is not supported");
-    if constexpr(v != uni::version::latest_version) {
-        if(cp_age(cp) > v)
-            return category::cn;
-    }
-    if(cp > 0x10FFFF)
-        return category::unassigned;
-    return __get_category<uni::version::latest_version>(cp);
-}
-
 constexpr uni::version __age_from_string(std::string_view a) {
     for(std::size_t i = 0; i < __age_strings.size(); ++i) {
         const auto res = __pronamecomp(a, __age_strings[i]);
@@ -13015,17 +13020,6 @@ constexpr __binary_prop __binary_prop_from_string(const std::string_view s) {
             return __binary_prop(c.value);
     }
     return __binary_prop::unknown;
-}
-
-template<uni::version v>
-constexpr script cp_script(char32_t cp) {
-    static_assert(v >= uni::version::minimum_version,
-                  "This version of the Unicode Database is not supported");
-    if constexpr(v != uni::version::latest_version) {
-        if(cp_age(cp) > v)
-            return script::zzzz;
-    }
-    return __cp_script<0, v>(cp);
 }
 
 template<uni::version v = uni::version::standard_unicode_version>
@@ -13972,12 +13966,18 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
 	
-	constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+	constexpr auto special = special_binary_property_from_string(get_string_view(name));
 	
-	if constexpr (p == uni::__binary_prop::unknown) {
-		return ctll::reject{};
+	if constexpr (special != special_binary_property::unknown) {
+		return pcre_context{ctll::push_front(binary_property<special>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
-		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+		constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+	
+		if constexpr (p == uni::__binary_prop::unknown) {
+			return ctll::reject{};
+		} else {
+			return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+		}
 	}
 }
 
@@ -13995,13 +13995,19 @@ template <auto V, auto... Value, auto... Name, typename... Ts, typename Paramete
 // make_property_negative
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
-	
-	constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
-	
-	if constexpr (p == uni::__binary_prop::unknown) {
-		return ctll::reject{};
+
+	constexpr auto special = special_binary_property_from_string(get_string_view(name));
+
+	if constexpr (special != special_binary_property::unknown) {
+		return pcre_context{ctll::push_front(negate<binary_property<special>>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
-		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+		constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+
+		if constexpr (p == uni::__binary_prop::unknown) {
+			return ctll::reject{};
+		} else {
+			return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+		}
 	}
 }
 
@@ -14403,6 +14409,12 @@ constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pat
 	
 	// in case the RE is empty
 	return evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+}
+
+// sink for making the errors shorter
+template <typename R, typename Iterator, typename EndIterator> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R captures, ...) noexcept {
+	return R{};
 }
 
 // if we found "accept" object on stack => ACCEPT
