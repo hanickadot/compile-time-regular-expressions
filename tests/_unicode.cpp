@@ -67,7 +67,8 @@ static_assert(CTRE_CREATE(U"\\p{script=Latin}+").match(U"abcd"));
 static_assert(CTRE_CREATE(U"\\p{script=Greek}+").match(U"βΩ"));
 static_assert(!CTRE_CREATE(U"\\p{script=Latin}+").match(U"βΩ"));
 static_assert(!CTRE_CREATE(U"\\p{script=Greek}+").match(U"abcd"));
-static_assert(CTRE_CREATE(U"\\p{scx=Hira}+").match(U"ゖ"));
+static_assert(CTRE_CREATE(U"\\p{emoji}+").match(U"🤪😍"));
+//static_assert(CTRE_CREATE(U"\\p{scx=Hira}+").match(U"ゖ"));
 
 //identify<decltype(ctll::fixed_string{u8"ěščř"})> a;
 //identify<decltype(CTRE_CREATE(u8"ěščř"))> i;

@@ -37,9 +37,9 @@ template <auto Name> struct binary_property;
 template <auto Name, auto Value> struct property;
 
 // unicode TS#18 level 1.2 general_category
-template <uni::category Category> struct binary_property<Category> {
+template <uni::__binary_prop Property> struct binary_property<Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_is<Category>(c);
+		return uni::__get_binary_prop<Property>(c);
 	}
 };
 
