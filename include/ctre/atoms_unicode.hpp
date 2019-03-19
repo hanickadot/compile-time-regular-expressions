@@ -1,7 +1,7 @@
 #ifndef CTRE__ATOMS_UNICODE__HPP
 #define CTRE__ATOMS_UNICODE__HPP
 
-#include "../ext-unicode-db/singleheader/ext/unicode.hpp"
+#include "../unicode-db/unicode.hpp"
 
 namespace ctre {
 
