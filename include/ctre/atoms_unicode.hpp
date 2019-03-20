@@ -14,22 +14,6 @@ template <size_t Sz> constexpr std::string_view get_string_view(const std::array
 	return std::string_view(arr.data(), arr.size());
 }
 
-enum class special_binary_property {
-	unknown, any, assigned, ascii
-};
-
-constexpr special_binary_property special_binary_property_from_string(std::string_view str) noexcept {
-	using namespace std::string_view_literals;
-	if (uni::__pronamecomp(str, "any"sv) == 0) {
-		return special_binary_property::any;
-	} else if (uni::__pronamecomp(str, "assigned"sv) == 0) {
-		return special_binary_property::assigned;
-	} else if (uni::__pronamecomp(str, "ascii"sv) == 0) {
-		return special_binary_property::ascii;
-	} else {
-		return special_binary_property::unknown;
-	}
-}
 
 // basic support for binary and type-value properties
 
@@ -40,26 +24,6 @@ template <auto Name, auto Value> struct property;
 template <uni::__binary_prop Property> struct binary_property<Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::__get_binary_prop<Property>(c);
-	}
-};
-
-// unicode TS#18 level 1.2 any/assigned/ascii
-
-template <> struct binary_property<special_binary_property::any> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_is_valid(c);
-	}
-};
-
-template <> struct binary_property<special_binary_property::assigned> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_is_assigned(c);
-	}
-};
-
-template <> struct binary_property<special_binary_property::ascii> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::cp_is_ascii(c);
 	}
 };
 
