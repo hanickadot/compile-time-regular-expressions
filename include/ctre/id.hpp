@@ -5,7 +5,9 @@
 
 namespace ctre {
 	
-template <auto...> struct id { };
+template <auto... Name> struct id {
+	static constexpr auto name = ctll::fixed_string<sizeof...(Name)>{{Name...}};
+};
 	
 template <auto... Name> constexpr auto operator==(id<Name...>, id<Name...>) noexcept -> std::true_type { return {}; }
 
