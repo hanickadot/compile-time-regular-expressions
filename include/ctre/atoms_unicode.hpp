@@ -3,6 +3,7 @@
 
 // master branch is not including unicode db (for now)
 // #include "../unicode-db/unicode.hpp"
+#include <array>
 
 namespace ctre {
 
