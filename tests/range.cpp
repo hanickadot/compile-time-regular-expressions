@@ -16,7 +16,7 @@ int main() {
 	#endif
 			
 	#if __cpp_nontype_template_parameter_class
-			std::cout << std::string_view(match.get<"firs2t">()) << "\n";
+			std::cout << std::string_view(match.get<"first">()) << "\n";
 	#else
 			std::cout << std::string_view(match.get<1>()) << "\n";
 	#endif
