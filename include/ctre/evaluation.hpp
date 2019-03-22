@@ -2,6 +2,8 @@
 #define CTRE__EVALUATION__HPP
 
 #include "atoms.hpp"
+#include "atoms_characters.hpp"
+#include "atoms_unicode.hpp"
 #include "utility.hpp"
 #include "return_type.hpp"
 #include "find_captures.hpp"
@@ -33,7 +35,11 @@ constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pat
 }
 
 
-
+// sink for making the errors shorter
+template <typename R, typename Iterator, typename EndIterator> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R, ...) noexcept {
+	return R{};
+}
 
 // if we found "accept" object on stack => ACCEPT
 template <typename R, typename Iterator, typename EndIterator> 

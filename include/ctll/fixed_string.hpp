@@ -161,6 +161,13 @@ public:
 	constexpr char32_t operator[](size_t i) const noexcept {
 		return content[i];
 	}
+	template <size_t M> constexpr bool is_same_as(const fixed_string<M> & rhs) const noexcept {
+		if (real_size != rhs.size()) return false;
+		for (size_t i{0}; i != real_size; ++i) {
+			if (content[i] != rhs[i]) return false;
+		}
+		return true;
+	}
 };
 
 template <> class fixed_string<0> {

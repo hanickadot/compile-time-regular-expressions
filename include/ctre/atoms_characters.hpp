@@ -72,21 +72,6 @@ struct digit_chars : char_range<'0','9'> { };
 
 struct ascii_chars : char_range<'\x00','\x7F'> { };
 
-// properties name & value
-
-template <auto... Str> struct property_name { };
-template <auto... Str> struct property_value { };
-
-template <typename Name, typename Value = void> struct property {
-	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
-		return true;
-	}
-};
-template <typename Name, typename Value = void> struct negative_property {
-	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
-		return false;
-	}
-};
 
 }
 

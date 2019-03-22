@@ -396,6 +396,13 @@ public:
 	constexpr char32_t operator[](size_t i) const noexcept {
 		return content[i];
 	}
+	template <size_t M> constexpr bool is_same_as(const fixed_string<M> & rhs) const noexcept {
+		if (real_size != rhs.size()) return false;
+		for (size_t i{0}; i != real_size; ++i) {
+			if (content[i] != rhs[i]) return false;
+		}
+		return true;
+	}
 };
 
 template <> class fixed_string<0> {
@@ -868,6 +875,7 @@ struct pcre {
 	struct m {};
 	struct mod {};
 	struct mod_opt {};
+	struct n {};
 	struct number2 {};
 	struct number {};
 	struct property_name2 {};
@@ -976,7 +984,7 @@ struct pcre {
 	static constexpr auto rule(a, ctll::epsilon) -> ctll::push<push_empty, make_alternate>;
 	static constexpr auto rule(a, ctll::set<'*','+','?','\x7B','|','\x7D'>) -> ctll::reject;
 
-	static constexpr auto rule(b, ctll::term<','>) -> ctll::push<ctll::anything, l>;
+	static constexpr auto rule(b, ctll::term<','>) -> ctll::push<ctll::anything, m>;
 	static constexpr auto rule(b, ctll::term<'\x7D'>) -> ctll::push<repeat_exactly, ctll::anything>;
 
 	static constexpr auto rule(backslash, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
@@ -986,11 +994,11 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
 	static constexpr auto rule(backslash, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
 	static constexpr auto rule(backslash, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
-	static constexpr auto rule(backslash, ctll::term<'u'>) -> ctll::push<ctll::anything, create_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
-	static constexpr auto rule(backslash, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, k>;
+	static constexpr auto rule(backslash, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, l>;
 	static constexpr auto rule(backslash, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
 	static constexpr auto rule(backslash, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
-	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, j>;
+	static constexpr auto rule(backslash, ctll::term<'u'>) -> ctll::push<ctll::anything, j>;
+	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, k>;
 	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(backslash, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
@@ -1000,8 +1008,8 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'r'>) -> ctll::push<ctll::anything, push_character_return_carriage>;
 	static constexpr auto rule(backslash, ctll::term<'t'>) -> ctll::push<ctll::anything, push_character_tab>;
 
-	static constexpr auto rule(backslash_range, ctll::term<'u'>) -> ctll::push<ctll::anything, create_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
-	static constexpr auto rule(backslash_range, ctll::term<'x'>) -> ctll::push<ctll::anything, j>;
+	static constexpr auto rule(backslash_range, ctll::term<'u'>) -> ctll::push<ctll::anything, j>;
+	static constexpr auto rule(backslash_range, ctll::term<'x'>) -> ctll::push<ctll::anything, k>;
 	static constexpr auto rule(backslash_range, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash_range, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
 	static constexpr auto rule(backslash_range, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed>;
@@ -1074,10 +1082,10 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
 	static constexpr auto rule(e, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
 	static constexpr auto rule(e, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
-	static constexpr auto rule(e, ctll::term<'u'>) -> ctll::push<ctll::anything, create_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec, range>;
 	static constexpr auto rule(e, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
 	static constexpr auto rule(e, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
-	static constexpr auto rule(e, ctll::term<'x'>) -> ctll::push<ctll::anything, j, range>;
+	static constexpr auto rule(e, ctll::term<'u'>) -> ctll::push<ctll::anything, j, range>;
+	static constexpr auto rule(e, ctll::term<'x'>) -> ctll::push<ctll::anything, k, range>;
 	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(e, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(e, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
@@ -1088,7 +1096,7 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'t'>) -> ctll::push<ctll::anything, push_character_tab, range>;
 
 	static constexpr auto rule(f, ctll::term<'s'>) -> ctll::push<ctll::anything, ctll::term<'c'>, ctll::term<'i'>, ctll::term<'i'>, class_named_ascii>;
-	static constexpr auto rule(f, ctll::term<'l'>) -> ctll::push<ctll::anything, m>;
+	static constexpr auto rule(f, ctll::term<'l'>) -> ctll::push<ctll::anything, n>;
 
 	static constexpr auto rule(g, ctll::term<'r'>) -> ctll::push<ctll::anything, ctll::term<'i'>, ctll::term<'n'>, ctll::term<'t'>, class_named_print>;
 	static constexpr auto rule(g, ctll::term<'u'>) -> ctll::push<ctll::anything, ctll::term<'n'>, ctll::term<'c'>, ctll::term<'t'>, class_named_punct>;
@@ -1115,17 +1123,17 @@ struct pcre {
 	static constexpr auto rule(i, ctll::set<'-','[',']','^','|'>) -> ctll::reject;
 
 	static constexpr auto rule(j, ctll::term<'\x7B'>) -> ctll::push<create_hexdec, ctll::anything, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, hexdec_repeat, ctll::term<'\x7D'>, finish_hexdec>;
-	static constexpr auto rule(j, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<create_hexdec, ctll::anything, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
+	static constexpr auto rule(j, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<create_hexdec, ctll::anything, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
 
-	static constexpr auto rule(k, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, ctll::term<'\x7D'>, make_back_reference>;
-	static constexpr auto rule(k, ctll::term<'-'>) -> ctll::push<ctll::anything, number, ctll::term<'\x7D'>, make_relative_back_reference>;
-	static constexpr auto rule(k, ctll::set<'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'>) -> ctll::push<ctll::anything, push_name, block_name2, ctll::term<'\x7D'>, make_back_reference>;
+	static constexpr auto rule(k, ctll::term<'\x7B'>) -> ctll::push<create_hexdec, ctll::anything, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, hexdec_repeat, ctll::term<'\x7D'>, finish_hexdec>;
+	static constexpr auto rule(k, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<create_hexdec, ctll::anything, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
 
-	static constexpr auto rule(l, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, repeat_ab, ctll::term<'\x7D'>, mod>;
-	static constexpr auto rule(l, ctll::term<'\x7D'>) -> ctll::push<repeat_at_least, ctll::anything, mod>;
+	static constexpr auto rule(l, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, ctll::term<'\x7D'>, make_back_reference>;
+	static constexpr auto rule(l, ctll::term<'-'>) -> ctll::push<ctll::anything, number, ctll::term<'\x7D'>, make_relative_back_reference>;
+	static constexpr auto rule(l, ctll::set<'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'>) -> ctll::push<ctll::anything, push_name, block_name2, ctll::term<'\x7D'>, make_back_reference>;
 
-	static constexpr auto rule(m, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'h'>, ctll::term<'a'>, class_named_alpha>;
-	static constexpr auto rule(m, ctll::term<'n'>) -> ctll::push<ctll::anything, ctll::term<'u'>, ctll::term<'m'>, class_named_alnum>;
+	static constexpr auto rule(m, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, repeat_ab, ctll::term<'\x7D'>, mod>;
+	static constexpr auto rule(m, ctll::term<'\x7D'>) -> ctll::push<repeat_at_least, ctll::anything, mod>;
 
 	static constexpr auto rule(mod, ctll::set<'!','$','\x28','\x29',',','-','.',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(mod, ctll::epsilon) -> ctll::epsilon;
@@ -1140,6 +1148,9 @@ struct pcre {
 	static constexpr auto rule(mod_opt, ctll::term<'?'>) -> ctll::push<ctll::anything, make_lazy>;
 	static constexpr auto rule(mod_opt, ctll::set<'*','+','\x7B','\x7D'>) -> ctll::reject;
 
+	static constexpr auto rule(n, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'h'>, ctll::term<'a'>, class_named_alpha>;
+	static constexpr auto rule(n, ctll::term<'n'>) -> ctll::push<ctll::anything, ctll::term<'u'>, ctll::term<'m'>, class_named_alnum>;
+
 	static constexpr auto rule(number2, ctll::set<',','\x7D'>) -> ctll::epsilon;
 	static constexpr auto rule(number2, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_number, number2>;
 
@@ -1147,14 +1158,14 @@ struct pcre {
 
 	static constexpr auto rule(property_name2, ctll::term<'\x7D'>) -> ctll::epsilon;
 	static constexpr auto rule(property_name2, ctll::term<'='>) -> ctll::push<ctll::anything, property_value>;
-	static constexpr auto rule(property_name2, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
+	static constexpr auto rule(property_name2, ctll::set<'0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
 
-	static constexpr auto rule(property_name, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
+	static constexpr auto rule(property_name, ctll::set<'0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_name, property_name2>;
 
 	static constexpr auto rule(property_value2, ctll::term<'\x7D'>) -> ctll::epsilon;
-	static constexpr auto rule(property_value2, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
+	static constexpr auto rule(property_value2, ctll::set<'0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
 
-	static constexpr auto rule(property_value, ctll::set<'0','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
+	static constexpr auto rule(property_value, ctll::set<'0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
 
 	static constexpr auto rule(range, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(range, ctll::epsilon) -> ctll::epsilon;
@@ -1341,25 +1352,162 @@ struct digit_chars : char_range<'0','9'> { };
 
 struct ascii_chars : char_range<'\x00','\x7F'> { };
 
+}
+
+#endif
+
+#ifndef CTRE__ATOMS_UNICODE__HPP
+#define CTRE__ATOMS_UNICODE__HPP
+
+// master branch is not including unicode db (for now)
+// #include "../unicode-db/unicode.hpp"
+
+namespace ctre {
+
 // properties name & value
 
 template <auto... Str> struct property_name { };
 template <auto... Str> struct property_value { };
 
-template <typename Name, typename Value = void> struct property {
-	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
-		return true;
+template <size_t Sz> constexpr std::string_view get_string_view(const std::array<char, Sz> & arr) noexcept {
+	return std::string_view(arr.data(), arr.size());
+}
+
+// basic support for binary and type-value properties
+
+template <auto Name> struct binary_property;
+template <auto Name, auto Value> struct property;
+
+// unicode TS#18 level 1.2 general_category
+//template <uni::__binary_prop Property> struct binary_property<Property> {
+//	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
+//		return uni::__get_binary_prop<Property>(c);
+//	}
+//};
+
+// unicode TS#18 level 1.2.2
+
+enum class property_type {
+	script, script_extension, age, block, unknown
+};
+
+// unicode TS#18 level 1.2.2
+
+//template <uni::script Script> struct binary_property<Script> {
+//	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
+//		return uni::cp_script(c) == Script;
+//	}
+//};
+//
+//template <uni::script Script> struct property<property_type::script_extension, Script> {
+//	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+//		for (uni::script sc: uni::cp_script_extensions(c)) {
+//			if (sc == Script) return true;
+//		}
+//		return false;
+//	}
+//};
+
+//template <uni::version Age> struct binary_property<Age> {
+//	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+//		return uni::cp_age(c) <= Age;
+//	}
+//};
+//
+//template <uni::block Block> struct binary_property<Block> {
+//	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+//		return uni::cp_block(c) == Block;
+//	}
+//};
+
+// nonbinary properties
+
+constexpr property_type property_type_from_name(std::string_view) noexcept {
+	return property_type::unknown;
+	//using namespace std::string_view_literals;
+	//if (uni::__pronamecomp(str, "script"sv) == 0 || uni::__pronamecomp(str, "sc"sv) == 0) {
+	//	return property_type::script;
+	//} else if (uni::__pronamecomp(str, "script_extension"sv) == 0 || uni::__pronamecomp(str, "scx"sv) == 0) {
+	//	return property_type::script_extension;
+	//} else if (uni::__pronamecomp(str, "age"sv) == 0) {
+	//	return property_type::age;
+	//} else if (uni::__pronamecomp(str, "block"sv) == 0) {
+	//	return property_type::block;
+	//} else {
+	//	return property_type::unknown;
+	//}
+}
+
+template <property_type Property> struct property_type_builder {
+	template <auto... Value> static constexpr auto get() {
+		return ctll::reject{};
 	}
 };
-template <typename Name, typename Value = void> struct negative_property {
-	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
-		return false;
+
+template <auto... Name> struct property_builder {
+	static constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	static constexpr property_type type = property_type_from_name(get_string_view(name));
+	
+	using helper = property_type_builder<type>;
+	
+	template <auto... Value> static constexpr auto get() {
+		return helper::template get<Value...>();
 	}
 };
+
+// unicode TS#18 level 1.2.2 script support
+
+//template <> struct property_type_builder<property_type::script> {
+//	template <auto... Value> static constexpr auto get() {
+//		constexpr std::array<char, sizeof...(Value)> value{Value...};
+//		constexpr auto sc = uni::__script_from_string(get_string_view(value));
+//		if constexpr (sc == uni::script::unknown) {
+//			return ctll::reject{};
+//		} else {
+//			return binary_property<sc>();
+//		}
+//	}
+//};
+//
+//template <> struct property_type_builder<property_type::script_extension> {
+//	template <auto... Value> static constexpr auto get() {
+//		constexpr std::array<char, sizeof...(Value)> value{Value...};
+//		constexpr auto sc = uni::__script_from_string(get_string_view(value));
+//		if constexpr (sc == uni::script::unknown) {
+//			return ctll::reject{};
+//		} else {
+//			return property<property_type::script_extension, sc>();
+//		}
+//	}
+//};
+//
+//template <> struct property_type_builder<property_type::age> {
+//	template <auto... Value> static constexpr auto get() {
+//		constexpr std::array<char, sizeof...(Value)> value{Value...};
+//		constexpr auto age = uni::__age_from_string(get_string_view(value));
+//		if constexpr (age == uni::version::unassigned) {
+//			return ctll::reject{};
+//		} else {
+//			return binary_property<age>();
+//		}
+//	}
+//};
+//
+//template <> struct property_type_builder<property_type::block> {
+//	template <auto... Value> static constexpr auto get() {
+//		constexpr std::array<char, sizeof...(Value)> value{Value...};
+//		constexpr auto block = uni::__block_from_string(get_string_view(value));
+//		if constexpr (block == uni::block::no_block) {
+//			return ctll::reject{};
+//		} else {
+//			return binary_property<block>();
+//		}
+//	}
+//};
 
 }
 
-#endif
+#endif 
 
 #ifndef CTRE__ID__HPP
 #define CTRE__ID__HPP
@@ -1368,7 +1516,9 @@ template <typename Name, typename Value = void> struct negative_property {
 
 namespace ctre {
 	
-template <auto...> struct id { };
+template <auto... Name> struct id {
+	static constexpr auto name = ctll::fixed_string<sizeof...(Name)>{{Name...}};
+};
 	
 template <auto... Name> constexpr auto operator==(id<Name...>, id<Name...>) noexcept -> std::true_type { return {}; }
 
@@ -1379,37 +1529,6 @@ template <auto... Name, typename T> constexpr auto operator==(id<Name...>, T) no
 }
 
 #endif
-#ifndef CTRE__UNICODE__HPP
-#define CTRE__UNICODE__HPP
-
-#include <string_view>
-
-namespace ctre::unicode {
-
-enum class property {
-	unknown,
-	emoji,
-	latin
-};
-
-constexpr property property_from_string(std::string_view name) noexcept {
-	if (name == "Emoji") {
-		return property::emoji;
-	} else if (name == "Latin") {
-		return property::latin;
-	} else {
-		return property::unknown;
-	}
-}
-
-constexpr bool is_defined(property p) noexcept {
-	return p != property::unknown;
-}
-
-}
-
-#endif
-
 #include <cstdint>
 #include <limits>
 
@@ -1962,31 +2081,53 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 }
 
 // make_property
-template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	constexpr ctll::fixed_string name{Name...};
-	
-	constexpr unicode::property p = unicode::property_from_string(std::string_view(name));
-	
-	if constexpr (unicode::is_defined(p)) {
-		return pcre_context{ctll::push_front(property<property_name<Name...>>(), subject.stack), subject.parameters};
-	} else {
-		return ctll::reject{};
-	}
+template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
+	return ctll::reject{};
+	//constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	//constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+    //
+	//if constexpr (p == uni::__binary_prop::unknown) {
+	//	return ctll::reject{};
+	//} else {
+	//	return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+	//}
 }
 
 // make_property
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property<property_name<Name...>, property_value<Value...>>(), subject.stack), subject.parameters};
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	return ctll::reject{};
+	//constexpr auto prop = property_builder<Name...>::template get<Value...>();
+	//
+	//if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+	//	return ctll::reject{};
+	//} else {
+	//	return pcre_context{ctll::push_front(prop, ctll::list<Ts...>()), subject.parameters};
+	//}
 }
 
 // make_property_negative
-template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(negative_property<property_name<Name...>>(), subject.stack), subject.parameters};
+template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
+	return ctll::reject{};
+	//constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	//constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
+    //
+	//if constexpr (p == uni::__binary_prop::unknown) {
+	//	return ctll::reject{};
+	//} else {
+	//	return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+	//}
 }
 
 // make_property_negative
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(negative_property<property_name<Name...>, property_value<Value...>>(), subject.stack), subject.parameters};
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	return ctll::reject{};
+	//constexpr auto prop = property_builder<Name...>::template get<Value...>();
+	//
+	//if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+	//	return ctll::reject{};
+	//} else {
+	//	return pcre_context{ctll::push_front(negate<decltype(prop)>(), ctll::list<Ts...>()), subject.parameters};
+	//}
 }
 
 #endif
@@ -2065,7 +2206,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
-			return std::basic_string<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+			return std::basic_string<char_type>(begin(), end());
 		}
 		
 		constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
@@ -2105,6 +2246,19 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template exists<Name>();
 		}
 	}
+#if __cpp_nontype_template_parameter_class
+	template <ctll::fixed_string Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+		if constexpr (std::is_same_v<typename Head::name, void>) {
+			return captures<Tail...>::template exists<Name>();
+		} else {
+			if constexpr (Head::name::name.is_same_as(Name)) {
+				return true;
+			} else {
+				return captures<Tail...>::template exists<Name>();
+			}
+		}
+	}
+#endif
 	template <size_t id> CTRE_FORCE_INLINE constexpr auto & select() noexcept {
 		if constexpr (id == Head::get_id()) {
 			return head;
@@ -2133,6 +2287,19 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template select<Name>();
 		}
 	}
+#if __cpp_nontype_template_parameter_class
+	template <ctll::fixed_string Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
+		if constexpr (std::is_same_v<typename Head::name, void>) {
+			return captures<Tail...>::template select<Name>();
+		} else {
+			if constexpr (Head::name::name.is_same_as(Name)) {
+				return head;
+			} else {
+				return captures<Tail...>::template select<Name>();
+			}
+		}
+	}
+#endif
 };
 
 template <> struct captures<> {
@@ -2168,6 +2335,11 @@ public:
 	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 		return _captures.template select<Name>();
 	}
+#if __cpp_nontype_template_parameter_class
+	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+		return _captures.template select<Name>();
+	}
+#endif
 	static constexpr size_t size() noexcept {
 		return sizeof...(Captures) + 1;
 	}
@@ -2376,6 +2548,12 @@ constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pat
 	
 	// in case the RE is empty
 	return evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+}
+
+// sink for making the errors shorter
+template <typename R, typename Iterator, typename EndIterator> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R, ...) noexcept {
+	return R{};
 }
 
 // if we found "accept" object on stack => ACCEPT
@@ -2767,6 +2945,13 @@ struct zero_terminated_string_end_iterator {
 	} 
 };
 
+template <typename T> class RangeLikeType {
+	template <typename Y> static auto test(Y *) -> decltype(std::declval<const Y &>().begin(), std::declval<const Y &>().end(), std::true_type());
+	template <typename> static auto test(...) -> std::false_type;
+public:
+	static inline constexpr bool value = decltype(test<std::remove_reference_t<std::remove_const_t<T>>>( nullptr ))();
+};
+
 template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto match_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return match_re(begin, end, RE());
@@ -2803,6 +2988,9 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto match(std::u32string_view sv) noexcept {
 		return match(sv.begin(), sv.end());
 	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto match(Range && range) noexcept {
+		return match(std::begin(range), std::end(range));
+	}
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto search(Iterator begin, Iterator end) noexcept {
 		return search_re(begin, end, RE());
 	}
@@ -2829,6 +3017,9 @@ template <typename RE> struct regular_expression {
 	}
 	static constexpr CTRE_FORCE_INLINE auto search(std::u32string_view sv) noexcept {
 		return search(sv.begin(), sv.end());
+	}
+	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
+		return search(std::begin(range), std::end(range));
 	}
 };
 
@@ -3163,6 +3354,15 @@ template <typename RE> constexpr auto range(const char * subject, RE re) noexcep
 #if __cpp_nontype_template_parameter_class
 template <ctll::fixed_string input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
 	constexpr auto _input = input;
+	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(tmp(), "Regular Expression contains syntax error.");
+	using re = decltype(front(typename tmp::output_type::stack_type()));
+	auto re_obj = ctre::regular_expression(re());
+	return range(subject.begin(), subject.end(), re_obj);
+}
+#else
+template <auto & input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
+	constexpr auto & _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
