@@ -12,6 +12,11 @@ int main() {
 		static constexpr auto pattern = ctll::fixed_string("(?<first>[0-9])[0-9]++");
 		for (auto match: ctre::range<pattern>(input)) {
 	#endif
-		std::cout << std::string_view(match.get<"firs2t">()) << "\n";
-	}
+			
+	#if __cpp_nontype_template_parameter_class
+			std::cout << std::string_view(match.get<"firs2t">()) << "\n";
+	#else
+			std::cout << std::string_view(match.get<1>()) << "\n";
+	#endif
+		}
 }
