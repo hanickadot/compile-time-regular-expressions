@@ -28,7 +28,7 @@ template <typename T> class RangeLikeType {
 	template <typename Y> static auto test(Y *) -> decltype(std::declval<const Y &>().begin(), std::declval<const Y &>().end(), std::true_type());
 	template <typename> static auto test(...) -> std::false_type;
 public:
-	static inline constexpr bool value = decltype(test<std::remove_reference_t<std::remove_const_t<T>>>( nullptr ))();
+	static inline constexpr bool value = decltype(test<std::remove_reference_t<std::remove_const_t<T>>>( nullptr ))::value;
 };
 
 template <typename RE> struct regular_expression {
