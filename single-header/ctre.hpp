@@ -408,7 +408,7 @@ public:
 template <> class fixed_string<0> {
 	static constexpr char32_t __empty[1] = {0};
 public:
-	template <typename T> constexpr fixed_string(const T (&)[]) noexcept {
+	template <typename T> constexpr fixed_string(const T *) noexcept {
 		
 	}
 	constexpr fixed_string(std::initializer_list<char32_t>) noexcept {
@@ -1361,6 +1361,7 @@ struct ascii_chars : char_range<'\x00','\x7F'> { };
 
 // master branch is not including unicode db (for now)
 // #include "../unicode-db/unicode.hpp"
+#include <array>
 
 namespace ctre {
 
@@ -2310,12 +2311,22 @@ template <> struct captures<> {
 	template <typename> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		return false;
 	}
+#if __cpp_nontype_template_parameter_class
+	template <ctll::fixed_string> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+		return false;
+	}
+#endif
 	template <size_t> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
 	template <typename> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
+#if __cpp_nontype_template_parameter_class
+	template <ctll::fixed_string> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
+		return capture_not_exists;
+	}
+#endif
 };
 
 template <typename Iterator, typename... Captures> class regex_results {
@@ -2949,7 +2960,7 @@ template <typename T> class RangeLikeType {
 	template <typename Y> static auto test(Y *) -> decltype(std::declval<const Y &>().begin(), std::declval<const Y &>().end(), std::true_type());
 	template <typename> static auto test(...) -> std::false_type;
 public:
-	static inline constexpr bool value = decltype(test<std::remove_reference_t<std::remove_const_t<T>>>( nullptr ))();
+	static inline constexpr bool value = decltype(test<std::remove_reference_t<std::remove_const_t<T>>>( nullptr ))::value;
 };
 
 template <typename RE> struct regular_expression {
