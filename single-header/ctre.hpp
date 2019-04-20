@@ -6418,7 +6418,8 @@ namespace ctfa {
 				constexpr auto transition = Dfa.transitions[transition_index];
 				if (transition.cond.match(*it) && end != it) {
 					constexpr size_t index = list.find(transition.target) - list.begin();
-					return run(index, it+1, end);
+					return match_state<Iterator, EndIterator, index>(it+1, end);
+					//return run(index, it+1, end);
 				} else {
 					return choose_transition<transition_index+1, current_state>(it, end);
 				}

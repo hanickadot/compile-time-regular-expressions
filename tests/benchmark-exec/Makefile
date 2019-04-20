@@ -20,6 +20,8 @@ CXXFLAGS_ADDITIONAL += -isysroot  /Applications/Xcode.app/Contents/Developer/Pla
 endif
 endif
 
+OPTLEVEL := -Os
+
 CXXFLAGS := $(CXXFLAGS_ADDITIONAL) -std=c++2a -I../../include -Isrell_include -I/usr/local/Cellar/pcre2/10.32/include -I/usr/local/Cellar/boost/1.68.0_1/include -I/usr/local/Cellar/re2/20180801/include
 LDFLAGS :=
 
@@ -65,10 +67,10 @@ pattern.hpp: $(PATTERN_HASH).tmp
 	@echo "#define PATTERN \"$(PATTERN)\"" > pattern.hpp
 
 $(LIBRARIES:%=%.o) $(LIBRARIES_$(compiler):%=%.o): %.o: %.cpp common.hpp $(PATTERN_HASH).tmp pattern.hpp
-	$(CXX) -O3 $(CXXFLAGS) ${${@:%.o=%}_CXXFLAGS} -c $< -o $@
+	$(CXX) $(OPTLEVEL) $(CXXFLAGS) ${${@:%.o=%}_CXXFLAGS} -c $< -o $@
 
 $(LIBRARIES) $(LIBRARIES_$(compiler)): %: %.o common.hpp $(PATTERN_HASH).tmp pattern.hpp
-	$(CXX) -O3 $(LDFLAGS) ${${@}_LDFLAGS} $< -o $@
+	$(CXX) $(OPTLEVEL) $(LDFLAGS) ${${@}_LDFLAGS} $< -o $@
 
 header.csv:
 	echo "library;pattern;duration" > header.csv
