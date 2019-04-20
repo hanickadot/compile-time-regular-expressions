@@ -1,6 +1,7 @@
 *.o
 *.d
 test
+dfa
 result
 tests/benchmark-exec/*
 !tests/benchmark-exec/Makefile

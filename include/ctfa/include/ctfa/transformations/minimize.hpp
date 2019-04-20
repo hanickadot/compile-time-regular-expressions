@@ -36,6 +36,7 @@ template <size_t N> struct transitions_from_state {
 	bool is_unique{false};
 	ctfa::set<extended_transition, N> transitions{};
 	ctfa::set<transition, N*2> merged_transitions{};
+	size_t count{0};
 	
 	template <size_t States> constexpr void merge_based_on_group(const ctfa::set<transitions_from_state<N>, States> & table) noexcept {
 		intervals<N, char32_t, state> i;
@@ -44,9 +45,11 @@ template <size_t N> struct transitions_from_state {
 			i.insert_range(t.t.cond.r.low, t.t.cond.r.high, table[t.target_index].group);
 		}
 		
+		count = 0;
 		i.merge_and_split([&](char32_t low, char32_t high, const auto & target_set){
 			for (state t: target_set) {
 				merged_transitions.insert(transition{s, t, condition(impl::range{low, high})});
+				count++;
 			}
 		});
 	}
@@ -181,15 +184,7 @@ template <const auto & Arg> struct minimize_one {
 			size_t count = 0;
 			for (const auto & s: known_states) {
 				if (s.is_unique) {
-					intervals<fa.transitions.size(), char32_t, state> i;
-				
-					for (const auto & et: s.transitions) {
-						i.insert_range(et.t.cond.r.low, et.t.cond.r.high, known_states[et.target_index].group);
-					}
-		
-					i.merge_and_split([&](char32_t, char32_t, const auto & target_set){
-						count+=target_set.size();
-					});
+					count += s.count;
 				}
 			}
 			return count;
