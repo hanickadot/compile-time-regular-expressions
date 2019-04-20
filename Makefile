@@ -13,6 +13,9 @@ compiler := $(shell $(CXX) -v 2>&1 | grep -E "^clang|^gcc" | head -n1 | sed -E "
 
 ifeq ($(compiler),clang)
 CXXFLAGS_ADDITIONAL := -fconstexpr-steps=100000000
+ifeq ($(shell uname),Darwin)
+CXXFLAGS_ADDITIONAL += -isysroot  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
+endif
 endif
 
 override CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_ADDITIONAL) $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra 

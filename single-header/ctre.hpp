@@ -5894,27 +5894,53 @@ template <const auto & Arg> struct minimize_one {
 	using state_and_transitions = impl::transitions_from_state<fa.transitions.size()>;
 
 	static constexpr auto build() {
-		ctfa::set<state_and_transitions, ctfa::info<fa>::states> known_states;
+		constexpr auto known_states = []{
+			ctfa::set<state_and_transitions, ctfa::info<fa>::states> known_states;
 		
-		// build state table
+			// build state table
 		
-		ctfa::info<fa>::iterate_over_states([&, index = 0] (const auto & s) mutable {
-			known_states.push_back({
-				state(s), s.is_final, index++
+			ctfa::info<fa>::iterate_over_states([&, index = 0] (const auto & s) mutable {
+				known_states.push_back({
+					state(s), s.is_final, index++
+				});
 			});
-		});
 		
-		// insert transition with target index in the extended_transition
-		for (const auto & t: fa.transitions) {
-			auto source = known_states.find(t.source);
-			int index = known_states.find(t.target) - known_states.begin();
-			source->transitions.push_back(impl::extended_transition{t, index});
-		}
+			// insert transition with target index in the extended_transition
+			for (const auto & t: fa.transitions) {
+				auto source = known_states.find(t.source);
+				int index = known_states.find(t.target) - known_states.begin();
+				source->transitions.push_back(impl::extended_transition{t, index});
+			}
 		
-		// divide into groups until there is no change
-		while (build_groups(known_states));
+			// divide into groups until there is no change
+			while (build_groups(known_states));
+			
+			return known_states;
+		}();
 		
-		auto out = fa.create_blank();
+		constexpr auto transitions = [&]{
+			size_t count = 0;
+			for (const auto & s: known_states) {
+				if (s.is_unique) {
+					intervals<fa.transitions.size(), char32_t, state> i;
+				
+					auto source = s.group;
+				
+					for (const auto & et: s.transitions) {
+						i.insert_range(et.t.cond.r.low, et.t.cond.r.high, known_states[et.target_index].group);
+					}
+		
+					i.merge_and_split([&](char32_t, char32_t, const auto & target_set){
+						for (state t: target_set) { // it will happen only once, or it will be nondeterministic
+							count++;
+						}
+					});
+				}
+			}
+			return count;
+		}();
+		
+		auto out = finite_automaton<transitions, fa.final_states.size()>();
 		
 		for (const auto & s: known_states) {
 			if (s.is_unique) {
@@ -6276,7 +6302,7 @@ template <const auto & ... Fas> static constexpr auto remove_unneeded = remove_u
 
 template <const auto & ... Fas> static constexpr auto minimize = minimize_one<utility::apply_2<concat_two, Fas...>::result>::result;
 
-template <const auto & ... Fas> static constexpr auto determinize = determinize_one<remove_unneeded<Fas...>>::result;
+template <const auto & ... Fas> static constexpr auto determinize = determinize_one<minimize<Fas...>>::result;
 
 template <const auto & ... Fas> static constexpr auto join_character_set = character_set_n<Fas...>::result;
 

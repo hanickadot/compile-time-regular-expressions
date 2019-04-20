@@ -49,7 +49,7 @@ template <const auto & ... Fas> static constexpr auto remove_unneeded = remove_u
 
 template <const auto & ... Fas> static constexpr auto minimize = minimize_one<utility::apply_2<concat_two, Fas...>::result>::result;
 
-template <const auto & ... Fas> static constexpr auto determinize = determinize_one<remove_unneeded<Fas...>>::result;
+template <const auto & ... Fas> static constexpr auto determinize = determinize_one<minimize<Fas...>>::result;
 
 template <const auto & ... Fas> static constexpr auto join_character_set = character_set_n<Fas...>::result;
 
