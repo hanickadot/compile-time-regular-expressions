@@ -74,6 +74,9 @@ template <typename Fa> void my_debug(const Fa & fa) {
 [[maybe_unused]] static constexpr auto value6 = ctfa::minimize<ctre::translate_dfa(CTRE_GEN("hi|[a-z]{4}"))>;
 [[maybe_unused]] static constexpr auto value7 = ctfa::minimize<ctre::translate_dfa(CTRE_GEN("[^a-z]"))>;
 
+static constexpr std::string_view subject = "hana";
+
+static_assert(ctre::fast_match_re(subject.begin(), subject.end(), CTRE_GEN("hi|[a-z]{4}")));
 
 int main() {
 	my_debug(value7);
