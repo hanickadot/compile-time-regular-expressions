@@ -98,7 +98,7 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto search(std::u32string_view sv) noexcept {
 		return search(sv.begin(), sv.end());
 	}
-	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
 		return search(std::begin(range), std::end(range));
 	}
 	
@@ -138,6 +138,9 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto fast_match(std::u32string_view sv) noexcept {
 		return fast_match(sv.begin(), sv.end());
 	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_match(Range && range) noexcept {
+		return fast_match(std::begin(range), std::end(range));
+	}
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_search(Iterator begin, Iterator end) noexcept {
 		return fast_search_re(begin, end, RE());
 	}
@@ -164,6 +167,9 @@ template <typename RE> struct regular_expression {
 	}
 	static constexpr CTRE_FORCE_INLINE auto fast_search(std::u32string_view sv) noexcept {
 		return fast_search(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_search(Range && range) noexcept {
+		return fast_search(std::begin(range), std::end(range));
 	}
 	
 };

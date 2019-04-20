@@ -66,8 +66,8 @@ template <typename Fa> void my_debug(const Fa & fa) {
 
 
 
-static constexpr auto value = ctre::translate_dfa(CTRE_GEN("(?:a|b)?x+.*+(www)[a-z]"));
-static constexpr auto value2 = ctre::translate_dfa(CTRE_GEN("[Hh]ello [A-Za-z]+"));
+[[maybe_unused]] static constexpr auto value = ctre::translate_dfa(CTRE_GEN("(?:a|b)?x+.*+(www)[a-z]"));
+[[maybe_unused]] static constexpr auto value2 = ctre::translate_dfa(CTRE_GEN("[Hh]ello [A-Za-z]+"));
 
 int main() {
 	my_debug(value2);
