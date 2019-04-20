@@ -5,9 +5,9 @@ FILE := input.txt
 
 PATTERN_HASH := $(shell echo "$(PATTERN)" | /sbin/md5)
 
-LIBRARIES := baseline ctre ctfa srell pcre pcre-jit std
+LIBRARIES := baseline ctre ctfa srell pcre pcre-jit re2 boost xpressive xpressive-ct std
 
-LIBRARIES_clang = re2 boost xpressive xpressive-ct
+#LIBRARIES_clang = re2 boost xpressive xpressive-ct
 
 default: all
 	
