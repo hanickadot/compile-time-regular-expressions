@@ -1,7 +1,8 @@
 #ifndef CTRE__FIND_CAPTURES__HPP
 #define CTRE__FIND_CAPTURES__HPP
 
-#include "atoms.hpp"
+#include "atoms_characters.hpp"
+#include "atoms_unicode.hpp"
 #include "utility.hpp"
 #include "return_type.hpp"
 

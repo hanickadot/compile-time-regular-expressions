@@ -4,8 +4,8 @@
 #include "pcre.hpp"
 #include "atoms.hpp"
 #include "atoms_characters.hpp"
+#include "atoms_unicode.hpp"
 #include "id.hpp"
-#include "unicode.hpp"
 #include <cstdint>
 #include <limits>
 

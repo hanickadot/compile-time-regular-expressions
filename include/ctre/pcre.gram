@@ -109,6 +109,7 @@ backslash_set->escape_alphanum,[push_character]
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 
 backslash_range->u,[create_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],[finish_hexdec]
+backslash_range->u,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose,[finish_hexdec]
 backslash_range->x,[create_hexdec],hexdec,[push_hexdec],hexdec,[push_hexdec],[finish_hexdec]
 backslash_range->x,[create_hexdec],copen,hexdec,[push_hexdec],<hexdec_repeat>,cclose,[finish_hexdec]
 backslash_range->n,[push_character_newline]
@@ -127,10 +128,14 @@ backslash_set->p,copen,<property_name>,cclose,[make_property]
 backslash_set->P,copen,<property_name>,cclose,[make_property_negative]
 
 property_name->alphanum_characters,[push_property_name],<property_name2>
+property_name->dot,[push_property_name],<property_name2>
 property_name2->alphanum_characters,[push_property_name],<property_name2>|epsilon|equal_sign,<property_value>
+property_name2->dot,[push_property_name],<property_name2>|epsilon|equal_sign,<property_value>
 
 property_value->alphanum_characters,[push_property_value],<property_value2>
+property_value->dot,[push_property_value],<property_value2>
 property_value2->alphanum_characters,[push_property_value],<property_value2>|epsilon
+property_value2->dot,[push_property_value],<property_value2>|epsilon
 
 backslash-><backslash_range>|<backslash_set>
 

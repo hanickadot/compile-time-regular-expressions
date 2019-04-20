@@ -98,9 +98,7 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto search(std::u32string_view sv) noexcept {
 		return search(sv.begin(), sv.end());
 	}
-	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
-		return search(std::begin(range), std::end(range));
-	}
+<<<<<<< HEAD
 	
 	
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_match_2(IteratorBegin begin, IteratorEnd end) noexcept {
@@ -166,6 +164,11 @@ template <typename RE> struct regular_expression {
 		return fast_search(sv.begin(), sv.end());
 	}
 	
+=======
+	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
+		return search(std::begin(range), std::end(range));
+	}
+>>>>>>> master
 };
 
 template <typename RE> regular_expression(RE) -> regular_expression<RE>;
