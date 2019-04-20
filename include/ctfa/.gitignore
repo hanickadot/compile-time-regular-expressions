@@ -1,0 +1,7 @@
+*.o
+*.d
+*.stamp
+/tests/exec/*
+!/tests/exec/*.cpp
+*.dSYM
+a.out

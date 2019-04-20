@@ -5,27 +5,33 @@ FILE := input.txt
 
 PATTERN_HASH := $(shell echo "$(PATTERN)" | /sbin/md5)
 
-LIBRARIES := $(sort baseline boost ctre pcre pcre-jit re2 std xpressive srell)
+LIBRARIES := baseline xpressive xpressive-ct ctre ctfa ctfa-table  srell pcre pcre-jit re2 boost std
+#std
 
 default: all
 
-CXXFLAGS := -std=c++2a -I../../include -Isrell_include
+CXXFLAGS := -std=c++2a -I../../include -Isrell_include -isysroot  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -I/usr/local/Cellar/pcre2/10.32/include -I/usr/local/Cellar/boost/1.68.0_1/include -I/usr/local/Cellar/re2/20180801/include -I/Volumes/projekty/dfa/include
 LDFLAGS :=
 
 ctre_CXXFLAGS := 
 ctre_LDFLAGS := 
 ctre_NAME := CTRE
 
+baseline_NAME := baseline
+
+ctfa_NAME := CTFA
+ctfa-table_NAME := CTFA (table)
+
 boost_CXXFLAGS := 
 boost_LDFLAGS := -lboost_regex
 boost_NAME := boost::regex
 
-pcre_CXXFLAGS :=
-pcre_LDFLAGS := -lpcre2-8
+pcre_CXXFLAGS := 
+pcre_LDFLAGS := -L/usr/local/Cellar/pcre2/10.32/lib -lpcre2-8
 pcre_NAME := PCRE2
 
 pcre-jit_CXXFLAGS :=
-pcre-jit_LDFLAGS := -lpcre2-8
+pcre-jit_LDFLAGS := -L/usr/local/Cellar/pcre2/10.32/lib -lpcre2-8
 pcre-jit_NAME := PCRE2 (jit)
 
 re2_CXXFLAGS :=
@@ -35,6 +41,7 @@ re2_NAME := RE2
 std_NAME := std::regex
 
 xpressive_NAME := boost::xpressive
+xpressive-ct_NAME := boost::xpressive (static)
 
 srell_NAME := srell
 

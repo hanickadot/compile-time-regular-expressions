@@ -89,7 +89,7 @@ template <typename CB> int benchmark_over_file(const char * fname, benchmark_mod
 		
 		if (mode == benchmark_mode::benchmark) {
 			if (app.length()) {
-				std::cout << '"' << app << "\";" << '"' << PATTERN << "\";" << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "\n";
+				std::cout << '"' << app << "\";" << count << ";" << '"' << PATTERN << "\";" << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "\n";
 			}
 		}
 		std::cerr << "Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms\n";

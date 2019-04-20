@@ -1,2 +1,2 @@
-exclude = "{$exclude,*.o,*.tmp,baseline,boost,ctre,pcre,pcre-jit,re2,std,xpressive,srell}"
+exclude = "{$exclude,*.o,*.tmp,baseline,boost,ctre,pcre,pcre-jit,re2,std,xpressive,srell,ctfa}"
 

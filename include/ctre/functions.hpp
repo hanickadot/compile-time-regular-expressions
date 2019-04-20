@@ -33,7 +33,7 @@ template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_st
 template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #else
-template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
+template <const auto &input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
 constexpr auto & _input = input; 
 #endif
 	
@@ -60,6 +60,20 @@ template <typename RE> struct regex_search_t {
 	}
 };
 
+template <typename RE> struct fast_regex_match_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.fast_match(std::forward<Args>(args)...);
+	}
+};
+
+template <typename RE> struct fast_regex_search_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.fast_search(std::forward<Args>(args)...);
+	}
+};
+
 #if __cpp_nontype_template_parameter_class
 
 template <auto input> struct regex_builder {
@@ -73,17 +87,26 @@ template <ctll::fixed_string input> static constexpr inline auto match = regex_m
 
 template <ctll::fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
+template <ctll::fixed_string input> static constexpr inline auto fast_match = fast_regex_match_t<typename regex_builder<input>::type>();
+
+template <ctll::fixed_string input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
+
+
 #else
 
-template <auto & input> struct regex_builder {
+template <const auto & input> struct regex_builder {
 	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
 	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
-template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
+template <const auto &input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
-template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+template <const auto &input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+
+template <const auto &input> static constexpr inline auto fast_match = fast_regex_match_t<typename regex_builder<input>::type>();
+
+template <const auto &input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
 
 #endif
 
