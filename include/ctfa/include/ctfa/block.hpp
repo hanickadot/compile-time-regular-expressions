@@ -7,6 +7,8 @@ namespace ctfa::block {
 
 static constexpr auto empty = finite_automaton<0,1>{{}, {state{0}}};
 
+static constexpr auto reject_all = finite_automaton<0,0>{{}, {}};
+
 template <char32_t Value> static constexpr auto unit = finite_automaton<1,1>{{transition{state{0}, state{1}, ctfa::matcher::unit<Value>}}, {state{1}}};
 
 template <char32_t A, char32_t B> static constexpr auto range = finite_automaton<1,1>{{transition{state{0}, state{1}, ctfa::matcher::range<A,B>}}, {state{1}}};

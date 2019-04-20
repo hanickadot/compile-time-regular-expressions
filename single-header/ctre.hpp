@@ -3523,6 +3523,8 @@ namespace ctfa::block {
 
 static constexpr auto empty = finite_automaton<0,1>{{}, {state{0}}};
 
+static constexpr auto reject_all = finite_automaton<0,0>{{}, {}};
+
 template <char32_t Value> static constexpr auto unit = finite_automaton<1,1>{{transition{state{0}, state{1}, ctfa::matcher::unit<Value>}}, {state{1}}};
 
 template <char32_t A, char32_t B> static constexpr auto range = finite_automaton<1,1>{{transition{state{0}, state{1}, ctfa::matcher::range<A,B>}}, {state{1}}};
@@ -6573,6 +6575,43 @@ constexpr inline auto & translate_nfa(ctll::list<ctre::star<Content...>, Rest...
 	return translate_nfa<output>(ctll::list<Rest...>());
 }
 
+// repeat<A,B>
+template <size_t Num, typename... Content> struct head_repeat { };
+template <size_t Num, typename... Content> struct tail_repeat { };
+
+template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::head_repeat<0, Content...>, Rest...>) noexcept {
+	return translate_nfa<Fa>(ctll::list<Rest...>());
+}
+
+template <const auto & Fa = ctfa::block::empty, size_t A, typename... Content, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::head_repeat<A, Content...>, Rest...>) noexcept {
+	return translate_nfa<Fa>(ctll::list<Content..., ctre::head_repeat<A-1, Content...>, Rest...>());
+}
+
+template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::tail_repeat<0, Content...>, Rest...>) noexcept {
+	return translate_nfa<Fa>(ctll::list<Rest...>());
+}
+
+template <const auto & Fa = ctfa::block::empty, size_t B, typename... Content, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::tail_repeat<B, Content...>, Rest...>) noexcept {
+	return translate_nfa<Fa>(ctll::list<optional<Content...>, ctre::tail_repeat<B-1, Content...>, Rest...>());
+}
+
+template <const auto & Fa = ctfa::block::empty, size_t A, size_t B, typename... Content, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::repeat<A,B, Content...>, Rest...>) noexcept {
+	if constexpr (A <= B || B == 0) {
+		if constexpr (B != 0) {
+			return translate_nfa<Fa>(ctll::list<head_repeat<A,Content...>, tail_repeat<B-A,Content...>, Rest...>());
+		} else {
+			return translate_nfa<Fa>(ctll::list<head_repeat<A,Content...>, star<Content...>, Rest...>());
+		}
+	} else {
+		return ctfa::block::reject_all;
+	}
+}
+
 // lazy repeat
 template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
 constexpr inline auto & translate_nfa(ctll::list<ctre::lazy_plus<Content...>, Rest...>) noexcept {
@@ -6590,6 +6629,12 @@ constexpr inline auto & translate_nfa(ctll::list<ctre::lazy_star<Content...>, Re
 	return translate_nfa<output>(ctll::list<Rest...>());
 }
 
+// lazy_repeat<A,B>
+template <const auto & Fa = ctfa::block::empty, size_t A, size_t B, typename... Content, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::lazy_repeat<A,B, Content...>, Rest...>) noexcept {
+	return translate_nfa<Fa>(ctll::list<ctre::repeat<A,B,Content...>, Rest...>());
+}
+
 // possesive repeat
 template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
 constexpr inline auto & translate_nfa(ctll::list<ctre::possessive_plus<Content...>, Rest...>) noexcept {
@@ -6605,6 +6650,12 @@ constexpr inline auto & translate_nfa(ctll::list<ctre::possessive_star<Content..
 	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
 	
 	return translate_nfa<output>(ctll::list<Rest...>());
+}
+
+// possessive_repeat<A,B>
+template <const auto & Fa = ctfa::block::empty, size_t A, size_t B, typename... Content, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::possessive_repeat<A,B, Content...>, Rest...>) noexcept {
+	return translate_nfa<Fa>(ctll::list<ctre::repeat<A,B,Content...>, Rest...>());
 }
 
 // select

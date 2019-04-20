@@ -1,1 +1,1 @@
-#define PATTERN "[a-z0-9]+?abc[0-9]"
+#define PATTERN "ABCD|DEFGH|EFGHI|A{4,}"

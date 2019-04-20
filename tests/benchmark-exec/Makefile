@@ -5,8 +5,9 @@ FILE := input.txt
 
 PATTERN_HASH := $(shell echo "$(PATTERN)" | /sbin/md5)
 
-LIBRARIES := baseline xpressive xpressive-ct ctre ctfa srell pcre pcre-jit re2 boost std
-#std
+LIBRARIES := baseline ctre ctfa srell pcre pcre-jit std
+
+LIBRARIES_clang = re2 boost xpressive xpressive-ct
 
 default: all
 	
@@ -51,7 +52,7 @@ xpressive-ct_NAME := boost::xpressive (static)
 
 srell_NAME := srell
 
-all: $(LIBRARIES)
+all: $(LIBRARIES) $(LIBRARIES_$(compiler))
 
 $(PATTERN_HASH).tmp:
 	@rm -f *.tmp
@@ -60,10 +61,10 @@ $(PATTERN_HASH).tmp:
 pattern.hpp: $(PATTERN_HASH).tmp
 	@echo "#define PATTERN \"$(PATTERN)\"" > pattern.hpp
 
-$(LIBRARIES:%=%.o): %.o: %.cpp common.hpp $(PATTERN_HASH).tmp pattern.hpp
+$(LIBRARIES:%=%.o) $(LIBRARIES_$(compiler):%=%.o): %.o: %.cpp common.hpp $(PATTERN_HASH).tmp pattern.hpp
 	$(CXX) -O3 $(CXXFLAGS) ${${@:%.o=%}_CXXFLAGS} -c $< -o $@
 
-$(LIBRARIES): %: %.o common.hpp $(PATTERN_HASH).tmp pattern.hpp
+$(LIBRARIES) $(LIBRARIES_$(compiler)): %: %.o common.hpp $(PATTERN_HASH).tmp pattern.hpp
 	$(CXX) -O3 $(LDFLAGS) ${${@}_LDFLAGS} $< -o $@
 
 header.csv:
