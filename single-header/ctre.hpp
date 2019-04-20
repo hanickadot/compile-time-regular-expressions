@@ -3018,6 +3018,7 @@ public:
 			insert(v);
 		}
 	}
+	constexpr set(const set & rhs) = default;
 	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
 		for (const auto & v: rhs) {
 			push_back(v);
@@ -3629,6 +3630,7 @@ public:
 			insert(v);
 		}
 	}
+	constexpr set(const set & rhs) = default;
 	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
 		for (const auto & v: rhs) {
 			push_back(v);
@@ -4516,6 +4518,7 @@ public:
 			insert(v);
 		}
 	}
+	constexpr set(const set & rhs) = default;
 	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
 		for (const auto & v: rhs) {
 			push_back(v);
@@ -4803,6 +4806,7 @@ public:
 			insert(v);
 		}
 	}
+	constexpr set(const set & rhs) = default;
 	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
 		for (const auto & v: rhs) {
 			push_back(v);
@@ -5894,6 +5898,7 @@ template <const auto & Arg> struct minimize_one {
 	using state_and_transitions = impl::transitions_from_state<fa.transitions.size()>;
 
 	static constexpr auto build() {
+		// build known states, split them into groups, return set of groups
 		constexpr auto known_states = []{
 			ctfa::set<state_and_transitions, ctfa::info<fa>::states> known_states;
 		
@@ -5918,28 +5923,26 @@ template <const auto & Arg> struct minimize_one {
 			return known_states;
 		}();
 		
+		// precalculate space needed for the output
 		constexpr auto transitions = [&]{
 			size_t count = 0;
 			for (const auto & s: known_states) {
 				if (s.is_unique) {
 					intervals<fa.transitions.size(), char32_t, state> i;
 				
-					auto source = s.group;
-				
 					for (const auto & et: s.transitions) {
 						i.insert_range(et.t.cond.r.low, et.t.cond.r.high, known_states[et.target_index].group);
 					}
 		
 					i.merge_and_split([&](char32_t, char32_t, const auto & target_set){
-						for (state t: target_set) { // it will happen only once, or it will be nondeterministic
-							count++;
-						}
+						count+=target_set.size();
 					});
 				}
 			}
 			return count;
 		}();
 		
+		// fill output variable
 		auto out = finite_automaton<transitions, fa.final_states.size()>();
 		
 		for (const auto & s: known_states) {
@@ -6236,6 +6239,8 @@ template <const auto & Fa> struct determinize_one {
 #ifndef CTFA__TRANSFORMATION__CHARACTER_SET__HPP
 #define CTFA__TRANSFORMATION__CHARACTER_SET__HPP
 
+#include <limits>
+
 namespace ctfa {
 
 template <const auto & ... Fa> struct character_set_n {
@@ -6253,6 +6258,50 @@ template <const auto & ... Fa> struct character_set_n {
 		
 		(add(Fa),...);
 		
+		output.mark_final(state{1});
+		
+		return output;
+	}
+	
+	static constexpr auto result = build();
+};
+
+template <const auto & Fa> struct negative_set_one {
+	static constexpr auto build() {
+		constexpr auto inter = []{
+			intervals<Fa.transitions.size()+1, char32_t, state> i;
+		
+			for (const auto & t: Fa.transitions) {
+				i.insert_range(t.cond.r.low, t.cond.r.high, state{1});
+			}
+		
+			i.insert_range(std::numeric_limits<char32_t>::min(), std::numeric_limits<char32_t>::max(), state{0});
+		
+			i.merge();
+			return i;
+		}();
+		
+		// calculate needed size
+		constexpr size_t count = [&]{
+			size_t c = 0;
+			inter.split([&](char32_t, char32_t, const auto & target_set){
+				if (target_set.size() == 1 && target_set[0] == state{0}) {
+					c++;
+				}
+			});
+			return c;
+		}();
+		
+		finite_automaton<count, 1> output;
+		
+		// create transition from everything else
+		inter.split([&](char32_t low, char32_t high, const auto & target_set){
+			if (target_set.size() == 1 && target_set[0] == state{0}) {
+				output.add(transition{start_state, state{1}, condition(impl::range{low, high})});
+			}
+		});
+		
+		// state 1 is final
 		output.mark_final(state{1});
 		
 		return output;
@@ -6305,6 +6354,8 @@ template <const auto & ... Fas> static constexpr auto minimize = minimize_one<ut
 template <const auto & ... Fas> static constexpr auto determinize = determinize_one<minimize<Fas...>>::result;
 
 template <const auto & ... Fas> static constexpr auto join_character_set = character_set_n<Fas...>::result;
+
+template <const auto & ... Fas> static constexpr auto join_negate_character_set = negative_set_one<character_set_n<Fas...>::result>::result;
 
 }
 
@@ -6723,36 +6774,48 @@ constexpr inline auto & translate_nfa(ctll::list<ctre::any, Rest...>) noexcept {
 
 struct nfa_set_builder {
 	
-//template <typename Head> static constexpr inline auto & item(Head) noexcept {
-//	constexpr auto & current = item(Head())
-//	constexpr auto & output = ctfa::join_character_set<Fa, 
-//}
+	//template <typename Head> static constexpr inline auto & item(Head) noexcept {
+	//	constexpr auto & current = item(Head())
+	//	constexpr auto & output = ctfa::join_character_set<Fa, 
+	//}
 
-template <auto A, auto B> static constexpr inline auto & item(ctre::char_range<A,B>) {
-	return ctfa::block::range<char32_t(A), char32_t(B)>;
-}
+	template <auto A, auto B> static constexpr inline auto & item(ctre::char_range<A,B>) {
+		return ctfa::block::range<char32_t(A), char32_t(B)>;
+	}
 
-template <auto A> static constexpr inline auto & item(ctre::character<A>) {
-	return ctfa::block::unit<char32_t(A)>;
-}
+	template <auto A> static constexpr inline auto & item(ctre::character<A>) {
+		return ctfa::block::unit<char32_t(A)>;
+	}
 
-static constexpr inline auto & item(ctre::any) {
-	return ctfa::block::anything;
-}
+	static constexpr inline auto & item(ctre::any) {
+		return ctfa::block::anything;
+	}
 
-template <typename... Items> static constexpr inline auto & build(Items...) noexcept {
-	return ctfa::join_character_set<item(Items())...>;
-}
+	template <typename... Items> static constexpr inline auto & build(Items...) noexcept {
+		return ctfa::join_character_set<item(Items())...>;
+	}
 
-template <typename... Definition> static constexpr inline auto & item(ctre::set<Definition...>) {
-	return build(Definition()...);
-}
+	template <typename... Definition> static constexpr inline auto & item(ctre::set<Definition...>) {
+		return build(Definition()...);
+	}
+	
+	template <typename... Items> static constexpr inline auto & item(ctre::negative_set<Items...>) {
+		return ctfa::join_negate_character_set<item(Items())...>;
+	}
 
 };
 
 template <const auto & Fa = ctfa::block::empty, typename... Definition, typename... Rest> 
 constexpr inline auto & translate_nfa(ctll::list<ctre::set<Definition...>, Rest...>) noexcept {
 	constexpr auto & inner = ctfa::determinize<nfa_set_builder::build(Definition()...)>;
+	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
+
+	return translate_nfa<output>(ctll::list<Rest...>());
+}
+
+template <const auto & Fa = ctfa::block::empty, typename... Definition, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::negative_set<Definition...>, Rest...>) noexcept {
+	constexpr auto & inner = ctfa::determinize<nfa_set_builder::build(ctre::negative_set<Definition...>())>;
 	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
 
 	return translate_nfa<output>(ctll::list<Rest...>());
@@ -6781,7 +6844,7 @@ constexpr inline auto & search_translate_dfa(Pattern) noexcept {
 	using return_type = decltype(result);
 	constexpr bool supported_pattern = !std::is_same_v<return_type, unsupported_pattern_tag>;
 	static_assert(supported_pattern);
-	if constexpr (supported_pattern) return ctfa::minimize<ctfa::determinize<ctfa::any_star, result, ctfa::any_star>>;
+	if constexpr (supported_pattern) return ctfa::minimize<ctfa::determinize<ctfa::any_star, ctfa::minimize<ctfa::determinize<result>>, ctfa::any_star>>;
 	else return ctfa::block::empty;
 }
 

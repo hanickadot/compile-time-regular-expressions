@@ -212,30 +212,34 @@ constexpr inline auto & translate_nfa(ctll::list<ctre::any, Rest...>) noexcept {
 
 struct nfa_set_builder {
 	
-//template <typename Head> static constexpr inline auto & item(Head) noexcept {
-//	constexpr auto & current = item(Head())
-//	constexpr auto & output = ctfa::join_character_set<Fa, 
-//}
+	//template <typename Head> static constexpr inline auto & item(Head) noexcept {
+	//	constexpr auto & current = item(Head())
+	//	constexpr auto & output = ctfa::join_character_set<Fa, 
+	//}
 
-template <auto A, auto B> static constexpr inline auto & item(ctre::char_range<A,B>) {
-	return ctfa::block::range<char32_t(A), char32_t(B)>;
-}
+	template <auto A, auto B> static constexpr inline auto & item(ctre::char_range<A,B>) {
+		return ctfa::block::range<char32_t(A), char32_t(B)>;
+	}
 
-template <auto A> static constexpr inline auto & item(ctre::character<A>) {
-	return ctfa::block::unit<char32_t(A)>;
-}
+	template <auto A> static constexpr inline auto & item(ctre::character<A>) {
+		return ctfa::block::unit<char32_t(A)>;
+	}
 
-static constexpr inline auto & item(ctre::any) {
-	return ctfa::block::anything;
-}
+	static constexpr inline auto & item(ctre::any) {
+		return ctfa::block::anything;
+	}
 
-template <typename... Items> static constexpr inline auto & build(Items...) noexcept {
-	return ctfa::join_character_set<item(Items())...>;
-}
+	template <typename... Items> static constexpr inline auto & build(Items...) noexcept {
+		return ctfa::join_character_set<item(Items())...>;
+	}
 
-template <typename... Definition> static constexpr inline auto & item(ctre::set<Definition...>) {
-	return build(Definition()...);
-}
+	template <typename... Definition> static constexpr inline auto & item(ctre::set<Definition...>) {
+		return build(Definition()...);
+	}
+	
+	template <typename... Items> static constexpr inline auto & item(ctre::negative_set<Items...>) {
+		return ctfa::join_negate_character_set<item(Items())...>;
+	}
 
 };
 
@@ -244,6 +248,14 @@ template <typename... Definition> static constexpr inline auto & item(ctre::set<
 template <const auto & Fa = ctfa::block::empty, typename... Definition, typename... Rest> 
 constexpr inline auto & translate_nfa(ctll::list<ctre::set<Definition...>, Rest...>) noexcept {
 	constexpr auto & inner = ctfa::determinize<nfa_set_builder::build(Definition()...)>;
+	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
+
+	return translate_nfa<output>(ctll::list<Rest...>());
+}
+
+template <const auto & Fa = ctfa::block::empty, typename... Definition, typename... Rest> 
+constexpr inline auto & translate_nfa(ctll::list<ctre::negative_set<Definition...>, Rest...>) noexcept {
+	constexpr auto & inner = ctfa::determinize<nfa_set_builder::build(ctre::negative_set<Definition...>())>;
 	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
 
 	return translate_nfa<output>(ctll::list<Rest...>());
@@ -274,7 +286,7 @@ constexpr inline auto & search_translate_dfa(Pattern) noexcept {
 	using return_type = decltype(result);
 	constexpr bool supported_pattern = !std::is_same_v<return_type, unsupported_pattern_tag>;
 	static_assert(supported_pattern);
-	if constexpr (supported_pattern) return ctfa::minimize<ctfa::determinize<ctfa::any_star, result, ctfa::any_star>>;
+	if constexpr (supported_pattern) return ctfa::minimize<ctfa::determinize<ctfa::any_star, ctfa::minimize<ctfa::determinize<result>>, ctfa::any_star>>;
 	else return ctfa::block::empty;
 }
 

@@ -151,6 +151,7 @@ template <const auto & Arg> struct minimize_one {
 	using state_and_transitions = impl::transitions_from_state<fa.transitions.size()>;
 
 	static constexpr auto build() {
+		// build known states, split them into groups, return set of groups
 		constexpr auto known_states = []{
 			ctfa::set<state_and_transitions, ctfa::info<fa>::states> known_states;
 		
@@ -175,28 +176,26 @@ template <const auto & Arg> struct minimize_one {
 			return known_states;
 		}();
 		
+		// precalculate space needed for the output
 		constexpr auto transitions = [&]{
 			size_t count = 0;
 			for (const auto & s: known_states) {
 				if (s.is_unique) {
 					intervals<fa.transitions.size(), char32_t, state> i;
 				
-					auto source = s.group;
-				
 					for (const auto & et: s.transitions) {
 						i.insert_range(et.t.cond.r.low, et.t.cond.r.high, known_states[et.target_index].group);
 					}
 		
 					i.merge_and_split([&](char32_t, char32_t, const auto & target_set){
-						for (state t: target_set) { // it will happen only once, or it will be nondeterministic
-							count++;
-						}
+						count+=target_set.size();
 					});
 				}
 			}
 			return count;
 		}();
 		
+		// fill output variable
 		auto out = finite_automaton<transitions, fa.final_states.size()>();
 		
 		for (const auto & s: known_states) {

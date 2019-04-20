@@ -48,6 +48,7 @@ public:
 			insert(v);
 		}
 	}
+	constexpr set(const set & rhs) = default;
 	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
 		for (const auto & v: rhs) {
 			push_back(v);

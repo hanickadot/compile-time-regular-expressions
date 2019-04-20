@@ -53,6 +53,8 @@ template <const auto & ... Fas> static constexpr auto determinize = determinize_
 
 template <const auto & ... Fas> static constexpr auto join_character_set = character_set_n<Fas...>::result;
 
+template <const auto & ... Fas> static constexpr auto join_negate_character_set = negative_set_one<character_set_n<Fas...>::result>::result;
+
 
 }
 
