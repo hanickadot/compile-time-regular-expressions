@@ -6397,7 +6397,9 @@ namespace ctfa {
 		template <int transition_index, int current_state, typename Iterator, typename EndIterator, typename CB> static CTFA_FORCE_INLINE constexpr bool choose_transition(Iterator it, const EndIterator end, CB && cb) noexcept {
 			if constexpr (transition_index != Dfa.transitions.size() && Dfa.transitions[transition_index].source.id == current_state) {
 				constexpr auto transition = Dfa.transitions[transition_index];
-				if (transition.cond.match(*it) && end != it) {
+				if constexpr (transition.cond == ctfa::matcher::anything && transition.source == transition.target && Dfa.is_final(state{current_state})) {
+					return true;
+				} else if (transition.cond.match(*it) && end != it) {
 					return cb(transition.target, it, end);
 				} else {
 					return choose_transition<transition_index+1, current_state>(it, end, std::forward<CB>(cb));
@@ -6706,7 +6708,6 @@ constexpr inline auto & search_translate_dfa(Pattern) noexcept {
 	else return ctfa::block::empty;
 }
 
-// calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto fast_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
 	constexpr auto & dfa = translate_dfa(pattern);
