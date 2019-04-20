@@ -68,7 +68,10 @@ template <typename Fa> void my_debug(const Fa & fa) {
 
 [[maybe_unused]] static constexpr auto value = ctre::translate_dfa(CTRE_GEN("(?:a|b)?x+.*+(www)[a-z]"));
 [[maybe_unused]] static constexpr auto value2 = ctre::translate_dfa(CTRE_GEN("[Hh]ello [A-Za-z]+"));
+[[maybe_unused]] static constexpr auto value3 = ctre::translate_dfa(CTRE_GEN("....A-|.GG.G.-"));
+[[maybe_unused]] static constexpr auto value4 = ctfa::determinize<ctfa::any_star, value3, ctfa::any_star>;
+[[maybe_unused]] static constexpr auto value5 = ctfa::minimize<value4>;
 
 int main() {
-	my_debug(value2);
+	my_debug(value5);
 }

@@ -5,12 +5,18 @@ FILE := input.txt
 
 PATTERN_HASH := $(shell echo "$(PATTERN)" | /sbin/md5)
 
-LIBRARIES := baseline xpressive xpressive-ct ctre ctfa ctfa-table  srell pcre pcre-jit re2 boost std
+LIBRARIES := baseline xpressive xpressive-ct ctre ctfa srell pcre pcre-jit re2 boost std
 #std
 
 default: all
+	
+compiler := $(shell $(CXX) -v 2>&1 | grep -E "^clang|^gcc" | head -n1 | sed -E "s/([a-z]+).*/\\1/")
 
-CXXFLAGS := -std=c++2a -I../../include -Isrell_include -isysroot  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -I/usr/local/Cellar/pcre2/10.32/include -I/usr/local/Cellar/boost/1.68.0_1/include -I/usr/local/Cellar/re2/20180801/include -I/Volumes/projekty/dfa/include
+ifeq ($(compiler),clang)
+CXXFLAGS_ADDITIONAL := -fconstexpr-steps=12712420
+endif
+
+CXXFLAGS := $(CXXFLAGS_ADDITIONAL) -std=c++2a -I../../include -Isrell_include -isysroot  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -I/usr/local/Cellar/pcre2/10.32/include -I/usr/local/Cellar/boost/1.68.0_1/include -I/usr/local/Cellar/re2/20180801/include
 LDFLAGS :=
 
 ctre_CXXFLAGS := 

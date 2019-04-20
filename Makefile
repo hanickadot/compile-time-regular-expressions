@@ -9,7 +9,13 @@ DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CPP_STANDARD := $(shell ./cpp-20-check.sh $(CXX))
 
-override CXXFLAGS := $(CXXFLAGS) $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra 
+compiler := $(shell $(CXX) -v 2>&1 | grep -E "^clang|^gcc" | head -n1 | sed -E "s/([a-z]+).*/\\1/")
+
+ifeq ($(compiler),clang)
+CXXFLAGS_ADDITIONAL := -fconstexpr-steps=100000000
+endif
+
+override CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_ADDITIONAL) $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra 
 LDFLAGS := -lre2 -lboost_regex -lpcre2-8 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)

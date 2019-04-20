@@ -229,7 +229,7 @@ constexpr inline auto & search_translate_dfa(Pattern) noexcept {
 	else return ctfa::block::empty;
 }
 
-// calling with pattern prepare stack and triplet of iterators
+
 template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto fast_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
 	constexpr auto & dfa = translate_dfa(pattern);
