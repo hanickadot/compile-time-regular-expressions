@@ -11,7 +11,7 @@ namespace impl {
 struct range {
 	char32_t low{};
 	char32_t high{};
-	CTFA_FORCE_INLINE constexpr bool match(char32_t v) const noexcept {
+	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T v) const noexcept {
 		return (low <= v) && (v <= high);
 	}
 	constexpr bool operator<(const range & rhs) const noexcept {
@@ -55,7 +55,7 @@ struct condition {
 	
 	constexpr condition(const impl::range & r) noexcept: r{r} { }
 	
-	CTFA_FORCE_INLINE constexpr bool match(char32_t value) const noexcept {
+	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T value) const noexcept {
 		return r.match(value);
 	}
 	constexpr bool operator<(const condition & rhs) const noexcept {
