@@ -5,7 +5,7 @@ FILE := input.txt
 
 PATTERN_HASH := $(shell echo "$(PATTERN)" | /sbin/md5)
 
-LIBRARIES := baseline ctre ctfa srell pcre pcre-jit re2 boost xpressive xpressive-ct std
+LIBRARIES := baseline ctre ctfa ctfa-data srell pcre pcre-jit re2 boost xpressive xpressive-ct std
 
 #LIBRARIES_clang = re2 boost xpressive xpressive-ct
 
@@ -32,7 +32,7 @@ ctre_NAME := CTRE
 baseline_NAME := baseline
 
 ctfa_NAME := CTFA
-ctfa-table_NAME := CTFA (table)
+ctfa-data_NAME := CTFA (data-driven)
 
 boost_CXXFLAGS := 
 boost_LDFLAGS := -lboost_regex

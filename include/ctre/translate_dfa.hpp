@@ -303,6 +303,20 @@ constexpr inline auto fast_search_re(const Iterator begin, const EndIterator end
 	return ctfa::dispatcher<dfa>::run(begin, end);
 }
 	
+	
+template <typename Iterator, typename EndIterator, typename Pattern> 
+constexpr inline auto fast_table_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	constexpr auto & dfa = translate_dfa(pattern);
+	return ctfa::table_dispatcher<dfa, std::remove_const_t<std::remove_reference_t<std::remove_const_t<decltype(*begin)>>>>::run(begin, end);
+}
+
+template <typename Iterator, typename EndIterator, typename Pattern> 
+constexpr inline auto fast_table_search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	constexpr auto & dfa = search_translate_dfa(pattern);
+	return ctfa::table_dispatcher<dfa, std::remove_const_t<std::remove_reference_t<std::remove_const_t<decltype(*begin)>>>>::run(begin, end);
+}
+		
+
 }
 
 #endif

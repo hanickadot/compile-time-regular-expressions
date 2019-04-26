@@ -6441,11 +6441,11 @@ namespace ctfa {
 
 	template <const auto & DFa> static constexpr auto match_wrap = ctfa::minimize<ctfa::determinize<DFa>>;
 	
-	template <const auto & DFa, typename Range> constexpr bool table_match(Range && range) noexcept {
+	template <const auto & DFa, typename Range> constexpr bool match(Range && range) noexcept {
 		return dispatcher<match_wrap<DFa>>::run(range.begin(), range.end());
 	}
 
-	template <const auto & DFa, typename Ptr> constexpr bool table_match_ptr(const Ptr * ptr) noexcept {
+	template <const auto & DFa, typename Ptr> constexpr bool match_ptr(const Ptr * ptr) noexcept {
 		return dispatcher<match_wrap<DFa>>::run(ptr, ctfa::zero_terminated_string_end_iterator());
 	}
 
@@ -6453,14 +6453,123 @@ namespace ctfa {
 
 	template <const auto & DFa> static constexpr auto search_wrap = ctfa::minimize<ctfa::determinize<any_star,DFa,any_star>>;
 	
-	template <const auto & DFa, typename Range> constexpr bool table_search(Range && range) noexcept {
+	template <const auto & DFa, typename Range> constexpr bool search(Range && range) noexcept {
 		return dispatcher<search_wrap<DFa>>::run(range.begin(), range.end());
 	}
 
-	template <const auto & DFa, typename Ptr> constexpr bool table_search_ptr(const Ptr * ptr) noexcept {
+	template <const auto & DFa, typename Ptr> constexpr bool search_ptr(const Ptr * ptr) noexcept {
 		return dispatcher<search_wrap<DFa>>::run(ptr, ctfa::zero_terminated_string_end_iterator());
 	}
 
+	template <const auto & Dfa, typename CharT> struct table_dispatcher {
+		static constexpr size_t size = Dfa.transitions.size() + Dfa.final_states.size() + 1;
+		
+		static constexpr auto index_example = []{
+			if constexpr (size < (256 - 1)) {
+				return uint8_t(0);
+			} else if constexpr (size < (65536 - 1)) {
+				return uint16_t(0);
+			} else {
+				return uint32_t(0);
+			}
+		}();
+		
+		using index_type = uint16_t;
+		
+		using char_type = char;
+	
+		struct jump_extended {
+			index_type source;
+			index_type target;
+			char_type low;
+			char_type high;
+			constexpr bool operator<(const jump_extended & rhs) const {
+				if (source == rhs.source) {
+					if (target == rhs.target) {
+						if (low == rhs.low) {
+							return high < rhs.high;
+						} else {
+							return low < rhs.low;
+						}
+					} else {
+						return target < rhs.target;
+					}
+				} else {
+					return source < rhs.source;
+				}
+			}
+			constexpr bool operator==(const jump_extended & rhs) const {
+				return source == rhs.source && target == rhs.target && low == rhs.low && high == rhs.high;
+			}
+			constexpr bool operator<(index_type idx) const {
+				return source < idx;
+			}
+			constexpr bool operator==(index_type idx) const {
+				return source == idx;
+			}
+		};
+
+		static constexpr auto build_presort() {
+			ctfa::set<jump_extended, size*2> presort;
+			for (const auto & t: Dfa.transitions) {
+				presort.insert(jump_extended{index_type(t.source.id), index_type(t.target.id), char_type(t.cond.r.low), char_type(t.cond.r.high)});
+				if (!Dfa.is_final(t.source)) presort.insert(jump_extended{index_type(t.source.id), std::numeric_limits<index_type>::max(), 0, 0});
+			}
+			for (state f: Dfa.final_states) {
+				presort.insert(jump_extended{index_type(f.id), std::numeric_limits<index_type>::max(), 1, 0});
+			}
+			presort.insert(jump_extended{std::numeric_limits<index_type>::max(), std::numeric_limits<index_type>::max(), 0, 0});
+			return presort;
+		}
+		
+		static constexpr auto presort_table = build_presort();
+		
+		static constexpr auto build_table() {
+			ctfa::set<jump_extended, presort_table.size()> out;
+			
+			for (const auto & j: presort_table) {
+				if (j.source != std::numeric_limits<index_type>::max()) {
+					auto source = presort_table.find(j.source);
+					if (j.target != std::numeric_limits<index_type>::max()) {
+						auto target = presort_table.find(j.target);
+						out.push_back(jump_extended{index_type(source - presort_table.begin()), index_type(target - presort_table.begin()), j.low, j.high});
+					} else {
+						out.push_back(jump_extended{index_type(source - presort_table.begin()), j.target, j.low, j.high});
+					}
+				} else {
+					out.push_back(jump_extended{j.source, j.target, j.low, j.high});
+				}
+				
+			}
+			return out;
+			
+		}
+	    
+		static constexpr auto jump_table = build_table();
+		
+		template <typename Iterator, typename EndIterator> static constexpr bool run(Iterator it, const EndIterator end) noexcept {
+			index_type state = 0; // start
+			index_type current = state;
+			
+			while (true) {
+				if (end == it) while (true) {
+					const auto & jump = jump_table[state++];
+					if (~jump.target) return jump.low;
+					else continue;
+				}
+				
+				const auto & jump = jump_table[state++];
+				
+				if (jump.source != current) return false;
+				
+				// the final mark can't be matched anyway
+				if ((char_type(jump.low) <= *it) && (*it <= char_type(jump.high))) {
+					current = state = jump.target;
+					it++;
+				}
+			}
+		}
+	};
 }
 
 #endif
@@ -6764,6 +6873,20 @@ constexpr inline auto fast_search_re(const Iterator begin, const EndIterator end
 	return ctfa::dispatcher<dfa>::run(begin, end);
 }
 	
+	
+template <typename Iterator, typename EndIterator, typename Pattern> 
+constexpr inline auto fast_table_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	constexpr auto & dfa = translate_dfa(pattern);
+	return ctfa::table_dispatcher<dfa, std::remove_const_t<std::remove_reference_t<std::remove_const_t<decltype(*begin)>>>>::run(begin, end);
+}
+
+template <typename Iterator, typename EndIterator, typename Pattern> 
+constexpr inline auto fast_table_search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	constexpr auto & dfa = search_translate_dfa(pattern);
+	return ctfa::table_dispatcher<dfa, std::remove_const_t<std::remove_reference_t<std::remove_const_t<decltype(*begin)>>>>::run(begin, end);
+}
+		
+
 }
 
 #endif
@@ -6936,6 +7059,77 @@ template <typename RE> struct regular_expression {
 		return fast_search(std::begin(range), std::end(range));
 	}
 	
+	
+	
+	
+	
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_match_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_table_match_re(begin, end, RE());
+	}
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_search_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_table_search_re(begin, end, RE());
+	}
+
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_match(Iterator begin, Iterator end) noexcept {
+		return fast_table_match_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const char * s) noexcept {
+		return fast_table_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const wchar_t * s) noexcept {
+		return fast_table_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::string & s) noexcept {
+		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::wstring & s) noexcept {
+		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::wstring_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u16string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u32string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_match(Range && range) noexcept {
+		return fast_table_match(std::begin(range), std::end(range));
+	}
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_search(Iterator begin, Iterator end) noexcept {
+		return fast_table_search_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const char * s) noexcept {
+		return fast_table_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const wchar_t * s) noexcept {
+		return fast_table_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::string & s) noexcept {
+		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::wstring & s) noexcept {
+		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::wstring_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u16string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u32string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_search(Range && range) noexcept {
+		return fast_table_search(std::begin(range), std::end(range));
+	}
 };
 
 template <typename RE> regular_expression(RE) -> regular_expression<RE>;
@@ -7123,6 +7317,20 @@ template <typename RE> struct fast_regex_search_t {
 	}
 };
 
+template <typename RE> struct fast_table_regex_match_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.fast_table_match(std::forward<Args>(args)...);
+	}
+};
+
+template <typename RE> struct fast_table_regex_search_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.fast_table_search(std::forward<Args>(args)...);
+	}
+};
+
 #if __cpp_nontype_template_parameter_class
 
 template <auto input> struct regex_builder {
@@ -7140,6 +7348,10 @@ template <ctll::fixed_string input> static constexpr inline auto fast_match = fa
 
 template <ctll::fixed_string input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
 
+template <ctll::fixed_string input> static constexpr inline auto fast_table_match = fast_table_regex_match_t<typename regex_builder<input>::type>();
+
+template <ctll::fixed_string input> static constexpr inline auto fast_table_search = fast_table_regex_search_t<typename regex_builder<input>::type>();
+
 #else
 
 template <const auto & input> struct regex_builder {
@@ -7155,6 +7367,10 @@ template <const auto &input> static constexpr inline auto search = regex_search_
 template <const auto &input> static constexpr inline auto fast_match = fast_regex_match_t<typename regex_builder<input>::type>();
 
 template <const auto &input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
+
+template <const auto &input> static constexpr inline auto fast_table_match = fast_table_regex_match_t<typename regex_builder<input>::type>();
+
+template <const auto &input> static constexpr inline auto fast_table_search = fast_table_regex_search_t<typename regex_builder<input>::type>();
 
 #endif
 

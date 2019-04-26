@@ -72,12 +72,15 @@ template <typename Fa> void my_debug(const Fa & fa) {
 //[[maybe_unused]] static constexpr auto value4 = ctfa::determinize<ctfa::any_star, value3, ctfa::any_star>;
 //[[maybe_unused]] static constexpr auto value5 = ctfa::minimize<value4>;
 [[maybe_unused]] static constexpr auto value6 = ctfa::minimize<ctre::translate_dfa(CTRE_GEN("hi|[a-z]{4}"))>;
-[[maybe_unused]] static constexpr auto value7 = ctfa::minimize<ctre::translate_dfa(CTRE_GEN("[^a-z]"))>;
+[[maybe_unused]] static constexpr auto value7 = ctfa::minimize<ctre::translate_dfa(CTRE_GEN("hi|[a-z]{4}"))>;
 
-static constexpr std::string_view subject = "hana";
+static constexpr std::string_view subject = "hanABCDa";
 
-static_assert(ctre::fast_match_re(subject.begin(), subject.end(), CTRE_GEN("hi|[a-z]{4}")));
+//static_assert(ctre::fast_match_re(subject.begin(), subject.end(), CTRE_GEN("ABCD")));
+//static_assert(ctre::fast_table_match_re(subject.begin(), subject.end(), CTRE_GEN("hi|[a-z]{4}")));
+
 
 int main() {
 	my_debug(value7);
+	ctre::fast_table_search_re(subject.begin(), subject.end(), CTRE_GEN("ABCD"));
 }

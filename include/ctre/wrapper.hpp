@@ -172,6 +172,78 @@ template <typename RE> struct regular_expression {
 		return fast_search(std::begin(range), std::end(range));
 	}
 	
+	
+	
+	
+	
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_match_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_table_match_re(begin, end, RE());
+	}
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_search_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_table_search_re(begin, end, RE());
+	}
+
+
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_match(Iterator begin, Iterator end) noexcept {
+		return fast_table_match_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const char * s) noexcept {
+		return fast_table_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const wchar_t * s) noexcept {
+		return fast_table_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::string & s) noexcept {
+		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::wstring & s) noexcept {
+		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::wstring_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u16string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u32string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_match(Range && range) noexcept {
+		return fast_table_match(std::begin(range), std::end(range));
+	}
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_search(Iterator begin, Iterator end) noexcept {
+		return fast_table_search_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const char * s) noexcept {
+		return fast_table_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const wchar_t * s) noexcept {
+		return fast_table_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::string & s) noexcept {
+		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::wstring & s) noexcept {
+		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::wstring_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u16string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u32string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_search(Range && range) noexcept {
+		return fast_table_search(std::begin(range), std::end(range));
+	}
 };
 
 template <typename RE> regular_expression(RE) -> regular_expression<RE>;

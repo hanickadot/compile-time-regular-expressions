@@ -1,1 +1,1 @@
-#define PATTERN "[a-fA-F]{8,16}?"
+#define PATTERN "ABCD|DEFGH|EFGHI|A{4,}"

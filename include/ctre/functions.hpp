@@ -72,6 +72,20 @@ template <typename RE> struct fast_regex_search_t {
 	}
 };
 
+template <typename RE> struct fast_table_regex_match_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.fast_table_match(std::forward<Args>(args)...);
+	}
+};
+
+template <typename RE> struct fast_table_regex_search_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.fast_table_search(std::forward<Args>(args)...);
+	}
+};
+
 #if __cpp_nontype_template_parameter_class
 
 template <auto input> struct regex_builder {
@@ -89,6 +103,10 @@ template <ctll::fixed_string input> static constexpr inline auto fast_match = fa
 
 template <ctll::fixed_string input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
 
+template <ctll::fixed_string input> static constexpr inline auto fast_table_match = fast_table_regex_match_t<typename regex_builder<input>::type>();
+
+template <ctll::fixed_string input> static constexpr inline auto fast_table_search = fast_table_regex_search_t<typename regex_builder<input>::type>();
+
 
 #else
 
@@ -105,6 +123,10 @@ template <const auto &input> static constexpr inline auto search = regex_search_
 template <const auto &input> static constexpr inline auto fast_match = fast_regex_match_t<typename regex_builder<input>::type>();
 
 template <const auto &input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
+
+template <const auto &input> static constexpr inline auto fast_table_match = fast_table_regex_match_t<typename regex_builder<input>::type>();
+
+template <const auto &input> static constexpr inline auto fast_table_search = fast_table_regex_search_t<typename regex_builder<input>::type>();
 
 #endif
 
