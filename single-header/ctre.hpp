@@ -3500,15 +3500,6 @@ template <size_t Transitions, size_t FinalStates> struct finite_automaton {
 	}
 };
 
-template <const auto & Fa, typename TransitionCB, typename FinalCB> void debug(TransitionCB && tran, FinalCB && final) {
-	for (const auto & t: Fa.transitions) {
-		tran(t.source, t.target, t.cond, Fa.is_final(t.source));
-	}
-	for (const auto & f: Fa.final_states) {
-		if (Fa.transitions.find(f) == Fa.transitions.end()) final(f);
-	}
-}
-
 template <typename F> struct filtered_out {
 	F fa;
 	size_t transitions;
@@ -4111,15 +4102,6 @@ template <size_t Transitions, size_t FinalStates> struct finite_automaton {
 		return final_states == rhs.final_states && transitions == rhs.transitions;
 	}
 };
-
-template <const auto & Fa, typename TransitionCB, typename FinalCB> void debug(TransitionCB && tran, FinalCB && final) {
-	for (const auto & t: Fa.transitions) {
-		tran(t.source, t.target, t.cond, Fa.is_final(t.source));
-	}
-	for (const auto & f: Fa.final_states) {
-		if (Fa.transitions.find(f) == Fa.transitions.end()) final(f);
-	}
-}
 
 template <typename F> struct filtered_out {
 	F fa;
@@ -5287,15 +5269,6 @@ template <size_t Transitions, size_t FinalStates> struct finite_automaton {
 		return final_states == rhs.final_states && transitions == rhs.transitions;
 	}
 };
-
-template <const auto & Fa, typename TransitionCB, typename FinalCB> void debug(TransitionCB && tran, FinalCB && final) {
-	for (const auto & t: Fa.transitions) {
-		tran(t.source, t.target, t.cond, Fa.is_final(t.source));
-	}
-	for (const auto & f: Fa.final_states) {
-		if (Fa.transitions.find(f) == Fa.transitions.end()) final(f);
-	}
-}
 
 template <typename F> struct filtered_out {
 	F fa;
@@ -6477,7 +6450,7 @@ namespace ctfa {
 		
 		using index_type = uint16_t;
 		
-		using char_type = char;
+		using char_type = char32_t;
 	
 		struct jump_extended {
 			index_type source;
@@ -6553,20 +6526,35 @@ namespace ctfa {
 			index_type current = state;
 			
 			while (true) {
-				if (end == it) while (true) {
-					const auto & jump = jump_table[state++];
-					if (~jump.target) return jump.low;
-					else continue;
+				if (end == it) {
+					//std::cout << "hit end == it => ";
+					while (true) {
+						const auto & jump = jump_table[state++];
+						if (~jump.target) {
+							//std::cout << (jump.low ? "ACCEPT\n" : "REJECT\n");
+							return jump.low;
+						}
+						else continue;
+					}
 				}
 				
+				//std::cout << "current = " << current << ", state = " << state; 
 				const auto & jump = jump_table[state++];
+				//std::cout << ", target = " << jump.target << "\n";
 				
-				if (jump.source != current) return false;
+				if (jump.source != current) {
+					//std::cout << " end of state => REJECT";
+					return false;
+				}
 				
 				// the final mark can't be matched anyway
-				if ((char_type(jump.low) <= *it) && (*it <= char_type(jump.high))) {
+				//std::cout << jump.low << " <= it ( " << unsigned(*it) << ") <= " << jump.high << "\n";
+				if ((jump.low <= *it) && (*it <= jump.high)) {
+					//std::cout << " match char " << *it << "\n";
 					current = state = jump.target;
 					it++;
+				} else {
+					//std::cout << " ... \n";
 				}
 			}
 		}
