@@ -4,6 +4,7 @@
 #include <utility>
 #include <cstddef>
 #include <string_view>
+#include <cstdint>
 
 namespace ctll {
 
