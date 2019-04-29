@@ -157,13 +157,13 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<capture_with_name<Id, 
 }
 
 // backreference
-template <typename... Content, size_t Id, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<back_reference<Id, Seq...>, Tail...>) noexcept {
+template <typename... Content, size_t Id, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<back_reference<Id>, Tail...>) noexcept {
 	return ctll::list<can_be_anything>{};
 }
 
-template <typename... Content, typename Name, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<back_reference_with_name<Name, Seq...>, Tail...>) noexcept {
+template <typename... Content, typename Name, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<back_reference_with_name<Name>, Tail...>) noexcept {
 	return ctll::list<can_be_anything>{};
 }
 
@@ -368,6 +368,10 @@ public:
 				return true;
 			} else if (r.low <= high && high <= r.high) {
 				return true;
+			} else if (low <= r.low && r.low <= high) {
+				return true;
+			} else if (low <= r.high && r.high <= high) {
+				return true;
 			}
 		}
 		return false;
@@ -381,7 +385,7 @@ public:
 		return check(A,B);
 	}
 	constexpr bool check(can_be_anything) {
-		return check(std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max());
+		return used > 0;
 	}
 	template <typename... Content> constexpr bool check(ctre::negative_set<Content...> nset) {
 		bool collision = false;
