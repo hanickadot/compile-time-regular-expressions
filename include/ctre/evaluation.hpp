@@ -288,8 +288,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		}
 	}
 	
-	auto f_inner = first(ctll::list<>{}, ctll::list<Content...>{});
-	auto f_outer = first(ctll::list<>{}, ctll::list<Tail...>{});
+	//auto f_inner = first(ctll::list<>{}, ctll::list<Content...>{});
+	//auto f_outer = first(ctll::list<>{}, ctll::list<Tail...>{});
 	
 	return evaluate_recursive(i, begin, current, end, captures, stack);
 }
