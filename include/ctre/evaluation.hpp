@@ -274,24 +274,31 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, assert_end, Tail...>());
 }
 
+template <typename... T> struct identify_type;
+
 // (greedy) repeat 
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
-	// A..B
-	size_t i{0};
-	for (; i < A && (A != 0); ++i) {
-		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			captures = inner_result.unmatch();
-			current = inner_result.get_end_position();
-		} else {
-			return not_matched;
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+	// check if it can be optimized
+	if constexpr (collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
+		// A..B
+		size_t i{0};
+		for (; i < A && (A != 0); ++i) {
+			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+				captures = inner_result.unmatch();
+				current = inner_result.get_end_position();
+			} else {
+				return not_matched;
+			}
 		}
+	
+		return evaluate_recursive(i, begin, current, end, captures, stack);
+	} else {
+		// if there is no collision we can go possessive
+		return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
 	}
 	
-	//auto f_inner = first(ctll::list<>{}, ctll::list<Content...>{});
-	//auto f_outer = first(ctll::list<>{}, ctll::list<Tail...>{});
-	
-	return evaluate_recursive(i, begin, current, end, captures, stack);
+
 }
 
 // repeat lazy_star
@@ -417,8 +424,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // property matching
-
-// TODO implement it in MASTER branch
 
 
 }
