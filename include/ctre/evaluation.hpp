@@ -7,6 +7,7 @@
 #include "utility.hpp"
 #include "return_type.hpp"
 #include "find_captures.hpp"
+#include "first.hpp"
 
 namespace ctre {
 
@@ -287,6 +288,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		}
 	}
 	
+	auto f_inner = first(ctll::list<>{}, ctll::list<Content...>{});
+	auto f_outer = first(ctll::list<>{}, ctll::list<Tail...>{});
+	
 	return evaluate_recursive(i, begin, current, end, captures, stack);
 }
 
@@ -413,6 +417,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // property matching
+
+// TODO implement it in MASTER branch
 
 
 }
