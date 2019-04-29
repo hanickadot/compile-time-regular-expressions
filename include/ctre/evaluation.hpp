@@ -263,6 +263,16 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
 }	
 
+
+// (gready) repeat optimization
+// basic one, if you are at the end of RE, just change it into possessive
+// TODO do the same if there is no collision with rest of the RE
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, accept, Tail...> stack) {
+	return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, accept, Tail...>());
+}
+
+// (greedy) repeat 
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 	// A..B
