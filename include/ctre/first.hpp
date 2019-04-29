@@ -348,10 +348,16 @@ template <size_t Capacity> class point_set {
 			auto out = it;
 			auto e = end();
 			while (it != e) {
-				std::swap(*it, obj);
+				auto tmp = *it;
+				*it = obj;
+				obj = tmp;
+				//std::swap(*it, obj);
 				it++;
 			}
-			std::swap(*it, obj);
+			auto tmp = *it;
+			*it = obj;
+			obj = tmp;
+			//std::swap(*it, obj);
 			
 			used++;
 			return out;
