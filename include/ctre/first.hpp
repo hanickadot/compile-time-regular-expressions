@@ -230,16 +230,18 @@ constexpr auto first(ctll::list<Content...>, ctll::list<any, Tail...>) noexcept 
 }
 
 // negative
-//template <typename... Content, typename... SetContent, typename... Tail> 
-//constexpr auto first(ctll::list<Content...> l, ctll::list<negate<SetContent...>, Tail...>) noexcept {
-//	return ctll::list<Content..., negative_set<SetContent...>>{};
-//}
-//
-//template <typename... Content, typename... SetContent, typename... Tail> 
-//constexpr auto first(ctll::list<Content...> l, ctll::list<negative_set<SetContent...>, Tail...>) noexcept {
-//	return ctll::list<Content..., negative_set<SetContent...>>{};
-//}
+template <typename... Content, typename... SetContent, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<negate<SetContent...>, Tail...>) noexcept {
+	return ctll::list<Content..., negative_set<SetContent...>>{};
+}
 
+template <typename... Content, typename... SetContent, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<negative_set<SetContent...>, Tail...>) noexcept {
+	return ctll::list<Content..., negative_set<SetContent...>>{};
+}
+
+
+// user facing interface
 template <typename... Content> constexpr auto calculate_first(Content...) noexcept {
 	return first(ctll::list<>{}, ctll::list<Content...>{});
 }
