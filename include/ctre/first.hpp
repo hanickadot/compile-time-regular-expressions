@@ -304,8 +304,10 @@ template <size_t Capacity> class point_set {
 		constexpr bool operator<(const point & rhs) const {
 			return low < rhs.low;
 		}
+		constexpr point() { }
+		constexpr point(int64_t l, int64_t h): low{l}, high{h} { }
 	};
-	point points[Capacity+1];
+	point points[Capacity+1]{};
 	size_t used{0};
 	constexpr point * begin() {
 		return points;
@@ -364,6 +366,7 @@ template <size_t Capacity> class point_set {
 		}
 	}
 public:
+	constexpr point_set() { }
 	constexpr void insert(int64_t low, int64_t high) {
 		insert_point(low, high);
 		//insert_point(high, low);
