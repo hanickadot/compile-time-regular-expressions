@@ -2765,12 +2765,12 @@ constexpr auto first(ctll::list<Content...>, ctll::list<any, Tail...>) noexcept 
 
 // negative
 template <typename... Content, typename... SetContent, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<negate<SetContent...>, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...>, ctll::list<negate<SetContent...>, Tail...>) noexcept {
 	return ctll::list<Content..., negative_set<SetContent...>>{};
 }
 
 template <typename... Content, typename... SetContent, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<negative_set<SetContent...>, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...>, ctll::list<negative_set<SetContent...>, Tail...>) noexcept {
 	return ctll::list<Content..., negative_set<SetContent...>>{};
 }
 
@@ -2827,7 +2827,7 @@ template <auto Head, auto... Tail, typename CB> constexpr int64_t negative_helpe
 	return negative_helper(ctre::enumeration<Tail...>{}, cb, nstart);
 }
 
-template <typename CB> constexpr int64_t negative_helper(ctre::enumeration<>, CB & cb, int64_t start) {
+template <typename CB> constexpr int64_t negative_helper(ctre::enumeration<>, CB &, int64_t start) {
 	return start;
 }
 
