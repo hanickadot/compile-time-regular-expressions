@@ -16,7 +16,7 @@ matrix:
   - os: linux
     compiler: clang
     env:
-      - COMPILER=clang++-7.0
+      - COMPILER=clang++-7
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
