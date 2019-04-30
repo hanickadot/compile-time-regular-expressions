@@ -430,7 +430,8 @@ public:
 		return collision;
 	}
 	template <auto... V> constexpr bool check(ctre::enumeration<V...>) {
-		return (check(character<V>{}) || ... || false);
+		
+		return (check(V,V) || ... || false);
 	}
 	template <typename... Content> constexpr bool check(ctll::list<Content...>) {
 		return (check(Content{}) || ... || false);
