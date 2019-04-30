@@ -140,6 +140,8 @@ static_assert(CTRE_CREATE("^a{2,5}ab").match("aaaaab"sv));
 static_assert(CTRE_CREATE("^a{2,5}ab").match("aaaaaab"sv));
 static_assert(!CTRE_CREATE("^a{2,5}ab").match("aaaaaaab"sv));
 
+static_assert(CTRE_CREATE("[a-z]+[^a-z]+").match("abcdef123456"sv));
+
 static_assert(CTRE_CREATE("(abc)").match("abc"sv));
 static_assert(CTRE_CREATE("(abc)+").match("abc"sv));
 static_assert(CTRE_CREATE("(abc)+").match("abcabc"sv));

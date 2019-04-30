@@ -19,7 +19,7 @@ endif
 endif
 
 override CXXFLAGS := $(CXXFLAGS) $(CXXFLAGS_ADDITIONAL) $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra 
-LDFLAGS := -lre2 -lboost_regex -lpcre2-8 
+LDFLAGS := 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
 TRUE_TARGETS := $(TARGETS:%.cpp=%)
