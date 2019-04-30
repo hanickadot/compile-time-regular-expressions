@@ -271,7 +271,9 @@ template <typename... T> struct identify_type;
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 	// check if it can be optimized
+#ifndef CTRE_DISABLE_GREEDY_OPT
 	if constexpr (collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
+#endif
 		// A..B
 		size_t i{0};
 		for (; i < A && (A != 0); ++i) {
@@ -284,11 +286,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		}
 	
 		return evaluate_recursive(i, begin, current, end, captures, stack);
+#ifndef CTRE_DISABLE_GREEDY_OPT
 	} else {
 		// if there is no collision we can go possessive
 		return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
 	}
-	
+#endif
 
 }
 

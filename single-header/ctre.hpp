@@ -2831,6 +2831,15 @@ template <typename CB> constexpr int64_t negative_helper(ctre::enumeration<>, CB
 	return start;
 }
 
+template <typename CB> constexpr int64_t negative_helper(ctre::set<>, CB &, int64_t start) {
+	return start;
+}
+
+template <typename Head, typename... Rest, typename CB> constexpr int64_t negative_helper(ctre::set<Head, Rest...>, CB & cb, int64_t start) {
+	start = negative_helper(Head{}, cb, start);
+	return negative_helper(ctre::set<Rest...>{}, cb, start);
+}
+
 template <typename Head, typename... Rest, typename CB> constexpr void negative_helper(ctre::negative_set<Head, Rest...>, CB && cb, int64_t start = std::numeric_limits<int64_t>::min()) {
 	start = negative_helper(Head{}, cb, start);
 	negative_helper(ctre::negative_set<Rest...>{}, std::forward<CB>(cb), start);
@@ -3252,7 +3261,9 @@ template <typename... T> struct identify_type;
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 	// check if it can be optimized
+#ifndef CTRE_DISABLE_GREEDY_OPT
 	if constexpr (collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
+#endif
 		// A..B
 		size_t i{0};
 		for (; i < A && (A != 0); ++i) {
@@ -3265,11 +3276,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		}
 	
 		return evaluate_recursive(i, begin, current, end, captures, stack);
+#ifndef CTRE_DISABLE_GREEDY_OPT
 	} else {
 		// if there is no collision we can go possessive
 		return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
 	}
-	
+#endif
 
 }
 
