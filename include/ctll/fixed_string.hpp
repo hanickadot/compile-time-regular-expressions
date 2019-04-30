@@ -174,7 +174,7 @@ public:
 template <> class fixed_string<0> {
 	static constexpr char32_t __empty[1] = {0};
 public:
-	template <typename T> constexpr fixed_string(const T (&)[]) noexcept {
+	template <typename T> constexpr fixed_string(const T *) noexcept {
 		
 	}
 	constexpr fixed_string(std::initializer_list<char32_t>) noexcept {

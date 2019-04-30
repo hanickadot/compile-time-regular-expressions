@@ -55,26 +55,26 @@ static_assert(CTRE_CREATE(U"\\u20AC").match(U"€"));
 
 // UTS #18 Level 1: RL1.2: Properties
 // TODO only \p and \P is not supported
-static_assert(CTRE_SYNTAX(U"\\p{L}"));
-static_assert(CTRE_SYNTAX(U"\\p{Letter}"));
-static_assert(CTRE_CREATE(U"\\p{Letter}+").match(U"abcDEF"));
-static_assert(CTRE_CREATE(U"\\p{Ll}+").match(U"abcdef"));
-static_assert(CTRE_CREATE(U"\\p{Lu}+").match(U"ABCD"));
-static_assert(!CTRE_CREATE(U"\\p{Lu}+").match(U"ABcD"));
-static_assert(CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890"));
-static_assert(!CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890h"));
-static_assert(CTRE_CREATE(U"\\p{script=Latin}+").match(U"abcd"));
-static_assert(CTRE_CREATE(U"\\p{script=Greek}+").match(U"βΩ"));
-static_assert(!CTRE_CREATE(U"\\p{script=Latin}+").match(U"βΩ"));
-static_assert(!CTRE_CREATE(U"\\p{script=Greek}+").match(U"abcd"));
-static_assert(CTRE_CREATE(U"\\p{emoji}+").match(U"🤪😍"));
-static_assert(CTRE_SYNTAX(U"\\p{sc=greek}+?\\p{Emoji}\\p{sc=greek}+?"));
-static_assert(CTRE_CREATE(U"\\p{sc=greek}+?\\p{Emoji}").match(U"αΩ😍"));
-static_assert(CTRE_CREATE(U"\\p{sc=greek}+?\\p{Emoji}\\p{sc=greek}+?").match(U"α😍Ω"));
-static_assert(CTRE_SYNTAX(U"\\p{age=10.0}"));
-static_assert(CTRE_CREATE(U"\\p{age=10.0}").match(U"🤩"));
-static_assert(CTRE_CREATE(U"\\p{block=misc_pictographs}").match(U"🎉"));
-static_assert(CTRE_CREATE(U"\\p{scx=Hira}+").match(U"ゖ"));
+// static_assert(CTRE_SYNTAX(U"\\p{L}"));
+// static_assert(CTRE_SYNTAX(U"\\p{Letter}"));
+// static_assert(CTRE_CREATE(U"\\p{Letter}+").match(U"abcDEF"));
+// static_assert(CTRE_CREATE(U"\\p{Ll}+").match(U"abcdef"));
+// static_assert(CTRE_CREATE(U"\\p{Lu}+").match(U"ABCD"));
+// static_assert(!CTRE_CREATE(U"\\p{Lu}+").match(U"ABcD"));
+// static_assert(CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890"));
+// static_assert(!CTRE_CREATE(U"\\p{Nd}+").match(U"1234567890h"));
+// static_assert(CTRE_CREATE(U"\\p{script=Latin}+").match(U"abcd"));
+// static_assert(CTRE_CREATE(U"\\p{script=Greek}+").match(U"βΩ"));
+// static_assert(!CTRE_CREATE(U"\\p{script=Latin}+").match(U"βΩ"));
+// static_assert(!CTRE_CREATE(U"\\p{script=Greek}+").match(U"abcd"));
+// static_assert(CTRE_CREATE(U"\\p{emoji}+").match(U"🤪😍"));
+// static_assert(CTRE_SYNTAX(U"\\p{sc=greek}+?\\p{Emoji}\\p{sc=greek}+?"));
+// static_assert(CTRE_CREATE(U"\\p{sc=greek}+?\\p{Emoji}").match(U"αΩ😍"));
+// static_assert(CTRE_CREATE(U"\\p{sc=greek}+?\\p{Emoji}\\p{sc=greek}+?").match(U"α😍Ω"));
+// static_assert(CTRE_SYNTAX(U"\\p{age=10.0}"));
+// static_assert(CTRE_CREATE(U"\\p{age=10.0}").match(U"🤩"));
+// static_assert(CTRE_CREATE(U"\\p{block=misc_pictographs}").match(U"🎉"));
+// static_assert(CTRE_CREATE(U"\\p{scx=Hira}+").match(U"ゖ"));
 
 //identify<decltype(ctll::fixed_string{u8"ěščř"})> a;
 //identify<decltype(CTRE_CREATE(u8"ěščř"))> i;

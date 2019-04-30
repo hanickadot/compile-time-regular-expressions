@@ -1,3 +1,0 @@
-[submodule "include/ext-unicode-db"]
-	path = include/ext-unicode-db
-	url = https://github.com/cor3ntin/ext-unicode-db

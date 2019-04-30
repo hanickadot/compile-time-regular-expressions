@@ -168,12 +168,22 @@ template <> struct captures<> {
 	template <typename> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		return false;
 	}
+#if __cpp_nontype_template_parameter_class
+	template <ctll::fixed_string> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+		return false;
+	}
+#endif
 	template <size_t> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
 	template <typename> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
+#if __cpp_nontype_template_parameter_class
+	template <ctll::fixed_string> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
+		return capture_not_exists;
+	}
+#endif
 };
 
 template <typename Iterator, typename... Captures> class regex_results {

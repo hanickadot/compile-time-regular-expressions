@@ -43,8 +43,9 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 
 ## Supported compilers
 
-* clang 5.0+ (template UDL, C++17 syntax)
-* gcc 7.2+ (template UDL, C++17 syntax)
+* clang 6.0+ (template UDL, C++17 syntax)
+* xcode clang 10.0+ (template UDL, C++17 syntax)
+* gcc 7.4+ (template UDL, C++17 syntax)
 * gcc 9.0+ (C++17 & C++20 cNTTP syntax)
 * MSVC 15.8.8+ (C++17 syntax only)
 
@@ -75,9 +76,7 @@ constexpr auto match(std::string_view sv) noexcept {
 
 #### C++20 syntax
 
-Currently only compiler which supports cNTTP syntax `ctre::match<PATTERN>(subject)` is GCC 9+. Use `-DEXPERIMENTAL_GCC_9` flag to disable trampolining (which crash compiler on ICE).
-
-Also there is [known bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88534) in current GCC 9 with debug symbols and cNTTP, you can avoid it if you disable generating debug symbols (`-g0`). 
+Currently only compiler which supports cNTTP syntax `ctre::match<PATTERN>(subject)` is GCC 9+.
 
 ```c++
 constexpr auto match(std::string_view sv) noexcept {
