@@ -202,6 +202,17 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<select<>, Tail...>) no
 }
 
 
+// unicode property => anything
+template <typename... Content, auto Property, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<Property>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
+}
+
+template <typename... Content, auto Property, auto Value, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<Property, Value>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
+}
+
 // characters / sets
 
 template <typename... Content, auto V, typename... Tail> 
