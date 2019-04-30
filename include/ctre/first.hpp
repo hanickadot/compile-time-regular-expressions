@@ -252,9 +252,15 @@ template <typename... Content> constexpr size_t calculate_size_of_first(ctre::ne
 	return 1 + 1 * sizeof...(Content);
 }
 
+template <auto... V> constexpr size_t calculate_size_of_first(ctre::enumeration<V...>) {
+	return sizeof...(V);
+}
+
 constexpr size_t calculate_size_of_first(...) {
 	return 1;
 }
+
+
 
 template <typename... Content> constexpr size_t calculate_size_of_first(ctll::list<Content...>) {
 	return (calculate_size_of_first(Content{}) + ... + 0);
@@ -285,6 +291,15 @@ template <auto A, auto B, typename CB> constexpr int64_t negative_helper(ctre::c
 		return B;
 	}
 }  
+
+template <auto Head, auto... Tail, typename CB> constexpr int64_t negative_helper(ctre::enumeration<Head, Tail...>, CB & cb, int64_t start) {
+	size_t nstart = negative_helper(ctre::character<Head>{}, cb, start);
+	return negative_helper(ctre::enumeration<Tail...>{}, cb, nstart);
+}
+
+template <typename CB> constexpr int64_t negative_helper(ctre::enumeration<>, CB & cb, int64_t start) {
+	return start;
+}
 
 template <typename Head, typename... Rest, typename CB> constexpr void negative_helper(ctre::negative_set<Head, Rest...>, CB && cb, int64_t start = std::numeric_limits<int64_t>::min()) {
 	start = negative_helper(Head{}, cb, start);
@@ -405,6 +420,9 @@ public:
 		});
 		return collision;
 	}
+	template <auto... V> constexpr bool check(ctre::enumeration<V...>) {
+		return (check(character<V>{}) || ... || false);
+	}
 	template <typename... Content> constexpr bool check(ctll::list<Content...>) {
 		return (check(Content{}) || ... || false);
 	}
@@ -423,6 +441,9 @@ public:
 		negative_helper(nset, [&](int64_t low, int64_t high){
 			this->insert(low, high);
 		});
+	}
+	template <auto... V> constexpr void populate(ctre::enumeration<V...>) {
+		return (insert(V,V), ...);
 	}
 	template <typename... Content> constexpr void populate(ctll::list<Content...>) {
 		(populate(Content{}), ...);
