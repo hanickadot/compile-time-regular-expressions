@@ -301,6 +301,15 @@ template <typename CB> constexpr int64_t negative_helper(ctre::enumeration<>, CB
 	return start;
 }
 
+template <typename CB> constexpr int64_t negative_helper(ctre::set<>, CB &, int64_t start) {
+	return start;
+}
+
+template <typename Head, typename... Rest, typename CB> constexpr int64_t negative_helper(ctre::set<Head, Rest...>, CB & cb, int64_t start) {
+	start = negative_helper(Head{}, cb, start);
+	return negative_helper(ctre::set<Rest...>{}, cb, start);
+}
+
 template <typename Head, typename... Rest, typename CB> constexpr void negative_helper(ctre::negative_set<Head, Rest...>, CB && cb, int64_t start = std::numeric_limits<int64_t>::min()) {
 	start = negative_helper(Head{}, cb, start);
 	negative_helper(ctre::negative_set<Rest...>{}, std::forward<CB>(cb), start);
