@@ -2823,7 +2823,7 @@ template <auto A, auto B, typename CB> constexpr int64_t negative_helper(ctre::c
 }  
 
 template <auto Head, auto... Tail, typename CB> constexpr int64_t negative_helper(ctre::enumeration<Head, Tail...>, CB & cb, int64_t start) {
-	size_t nstart = negative_helper(ctre::character<Head>{}, cb, start);
+	int64_t nstart = negative_helper(ctre::character<Head>{}, cb, start);
 	return negative_helper(ctre::enumeration<Tail...>{}, cb, nstart);
 }
 
