@@ -43,7 +43,8 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 
 ## Supported compilers
 
-* clang 7.0+ (template UDL, C++17 syntax)
+* clang 6.0+ (template UDL, C++17 syntax)
+* xcode clang 10.0+ (template UDL, C++17 syntax)
 * gcc 7.4+ (template UDL, C++17 syntax)
 * gcc 9.0+ (C++17 & C++20 cNTTP syntax)
 * MSVC 15.8.8+ (C++17 syntax only)
