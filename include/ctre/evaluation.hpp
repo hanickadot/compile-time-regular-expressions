@@ -243,6 +243,25 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 }
 
+// possessive repeat
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end,
+	const match_type mtype, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
+
+	for (size_t i{0}; (i < B) || (B == 0); ++i) {
+		// try as many of inner as possible and then try outer once
+		if (auto inner_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			captures = inner_result.unmatch();
+			current = inner_result.get_end_position();
+		} else {
+			if (i < A && (A != 0)) return not_matched;
+			else return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
+		}
+	}
+	
+	return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
+}
+
 // (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end,
@@ -267,7 +286,45 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 	return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
 }	
 
+// (gready) repeat optimization
+// basic one, if you are at the end of RE, just change it into possessive
+// TODO do the same if there is no collision with rest of the RE
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end,
+	match_type mtype, R captures, ctll::list<repeat<A,B,Content...>,assert_end, Tail...>) {
+	return evaluate(begin, current, end, mtype, captures, ctll::list<possessive_repeat<A,B,Content...>, assert_end, Tail...>());
+}
+
 template <typename... T> struct identify_type;
+
+// (greedy) repeat 
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end,
+	const match_type mtype, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+	// check if it can be optimized
+#ifndef CTRE_DISABLE_GREEDY_OPT
+	if constexpr (collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
+#endif
+		// A..B
+		size_t i{0};
+		for (; i < A && (A != 0); ++i) {
+			if (auto inner_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+				captures = inner_result.unmatch();
+				current = inner_result.get_end_position();
+			} else {
+				return not_matched;
+			}
+		}
+	
+		return evaluate_recursive(i, begin, current, end, mtype, captures, stack);
+#ifndef CTRE_DISABLE_GREEDY_OPT
+	} else {
+		// if there is no collision we can go possessive
+		return evaluate(begin, current, end, mtype, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
+	}
+#endif
+
+}
 
 // repeat lazy_star
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
