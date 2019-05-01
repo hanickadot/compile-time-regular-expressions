@@ -7,6 +7,7 @@
 #include "utility.hpp"
 #include "return_type.hpp"
 #include "find_captures.hpp"
+#include "first.hpp"
 
 namespace ctre {
 	enum match_type { full_match, partial_match };
@@ -242,33 +243,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 }
 
-// possessive repeat
-template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end,
-	const match_type mtype, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
-	// A..B
-	size_t i{0};
-	for (; i < A && (A != 0); ++i) {
-		if (auto inner_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			captures = inner_result.unmatch();
-			current = inner_result.get_end_position();
-		} else {
-			return not_matched;
-		}
-	}
-	
-	for (; (i < B) || (B == 0); ++i) {
-		// try as many of inner as possible and then try outer once
-		if (auto inner_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			current = inner_result.get_end_position();
-		} else {
-			return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
-		}
-	}
-	
-	return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
-}
-
 // (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end,
@@ -293,22 +267,7 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 	return evaluate(begin, current, end, mtype, captures, ctll::list<Tail...>());
 }	
 
-template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end,
-	const match_type mtype, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
-	// A..B
-	size_t i{0};
-	for (; i < A && (A != 0); ++i) {
-		if (auto inner_result = evaluate(begin, current, end, mtype, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			captures = inner_result.unmatch();
-			current = inner_result.get_end_position();
-		} else {
-			return not_matched;
-		}
-	}
-	
-	return evaluate_recursive(i, begin, current, end, mtype, captures, stack);
-}
+template <typename... T> struct identify_type;
 
 // repeat lazy_star
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
