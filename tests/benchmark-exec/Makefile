@@ -22,7 +22,7 @@ endif
 
 OPTLEVEL := -Os
 
-CXXFLAGS := $(CXXFLAGS_ADDITIONAL) -std=c++2a -I../../include -Isrell_include -I/usr/local/Cellar/pcre2/10.32/include -I/usr/local/Cellar/boost/1.68.0_1/include -I/usr/local/Cellar/re2/20180801/include
+CXXFLAGS := $(CXXFLAGS_ADDITIONAL) -std=c++2a -I../../include -Isrell_include -I/usr/local/Cellar/pcre2/10.33/include -I/usr/local/Cellar/boost/1.69.0_2/include -I/usr/local/Cellar/re2/20180801/include
 LDFLAGS :=
 
 ctre_CXXFLAGS := 
@@ -39,11 +39,11 @@ boost_LDFLAGS := -lboost_regex
 boost_NAME := boost::regex
 
 pcre_CXXFLAGS := 
-pcre_LDFLAGS := -L/usr/local/Cellar/pcre2/10.32/lib -lpcre2-8
+pcre_LDFLAGS := -L/usr/local/Cellar/pcre2/10.33/lib -lpcre2-8
 pcre_NAME := PCRE2
 
 pcre-jit_CXXFLAGS :=
-pcre-jit_LDFLAGS := -L/usr/local/Cellar/pcre2/10.32/lib -lpcre2-8
+pcre-jit_LDFLAGS := -L/usr/local/Cellar/pcre2/10.33/lib -lpcre2-8
 pcre-jit_NAME := PCRE2 (jit)
 
 re2_CXXFLAGS :=
