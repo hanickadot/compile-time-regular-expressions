@@ -16,7 +16,7 @@ int main (int argc, char ** argv)
 	
 	auto match_data = pcre2_match_data_create_from_pattern(re, NULL);
 	
-	benchmark(argc, argv, [&] (std::string_view line) { 
+	benchmark(argc, argv, "PCRE", "#6998d8", [&] (std::string_view line) { 
 		return pcre2_match(re, reinterpret_cast<const unsigned char *>(line.data()), line.length(), 0, 0, match_data, mcontext) >= 0;
 	});
 	

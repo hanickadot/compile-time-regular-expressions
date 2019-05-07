@@ -2,7 +2,7 @@
 
 int main (int argc, char ** argv)
 {
-	benchmark(argc, argv, [] (auto) { return true; });
+	benchmark(argc, argv, "baseline", "#000000", [] (auto) { return true; });
 	
 	return 0;
 }

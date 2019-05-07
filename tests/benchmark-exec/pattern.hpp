@@ -1,1 +1,1 @@
-#define PATTERN "ABCD|DEFGH|EFGHI|A{4,}"
+#define PATTERN "ABCDE-[0-9]+"

@@ -4,7 +4,7 @@ int main (int argc, char ** argv)
 {
 	auto re = std::regex(PATTERN);
 	
-	benchmark(argc, argv, [&] (std::string_view line) { 
+	benchmark(argc, argv, "std", "#ff81c5", [&] (std::string_view line) { 
 		return std::regex_search(line.begin(), line.end(), re);
 	});
 }

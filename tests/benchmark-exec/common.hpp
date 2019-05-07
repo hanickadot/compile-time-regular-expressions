@@ -67,12 +67,21 @@ static std::vector<char> loadBlob(const char * fname) {
 	return {std::move(out), std::move(blob)};
 }
 
-template <typename CB> int benchmark_over_file(const char * fname, benchmark_mode mode, CB && cb, std::string_view app) {
+template <benchmark_mode mode, typename CB> int benchmark_over_file(const char * fname, CB && cb, std::string_view app, std::string_view color, std::string_view test_name) {
 	std::ios_base::sync_with_stdio(false);
 	try {
 		auto [lines, blob] = loadFile(fname);
 		
 		uint64_t count{0};
+		
+		for (auto line: lines) {
+			if (count > 1000) break;
+			if (cb(line)) {
+				count++;
+			}
+		}
+		
+		count = 0;
 		
 		std::cerr << "Start...\n" << std::flush;
 		
@@ -80,16 +89,49 @@ template <typename CB> int benchmark_over_file(const char * fname, benchmark_mod
 		
 		for (auto line: lines) {
 			if (cb(line)) {
-				if (mode == benchmark_mode::normal) std::cout << line << '\n';
+				if constexpr (mode == benchmark_mode::normal) std::cout << line << '\n';
 				count++;
 			}
 		}
 		
 		auto end = std::chrono::steady_clock::now();
 		
-		if (mode == benchmark_mode::benchmark) {
+		if constexpr (mode == benchmark_mode::benchmark) {
 			if (app.length()) {
-				std::cout << '"' << app << "\";" << count << ";" << '"' << PATTERN << "\";" << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "\n";
+				uint64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+				
+				std::ostringstream ss;
+				
+				if (ms > (1000*60)) {
+					uint64_t minutes = ms / (1000*60);
+					uint64_t seconds = (ms % (1000*60)) / 1000;
+					ss << minutes << "min " << seconds << "s";
+				} else if (ms > 10000) {
+					auto seconds = ms / 1000.0;
+					ss << seconds << "s";
+				} else {
+					ss << ms << "ms";
+				}
+				
+				uint64_t throughput = blob.size() / (ms / 1000.0);
+				
+				
+				std::ostringstream ss2;
+				
+				if (throughput > (1024*1024*1024)) {
+					ss2 << (throughput / (1024.0*1024.0*1024.0)) << " GiB/s";
+				} else if (throughput > (1024*1024)) {
+					ss2 << (throughput / (1024.0*1024.0)) << " MiB/s";
+				} else if (throughput > (1024)) {
+					ss2 << (throughput / (1024.0)) << " KiB/s";
+				} else {
+					ss2 << (throughput) << " B/s";
+				}
+				
+				std::string nice_time = std::move(ss).str();
+				
+				std::cout << '"' << app << "\"    " << ms << "    " << color << "    " << test_name << "    \"" << nice_time << "\"    " << count << "    " << throughput << "    \"" << ss2.str() << "\"\n";
+				
 			}
 		}
 		std::cerr << "Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms\n";
@@ -106,7 +148,7 @@ template <typename CB> int benchmark_over_file(const char * fname, benchmark_mod
 	}
 }
 
-template <typename CB> int benchmark(int argc, char ** argv, CB && cb) {
+template <typename CB> int benchmark(int argc, char ** argv, std::string_view appname, std::string_view color, CB && cb) {
 	if (argc == 0) {
 		std::cerr << "There are no arguments!\n";
 		return 3;
@@ -117,7 +159,8 @@ template <typename CB> int benchmark(int argc, char ** argv, CB && cb) {
 	bool off = false;
 	benchmark_mode mode{benchmark_mode::normal};
 	
-	std::string_view app = argv[0];
+	std::string_view app = appname;
+	std::string_view test_name = "unknown";
 	
 	if (argc >= 3) {
 		if (std::string_view(argv[2]) == "off") {
@@ -128,9 +171,18 @@ template <typename CB> int benchmark(int argc, char ** argv, CB && cb) {
 	}
 	
 	if (argc >= 4) {
-		app = std::string_view(argv[3]);
+		test_name = std::string_view(argv[3]);
 	}
 	
-	return benchmark_over_file(argv[1], mode, std::forward<CB>(cb), app);
+	
+	if (argc >= 3) {
+		if (std::string_view(argv[2]) == "off") {
+			return benchmark_over_file<benchmark_mode::off>(argv[1], std::forward<CB>(cb), app, color, test_name);
+		} else if (std::string_view(argv[2]) == "benchmark") {
+			return benchmark_over_file<benchmark_mode::benchmark>(argv[1], std::forward<CB>(cb), app, color, test_name);
+		}
+	}
+	
+	return benchmark_over_file<benchmark_mode::normal>(argv[1], std::forward<CB>(cb), app, color, test_name);
 }
 

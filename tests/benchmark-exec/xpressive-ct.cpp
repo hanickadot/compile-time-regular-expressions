@@ -3,14 +3,18 @@
 
 int main (int argc, char ** argv)
 {
+	// "ABCDE-[0-9]+"
 	// [a-z0-9]+?abc[0-9]
 	
 	using svregex = boost::xpressive::basic_regex<std::string_view::const_iterator>;
 	//svregex re = svregex::compile(PATTERN);
 	
-	svregex re = (-+boost::xpressive::alnum) >> 'a' >> 'b' >> 'c' >> boost::xpressive::digit;
+	//([A-Z0-9]|-)+?ABC-[0-9]
 	
-	benchmark(argc, argv, [&] (std::string_view line) { 
+	svregex re = (boost::xpressive::as_xpr('A')) >> 'B' >> 'C' >> 'D' >> 'E' >> '-' >> +(boost::xpressive::alnum);
+	//svregex re = (-+(boost::xpressive::alnum | '-')) >> 'A' >> 'B' >> 'C' >> '-' >> boost::xpressive::digit;
+	
+	benchmark(argc, argv, "xpressive (static)", "#81efff",[&] (std::string_view line) { 
 		return bool(boost::xpressive::regex_search(line, re));
 	});
 }
