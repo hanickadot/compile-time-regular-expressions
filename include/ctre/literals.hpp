@@ -7,6 +7,7 @@
 #include "wrapper.hpp"
 #include "id.hpp"
 
+#ifndef __EDG__
 
 namespace ctre {
 
@@ -121,5 +122,7 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 } // literals
 
 } // ctre
+
+#endif
 
 #endif
