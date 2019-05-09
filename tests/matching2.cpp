@@ -266,3 +266,9 @@ static_assert(CTRE_CREATE("[<>]+").match("><"sv));
 static_assert(CTRE_CREATE("<[a-z]+>").match("<aloha>"sv));
 static_assert(CTRE_CREATE("(<[a-z]+>)\\g{1}").match("<aloha><aloha>"sv));
 
+// issue #60
+static_assert(CTRE_CREATE("[^\\^]").match("a"sv));
+static_assert(CTRE_CREATE("[^^]").match("a"sv));
+static_assert(CTRE_CREATE("[\\-]").match("-"sv));
+static_assert(CTRE_CREATE("[-]").match("-"sv));
+static_assert(CTRE_CREATE("[\\--\\-]").match("-"sv));
