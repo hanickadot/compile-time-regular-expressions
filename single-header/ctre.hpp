@@ -3066,6 +3066,13 @@ template <typename... A, typename... B> constexpr bool collides(ctll::list<A...>
 
 #endif
 
+// remove me when MSVC fix the constexpr bug
+#ifdef _MSC_VER
+#ifndef CTRE_MSVC_GREEDY_WORKAROUND
+#define CTRE_MSVC_GREEDY_WORKAROUND
+#endif
+#endif
+
 namespace ctre {
 
 // calling with pattern prepare stack and triplet of iterators
@@ -3292,7 +3299,11 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+#else
 constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+#endif
 	if ((B == 0) || (i < B)) {
 		 
 		// a*ab
@@ -3303,12 +3314,23 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
 			//  return inner_result
 			// I tried to add all constructors to R but without any success 
+			#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+			evaluate_recursive(result, i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack);
+			if (result) {
+				return;
+			}
+			#else
 			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack)) {
 				return rec_result;
 			}
+			#endif
 		}
 	} 
+	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+	result = evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#else
 	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#endif
 }	
 
 // (gready) repeat optimization
@@ -3338,8 +3360,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 				return not_matched;
 			}
 		}
-	
+	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+		R result;
+		evaluate_recursive(result, i, begin, current, end, captures, stack);
+		return result;
+	#else
 		return evaluate_recursive(i, begin, current, end, captures, stack);
+	#endif
 #ifndef CTRE_DISABLE_GREEDY_OPT
 	} else {
 		// if there is no collision we can go possessive

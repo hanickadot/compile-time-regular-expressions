@@ -9,7 +9,7 @@ DESATOMAT := /www/root/desatomat/console/desatomat.php
 
 CPP_STANDARD := $(shell ./cpp-20-check.sh $(CXX))
 
-override CXXFLAGS := $(CXXFLAGS) $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra 
+override CXXFLAGS := $(CXXFLAGS) $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra
 LDFLAGS := 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
