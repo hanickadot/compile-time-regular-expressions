@@ -72,7 +72,7 @@ template <auto... Def> struct set {
 	#ifdef __EDG__
 	template <auto V, typename = std::enable_if_t<contains<V, Def...>::value>> constexpr inline set(term<V>) noexcept;
 	#else
-	template <auto V, typename = std::enable_if_t<((Set == V) || ... || false)>> constexpr inline set(term<V>) noexcept;
+	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr inline set(term<V>) noexcept;
 	#endif
 };
 
@@ -83,7 +83,7 @@ template <auto... Def> struct neg_set {
 	#ifdef __EDG__
 	template <auto V, typename = std::enable_if_t<!contains<V, Def...>::value>> constexpr inline neg_set(term<V>) noexcept;
 	#else
-	template <auto V, typename = std::enable_if_t<!(Set == V) || ... || false)>> constexpr inline neg_set(term<V>) noexcept;
+	template <auto V, typename = std::enable_if_t<!((Def == V) || ... || false)>> constexpr inline neg_set(term<V>) noexcept;
 	#endif
 };
 
