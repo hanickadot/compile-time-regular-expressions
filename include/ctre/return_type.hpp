@@ -274,6 +274,7 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 
 // support for structured bindings
 
+#ifndef __EDG__
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmismatched-tags"
@@ -292,6 +293,7 @@ namespace std {
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 #endif
 
 #endif

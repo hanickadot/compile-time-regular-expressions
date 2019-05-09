@@ -12,4 +12,3 @@ template <auto V, typename... Ts, typename Parameters> static constexpr auto app
 }
 
 #endif
-	

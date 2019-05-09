@@ -60,18 +60,31 @@ template <auto A, decltype(A) B> struct range {
 	template <auto V, typename = std::enable_if_t<(A <= V) && (V <= B)>> constexpr inline range(term<V>) noexcept;
 };
 
+#ifdef __EDG__
+template <auto V, auto... Set> struct contains {
+	static constexpr bool value = ((Set == V) || ... || false);
+};
+#endif
+
 // match terms defined in set
 template <auto... Def> struct set {
 	constexpr inline set() noexcept { };
-	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
-	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr inline set(term<V>) noexcept;
+	#ifdef __EDG__
+	template <auto V, typename = std::enable_if_t<contains<V, Def...>::value>> constexpr inline set(term<V>) noexcept;
+	#else
+	template <auto V, typename = std::enable_if_t<((Set == V) || ... || false)>> constexpr inline set(term<V>) noexcept;
+	#endif
 };
 
 // match terms not defined in set
 template <auto... Def> struct neg_set {
 	constexpr inline neg_set() noexcept { };
-	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
-	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr inline neg_set(term<V>) noexcept;
+	
+	#ifdef __EDG__
+	template <auto V, typename = std::enable_if_t<!contains<V, Def...>::value>> constexpr inline neg_set(term<V>) noexcept;
+	#else
+	template <auto V, typename = std::enable_if_t<!(Set == V) || ... || false)>> constexpr inline neg_set(term<V>) noexcept;
+	#endif
 };
 
 // AUGMENTED grammar which completes user-defined grammar for all other cases
