@@ -53,7 +53,7 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 
 #### Template UDL syntax
 
-Compiler must support N3599 extension, as GNU extension in gcc (not in c++2a mode) and clang.
+Compiler must support N3599 extension, as GNU extension in gcc (not in GCC 9.1+) and clang.
 
 ```c++
 constexpr auto match(std::string_view sv) noexcept {
@@ -61,6 +61,8 @@ constexpr auto match(std::string_view sv) noexcept {
 	return "h.*"_ctre.match(sv);
 }
 ```
+
+If you need N3599 extension in GCC 9.1+ you can't use -pedantic mode and define macro `CTRE_ENABLE_LITERALS`.
 
 #### C++17 syntax
 
