@@ -72,7 +72,6 @@ block_name2->alphanum_characters,[push_name],<block_name2>|epsilon
 
 
 character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set2a>,[set_make_negative],sclose
-set->minus,[push_character],[set_start],<set2b>
 set-><setitem>,[set_start],<set2b>
 set2a-><setitem2>,[set_start],<set2b>|epsilon
 set2b-><setitem2>,[set_combine],<set2b>|epsilon
