@@ -223,6 +223,14 @@ public:
 		return bool(_captures.template select<0>());
 	}
 	
+	constexpr CTRE_FORCE_INLINE auto operator*() const noexcept {
+		return *this;
+	}
+	
+	constexpr CTRE_FORCE_INLINE auto operator*() noexcept {
+		return *this;
+	}
+	
 	constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
 		return to_view();
 	}
@@ -266,6 +274,7 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 
 // support for structured bindings
 
+#ifndef __EDG__
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmismatched-tags"
@@ -284,6 +293,7 @@ namespace std {
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 #endif
 
 #endif

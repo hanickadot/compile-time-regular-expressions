@@ -51,12 +51,18 @@ template <typename RE> struct regex_match_t {
 		auto re_obj = ctre::regular_expression<RE>();
 		return re_obj.match(std::forward<Args>(args)...);
 	}
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args && ... args) const noexcept {
+		return operator()(std::forward<Args>(args)...);
+	}
 };
 
 template <typename RE> struct regex_search_t {
 	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
 		auto re_obj = ctre::regular_expression<RE>();
 		return re_obj.search(std::forward<Args>(args)...);
+	}
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args && ... args) const noexcept {
+		return operator()(std::forward<Args>(args)...);
 	}
 };
 

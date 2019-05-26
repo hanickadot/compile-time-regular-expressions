@@ -6,6 +6,8 @@ Fast compile-time regular expression with support for matching/searching/capturi
 
 You can use single header version from directory `single-header`. This header can be regenerated with `make single-header`.
 
+More info at [compile-time.re](https://compile-time.re/)
+
 ## What this library can do?
 
 ```c++
@@ -51,7 +53,7 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 
 #### Template UDL syntax
 
-Compiler must support N3599 extension, as GNU extension in gcc (not in c++2a mode) and clang.
+Compiler must support N3599 extension, as GNU extension in gcc (not in GCC 9.1+) and clang.
 
 ```c++
 constexpr auto match(std::string_view sv) noexcept {
@@ -59,6 +61,8 @@ constexpr auto match(std::string_view sv) noexcept {
 	return "h.*"_ctre.match(sv);
 }
 ```
+
+If you need N3599 extension in GCC 9.1+ you can't use -pedantic mode and define macro `CTRE_ENABLE_LITERALS`.
 
 #### C++17 syntax
 
@@ -89,7 +93,7 @@ constexpr auto match(std::string_view sv) noexcept {
 #### Extracting number from input
 ```c++
 std::optional<std::string_view> extract_number(std::string_view s) noexcept {
-    if (auto m = ctre::match<"^[a-z]++([0-9]++)$">(s)) {
+	if (auto m = ctre::match<"[a-z]+([0-9]+)">(s)) {
         return m.get<1>().to_view();
     } else {
         return std::nullopt;
@@ -105,7 +109,7 @@ struct date { std::string_view year; std::string_view month; std::string_view da
 
 std::optional<date> extract_date(std::string_view s) noexcept {
     using namespace ctre::literals;
-    if (auto [whole, year, month, day] = ctre::match<"^(\\d{4})/(\\d{1,2}+)/(\\d{1,2}+)$">(s); whole) {
+    if (auto [whole, year, month, day] = ctre::match<"(\\d{4})/(\\d{1,2})/(\\d{1,2})">(s); whole) {
         return date{year, month, day};
     } else {
         return std::nullopt;
@@ -131,7 +135,7 @@ struct lex_item {
 };
 
 std::optional<lex_item> lexer(std::string_view v) noexcept {
-    if (auto [m,id,num] = ctre::match<"^([a-z]++)|([0-9]++)$">(v); m) {
+    if (auto [m,id,num] = ctre::match<"([a-z]+)|([0-9]+)">(v); m) {
         if (id) {
             return lex_item{type::identifier, id};
         } else if (num) {
@@ -150,7 +154,7 @@ This support is preliminary and probably the API will be changed.
 ```c++
 auto input = "123,456,768"sv;
 
-for (auto match: ctre::range<"([0-9]++),?">(input)) {
+for (auto match: ctre::range<"([0-9]+),?">(input)) {
 	std::cout << std::string_view{match.get<0>()} << "\n";
 }
 ```

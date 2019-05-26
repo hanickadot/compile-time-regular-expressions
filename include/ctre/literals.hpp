@@ -7,6 +7,7 @@
 #include "wrapper.hpp"
 #include "id.hpp"
 
+#ifndef __EDG__
 
 namespace ctre {
 
@@ -32,10 +33,6 @@ namespace literals {
 #elif defined __GNUC__
 #if not(__GNUC__ == 9 || __GNUC__ == 10)
 #define CTRE_ENABLE_LITERALS
-#else
-#if !__cpp_nontype_template_parameter_class
-#define CTRE_ENABLE_LITERALS
-#endif
 #endif
 #endif
 
@@ -121,5 +118,7 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 } // literals
 
 } // ctre
+
+#endif
 
 #endif
