@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 using namespace ctre::test_literals;
 
+void empty_symbol() { }
+
 #if !__cpp_nontype_template_parameter_class
 #define CTRE_TEST(pattern) static_assert(pattern ## _ctre_test)
 #else

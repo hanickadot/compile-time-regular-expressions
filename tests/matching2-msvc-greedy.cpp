@@ -3,6 +3,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+void empty_symbol() { }
+
 #if !__cpp_nontype_template_parameter_class
 #define CTRE_CREATE(pattern) (pattern ## _ctre)
 #define CTRE_SYNTAX(pattern) (pattern ## _ctre_syntax)

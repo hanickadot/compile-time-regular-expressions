@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+void empty_symbol() { }
+
 using namespace std::string_view_literals;
 
 static inline constexpr auto pattern1 = ctll::fixed_string{"^[\\x30-\\x39]+?$"};

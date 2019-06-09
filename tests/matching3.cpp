@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+void empty_symbol() { }
+
 using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;

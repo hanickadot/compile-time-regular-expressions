@@ -27,3 +27,9 @@ install(
     DESTINATION lib/cmake/ctre)
 install(DIRECTORY include/ DESTINATION include
     FILES_MATCHING PATTERN *.hpp)
+
+option(ENABLE_CTRE_SELF_TEST "build self tests" OFF)
+
+if(ENABLE_CTRE_SELF_TEST)
+add_subdirectory(tests)
+endif()
