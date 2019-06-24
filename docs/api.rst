@@ -28,8 +28,8 @@ API
 
     Example: ::
 
-      if (auto m = ctre::match<"(?<chars>[a-z]+([0-9]+)">("abc123")) {
-        //TODO I can't seem to get named captures to work
+      if (auto m = ctre::match<"(?<chars>[a-z]+)([0-9]+)">("abc123")) {
+        m.get<"chars">(); //abc
         m.get<2>(); //123
       }
 
@@ -52,11 +52,6 @@ API
                 constexpr std::basic_string<char_type> str() const noexcept
 
     Converts the match to a string view. 
-
-  .. function:: constexpr auto operator*() const noexcept
-              constexpr auto operator*() noexcept
-
-    TODO I can't tell what these are supposed to do.
 
 .. class:: template<size_t Id, typename Name = void> captured_content
 
