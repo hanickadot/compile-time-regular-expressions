@@ -231,14 +231,6 @@ public:
 		return bool(_captures.template select<0>());
 	}
 	
-	constexpr CTRE_FORCE_INLINE auto operator*() const noexcept {
-		return *this;
-	}
-	
-	constexpr CTRE_FORCE_INLINE auto operator*() noexcept {
-		return *this;
-	}
-	
 	constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
 		return to_view();
 	}
