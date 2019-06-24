@@ -18,4 +18,4 @@ The library supports most of the `PCRE <pcre.org>`_ syntax with a few exceptions
 - subroutines
 - unicode grapheme cluster (\\X)
 
-*more detailed regex syntax information could go here*
+TODO more detailed regex information
