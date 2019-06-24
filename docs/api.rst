@@ -58,9 +58,9 @@ API
 
     TODO I can't tell what these are supposed to do.
 
-.. struct:: template<size_t Id, typename Name = void> captured_content
+.. class:: template<size_t Id, typename Name = void> captured_content
 
-   .. struct:: template <typename Iterator> storage
+   .. class:: template <typename Iterator> storage
 
       .. function:: constexpr auto begin() const noexcept
                     constexpr auto end() const noexcept
