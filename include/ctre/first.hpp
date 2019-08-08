@@ -266,6 +266,10 @@ template <typename... Content> constexpr size_t calculate_size_of_first(ctll::li
 	return (calculate_size_of_first(Content{}) + ... + 0);
 }
 
+template <typename... Content> constexpr size_t calculate_size_of_first(ctre::set<Content...>) {
+	return (calculate_size_of_first(Content{}) + ... + 0);
+}
+
 template <auto A, typename CB> constexpr int64_t negative_helper(ctre::character<A>, CB & cb, int64_t start) {
 	if (A != std::numeric_limits<int64_t>::min()) {
 		if (start < A) {
@@ -436,6 +440,9 @@ public:
 	template <typename... Content> constexpr bool check(ctll::list<Content...>) {
 		return (check(Content{}) || ... || false);
 	}
+	template <typename... Content> constexpr bool check(ctre::set<Content...>) {
+		return (check(Content{}) || ... || false);
+	}
 	
 	
 	template <auto V> constexpr void populate(ctre::character<V>) {
@@ -452,8 +459,8 @@ public:
 			this->insert(low, high);
 		});
 	}
-	template <auto... V> constexpr void populate(ctre::enumeration<V...>) {
-		return (insert(V,V), ...);
+	template <typename... Content> constexpr void populate(ctre::set<Content...>) {
+		(populate(Content{}), ...);
 	}
 	template <typename... Content> constexpr void populate(ctll::list<Content...>) {
 		(populate(Content{}), ...);

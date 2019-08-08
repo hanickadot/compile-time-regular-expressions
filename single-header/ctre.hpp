@@ -1385,24 +1385,24 @@ template <auto A, auto B> struct char_range {
 	}
 };
 
-struct word_chars : set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> > { };
+using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> >;
 
-struct space_chars : enumeration<' ', '\t', '\n', '\v', '\f', '\r'> {};
+using space_chars = enumeration<' ', '\t', '\n', '\v', '\f', '\r'>;
 
-struct alphanum_chars : set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> > { };
+using alphanum_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> >;
 
-struct alpha_chars : set<char_range<'A','Z'>, char_range<'a','z'> > { };
+using alpha_chars = set<char_range<'A','Z'>, char_range<'a','z'> >;
 
-struct xdigit_chars : set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> > { };
+using xdigit_chars = set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> >;
 
-struct punct_chars
-    : enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
+using punct_chars
+    = enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
 		  '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']',
-		  '^', '_', '`', '{', '|', '}', '~'> {};
+		  '^', '_', '`', '{', '|', '}', '~'>;
 
-struct digit_chars : char_range<'0','9'> { };
+using digit_chars = char_range<'0','9'>;
 
-struct ascii_chars : char_range<'\x00','\x7F'> { };
+using ascii_chars = char_range<'\x00','\x7F'>;
 
 }
 
@@ -2427,14 +2427,6 @@ public:
 		return bool(_captures.template select<0>());
 	}
 	
-	constexpr CTRE_FORCE_INLINE auto operator*() const noexcept {
-		return *this;
-	}
-	
-	constexpr CTRE_FORCE_INLINE auto operator*() noexcept {
-		return *this;
-	}
-	
 	constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
 		return to_view();
 	}
@@ -2874,6 +2866,10 @@ template <typename... Content> constexpr size_t calculate_size_of_first(ctll::li
 	return (calculate_size_of_first(Content{}) + ... + 0);
 }
 
+template <typename... Content> constexpr size_t calculate_size_of_first(ctre::set<Content...>) {
+	return (calculate_size_of_first(Content{}) + ... + 0);
+}
+
 template <auto A, typename CB> constexpr int64_t negative_helper(ctre::character<A>, CB & cb, int64_t start) {
 	if (A != std::numeric_limits<int64_t>::min()) {
 		if (start < A) {
@@ -3044,6 +3040,9 @@ public:
 	template <typename... Content> constexpr bool check(ctll::list<Content...>) {
 		return (check(Content{}) || ... || false);
 	}
+	template <typename... Content> constexpr bool check(ctre::set<Content...>) {
+		return (check(Content{}) || ... || false);
+	}
 	
 	
 	template <auto V> constexpr void populate(ctre::character<V>) {
@@ -3060,8 +3059,8 @@ public:
 			this->insert(low, high);
 		});
 	}
-	template <auto... V> constexpr void populate(ctre::enumeration<V...>) {
-		return (insert(V,V), ...);
+	template <typename... Content> constexpr void populate(ctre::set<Content...>) {
+		(populate(Content{}), ...);
 	}
 	template <typename... Content> constexpr void populate(ctll::list<Content...>) {
 		(populate(Content{}), ...);
@@ -3447,7 +3446,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // backreference support (match agains content of iterators)
 template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> match_against_range(Iterator current, const EndIterator end, Iterator range_current, const Iterator range_end) noexcept {
-	while (current != end && range_current != range_end) {
+	while (end != current && range_end != range_current) {
 		if (*current == *range_current) {
 			current++;
 			range_current++;
