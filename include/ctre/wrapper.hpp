@@ -32,40 +32,42 @@ public:
 };
 
 template <typename RE> struct regular_expression {
-	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto match_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return match_re(begin, end, RE());
+	template <typename IteratorBegin, typename IteratorEnd>
+	constexpr CTRE_FORCE_INLINE static auto match_2(IteratorBegin begin, IteratorEnd end, const match_type mtype) noexcept {
+		return match_re(begin, end, RE(), mtype);
 	}
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { };
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { };
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
-		return match_re(begin, end, RE());
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end,
+		match_type mtype = full_match) noexcept {
+		return match_re(begin, end, RE(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(const char * s) noexcept {
-		return match_2(s, zero_terminated_string_end_iterator());
+	static constexpr CTRE_FORCE_INLINE auto match(const char * s, const match_type mtype = full_match) noexcept {
+		return match_2(s, zero_terminated_string_end_iterator(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(const wchar_t * s) noexcept {
-		return match_2(s, zero_terminated_string_end_iterator());
+	static constexpr CTRE_FORCE_INLINE auto match(const wchar_t * s, const match_type mtype = full_match) noexcept {
+		return match_2(s, zero_terminated_string_end_iterator(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(const std::string & s) noexcept {
-		return match_2(s.c_str(), zero_terminated_string_end_iterator());
+	static constexpr CTRE_FORCE_INLINE auto match(const std::string & s, const match_type mtype = full_match) noexcept {
+		return match_2(s.c_str(), zero_terminated_string_end_iterator(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(const std::wstring & s) noexcept {
-		return match_2(s.c_str(), zero_terminated_string_end_iterator());
+	static constexpr CTRE_FORCE_INLINE auto match(const std::wstring & s, const match_type mtype = full_match) noexcept {
+		return match_2(s.c_str(), zero_terminated_string_end_iterator(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(std::string_view sv) noexcept {
-		return match(sv.begin(), sv.end());
+	static constexpr CTRE_FORCE_INLINE auto match(std::string_view sv, const match_type mtype = full_match) noexcept {
+		return match(sv.begin(), sv.end(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(std::wstring_view sv) noexcept {
-		return match(sv.begin(), sv.end());
+	static constexpr CTRE_FORCE_INLINE auto match(std::wstring_view sv, const match_type mtype = full_match) noexcept {
+		return match(sv.begin(), sv.end(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(std::u16string_view sv) noexcept {
-		return match(sv.begin(), sv.end());
+	static constexpr CTRE_FORCE_INLINE auto match(std::u16string_view sv, const match_type mtype = full_match) noexcept {
+		return match(sv.begin(), sv.end(), mtype);
 	}
-	static constexpr CTRE_FORCE_INLINE auto match(std::u32string_view sv) noexcept {
-		return match(sv.begin(), sv.end());
+	static constexpr CTRE_FORCE_INLINE auto match(std::u32string_view sv, const match_type mtype = full_match) noexcept {
+		return match(sv.begin(), sv.end(), mtype);
 	}
 	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto match(Range && range) noexcept {
 		return match(std::begin(range), std::end(range));
