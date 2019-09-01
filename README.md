@@ -44,6 +44,11 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 * `std::string`-like object (`std::string_view` or your own string if it's providing `begin`/`end` functions with forward iterators)
 * pair of forward iterators
 
+### Known quirks
+
+* [issue #72: possible infinite loop when content of a loop can accept empty input](https://github.com/hanickadot/compile-time-regular-expressions/issues/72) – workaround: don't 
+* dialect which doesn't support using `-` without backslash in class specifier at the beginning / ending of the class (eg. `[-a]` and `[a-]`)
+
 ## Supported compilers
 
 * clang 6.0+ (template UDL, C++17 syntax)

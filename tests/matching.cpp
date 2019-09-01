@@ -99,4 +99,4 @@ static_assert(match("aaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<
 static_assert(match("aaaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<'a'>>, ctre::string<'a','b'>>()));
 static_assert(!match("aaaaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<'a'>>, ctre::string<'a','b'>>()));
 
-static_assert(match("aaa"sv, ctre::possessive_repeat<0,0,ctre::possessive_repeat<0,0,ctre::character<'a'>>>()));
+

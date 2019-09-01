@@ -9,6 +9,24 @@
 #include "find_captures.hpp"
 #include "first.hpp"
 
+#ifdef CTRE_DEBUG
+#include <iostream>
+namespace ctre {
+template <typename... Args> void debug(Args && ... args) {
+	(std::cout << ... << std::forward<Args>(args));
+}
+template <typename... Args> void debug(ctll::list<Args...>) {
+	puts(__PRETTY_FUNCTION__);
+}
+}
+#else
+namespace ctre {
+template <typename... Args> constexpr void debug(Args && ...) { }
+template <typename... Args> constexpr void debug(ctll::list<Args...>) { }
+}
+#endif
+
+
 // remove me when MSVC fix the constexpr bug
 #ifdef _MSC_VER
 #ifndef CTRE_MSVC_GREEDY_WORKAROUND
@@ -326,6 +344,65 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 }
 
+// (explicit gready) repeat
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<greedy_repeat<A,B,Content...>, Tail...> stack) {
+#else
+constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<greedy_repeat<A,B,Content...>, Tail...> stack) {
+#endif
+	if ((B == 0) || (i < B)) {
+		 
+		// a*ab
+		// aab
+		
+		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			
+			// TODO MSVC issue:
+			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
+			//  return inner_result
+			// I tried to add all constructors to R but without any success 
+			#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+			evaluate_recursive(result, i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack);
+			if (result) {
+				return;
+			}
+			#else
+			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack)) {
+				return rec_result;
+			}
+			#endif
+		}
+	} 
+	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+	result = evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#else
+	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#endif
+}	
+
+// (explicit greedy) repeat 
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, [[maybe_unused]] ctll::list<greedy_repeat<A,B,Content...>, Tail...> stack) {
+	// A..B
+	size_t i{0};
+	for (; i < A && (A != 0); ++i) {
+		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			captures = inner_result.unmatch();
+			current = inner_result.get_end_position();
+		} else {
+			return not_matched;
+		}
+	}
+#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+	R result;
+	evaluate_recursive(result, i, begin, current, end, captures, stack);
+	return result;
+#else
+	return evaluate_recursive(i, begin, current, end, captures, stack);
+#endif
+}
+
 // repeat lazy_star
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lazy_star<Content...>, Tail...>) noexcept {
@@ -362,6 +439,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<plus<Content...>, Tail...>) noexcept {
 	return evaluate(begin, current, end, captures, ctll::list<repeat<1,0,Content...>, Tail...>());
+}
+
+// repeat (explicit greedy) star
+template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<greedy_star<Content...>, Tail...>) noexcept {
+	return evaluate(begin, current, end, captures, ctll::list<greedy_repeat<0,0,Content...>, Tail...>());
+}
+
+
+// repeat (explicit greedy) plus
+template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<greedy_plus<Content...>, Tail...>) noexcept {
+	return evaluate(begin, current, end, captures, ctll::list<greedy_repeat<1,0,Content...>, Tail...>());
 }
 
 // capture (numeric ID)

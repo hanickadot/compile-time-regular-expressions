@@ -26,6 +26,10 @@ template <typename... Content> struct plus { };
 template <typename... Content> struct star { };
 template <size_t a, size_t b, typename... Content> struct repeat { };
 
+template <typename... Content> struct greedy_plus { };
+template <typename... Content> struct greedy_star { };
+template <size_t a, size_t b, typename... Content> struct greedy_repeat { };
+
 template <typename... Content> struct lazy_plus { };
 template <typename... Content> struct lazy_star { };
 template <size_t a, size_t b, typename... Content> struct lazy_repeat { };
