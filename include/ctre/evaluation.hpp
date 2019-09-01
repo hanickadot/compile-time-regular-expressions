@@ -231,6 +231,10 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	for (size_t i{0}; (i < B) || (B == 0); ++i) {
 		// try as many of inner as possible and then try outer once
 		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			if (current == inner_result.get_end_position()) {
+				// in case we didn't moved in this loop, we should stop and try something else
+				return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+			}
 			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
