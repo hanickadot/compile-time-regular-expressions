@@ -190,8 +190,9 @@ TEST_MATCH(111, "^abc$", "abc");
 
 TEST_MATCH(112, "\\[\\]", "[]");
 
-
-
+TEST_MATCH(113, "a+(?!b)", "aaaaaa");
+TEST_MATCH(114, "a+(?!b).", "aaaaaac");
+TEST_MATCH(115, "a+(?=b).", "aaaaaab");
 
 
 

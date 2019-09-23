@@ -578,13 +578,13 @@ template <typename T, typename... As> constexpr auto pop_front_and_push_front(T 
 
 // match any term
 struct anything {
-	constexpr inline anything() noexcept { };
+	constexpr inline anything() noexcept { }
 	template <auto V> constexpr anything(term<V>) noexcept;
 };
 
 // match range of term A-B
 template <auto A, decltype(A) B> struct range {
-	constexpr inline range() noexcept { };
+	constexpr inline range() noexcept { }
 	//template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
 	template <auto V, typename = std::enable_if_t<(A <= V) && (V <= B)>> constexpr inline range(term<V>) noexcept;
 };
@@ -597,7 +597,7 @@ template <auto V, auto... Set> struct contains {
 
 // match terms defined in set
 template <auto... Def> struct set {
-	constexpr inline set() noexcept { };
+	constexpr inline set() noexcept { }
 	#ifdef __EDG__
 	template <auto V, typename = std::enable_if_t<contains<V, Def...>::value>> constexpr inline set(term<V>) noexcept;
 	#else
@@ -607,7 +607,7 @@ template <auto... Def> struct set {
 
 // match terms not defined in set
 template <auto... Def> struct neg_set {
-	constexpr inline neg_set() noexcept { };
+	constexpr inline neg_set() noexcept { }
 	
 	#ifdef __EDG__
 	template <auto V, typename = std::enable_if_t<!contains<V, Def...>::value>> constexpr inline neg_set(term<V>) noexcept;
@@ -2740,15 +2740,14 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<repeat<0, B, Seq...>, 
 
 // lookahead_positive
 template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
-	auto out = first(l, ctll::list<Seq..., Tail...>{});
-	return first(out, ctll::list<Tail...>{});
+constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
 }
 
 // lookahead_negative TODO fixme
 template <typename... Content, typename... Seq, typename... Tail> 
 constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_negative<Seq...>, Tail...>) noexcept {
-	return can_be_anything{};
+	return ctll::list<can_be_anything>{};
 }
 
 // capture
@@ -3554,8 +3553,8 @@ template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
-	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { };
-	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { };
+	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
+	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
 		return match_re(begin, end, RE());
 	}

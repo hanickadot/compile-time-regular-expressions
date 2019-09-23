@@ -134,15 +134,14 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<repeat<0, B, Seq...>, 
 
 // lookahead_positive
 template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
-	auto out = first(l, ctll::list<Seq..., Tail...>{});
-	return first(out, ctll::list<Tail...>{});
+constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
 }
 
 // lookahead_negative TODO fixme
 template <typename... Content, typename... Seq, typename... Tail> 
 constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_negative<Seq...>, Tail...>) noexcept {
-	return can_be_anything{};
+	return ctll::list<can_be_anything>{};
 }
 
 // capture
