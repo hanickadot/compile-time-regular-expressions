@@ -22,6 +22,7 @@ equal_sign={=}
 exclamation_mark={!}
 
 escape_alphanum={b,c,h,i,j,k,l,m,o,q,v,y,z,A,B,C,E,F,G,H,I,J,K,L,M,O,Q,U,V,X,Y,Z,1,2,3,4,5,6,7,8,9}
+escape_backreference={1,2,3,4,5,6,7,8,9}
 hexdec={0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,A,B,C,D,E,F}
 octal={0,1,2,3,4,5,6,7}
 nonspecial_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,,:,!,=,_}
@@ -110,7 +111,7 @@ range->minus,backslash,<backslash_range>,[make_range]|minus,nonspecial_character
 
 backslash_set-><special>,[push_character]
 special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar|minus
-backslash_set->escape_alphanum,[push_character]
+backslash_set->escape_backreference,[create_number],[make_back_reference]
 
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 

@@ -18,7 +18,7 @@ ctre::match<"REGEX">(subject); // C++20
 * Matching
 * Searching
 * Capturing content (named captures are supported too)
-* Back-Reference (only \g{N} syntax)
+* Back-Reference (\g{N} syntax, and \1...\9 syntax too)
 
 The library is implementing most of the PCRE syntax with a few exceptions:
 
