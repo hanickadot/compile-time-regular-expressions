@@ -113,7 +113,7 @@ public:
 				}
 			}
 		#endif
-		} else if constexpr (std::is_same_v<T, char16_t>) {
+		} else if constexpr (std::is_same_v<T, char16_t> || (std::is_same_v<T, wchar_t> && sizeof(wchar_t) == sizeof(char16_t))) {
 			size_t out{0};
 			for (size_t i{0}; i < N; ++i) {
 				length_value_t info = length_and_value_of_utf16_code_point(input[i]);
@@ -132,7 +132,7 @@ public:
 				}
 			}
 			real_size = out;
-		} else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
+		} else if constexpr (std::is_same_v<T, char32_t> || (std::is_same_v<T, wchar_t> && sizeof(wchar_t) == sizeof(char32_t))) {
 			for (size_t i{0}; i < N; ++i) {
 				content[i] = input[i];
 				if ((i == (N-1)) && (input[i] == 0)) break;
