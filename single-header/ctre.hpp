@@ -271,12 +271,11 @@ constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_uni
 	else return {first_unit, 1};
 }
 
-template <size_t N> class fixed_string {
-private:
+template <size_t N> struct fixed_string {
 	char32_t content[N] = {};
 	size_t real_size{0};
 	bool correct_flag{true};
-public:
+
 	template <typename T> constexpr fixed_string(const T (&input)[N]) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
 			#if CTRE_STRING_IS_UTF8
