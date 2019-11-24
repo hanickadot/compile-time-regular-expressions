@@ -3670,7 +3670,7 @@ namespace literals {
 #ifdef __INTEL_COMPILER
 // not enable literals
 #elif defined __GNUC__
-#if not(__GNUC__ == 9 || __GNUC__ == 10)
+#if not(__GNUC__ == 9)
 #define CTRE_ENABLE_LITERALS
 #endif
 #endif
