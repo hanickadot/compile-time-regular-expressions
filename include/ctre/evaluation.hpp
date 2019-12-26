@@ -40,6 +40,12 @@ constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pat
 	return evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
+template <typename Iterator, typename EndIterator, typename Pattern>
+constexpr inline auto parse_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
+	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+}
+
 
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 

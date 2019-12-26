@@ -38,6 +38,9 @@ template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto parse_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return parse_re(begin, end, RE());
+	}
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
@@ -99,6 +102,36 @@ template <typename RE> struct regular_expression {
 	}
 	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
 		return search(std::begin(range), std::end(range));
+	}
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto parse(Iterator begin, Iterator end) noexcept {
+		return parse_re(begin, end, RE());
+	}
+	constexpr CTRE_FORCE_INLINE static auto parse(const char* s) noexcept {
+		return parse_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto parse(const wchar_t* s) noexcept {
+		return parse_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto parse(const std::string& s) noexcept {
+		return parse_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto parse(const std::wstring& s) noexcept {
+		return parse_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto parse(std::string_view sv) noexcept {
+		return parse(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto parse(std::wstring_view sv) noexcept {
+		return parse(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto parse(std::u16string_view sv) noexcept {
+		return parse(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto parse(std::u32string_view sv) noexcept {
+		return parse(sv.begin(), sv.end());
+	}
+	template <typename Range> static constexpr CTRE_FORCE_INLINE auto parse(Range&& range) noexcept {
+		return parse(std::begin(range), std::end(range));
 	}
 };
 

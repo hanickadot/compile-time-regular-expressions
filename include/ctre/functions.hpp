@@ -66,6 +66,16 @@ template <typename RE> struct regex_search_t {
 	}
 };
 
+template <typename RE> struct regex_parse_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args&& ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.parse(std::forward<Args>(args)...);
+	}
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args&& ... args) const noexcept {
+		return operator()(std::forward<Args>(args)...);
+	}
+};
+
 #if __cpp_nontype_template_parameter_class
 
 template <auto input> struct regex_builder {
@@ -90,6 +100,8 @@ template <auto & input> struct regex_builder {
 template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
 template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+
+template <auto & input> static constexpr inline auto search = regex_parse_t<typename regex_builder<input>::type>();
 
 #endif
 
