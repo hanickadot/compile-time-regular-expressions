@@ -13,7 +13,7 @@ struct not_matched_tag_t { };
 
 static constexpr inline auto not_matched = not_matched_tag_t{};
 	
-template <size_t Id, typename Name = void> struct captured_content {
+template <size_t Id, typename Name = void, typename Content = void> struct captured_content {
 	template <typename Iterator> class storage {
 		Iterator _begin{};
 		Iterator _end{};
@@ -21,7 +21,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		bool _matched{false};
 	public:
 		using char_type = typename std::iterator_traits<Iterator>::value_type;
-		
+		using content_type = Content;
 		using name = Name;
 	
 		constexpr CTRE_FORCE_INLINE storage() noexcept {}
@@ -85,6 +85,10 @@ template <size_t Id, typename Name = void> struct captured_content {
 		
 		constexpr CTRE_FORCE_INLINE static size_t get_id() noexcept {
 			return Id;
+		}
+		
+		constexpr CTRE_FORCE_INLINE static content_type get_expression() noexcept {
+			return {};
 		}
 	};
 };
