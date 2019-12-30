@@ -18,6 +18,10 @@
 
 namespace ctre {
 
+struct analysis_results;
+template<typename T = ctll::list<>, typename R = ctll::list<>>
+static constexpr analysis_results trampoline_analysis(T, R captures) noexcept;
+
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
@@ -457,7 +461,8 @@ struct analysis_results : std::pair<size_t, size_t> {
 		size_t ret = inf;
 		if (lhs == inf || rhs == inf) {
 			return ret;
-		} else {
+		}
+		else {
 			ret = lhs + rhs;
 			ret = ret < lhs ? lim : ret == inf ? lim : ret;
 		}
@@ -470,9 +475,11 @@ struct analysis_results : std::pair<size_t, size_t> {
 		size_t ret = inf;
 		if (lhs == inf || rhs == inf) {
 			return ret;
-		} else if (lhs == 0 || rhs == 0) {
+		}
+		else if (lhs == 0 || rhs == 0) {
 			return ret = 0;
-		} else {
+		}
+		else {
 			if (lhs > (SIZE_MAX / rhs))
 				return ret = lim;
 			ret = lhs * rhs;
@@ -480,38 +487,43 @@ struct analysis_results : std::pair<size_t, size_t> {
 			return ret;
 		}
 	}
-	
+
 	constexpr inline CTRE_FORCE_INLINE operator bool() const noexcept {
-		return first;
+		return first > 0;
 	}
-	constexpr auto CTRE_FORCE_INLINE operator+(analysis_results other) const noexcept {
-		return analysis_results{std::make_pair(
-			saturate_limit(first, other.first),
-			saturate_limit(second, other.second)
+	friend constexpr auto CTRE_FORCE_INLINE operator+(const analysis_results &lhs, const analysis_results &other) noexcept {
+		return analysis_results{ std::make_pair(
+			saturate_limit(lhs.first, other.first),
+			saturate_limit(lhs.second, other.second)
+		) };
+	}
+	friend constexpr auto CTRE_FORCE_INLINE operator||(const analysis_results& lhs, const analysis_results& other) noexcept {
+		return analysis_results{ std::make_pair(
+			std::min(lhs.first, other.first),
+			std::max(lhs.second, other.second)
 		)};
 	}
-	constexpr auto CTRE_FORCE_INLINE operator||(analysis_results other) const noexcept {
-		return analysis_results{std::make_pair(
-			std::min(first, other.first),
-			std::max(second, other.second)
-		)};
+	constexpr analysis_results& operator =(const analysis_results& rhs) {
+		first = rhs.first;
+		second = rhs.second;
+		return *this;
 	}
 };
 
-template <typename Pattern>
-static constexpr auto trampoline_analysis(Pattern) noexcept;
-
-template <typename... Patterns>
-static constexpr auto trampoline_analysis(ctll::list<Patterns...>) noexcept;
+//processing for each type
 
 template<typename T, typename R>
-static constexpr auto trampoline_analysis(T, R captures) noexcept;
+static constexpr analysis_results _analyze(T, R captures) noexcept;
 
-//processing for each type
+template <typename... Patterns>
+static constexpr auto pattern_analysis(ctll::list<Patterns...>) noexcept;
+
+template <typename Pattern = empty>
+static constexpr auto pattern_analysis(Pattern pattern = {}) noexcept;
 
 //repeat
 template<size_t A, size_t B, typename R, typename... Content>
-static constexpr auto _analyze(repeat<A,B,Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(repeat<A, B, Content...>, R captures) noexcept {
 	analysis_results ret{ std::make_pair(0ULL, 0ULL) };
 	if constexpr (sizeof...(Content)) {
 		ret = trampoline_analysis(ctll::list<Content...>(), captures);
@@ -524,67 +536,67 @@ static constexpr auto _analyze(repeat<A,B,Content...>, R captures) noexcept {
 //note: all * ? + operations are specialized variations of repeat {A,B}
 //lazy_repeat
 template<size_t A, size_t B, typename R, typename... Content>
-static constexpr auto _analyze(lazy_repeat<A, B, Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(lazy_repeat<A, B, Content...>, R captures) noexcept {
 	return _analyze(repeat<A, B, Content...>(), captures);
 }
 
 //possessive_repeat
 template<size_t A, size_t B, typename R, typename... Content>
-static constexpr auto _analyze(possessive_repeat<A, B, Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(possessive_repeat<A, B, Content...>, R captures) noexcept {
 	return _analyze(repeat<A, B, Content...>(), captures);
 }
 
 //star
 template<typename R, typename... Content>
-static constexpr auto _analyze(star<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(star<Content...>, R captures) noexcept {
 	return _analyze(repeat<0ULL, ~(0ULL), Content...>(), captures);
 }
 
 //lazy_star
 template<typename R, typename... Content>
-static constexpr auto _analyze(lazy_star<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(lazy_star<Content...>, R captures) noexcept {
 	return _analyze(repeat<0ULL, ~(0ULL), Content...>(), captures);
 }
 
 //possessive_star
 template<typename R, typename... Content>
-static constexpr auto _analyze(possessive_star<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(possessive_star<Content...>, R captures) noexcept {
 	return _analyze(repeat<0ULL, ~(0ULL), Content...>(), captures);
 }
 
 //plus
 template<typename R, typename... Content>
-static constexpr auto _analyze(plus<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(plus<Content...>, R captures) noexcept {
 	return _analyze(repeat<1ULL, ~(0ULL), Content...>(), captures);
 }
 
 //lazy_plus
 template<typename R, typename... Content>
-static constexpr auto _analyze(lazy_star<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(lazy_plus<Content...>, R captures) noexcept {
 	return _analyze(repeat<1ULL, ~(0ULL), Content...>(), captures);
 }
 
 //possessive_plus
 template<typename R, typename... Content>
-static constexpr auto _analyze(possessive_star<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(possessive_plus<Content...>, R captures) noexcept {
 	return _analyze(repeat<1ULL, ~(0ULL), Content...>(), captures);
 }
 
 //optional
 template<typename R, typename... Content>
-static constexpr auto _analyze(optional<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(optional<Content...>, R captures) noexcept {
 	return _analyze(repeat<0ULL, 1ULL, Content...>(), captures);
 }
 
 //lazy_optional
 template<typename R, typename... Content>
-static constexpr auto _analyze(lazy_optional<Content...>, R captures) noexcept {
+static constexpr analysis_results _analyze(lazy_optional<Content...>, R captures) noexcept {
 	return _analyze(repeat<0ULL, 1ULL, Content...>(), captures);
 }
 
 //back_reference
 template<size_t Id, typename R>
-static constexpr auto _analyze(back_reference<Id>, R captures) noexcept {
+static constexpr analysis_results _analyze(back_reference<Id>, R captures) noexcept {
 	const auto ref = captures.template get<Id>();
 	analysis_results ret{ std::make_pair(0ULL, 0ULL) };
 	if constexpr (size(ref.get_expression())) {
@@ -595,7 +607,7 @@ static constexpr auto _analyze(back_reference<Id>, R captures) noexcept {
 
 //back_reference_with_name
 template<typename Name, typename R>
-static constexpr auto _analyze(back_reference_with_name<Name>, R captures) noexcept {
+static constexpr analysis_results _analyze(back_reference_with_name<Name>, R captures) noexcept {
 	const auto ref = captures.template get<Name>();
 	analysis_results ret{ std::make_pair(0ULL, 0ULL) };
 	if constexpr (size(ref.get_expression())) {
@@ -604,23 +616,16 @@ static constexpr auto _analyze(back_reference_with_name<Name>, R captures) noexc
 	return ret;
 }
 
-//select, this is specialized, we need to take the minimum of all minimums and maximum of all maximums
-template<typename R, typename... Content>
-static constexpr auto _analyze(select<Content...>, R captures) noexcept {
-	analysis_results ret = trampoline_select_analysis(ctll::list<Content...>(), captures);
-	return ret;
-}
-
 //character, any character contributes exactly one to both counts
 template<auto C, typename R>
-static constexpr auto _analyze(character<C>, R captures) noexcept {
+static constexpr analysis_results _analyze(character<C>, R captures) noexcept {
 	analysis_results ret{ std::make_pair(1ULL, 1ULL) };
 	return ret;
 }
 
 //strings, any string contributes the # of characters it contains (if we have an empty string that'll be 0)
 template<auto... Str, typename R>
-static constexpr auto _analyze(string<Str...>, R captures) noexcept {
+static constexpr analysis_results _analyze(string<Str...>, R captures) noexcept {
 	analysis_results ret{ std::make_pair(sizeof...(Str), sizeof...(Str)) };
 	return ret;
 }
@@ -628,53 +633,60 @@ static constexpr auto _analyze(string<Str...>, R captures) noexcept {
 //we'll process anything that has contents as a regex
 //ctll::list
 template<typename R, typename... Content>
-static constexpr auto _analyze(ctll::list<Content...>,R captures) noexcept {
-	analysis_results ret = trampoline_analysis(ctll::list<Content...>(), captures);
+static constexpr analysis_results _analyze(ctll::list<Content...>, R captures) noexcept {
+	analysis_results ret{ trampoline_analysis(ctll::list<Content...>(), captures) };
 	return ret;
 }
 
 //sequence
 template<typename R, typename... Content>
-static constexpr auto _analyze(sequence<Content...>, R captures) noexcept {
-	analysis_results ret = trampoline_analysis(ctll::list<Content...>(), captures);
+static constexpr analysis_results _analyze(sequence<Content...>, R captures) noexcept {
+	analysis_results ret{ trampoline_analysis(ctll::list<Content...>(), captures) };
 	return ret;
 }
 
 //capture
 template<size_t Id, typename R, typename... Content>
-static constexpr auto _analyze(capture<Id, Content...>, R captures) noexcept {
-	analysis_results ret = trampoline_analysis(ctll::list<Content...>(), captures);
+static constexpr analysis_results _analyze(capture<Id, Content...>, R captures) noexcept {
+	analysis_results ret{ trampoline_analysis(ctll::list<Content...>(), captures) };
 	return ret;
 }
 
 //capture_with_name
 template<size_t Id, typename Name, typename R, typename... Content>
-static constexpr auto _analyze(capture_with_name<Id, Name, Content...>, R captures) noexcept {
-	analysis_results ret = trampoline_analysis(ctll::list<Content...>(), captures);
+static constexpr analysis_results _analyze(capture_with_name<Id, Name, Content...>, R captures) noexcept {
+	analysis_results ret{ trampoline_analysis(ctll::list<Content...>(), captures) };
 	return ret;
 }
 
 //everything else, anything we haven't matched already isn't supported and will contribute 0
 template<typename T, typename R>
-static constexpr auto _analyze(T, R captures) noexcept {
+static constexpr analysis_results _analyze(T, R captures) noexcept {
 	analysis_results ret{ std::make_pair(0ULL, 0ULL) };
 	return ret;
 }
-//note: ctll::list wraps patterns just like sequences, we'll treat anything that looks like a regex w/ ctll::list
-template <typename... Patterns, typename R>
-static constexpr auto trampoline_analysis(ctll::list<Patterns...>, R captures) noexcept {
-	//fold, for every argument in a ctll::list, calculate its contribution to the limits
-	auto r = ((_analyze(Patterns(), captures)) + ...);
-	//note any reordering of parameters will result in the same limits
-	return r;
+
+//select, this is specialized, we need to take the minimum of all minimums and maximum of all maximums
+template<typename R, typename... Content>
+static constexpr analysis_results _analyze(select<Content...>, R captures) noexcept {
+	analysis_results ret = ((trampoline_analysis(Content(), captures)) || ...);
+	return ret;
 }
 
+//note: ctll::list wraps patterns just like sequences, we'll treat anything that looks like a regex w/ ctll::list
 template <typename... Patterns, typename R>
-static constexpr auto trampoline_select_analysis(ctll::list<Patterns...>, R captures) noexcept {
-	//fold, each argument in a selection of regexes we take the minimum and maximum of all values
-	auto r = ((trampoline_analysis(Patterns(), captures)) || ...);
-	//note again, order is unimportant
-	return r;
+static constexpr analysis_results trampoline_analysis(ctll::list<Patterns...>, R captures) noexcept {
+	//fold, for every argument in a ctll::list, calculate its contribution to the limits
+	analysis_results ret = ((_analyze(Patterns(), captures)) + ...);
+	//note any reordering of parameters will result in the same limits
+	return ret;
+}
+
+template <typename Pattern, typename R>
+static constexpr analysis_results trampoline_analysis(Pattern pattern, R captures) noexcept {
+	//some individual type, we can immediately analyze it
+	analysis_results ret = _analyze(pattern, captures);
+	return ret;
 }
 
 template <typename... Patterns>
@@ -684,11 +696,10 @@ static constexpr auto pattern_analysis(ctll::list<Patterns...>) noexcept {
 }
 
 template <typename Pattern = empty>
-static constexpr auto pattern_analysis(Pattern pattern = {}) noexcept {
+static constexpr auto pattern_analysis(Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<std::basic_string_view<char>::iterator>(), find_captures(pattern)));
 	return trampoline_analysis(ctll::list<Pattern>(), return_type{});
 }
-
 
 }
 
