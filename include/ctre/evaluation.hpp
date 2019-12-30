@@ -510,17 +510,13 @@ struct analysis_results : std::pair<size_t, size_t> {
 	}
 };
 
-//processing for each type
-
-template<typename T, typename R>
-static constexpr analysis_results _analyze(T, R captures) noexcept;
-
 template <typename... Patterns>
 static constexpr auto pattern_analysis(ctll::list<Patterns...>) noexcept;
 
 template <typename Pattern = empty>
 static constexpr auto pattern_analysis(Pattern pattern = {}) noexcept;
 
+//processing for each type
 //repeat
 template<size_t A, size_t B, typename R, typename... Content>
 static constexpr analysis_results _analyze(repeat<A, B, Content...>, R captures) noexcept {
@@ -616,9 +612,9 @@ static constexpr analysis_results _analyze(back_reference_with_name<Name>, R cap
 	return ret;
 }
 
-//character, any character contributes exactly one to both counts
-template<auto C, typename R>
-static constexpr analysis_results _analyze(character<C>, R captures) noexcept {
+//CharacterLike, anything that's like a character contributes 1 to both counts
+template <typename R, typename CharacterLike, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<std::basic_string_view<char>::iterator>())>)>>
+	static constexpr analysis_results _analyze(CharacterLike, R captures) {
 	analysis_results ret{ std::make_pair(1ULL, 1ULL) };
 	return ret;
 }
@@ -660,7 +656,7 @@ static constexpr analysis_results _analyze(capture_with_name<Id, Name, Content..
 }
 
 //everything else, anything we haven't matched already isn't supported and will contribute 0
-template<typename T, typename R>
+template<typename T, typename R, typename = std::enable_if_t<(!MatchesCharacter<T>::template value<decltype(*std::declval<std::basic_string_view<char>::iterator>())>)>>
 static constexpr analysis_results _analyze(T, R captures) noexcept {
 	analysis_results ret{ std::make_pair(0ULL, 0ULL) };
 	return ret;
