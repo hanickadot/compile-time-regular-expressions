@@ -23,7 +23,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> constexpr a
 	return regex_range<BeginIterator, EndIterator, RE>(begin, end);
 }
 
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 template <ctll::fixed_string input, typename BeginIterator, typename EndIterator> constexpr auto range(BeginIterator begin, EndIterator end) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -42,7 +42,7 @@ template <typename RE> constexpr auto range(const char * subject, RE re) noexcep
 	return range(subject, zero_terminated_string_end_iterator(), re);
 }
 
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 template <ctll::fixed_string input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
