@@ -223,9 +223,9 @@ public:
 	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 #else
 	template <const auto & Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+#endif
 		return _captures.template select<Name>();
 	}
-#endif
 	static constexpr size_t size() noexcept {
 		return sizeof...(Captures) + 1;
 	}
