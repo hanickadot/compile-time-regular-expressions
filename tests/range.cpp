@@ -25,8 +25,10 @@ int main() {
 			
 	#if __cpp_nontype_template_parameter_class
 			std::cout << std::string_view(match.get<"first">()) << "\n";
+			std::cout << std::string_view(match.get<1>()) << "\n";
 	#else
 			std::cout << std::string_view(match.get<name>()) << "\n";
+			std::cout << std::string_view(match.get<1>()) << "\n";
 	#endif
 		}
 }
