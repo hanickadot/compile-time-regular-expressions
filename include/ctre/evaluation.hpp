@@ -102,7 +102,7 @@ template <auto Head, auto... String, typename Iterator, typename EndIterator> co
 			return {++current, true};
 		}
 	} else {
-		return {++current, false}; // not needed but will optimize
+		return {current, false}; // not needed but will optimize
 	}
 }
 
