@@ -53,24 +53,24 @@ template <auto A, auto B> struct char_range {
 	}
 };
 
-struct word_chars : set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> > { };
+using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> >;
 
-struct space_chars : enumeration<' ', '\t', '\n', '\v', '\f', '\r'> {};
+using space_chars = enumeration<' ', '\t', '\n', '\v', '\f', '\r'>;
 
-struct alphanum_chars : set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> > { };
+using alphanum_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> >;
 
-struct alpha_chars : set<char_range<'A','Z'>, char_range<'a','z'> > { };
+using alpha_chars = set<char_range<'A','Z'>, char_range<'a','z'> >;
 
-struct xdigit_chars : set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> > { };
+using xdigit_chars = set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> >;
 
-struct punct_chars
-    : enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
+using punct_chars
+    = enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
 		  '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']',
-		  '^', '_', '`', '{', '|', '}', '~'> {};
+		  '^', '_', '`', '{', '|', '}', '~'>;
 
-struct digit_chars : char_range<'0','9'> { };
+using digit_chars = char_range<'0','9'>;
 
-struct ascii_chars : char_range<'\x00','\x7F'> { };
+using ascii_chars = char_range<'\x00','\x7F'>;
 
 
 }

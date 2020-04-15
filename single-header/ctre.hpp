@@ -272,11 +272,10 @@ constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_uni
 }
 
 template <size_t N> struct fixed_string {
-
 	char32_t content[N] = {};
 	size_t real_size{0};
 	bool correct_flag{true};
-
+	
 	template <typename T> constexpr fixed_string(const T (&input)[N]) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
 			#if CTRE_STRING_IS_UTF8
@@ -578,29 +577,42 @@ template <typename T, typename... As> constexpr auto pop_front_and_push_front(T 
 
 // match any term
 struct anything {
-	constexpr inline anything() noexcept { };
+	constexpr inline anything() noexcept { }
 	template <auto V> constexpr anything(term<V>) noexcept;
 };
 
 // match range of term A-B
 template <auto A, decltype(A) B> struct range {
-	constexpr inline range() noexcept { };
+	constexpr inline range() noexcept { }
 	//template <auto V> constexpr range(term<V>) noexcept requires (A <= V) && (V <= B);
 	template <auto V, typename = std::enable_if_t<(A <= V) && (V <= B)>> constexpr inline range(term<V>) noexcept;
 };
 
+#ifdef __EDG__
+template <auto V, auto... Set> struct contains {
+	static constexpr bool value = ((Set == V) || ... || false);
+};
+#endif
+
 // match terms defined in set
 template <auto... Def> struct set {
-	constexpr inline set() noexcept { };
-	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
+	constexpr inline set() noexcept { }
+	#ifdef __EDG__
+	template <auto V, typename = std::enable_if_t<contains<V, Def...>::value>> constexpr inline set(term<V>) noexcept;
+	#else
 	template <auto V, typename = std::enable_if_t<((Def == V) || ... || false)>> constexpr inline set(term<V>) noexcept;
+	#endif
 };
 
 // match terms not defined in set
 template <auto... Def> struct neg_set {
-	constexpr inline neg_set() noexcept { };
-	//template <auto V> constexpr set(term<V>) noexcept requires ((Def == V) || ... || false);
-	template <auto V, typename = std::enable_if_t<((Def != V) && ... && true)>> constexpr inline neg_set(term<V>) noexcept;
+	constexpr inline neg_set() noexcept { }
+	
+	#ifdef __EDG__
+	template <auto V, typename = std::enable_if_t<!contains<V, Def...>::value>> constexpr inline neg_set(term<V>) noexcept;
+	#else
+	template <auto V, typename = std::enable_if_t<!((Def == V) || ... || false)>> constexpr inline neg_set(term<V>) noexcept;
+	#endif
 };
 
 // AUGMENTED grammar which completes user-defined grammar for all other cases
@@ -853,6 +865,7 @@ struct pcre {
 
 // NONTERMINALS:
 	struct a {};
+	struct atom_repeat {};
 	struct b {};
 	struct backslash {};
 	struct backslash_range {};
@@ -860,8 +873,12 @@ struct pcre {
 	struct block_name2 {};
 	struct block_name {};
 	struct c {};
+	struct character_class {};
+	struct class_named {};
 	struct class_named_name {};
+	struct collate_char {};
 	struct content2 {};
+	struct content {};
 	struct content_in_capture {};
 	struct d {};
 	struct e {};
@@ -879,15 +896,22 @@ struct pcre {
 	struct n {};
 	struct number2 {};
 	struct number {};
+	struct o {};
+	struct p {};
 	struct property_name2 {};
 	struct property_name {};
 	struct property_value2 {};
 	struct property_value {};
+	struct q {};
+	struct r {};
 	struct range {};
 	struct repeat {};
 	struct s {}; using _start = s;
-	struct set2 {};
+	struct set2a {};
+	struct set2b {};
 	struct set {};
+	struct setitem2 {};
+	struct setitem {};
 	struct string2 {};
 
 // 'action' types:
@@ -914,6 +938,7 @@ struct pcre {
 	struct class_word: ctll::action {};
 	struct create_hexdec: ctll::action {};
 	struct create_number: ctll::action {};
+	struct equivalent_character: ctll::action {};
 	struct finish_hexdec: ctll::action {};
 	struct look_finish: ctll::action {};
 	struct make_alternate: ctll::action {};
@@ -973,19 +998,23 @@ struct pcre {
 	static constexpr auto rule(s, ctll::epsilon) -> ctll::push<push_empty>;
 	static constexpr auto rule(s, ctll::set<'\x29','*','+','?','\x7B','|','\x7D'>) -> ctll::reject;
 
-	static constexpr auto rule(a, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash, repeat, string2, content2, make_alternate>;
-	static constexpr auto rule(a, ctll::term<'['>) -> ctll::push<ctll::anything, c, repeat, string2, content2, make_alternate>;
-	static constexpr auto rule(a, ctll::term<'\x28'>) -> ctll::push<ctll::anything, prepare_capture, block, repeat, string2, content2, make_alternate>;
-	static constexpr auto rule(a, ctll::term<'^'>) -> ctll::push<ctll::anything, push_assert_begin, repeat, string2, content2, make_alternate>;
-	static constexpr auto rule(a, ctll::term<'$'>) -> ctll::push<ctll::anything, push_assert_end, repeat, string2, content2, make_alternate>;
-	static constexpr auto rule(a, ctll::set<'!',',','-',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T',']','_','0','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, repeat, string2, content2, make_alternate>;
-	static constexpr auto rule(a, _others) -> ctll::push<ctll::anything, push_character, repeat, string2, content2, make_alternate>;
-	static constexpr auto rule(a, ctll::term<'.'>) -> ctll::push<ctll::anything, push_character_anything, repeat, string2, content2, make_alternate>;
+	static constexpr auto rule(a, ctll::set<'!','$','\x28',',','-','.',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<content, make_alternate>;
+	static constexpr auto rule(a, _others) -> ctll::push<content, make_alternate>;
 	static constexpr auto rule(a, ctll::term<'\x29'>) -> ctll::push<push_empty, make_alternate>;
 	static constexpr auto rule(a, ctll::epsilon) -> ctll::push<push_empty, make_alternate>;
 	static constexpr auto rule(a, ctll::set<'*','+','?','\x7B','|','\x7D'>) -> ctll::reject;
 
-	static constexpr auto rule(b, ctll::term<','>) -> ctll::push<ctll::anything, m>;
+	static constexpr auto rule(atom_repeat, ctll::term<'['>) -> ctll::push<character_class, repeat>;
+	static constexpr auto rule(atom_repeat, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash, repeat>;
+	static constexpr auto rule(atom_repeat, ctll::term<'\x28'>) -> ctll::push<ctll::anything, prepare_capture, block, repeat>;
+	static constexpr auto rule(atom_repeat, ctll::term<'^'>) -> ctll::push<ctll::anything, push_assert_begin, repeat>;
+	static constexpr auto rule(atom_repeat, ctll::term<'$'>) -> ctll::push<ctll::anything, push_assert_end, repeat>;
+	static constexpr auto rule(atom_repeat, ctll::set<'!',',','-',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T',']','_','0','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, repeat>;
+	static constexpr auto rule(atom_repeat, _others) -> ctll::push<ctll::anything, push_character, repeat>;
+	static constexpr auto rule(atom_repeat, ctll::term<'.'>) -> ctll::push<ctll::anything, push_character_anything, repeat>;
+	static constexpr auto rule(atom_repeat, ctll::set<'\x29','*','+','?','\x7B','|','\x7D'>) -> ctll::reject;
+
+	static constexpr auto rule(b, ctll::term<','>) -> ctll::push<ctll::anything, n>;
 	static constexpr auto rule(b, ctll::term<'\x7D'>) -> ctll::push<repeat_exactly, ctll::anything>;
 
 	static constexpr auto rule(backslash, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
@@ -995,12 +1024,13 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
 	static constexpr auto rule(backslash, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
 	static constexpr auto rule(backslash, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
-	static constexpr auto rule(backslash, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, l>;
+	static constexpr auto rule(backslash, ctll::set<'1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, make_back_reference>;
+	static constexpr auto rule(backslash, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, m>;
 	static constexpr auto rule(backslash, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
 	static constexpr auto rule(backslash, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
-	static constexpr auto rule(backslash, ctll::term<'u'>) -> ctll::push<ctll::anything, j>;
-	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, k>;
-	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(backslash, ctll::term<'u'>) -> ctll::push<ctll::anything, k>;
+	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, l>;
+	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(backslash, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
 	static constexpr auto rule(backslash, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed>;
@@ -1009,8 +1039,9 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'r'>) -> ctll::push<ctll::anything, push_character_return_carriage>;
 	static constexpr auto rule(backslash, ctll::term<'t'>) -> ctll::push<ctll::anything, push_character_tab>;
 
-	static constexpr auto rule(backslash_range, ctll::term<'u'>) -> ctll::push<ctll::anything, j>;
-	static constexpr auto rule(backslash_range, ctll::term<'x'>) -> ctll::push<ctll::anything, k>;
+	static constexpr auto rule(backslash_range, ctll::term<'u'>) -> ctll::push<ctll::anything, k>;
+	static constexpr auto rule(backslash_range, ctll::term<'x'>) -> ctll::push<ctll::anything, l>;
+	static constexpr auto rule(backslash_range, ctll::term<'-'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(backslash_range, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash_range, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
 	static constexpr auto rule(backslash_range, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed>;
@@ -1019,16 +1050,9 @@ struct pcre {
 	static constexpr auto rule(backslash_range, ctll::term<'r'>) -> ctll::push<ctll::anything, push_character_return_carriage>;
 	static constexpr auto rule(backslash_range, ctll::term<'t'>) -> ctll::push<ctll::anything, push_character_tab>;
 
-	static constexpr auto rule(block, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
-	static constexpr auto rule(block, ctll::term<'['>) -> ctll::push<ctll::anything, c, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
+	static constexpr auto rule(block, ctll::set<'!','$','\x28','\x29',',','-','.',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<content_in_capture, make_capture, ctll::term<'\x29'>>;
+	static constexpr auto rule(block, _others) -> ctll::push<content_in_capture, make_capture, ctll::term<'\x29'>>;
 	static constexpr auto rule(block, ctll::term<'?'>) -> ctll::push<ctll::anything, d>;
-	static constexpr auto rule(block, ctll::term<'\x28'>) -> ctll::push<ctll::anything, prepare_capture, block, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
-	static constexpr auto rule(block, ctll::term<'^'>) -> ctll::push<ctll::anything, push_assert_begin, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
-	static constexpr auto rule(block, ctll::term<'$'>) -> ctll::push<ctll::anything, push_assert_end, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
-	static constexpr auto rule(block, ctll::set<'!',',','-',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T',']','_','0','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
-	static constexpr auto rule(block, _others) -> ctll::push<ctll::anything, push_character, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
-	static constexpr auto rule(block, ctll::term<'.'>) -> ctll::push<ctll::anything, push_character_anything, repeat, string2, content2, make_capture, ctll::term<'\x29'>>;
-	static constexpr auto rule(block, ctll::term<'\x29'>) -> ctll::push<push_empty, make_capture, ctll::anything>;
 	static constexpr auto rule(block, ctll::set<'*','+','\x7B','|','\x7D'>) -> ctll::reject;
 
 	static constexpr auto rule(block_name2, ctll::set<'>','\x7D'>) -> ctll::epsilon;
@@ -1036,13 +1060,14 @@ struct pcre {
 
 	static constexpr auto rule(block_name, ctll::set<'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'>) -> ctll::push<ctll::anything, push_name, block_name2>;
 
-	static constexpr auto rule(c, ctll::term<'['>) -> ctll::push<ctll::anything, ctll::term<':'>, h, range, set_start, set2, set_make, ctll::term<']'>>;
-	static constexpr auto rule(c, ctll::term<'\\'>) -> ctll::push<ctll::anything, e, set_start, set2, set_make, ctll::term<']'>>;
-	static constexpr auto rule(c, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','0','s','t','u','v','w','x','y','z','\x7B','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, range, set_start, set2, set_make, ctll::term<']'>>;
-	static constexpr auto rule(c, _others) -> ctll::push<ctll::anything, push_character, range, set_start, set2, set_make, ctll::term<']'>>;
-	static constexpr auto rule(c, ctll::term<'-'>) -> ctll::push<ctll::anything, push_character, set_start, set2, set_make, ctll::term<']'>>;
-	static constexpr auto rule(c, ctll::term<'^'>) -> ctll::push<ctll::anything, set, set_make_negative, ctll::term<']'>>;
-	static constexpr auto rule(c, ctll::set<']','|'>) -> ctll::reject;
+	static constexpr auto rule(c, ctll::term<'^'>) -> ctll::push<ctll::anything, set2a, set_make_negative, ctll::term<']'>>;
+	static constexpr auto rule(c, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<set, set_make, ctll::term<']'>>;
+	static constexpr auto rule(c, _others) -> ctll::push<set, set_make, ctll::term<']'>>;
+	static constexpr auto rule(c, ctll::set<'-',']','|'>) -> ctll::reject;
+
+	static constexpr auto rule(character_class, ctll::term<'['>) -> ctll::push<ctll::anything, c>;
+
+	static constexpr auto rule(class_named, ctll::term<'['>) -> ctll::push<ctll::anything, i>;
 
 	static constexpr auto rule(class_named_name, ctll::term<'x'>) -> ctll::push<ctll::anything, ctll::term<'d'>, ctll::term<'i'>, ctll::term<'g'>, ctll::term<'i'>, ctll::term<'t'>, class_named_xdigit>;
 	static constexpr auto rule(class_named_name, ctll::term<'d'>) -> ctll::push<ctll::anything, ctll::term<'i'>, ctll::term<'g'>, ctll::term<'i'>, ctll::term<'t'>, class_named_digit>;
@@ -1053,12 +1078,25 @@ struct pcre {
 	static constexpr auto rule(class_named_name, ctll::term<'s'>) -> ctll::push<ctll::anything, ctll::term<'p'>, ctll::term<'a'>, ctll::term<'c'>, ctll::term<'e'>, class_named_space>;
 	static constexpr auto rule(class_named_name, ctll::term<'u'>) -> ctll::push<ctll::anything, ctll::term<'p'>, ctll::term<'p'>, ctll::term<'e'>, ctll::term<'r'>, class_named_upper>;
 	static constexpr auto rule(class_named_name, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'r'>, ctll::term<'a'>, ctll::term<'p'>, ctll::term<'h'>, class_named_graph>;
-	static constexpr auto rule(class_named_name, ctll::term<'a'>) -> ctll::push<ctll::anything, f>;
-	static constexpr auto rule(class_named_name, ctll::term<'p'>) -> ctll::push<ctll::anything, g>;
+	static constexpr auto rule(class_named_name, ctll::term<'a'>) -> ctll::push<ctll::anything, g>;
+	static constexpr auto rule(class_named_name, ctll::term<'p'>) -> ctll::push<ctll::anything, h>;
+
+	static constexpr auto rule(collate_char, ctll::set<'!','$','\x28','\x29','*','+',',','-','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','0','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(collate_char, _others) -> ctll::push<ctll::anything, push_character>;
 
 	static constexpr auto rule(content2, ctll::term<'\x29'>) -> ctll::epsilon;
 	static constexpr auto rule(content2, ctll::epsilon) -> ctll::epsilon;
 	static constexpr auto rule(content2, ctll::term<'|'>) -> ctll::push<ctll::anything, a>;
+
+	static constexpr auto rule(content, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash, repeat, string2, content2>;
+	static constexpr auto rule(content, ctll::term<'['>) -> ctll::push<ctll::anything, c, repeat, string2, content2>;
+	static constexpr auto rule(content, ctll::term<'\x28'>) -> ctll::push<ctll::anything, prepare_capture, block, repeat, string2, content2>;
+	static constexpr auto rule(content, ctll::term<'^'>) -> ctll::push<ctll::anything, push_assert_begin, repeat, string2, content2>;
+	static constexpr auto rule(content, ctll::term<'$'>) -> ctll::push<ctll::anything, push_assert_end, repeat, string2, content2>;
+	static constexpr auto rule(content, ctll::set<'!',',','-',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T',']','_','0','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, repeat, string2, content2>;
+	static constexpr auto rule(content, _others) -> ctll::push<ctll::anything, push_character, repeat, string2, content2>;
+	static constexpr auto rule(content, ctll::term<'.'>) -> ctll::push<ctll::anything, push_character_anything, repeat, string2, content2>;
+	static constexpr auto rule(content, ctll::set<'\x29','*','+','?','\x7B','|','\x7D'>) -> ctll::reject;
 
 	static constexpr auto rule(content_in_capture, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash, repeat, string2, content2>;
 	static constexpr auto rule(content_in_capture, ctll::term<'['>) -> ctll::push<ctll::anything, c, repeat, string2, content2>;
@@ -1083,11 +1121,12 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
 	static constexpr auto rule(e, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
 	static constexpr auto rule(e, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
+	static constexpr auto rule(e, ctll::set<'1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, make_back_reference>;
 	static constexpr auto rule(e, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
 	static constexpr auto rule(e, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
-	static constexpr auto rule(e, ctll::term<'u'>) -> ctll::push<ctll::anything, j, range>;
-	static constexpr auto rule(e, ctll::term<'x'>) -> ctll::push<ctll::anything, k, range>;
-	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','-','.','?','A','B','C','E','F','G','H','I','J','K','L','M','O','Q','U','V','X','Y','Z','[','\\',']','^','b','c','h','i','j','k','l','m','o','q','v','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(e, ctll::term<'u'>) -> ctll::push<ctll::anything, k, range>;
+	static constexpr auto rule(e, ctll::term<'x'>) -> ctll::push<ctll::anything, l, range>;
+	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(e, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(e, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
 	static constexpr auto rule(e, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed, range>;
@@ -1095,46 +1134,56 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'0'>) -> ctll::push<ctll::anything, push_character_null, range>;
 	static constexpr auto rule(e, ctll::term<'r'>) -> ctll::push<ctll::anything, push_character_return_carriage, range>;
 	static constexpr auto rule(e, ctll::term<'t'>) -> ctll::push<ctll::anything, push_character_tab, range>;
+	static constexpr auto rule(e, ctll::term<'-'>) -> ctll::push<ctll::anything, q>;
 
-	static constexpr auto rule(f, ctll::term<'s'>) -> ctll::push<ctll::anything, ctll::term<'c'>, ctll::term<'i'>, ctll::term<'i'>, class_named_ascii>;
-	static constexpr auto rule(f, ctll::term<'l'>) -> ctll::push<ctll::anything, n>;
+	static constexpr auto rule(f, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
+	static constexpr auto rule(f, ctll::term<'D'>) -> ctll::push<ctll::anything, class_nondigit>;
+	static constexpr auto rule(f, ctll::term<'N'>) -> ctll::push<ctll::anything, class_nonnewline>;
+	static constexpr auto rule(f, ctll::term<'S'>) -> ctll::push<ctll::anything, class_nonspace>;
+	static constexpr auto rule(f, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
+	static constexpr auto rule(f, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
+	static constexpr auto rule(f, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
+	static constexpr auto rule(f, ctll::set<'1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, make_back_reference>;
+	static constexpr auto rule(f, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
+	static constexpr auto rule(f, ctll::term<'P'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property_negative>;
+	static constexpr auto rule(f, ctll::term<'u'>) -> ctll::push<ctll::anything, k, range>;
+	static constexpr auto rule(f, ctll::term<'x'>) -> ctll::push<ctll::anything, l, range>;
+	static constexpr auto rule(f, ctll::set<'$','\x28','\x29','*','+','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
+	static constexpr auto rule(f, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
+	static constexpr auto rule(f, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
+	static constexpr auto rule(f, ctll::term<'f'>) -> ctll::push<ctll::anything, push_character_formfeed, range>;
+	static constexpr auto rule(f, ctll::term<'n'>) -> ctll::push<ctll::anything, push_character_newline, range>;
+	static constexpr auto rule(f, ctll::term<'0'>) -> ctll::push<ctll::anything, push_character_null, range>;
+	static constexpr auto rule(f, ctll::term<'r'>) -> ctll::push<ctll::anything, push_character_return_carriage, range>;
+	static constexpr auto rule(f, ctll::term<'t'>) -> ctll::push<ctll::anything, push_character_tab, range>;
+	static constexpr auto rule(f, ctll::term<'-'>) -> ctll::push<ctll::anything, r>;
 
-	static constexpr auto rule(g, ctll::term<'r'>) -> ctll::push<ctll::anything, ctll::term<'i'>, ctll::term<'n'>, ctll::term<'t'>, class_named_print>;
-	static constexpr auto rule(g, ctll::term<'u'>) -> ctll::push<ctll::anything, ctll::term<'n'>, ctll::term<'c'>, ctll::term<'t'>, class_named_punct>;
+	static constexpr auto rule(g, ctll::term<'s'>) -> ctll::push<ctll::anything, ctll::term<'c'>, ctll::term<'i'>, ctll::term<'i'>, class_named_ascii>;
+	static constexpr auto rule(g, ctll::term<'l'>) -> ctll::push<ctll::anything, o>;
 
-	static constexpr auto rule(h, ctll::term<'^'>) -> ctll::push<ctll::anything, class_named_name, negate_class_named, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'x'>) -> ctll::push<ctll::anything, ctll::term<'d'>, ctll::term<'i'>, ctll::term<'g'>, ctll::term<'i'>, ctll::term<'t'>, class_named_xdigit, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'d'>) -> ctll::push<ctll::anything, ctll::term<'i'>, ctll::term<'g'>, ctll::term<'i'>, ctll::term<'t'>, class_named_digit, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'b'>) -> ctll::push<ctll::anything, ctll::term<'l'>, ctll::term<'a'>, ctll::term<'n'>, ctll::term<'k'>, class_named_blank, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'c'>) -> ctll::push<ctll::anything, ctll::term<'n'>, ctll::term<'t'>, ctll::term<'r'>, ctll::term<'l'>, class_named_cntrl, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'w'>) -> ctll::push<ctll::anything, ctll::term<'o'>, ctll::term<'r'>, ctll::term<'d'>, class_named_word, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'l'>) -> ctll::push<ctll::anything, ctll::term<'o'>, ctll::term<'w'>, ctll::term<'e'>, ctll::term<'r'>, class_named_lower, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'s'>) -> ctll::push<ctll::anything, ctll::term<'p'>, ctll::term<'a'>, ctll::term<'c'>, ctll::term<'e'>, class_named_space, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'u'>) -> ctll::push<ctll::anything, ctll::term<'p'>, ctll::term<'p'>, ctll::term<'e'>, ctll::term<'r'>, class_named_upper, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'r'>, ctll::term<'a'>, ctll::term<'p'>, ctll::term<'h'>, class_named_graph, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'a'>) -> ctll::push<ctll::anything, f, ctll::term<':'>, ctll::term<']'>>;
-	static constexpr auto rule(h, ctll::term<'p'>) -> ctll::push<ctll::anything, g, ctll::term<':'>, ctll::term<']'>>;
+	static constexpr auto rule(h, ctll::term<'r'>) -> ctll::push<ctll::anything, ctll::term<'i'>, ctll::term<'n'>, ctll::term<'t'>, class_named_print>;
+	static constexpr auto rule(h, ctll::term<'u'>) -> ctll::push<ctll::anything, ctll::term<'n'>, ctll::term<'c'>, ctll::term<'t'>, class_named_punct>;
 
 	static constexpr auto rule(hexdec_repeat, ctll::term<'\x7D'>) -> ctll::epsilon;
 	static constexpr auto rule(hexdec_repeat, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_hexdec, hexdec_repeat>;
 
-	static constexpr auto rule(i, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash_range, make_range>;
-	static constexpr auto rule(i, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','0','s','t','u','v','w','x','y','z','\x7B','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, make_range>;
-	static constexpr auto rule(i, _others) -> ctll::push<ctll::anything, push_character, make_range>;
-	static constexpr auto rule(i, ctll::set<'-','[',']','^','|'>) -> ctll::reject;
+	static constexpr auto rule(i, ctll::term<'='>) -> ctll::push<ctll::anything, collate_char, equivalent_character, ctll::term<'='>, ctll::term<']'>>;
+	static constexpr auto rule(i, ctll::term<':'>) -> ctll::push<ctll::anything, p>;
 
-	static constexpr auto rule(j, ctll::term<'\x7B'>) -> ctll::push<create_hexdec, ctll::anything, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, hexdec_repeat, ctll::term<'\x7D'>, finish_hexdec>;
-	static constexpr auto rule(j, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<create_hexdec, ctll::anything, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
+	static constexpr auto rule(j, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash_range, make_range>;
+	static constexpr auto rule(j, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','0','s','t','u','v','w','x','y','z','\x7B','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, make_range>;
+	static constexpr auto rule(j, _others) -> ctll::push<ctll::anything, push_character, make_range>;
+	static constexpr auto rule(j, ctll::set<'-','[',']','^','|'>) -> ctll::reject;
 
 	static constexpr auto rule(k, ctll::term<'\x7B'>) -> ctll::push<create_hexdec, ctll::anything, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, hexdec_repeat, ctll::term<'\x7D'>, finish_hexdec>;
-	static constexpr auto rule(k, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<create_hexdec, ctll::anything, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
+	static constexpr auto rule(k, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<create_hexdec, ctll::anything, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
 
-	static constexpr auto rule(l, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, ctll::term<'\x7D'>, make_back_reference>;
-	static constexpr auto rule(l, ctll::term<'-'>) -> ctll::push<ctll::anything, number, ctll::term<'\x7D'>, make_relative_back_reference>;
-	static constexpr auto rule(l, ctll::set<'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'>) -> ctll::push<ctll::anything, push_name, block_name2, ctll::term<'\x7D'>, make_back_reference>;
+	static constexpr auto rule(l, ctll::term<'\x7B'>) -> ctll::push<create_hexdec, ctll::anything, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, hexdec_repeat, ctll::term<'\x7D'>, finish_hexdec>;
+	static constexpr auto rule(l, ctll::set<'0','A','B','C','D','E','F','a','b','c','d','e','f','1','2','3','4','5','6','7','8','9'>) -> ctll::push<create_hexdec, ctll::anything, push_hexdec, ctll::set<'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','a','b','c','d','e','f'>, push_hexdec, finish_hexdec>;
 
-	static constexpr auto rule(m, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, repeat_ab, ctll::term<'\x7D'>, mod>;
-	static constexpr auto rule(m, ctll::term<'\x7D'>) -> ctll::push<repeat_at_least, ctll::anything, mod>;
+	static constexpr auto rule(m, ctll::set<'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'>) -> ctll::push<block_name, ctll::term<'\x7D'>, make_back_reference>;
+	static constexpr auto rule(m, ctll::term<'-'>) -> ctll::push<ctll::anything, number, ctll::term<'\x7D'>, make_relative_back_reference>;
+	static constexpr auto rule(m, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<number, ctll::term<'\x7D'>, make_back_reference>;
 
 	static constexpr auto rule(mod, ctll::set<'!','$','\x28','\x29',',','-','.',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(mod, ctll::epsilon) -> ctll::epsilon;
@@ -1149,13 +1198,19 @@ struct pcre {
 	static constexpr auto rule(mod_opt, ctll::term<'?'>) -> ctll::push<ctll::anything, make_lazy>;
 	static constexpr auto rule(mod_opt, ctll::set<'*','+','\x7B','\x7D'>) -> ctll::reject;
 
-	static constexpr auto rule(n, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'h'>, ctll::term<'a'>, class_named_alpha>;
-	static constexpr auto rule(n, ctll::term<'n'>) -> ctll::push<ctll::anything, ctll::term<'u'>, ctll::term<'m'>, class_named_alnum>;
+	static constexpr auto rule(n, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<number, repeat_ab, ctll::term<'\x7D'>, mod>;
+	static constexpr auto rule(n, ctll::term<'\x7D'>) -> ctll::push<repeat_at_least, ctll::anything, mod>;
 
 	static constexpr auto rule(number2, ctll::set<',','\x7D'>) -> ctll::epsilon;
 	static constexpr auto rule(number2, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_number, number2>;
 
 	static constexpr auto rule(number, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2>;
+
+	static constexpr auto rule(o, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'h'>, ctll::term<'a'>, class_named_alpha>;
+	static constexpr auto rule(o, ctll::term<'n'>) -> ctll::push<ctll::anything, ctll::term<'u'>, ctll::term<'m'>, class_named_alnum>;
+
+	static constexpr auto rule(p, ctll::set<'a','b','c','d','g','l','p','s','u','w','x'>) -> ctll::push<class_named_name, ctll::term<':'>, ctll::term<']'>>;
+	static constexpr auto rule(p, ctll::term<'^'>) -> ctll::push<ctll::anything, class_named_name, negate_class_named, ctll::term<':'>, ctll::term<']'>>;
 
 	static constexpr auto rule(property_name2, ctll::term<'\x7D'>) -> ctll::epsilon;
 	static constexpr auto rule(property_name2, ctll::term<'='>) -> ctll::push<ctll::anything, property_value>;
@@ -1168,11 +1223,23 @@ struct pcre {
 
 	static constexpr auto rule(property_value, ctll::set<'0','.','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_property_value, property_value2>;
 
-	static constexpr auto rule(range, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
+	static constexpr auto rule(q, ctll::term<'-'>) -> ctll::push<push_character, ctll::anything, j>;
+	static constexpr auto rule(q, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<push_character>;
+	static constexpr auto rule(q, ctll::epsilon) -> ctll::push<push_character>;
+	static constexpr auto rule(q, _others) -> ctll::push<push_character>;
+	static constexpr auto rule(q, ctll::term<'|'>) -> ctll::reject;
+
+	static constexpr auto rule(r, ctll::term<'-'>) -> ctll::push<push_character, ctll::anything, j>;
+	static constexpr auto rule(r, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<push_character>;
+	static constexpr auto rule(r, ctll::epsilon) -> ctll::push<push_character>;
+	static constexpr auto rule(r, _others) -> ctll::push<push_character>;
+	static constexpr auto rule(r, ctll::term<'|'>) -> ctll::reject;
+
+	static constexpr auto rule(range, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(range, ctll::epsilon) -> ctll::epsilon;
 	static constexpr auto rule(range, _others) -> ctll::epsilon;
-	static constexpr auto rule(range, ctll::term<'-'>) -> ctll::push<ctll::anything, i>;
-	static constexpr auto rule(range, ctll::set<'^','|'>) -> ctll::reject;
+	static constexpr auto rule(range, ctll::term<'-'>) -> ctll::push<ctll::anything, j>;
+	static constexpr auto rule(range, ctll::term<'|'>) -> ctll::reject;
 
 	static constexpr auto rule(repeat, ctll::set<'!','$','\x28','\x29',',','-','.',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(repeat, ctll::epsilon) -> ctll::epsilon;
@@ -1183,30 +1250,36 @@ struct pcre {
 	static constexpr auto rule(repeat, ctll::term<'*'>) -> ctll::push<ctll::anything, repeat_star, mod>;
 	static constexpr auto rule(repeat, ctll::term<'\x7D'>) -> ctll::reject;
 
-	static constexpr auto rule(set2, ctll::term<']'>) -> ctll::epsilon;
-	static constexpr auto rule(set2, ctll::term<'['>) -> ctll::push<ctll::anything, ctll::term<':'>, h, range, set_combine, set2>;
-	static constexpr auto rule(set2, ctll::term<'\\'>) -> ctll::push<ctll::anything, e, set_combine, set2>;
-	static constexpr auto rule(set2, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','0','s','t','u','v','w','x','y','z','\x7B','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, range, set_combine, set2>;
-	static constexpr auto rule(set2, _others) -> ctll::push<ctll::anything, push_character, range, set_combine, set2>;
-	static constexpr auto rule(set2, ctll::set<'-','^','|'>) -> ctll::reject;
+	static constexpr auto rule(set2a, ctll::term<']'>) -> ctll::epsilon;
+	static constexpr auto rule(set2a, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<setitem2, set_start, set2b>;
+	static constexpr auto rule(set2a, _others) -> ctll::push<setitem2, set_start, set2b>;
+	static constexpr auto rule(set2a, ctll::set<'-','|'>) -> ctll::reject;
 
-	static constexpr auto rule(set, ctll::term<'['>) -> ctll::push<ctll::anything, ctll::term<':'>, h, range, set_start, set2>;
-	static constexpr auto rule(set, ctll::term<'\\'>) -> ctll::push<ctll::anything, e, set_start, set2>;
-	static constexpr auto rule(set, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','0','s','t','u','v','w','x','y','z','\x7B','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, range, set_start, set2>;
-	static constexpr auto rule(set, _others) -> ctll::push<ctll::anything, push_character, range, set_start, set2>;
-	static constexpr auto rule(set, ctll::term<'-'>) -> ctll::push<ctll::anything, push_character, set_start, set2>;
-	static constexpr auto rule(set, ctll::set<']','^','|'>) -> ctll::reject;
+	static constexpr auto rule(set2b, ctll::term<']'>) -> ctll::epsilon;
+	static constexpr auto rule(set2b, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<setitem2, set_combine, set2b>;
+	static constexpr auto rule(set2b, _others) -> ctll::push<setitem2, set_combine, set2b>;
+	static constexpr auto rule(set2b, ctll::set<'-','|'>) -> ctll::reject;
+
+	static constexpr auto rule(set, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','\x7D','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<setitem, set_start, set2b>;
+	static constexpr auto rule(set, _others) -> ctll::push<setitem, set_start, set2b>;
+	static constexpr auto rule(set, ctll::set<'-',']','^','|'>) -> ctll::reject;
+
+	static constexpr auto rule(setitem2, ctll::term<'['>) -> ctll::push<class_named, range>;
+	static constexpr auto rule(setitem2, ctll::term<'\\'>) -> ctll::push<ctll::anything, f>;
+	static constexpr auto rule(setitem2, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','0','s','t','u','v','w','x','y','z','\x7B','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, range>;
+	static constexpr auto rule(setitem2, _others) -> ctll::push<ctll::anything, push_character, range>;
+	static constexpr auto rule(setitem2, ctll::set<'-',']','|'>) -> ctll::reject;
+
+	static constexpr auto rule(setitem, ctll::term<'['>) -> ctll::push<class_named, range>;
+	static constexpr auto rule(setitem, ctll::term<'\\'>) -> ctll::push<ctll::anything, e>;
+	static constexpr auto rule(setitem, ctll::set<'!','$','\x28','\x29','*','+',',','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','0','s','t','u','v','w','x','y','z','\x7B','\x7D','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, range>;
+	static constexpr auto rule(setitem, _others) -> ctll::push<ctll::anything, push_character, range>;
+	static constexpr auto rule(setitem, ctll::set<'-',']','^','|'>) -> ctll::reject;
 
 	static constexpr auto rule(string2, ctll::set<'\x29','|'>) -> ctll::epsilon;
 	static constexpr auto rule(string2, ctll::epsilon) -> ctll::epsilon;
-	static constexpr auto rule(string2, ctll::term<'\\'>) -> ctll::push<ctll::anything, backslash, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctll::term<'['>) -> ctll::push<ctll::anything, c, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctll::term<'\x28'>) -> ctll::push<ctll::anything, prepare_capture, block, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctll::term<'^'>) -> ctll::push<ctll::anything, push_assert_begin, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctll::term<'$'>) -> ctll::push<ctll::anything, push_assert_end, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctll::set<'!',',','-',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T',']','_','0','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, push_character, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, _others) -> ctll::push<ctll::anything, push_character, repeat, string2, make_sequence>;
-	static constexpr auto rule(string2, ctll::term<'.'>) -> ctll::push<ctll::anything, push_character_anything, repeat, string2, make_sequence>;
+	static constexpr auto rule(string2, ctll::set<'!','$','\x28',',','-','.',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<atom_repeat, string2, make_sequence>;
+	static constexpr auto rule(string2, _others) -> ctll::push<atom_repeat, string2, make_sequence>;
 	static constexpr auto rule(string2, ctll::set<'*','+','?','\x7B','\x7D'>) -> ctll::reject;
 
 };
@@ -1285,6 +1358,7 @@ struct assert_end { };
 #endif
 
 #endif
+
 #include <cstdint>
 
 namespace ctre {
@@ -1334,24 +1408,24 @@ template <auto A, auto B> struct char_range {
 	}
 };
 
-struct word_chars : set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> > { };
+using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> >;
 
-struct space_chars : enumeration<' ', '\t', '\n', '\v', '\f', '\r'> {};
+using space_chars = enumeration<' ', '\t', '\n', '\v', '\f', '\r'>;
 
-struct alphanum_chars : set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> > { };
+using alphanum_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> >;
 
-struct alpha_chars : set<char_range<'A','Z'>, char_range<'a','z'> > { };
+using alpha_chars = set<char_range<'A','Z'>, char_range<'a','z'> >;
 
-struct xdigit_chars : set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> > { };
+using xdigit_chars = set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> >;
 
-struct punct_chars
-    : enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
+using punct_chars
+    = enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
 		  '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']',
-		  '^', '_', '`', '{', '|', '}', '~'> {};
+		  '^', '_', '`', '{', '|', '}', '~'>;
 
-struct digit_chars : char_range<'0','9'> { };
+using digit_chars = char_range<'0','9'>;
 
-struct ascii_chars : char_range<'\x00','\x7F'> { };
+using ascii_chars = char_range<'\x00','\x7F'>;
 
 }
 
@@ -1531,6 +1605,7 @@ template <auto... Name, typename T> constexpr auto operator==(id<Name...>, T) no
 }
 
 #endif
+
 #include <cstdint>
 #include <limits>
 
@@ -1571,7 +1646,7 @@ template <auto V, typename... Ts, typename Parameters> static constexpr auto app
 }
 
 #endif
-	
+
 #ifndef CTRE__ACTIONS__BACKREFERENCE__HPP
 #define CTRE__ACTIONS__BACKREFERENCE__HPP
 
@@ -2060,7 +2135,7 @@ template <auto V, auto B, auto A, typename... Ts, typename Parameters> static co
 }
 
 #endif
-	
+
 #ifndef CTRE__ACTIONS__PROPERTIES__HPP
 #define CTRE__ACTIONS__PROPERTIES__HPP
 
@@ -2208,6 +2283,14 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
+			return std::basic_string<char_type>(begin(), end());
+		}
+		
+		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
+			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+		}
+		
+		constexpr CTRE_FORCE_INLINE auto str() const noexcept {
 			return std::basic_string<char_type>(begin(), end());
 		}
 		
@@ -2383,6 +2466,14 @@ public:
 		return _captures.template select<0>().to_string();
 	}
 	
+	constexpr CTRE_FORCE_INLINE auto view() const noexcept {
+		return _captures.template select<0>().view();
+	}
+	
+	constexpr CTRE_FORCE_INLINE auto str() const noexcept {
+		return _captures.template select<0>().to_string();
+	}
+	
 	constexpr CTRE_FORCE_INLINE regex_results & set_start_mark(Iterator pos) noexcept {
 		_captures.template select<0>().set_start(pos);
 		return *this;
@@ -2410,6 +2501,7 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 
 // support for structured bindings
 
+#ifndef __EDG__
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmismatched-tags"
@@ -2428,6 +2520,7 @@ namespace std {
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 #endif
 
 #endif
@@ -2670,15 +2763,14 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<repeat<0, B, Seq...>, 
 
 // lookahead_positive
 template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
-	auto out = first(l, ctll::list<Seq..., Tail...>{});
-	return first(out, ctll::list<Tail...>{});
+constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
 }
 
 // lookahead_negative TODO fixme
 template <typename... Content, typename... Seq, typename... Tail> 
 constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_negative<Seq...>, Tail...>) noexcept {
-	return can_be_anything{};
+	return ctll::list<can_be_anything>{};
 }
 
 // capture
@@ -2793,6 +2885,10 @@ constexpr size_t calculate_size_of_first(...) {
 }
 
 template <typename... Content> constexpr size_t calculate_size_of_first(ctll::list<Content...>) {
+	return (calculate_size_of_first(Content{}) + ... + 0);
+}
+
+template <typename... Content> constexpr size_t calculate_size_of_first(ctre::set<Content...>) {
 	return (calculate_size_of_first(Content{}) + ... + 0);
 }
 
@@ -2966,6 +3062,9 @@ public:
 	template <typename... Content> constexpr bool check(ctll::list<Content...>) {
 		return (check(Content{}) || ... || false);
 	}
+	template <typename... Content> constexpr bool check(ctre::set<Content...>) {
+		return (check(Content{}) || ... || false);
+	}
 	
 	
 	template <auto V> constexpr void populate(ctre::character<V>) {
@@ -2982,8 +3081,8 @@ public:
 			this->insert(low, high);
 		});
 	}
-	template <auto... V> constexpr void populate(ctre::enumeration<V...>) {
-		return (insert(V,V), ...);
+	template <typename... Content> constexpr void populate(ctre::set<Content...>) {
+		(populate(Content{}), ...);
 	}
 	template <typename... Content> constexpr void populate(ctll::list<Content...>) {
 		(populate(Content{}), ...);
@@ -3001,6 +3100,13 @@ template <typename... A, typename... B> constexpr bool collides(ctll::list<A...>
 
 }
 
+#endif
+
+// remove me when MSVC fix the constexpr bug
+#ifdef _MSC_VER
+#ifndef CTRE_MSVC_GREEDY_WORKAROUND
+#define CTRE_MSVC_GREEDY_WORKAROUND
+#endif
 #endif
 
 namespace ctre {
@@ -3229,8 +3335,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+#else
 constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
-	if ((i < B) || (B == 0)) {
+#endif
+	if ((B == 0) || (i < B)) {
 		 
 		// a*ab
 		// aab
@@ -3240,12 +3350,23 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
 			//  return inner_result
 			// I tried to add all constructors to R but without any success 
+			#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+			evaluate_recursive(result, i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack);
+			if (result) {
+				return;
+			}
+			#else
 			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack)) {
 				return rec_result;
 			}
+			#endif
 		}
 	} 
+	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+	result = evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#else
 	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#endif
 }	
 
 // (gready) repeat optimization
@@ -3275,8 +3396,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 				return not_matched;
 			}
 		}
-	
+	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+		R result;
+		evaluate_recursive(result, i, begin, current, end, captures, stack);
+		return result;
+	#else
 		return evaluate_recursive(i, begin, current, end, captures, stack);
+	#endif
 #ifndef CTRE_DISABLE_GREEDY_OPT
 	} else {
 		// if there is no collision we can go possessive
@@ -3342,7 +3468,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // backreference support (match agains content of iterators)
 template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> match_against_range(Iterator current, const EndIterator end, Iterator range_current, const Iterator range_end) noexcept {
-	while (current != end && range_current != range_end) {
+	while (end != current && range_end != range_current) {
 		if (*current == *range_current) {
 			current++;
 			range_current++;
@@ -3415,3950 +3541,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 #ifndef CTRE__WRAPPER__HPP
 #define CTRE__WRAPPER__HPP
 
-#ifndef CTRE__TRANSLATE_DFA__HPP
-#define CTRE__TRANSLATE_DFA__HPP
-
-#ifndef CTRE__CTFA_WRAPPER__HPP
-#define CTRE__CTFA_WRAPPER__HPP
-
-#ifndef CTFA__HPP
-#define CTFA__HPP
-
-#ifndef CTFA__BASIC__HPP
-#define CTFA__BASIC__HPP
-
-#ifndef CTFA__BASIC__FA__HPP
-#define CTFA__BASIC__FA__HPP
-
-#include <cstddef>
-#ifndef CTFA__CONTAINER__SET__HPP
-#define CTFA__CONTAINER__SET__HPP
-
-#include <cstddef>
-#include <iterator>
-#ifndef CTFA__HELPER__CONDITIONAL__HPP
-#define CTFA__HELPER__CONDITIONAL__HPP
-
-namespace ctfa {
-
-template <bool> struct conditional_helper;
-
-template <> struct conditional_helper<true> {
-	template <typename T, typename> using type = T;
-};
-
-template <> struct conditional_helper<false> {
-	template <typename, typename T> using type = T;
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-template <bool C, typename T, typename F> using conditional = typename conditional_helper<C>::template type<T,F>;
-
-template <typename T, size_t Capacity> class set {
-	// I'm using C array, because it's much quicker in compile-time
-	size_t _size{0};
-	
-	struct storage {
-		T _data[Capacity]{};
-		constexpr const T * data() const {
-			return _data;
-		}
-		constexpr T * data() {
-			return _data;
-		}
-	};
-	
-	struct empty_storage {
-		constexpr const T * data() const {
-			return nullptr;
-		}
-		constexpr T * data() {
-			return nullptr;
-		}
-	};
-	
-	
-	using data_t = conditional<(Capacity > 0), storage, empty_storage>;
-	
-	data_t _data;
-	
-	template <typename, size_t> friend class set;
-public:
-	static constexpr size_t capacity = Capacity;
-	using iterator = T *;
-	constexpr set() { }
-	
-	constexpr set(const std::initializer_list<T> & list) {
-		for (const auto & v: list) {
-			insert(v);
-		}
-	}
-	constexpr set(const set & rhs) = default;
-	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
-		for (const auto & v: rhs) {
-			push_back(v);
-		}
-	}
-	constexpr const T * data() const {
-		return _data.data();
-	}
-	constexpr T * data() {
-		return _data.data();
-	}
-	constexpr auto begin() {
-		return data();
-	}
-	constexpr auto end() {
-		return data() + _size;
-	}
-	constexpr auto begin() const {
-		return data();
-	}
-	constexpr auto end() const {
-		return data() + _size;
-	}
-	constexpr size_t size() const {
-		return _size;
-	}
-	constexpr const auto & first() const {
-		return *_data;
-	}
-	constexpr const auto & last() const {
-		return _data[_size - 1];
-	}
-	template <size_t C> constexpr bool operator==(const set<T,C> & rhs) const {
-		if (_size != rhs._size) return false;
-		for (size_t i = 0; i != _size; ++i) {
-			if (!(data()[i] == rhs.data()[i])) return false;
-		}
-		return true;
-	}
-	template <size_t C> constexpr bool operator<(const set<T,C> & rhs) const {
-		for (size_t i = 0; i != _size && i != rhs._size; ++i) {
-			if (data()[i] == rhs.data()[i]) continue;
-			else if (data()[i] < rhs.data()[i]) return true;
-			else return false;
-		}
-		return _size < rhs._size;
-	}
-	constexpr auto & operator[](size_t idx) const {
-		return data()[idx];
-	} 
-	constexpr auto & operator[](size_t idx) {
-		return data()[idx];
-	} 
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) const {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) const {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	constexpr std::pair<iterator, bool> insert(T obj) {
-		auto it = lower_bound(obj);
-		if (it == end()) {
-			[[maybe_unused]] auto check = data()[_size];
-			*it = obj;
-			_size++;
-			return {it, true};
-		} else if (*it == obj) {
-			return {it, false};
-		} else {
-			[[maybe_unused]] auto check = data()[_size];
-			auto out = it;
-			while (it != end()) {
-				// swap
-				auto tmp = std::move(*it);
-				*it = std::move(obj);
-				obj = std::move(tmp);
-				
-				it++;
-			}
-			// swap
-			auto tmp = std::move(*it);
-			*it = std::move(obj);
-			obj = std::move(tmp);
-			
-			_size++;
-			return {out, true};
-		}
-	}
-	constexpr void push_back(T obj) {
-		auto it = end();
-		*it = obj;
-		_size++;
-	}
-	template <typename Arg> constexpr bool remove(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) {
-			return remove(it);
-		} else {
-			return false;
-		}
-	}
-	constexpr iterator remove(iterator erase_it) {
-		iterator out = erase_it;
-		if (erase_it == end()) { 
-			return out;
-		}
-		
-		while (erase_it != end()) {
-			auto next = erase_it;
-			next++;
-			if (next != end()) {
-				*erase_it = std::move(*next);
-			}
-			erase_it++;
-		}
-		_size--;
-		return out;
-	}
-};
-
-}
-
-#endif
-
-#ifndef CTFA__BASIC__TRANSITION__HPP
-#define CTFA__BASIC__TRANSITION__HPP
-
-#ifndef CTFA__BASIC__STATE__HPP
-#define CTFA__BASIC__STATE__HPP
-
-#ifndef CTFA__CONDITION__HPP
-#define CTFA__CONDITION__HPP
-
-#include <string_view>
-#ifndef CTFA__UTILITY__HPP
-#define CTFA__UTILITY__HPP
-
-#ifdef _MSC_VER
-#define CTFA_FORCE_INLINE __forceinline
-#define CTFA_FLATTEN
-#else
-#define CTFA_FORCE_INLINE inline __attribute__((always_inline))
-#define CTFA_FLATTEN __attribute__((flatten))
-#endif
-
-namespace ctfa {
-	struct zero_terminated_string_end_iterator {
-		constexpr inline zero_terminated_string_end_iterator() = default;
-		constexpr CTFA_FORCE_INLINE bool operator==(const char * ptr) const noexcept {
-			return *ptr == '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator==(const wchar_t * ptr) const noexcept {
-			return *ptr == 0;
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const char * ptr) const noexcept {
-			return *ptr != '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const wchar_t * ptr) const noexcept {
-			return *ptr != 0;
-		} 
-	};
-}
-
-#endif
-
-namespace ctfa {
-
-namespace impl {
-
-struct range {
-	char32_t low{};
-	char32_t high{};
-	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T v) const noexcept {
-		return (low <= v) && (v <= high);
-	}
-	constexpr bool operator<(const range & rhs) const noexcept {
-		if (low == rhs.low) {
-			return high < rhs.high;
-		}
-		return low < rhs.low;
-	}
-	constexpr bool operator==(const range & rhs) const noexcept {
-		return low == rhs.low && high == rhs.high;
-	}
-	constexpr bool operator!=(const range & rhs) const noexcept {
-		return low != rhs.low || high != rhs.high;
-	}
-	template <typename CB> void debug(CB && cb) const {
-		if (low == std::numeric_limits<char32_t>::min() && high == std::numeric_limits<char32_t>::max()) {
-			cb("anything");
-			return;
-		}
-	
-		if (low == std::numeric_limits<char32_t>::min()) cb("MIN");
-		else if (low >= 32 && low <= 126) cb('\'',static_cast<char>(low),'\'');
-		else cb(low);
-		
-		if (low != high) {
-			cb("..");
-			if (high == std::numeric_limits<char32_t>::max()) cb("MAX");
-			else if (high >= 32 && high <= 126) cb('\'',static_cast<char>(high),'\'');
-			else cb(high);
-		}
-	}
-};
-
-}
-
-struct condition {
-	impl::range r;
-
-	constexpr condition() noexcept { }
-	
-	constexpr condition(const impl::range & r) noexcept: r{r} { }
-	
-	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T value) const noexcept {
-		return r.match(value);
-	}
-	constexpr bool operator<(const condition & rhs) const noexcept {
-		return r < rhs.r;
-	}
-	constexpr bool operator==(const condition & rhs) const noexcept {
-		return r == rhs.r;
-	}
-	constexpr bool operator!=(const condition & rhs) const noexcept {
-		return r != rhs.r;
-	}
-	template <typename CB> constexpr void debug(CB && cb) const {
-		r.debug(cb);
-	}
-};
-
-namespace matcher {
-
-template <char32_t C> static constexpr auto unit = condition(impl::range{C,C});
-template <char32_t A, char32_t B> static constexpr auto range = condition(impl::range{A,B});
-static constexpr auto anything = condition(impl::range{std::numeric_limits<char32_t>::min(), std::numeric_limits<char32_t>::max()});
-
-}
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct state {
-	int id{-1};
-	
-	static constexpr int placeholder = -2;
-	static constexpr int invalid = -1;
-	static constexpr int start = 0;
-	
-	constexpr bool operator<(const state & rhs) const noexcept {
-		return id < rhs.id;
-	}
-	constexpr bool operator<=(const state & rhs) const noexcept {
-		return id <= rhs.id;
-	}
-	constexpr bool operator==(const state & rhs) const noexcept {
-		return id == rhs.id;
-	}
-	constexpr bool operator!=(const state & rhs) const noexcept {
-		return id != rhs.id;
-	}
-	constexpr state prefix_base(state base) const noexcept {
-		return state{id+base.id};
-	}
-	constexpr state prefix(state base) const noexcept {
-		return state{id+base.id};
-	}
-	constexpr state next() const noexcept {
-		return state{id+1};
-	}
-	constexpr bool is_start() const noexcept {
-		return id == start;
-	}
-};
-
-static constexpr auto start_state = state{state::start};
-static constexpr auto invalid_state = state{state::invalid};
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct transition {
-	state source;
-	state target;
-	condition cond;
-	constexpr bool operator<(state current) const noexcept {
-		return source < current;
-	}
-	constexpr bool operator==(state current) const noexcept {
-		return source == current;
-	}
-	constexpr bool operator!=(state current) const noexcept {
-		return !operator==(current);
-	}
-	constexpr bool operator<(const transition & rhs) const noexcept {
-		if (source == rhs.source) {
-			if (cond == rhs.cond) {
-				return target < rhs.target;
-			}
-			return cond < rhs.cond;
-		}
-		return source < rhs.source;
-	}
-	constexpr bool operator==(const transition & rhs) const noexcept {
-		return source == rhs.source && target == rhs.target && cond == rhs.cond;
-	}
-	constexpr bool operator!=(const transition & rhs) const noexcept {
-		return !operator==(rhs);
-	}
-	constexpr bool match(char32_t current) const noexcept {
-		return cond.match(current);
-	}
-	constexpr bool is_start() const noexcept {
-		return source.is_start();
-	}
-	constexpr transition prefix(state base) const noexcept {
-		return transition{
-			source.prefix(base),
-			target.prefix(base),
-			cond
-		};
-	}
-	constexpr transition prefix_base(state base) const noexcept {
-		return transition{
-			source.prefix_base(base),
-			target.prefix_base(base),
-			cond
-		};
-	}
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct transition_count_pair {
-	size_t from_start{0};
-	size_t other{0};
-};
-
-template <size_t Transitions, size_t FinalStates> struct finite_automaton {
-	ctfa::set<transition, Transitions> transitions{};
-	ctfa::set<state, FinalStates> final_states{};
-	
-	constexpr finite_automaton() = default;
-	constexpr finite_automaton(const ctfa::set<transition, Transitions> & t, const ctfa::set<state, FinalStates> & f): transitions{t}, final_states{f} { }
-	
-	constexpr bool is_final(state s) const noexcept {
-		if (s == invalid_state) return false;
-		return final_states.find(s) != final_states.end();
-	}
-
-	constexpr auto create_blank() const noexcept {
-		return finite_automaton<Transitions, FinalStates>{};
-	}
-	
-	constexpr state next_free_state() const noexcept {
-		state highest = invalid_state;
-		// I need to iterate because there can be unaccessible state (it's sorted source,target )
-		for (const auto & t: transitions) {
-			highest = std::max(t.source, highest);
-			highest = std::max(t.target, highest);
-		}
-		for (state s: final_states) {
-			highest = std::max(s, highest);
-		}
-		return highest.next();
-	}
-	constexpr void add(const transition & t) {
-		transitions.insert(t);
-	}
-	constexpr void mark_final(state s) {
-		final_states.insert(s);
-	}
-	template <size_t T, size_t F> constexpr bool operator==(const finite_automaton<T,F> & rhs) const noexcept {
-		return final_states == rhs.final_states && transitions == rhs.transitions;
-	}
-};
-
-template <typename F> struct filtered_out {
-	F fa;
-	size_t transitions;
-	size_t final_states;
-};
-
-template <typename F> filtered_out(const F &, size_t, size_t) -> filtered_out<F>;
-
-}
-
-#endif
-
-namespace ctfa::block {
-
-static constexpr auto empty = finite_automaton<0,1>{{}, {state{0}}};
-
-static constexpr auto reject_all = finite_automaton<0,0>{{}, {}};
-
-template <char32_t Value> static constexpr auto unit = finite_automaton<1,1>{{transition{state{0}, state{1}, ctfa::matcher::unit<Value>}}, {state{1}}};
-
-template <char32_t A, char32_t B> static constexpr auto range = finite_automaton<1,1>{{transition{state{0}, state{1}, ctfa::matcher::range<A,B>}}, {state{1}}};
-
-static constexpr auto anything = finite_automaton<1,1>{{transition{state{0}, state{1}, ctfa::matcher::anything}}, {state{1}}};
-
-template <char32_t... Str> static constexpr auto string = []{
-	char32_t buffer[] = {Str...};
-	finite_automaton<sizeof...(Str),1> out;
-	for (int i = 0; i != sizeof...(Str); ++i) {
-		out.add(transition{state{i}, state{i+1}, condition{impl::range{buffer[i], buffer[i]}}});
-	}
-	out.mark_final(state{sizeof...(Str)});
-	return out;
-}();
-
-template <char32_t... Values> static constexpr auto set = []{
-	finite_automaton<sizeof...(Values),1> out;
-	(out.add(transition{start_state, state{1}, condition{impl::range{Values, Values}}}), ...);
-	out.mark_final(invalid_state);
-	return out;
-}();
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__HPP
-#define CTFA__TRANSFORMATION__HPP
-
-#ifndef CTFA__TRANSFORMATION__ALTERNATIVE__HPP
-#define CTFA__TRANSFORMATION__ALTERNATIVE__HPP
-
-#ifndef CTFA__BASIC__FA__HPP
-#define CTFA__BASIC__FA__HPP
-
-#include <cstddef>
-#ifndef CTFA__CONTAINER__SET__HPP
-#define CTFA__CONTAINER__SET__HPP
-
-#include <cstddef>
-#include <iterator>
-#ifndef CTFA__HELPER__CONDITIONAL__HPP
-#define CTFA__HELPER__CONDITIONAL__HPP
-
-namespace ctfa {
-
-template <bool> struct conditional_helper;
-
-template <> struct conditional_helper<true> {
-	template <typename T, typename> using type = T;
-};
-
-template <> struct conditional_helper<false> {
-	template <typename, typename T> using type = T;
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-template <bool C, typename T, typename F> using conditional = typename conditional_helper<C>::template type<T,F>;
-
-template <typename T, size_t Capacity> class set {
-	// I'm using C array, because it's much quicker in compile-time
-	size_t _size{0};
-	
-	struct storage {
-		T _data[Capacity]{};
-		constexpr const T * data() const {
-			return _data;
-		}
-		constexpr T * data() {
-			return _data;
-		}
-	};
-	
-	struct empty_storage {
-		constexpr const T * data() const {
-			return nullptr;
-		}
-		constexpr T * data() {
-			return nullptr;
-		}
-	};
-	
-	
-	using data_t = conditional<(Capacity > 0), storage, empty_storage>;
-	
-	data_t _data;
-	
-	template <typename, size_t> friend class set;
-public:
-	static constexpr size_t capacity = Capacity;
-	using iterator = T *;
-	constexpr set() { }
-	
-	constexpr set(const std::initializer_list<T> & list) {
-		for (const auto & v: list) {
-			insert(v);
-		}
-	}
-	constexpr set(const set & rhs) = default;
-	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
-		for (const auto & v: rhs) {
-			push_back(v);
-		}
-	}
-	constexpr const T * data() const {
-		return _data.data();
-	}
-	constexpr T * data() {
-		return _data.data();
-	}
-	constexpr auto begin() {
-		return data();
-	}
-	constexpr auto end() {
-		return data() + _size;
-	}
-	constexpr auto begin() const {
-		return data();
-	}
-	constexpr auto end() const {
-		return data() + _size;
-	}
-	constexpr size_t size() const {
-		return _size;
-	}
-	constexpr const auto & first() const {
-		return *_data;
-	}
-	constexpr const auto & last() const {
-		return _data[_size - 1];
-	}
-	template <size_t C> constexpr bool operator==(const set<T,C> & rhs) const {
-		if (_size != rhs._size) return false;
-		for (size_t i = 0; i != _size; ++i) {
-			if (!(data()[i] == rhs.data()[i])) return false;
-		}
-		return true;
-	}
-	template <size_t C> constexpr bool operator<(const set<T,C> & rhs) const {
-		for (size_t i = 0; i != _size && i != rhs._size; ++i) {
-			if (data()[i] == rhs.data()[i]) continue;
-			else if (data()[i] < rhs.data()[i]) return true;
-			else return false;
-		}
-		return _size < rhs._size;
-	}
-	constexpr auto & operator[](size_t idx) const {
-		return data()[idx];
-	} 
-	constexpr auto & operator[](size_t idx) {
-		return data()[idx];
-	} 
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) const {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) const {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	constexpr std::pair<iterator, bool> insert(T obj) {
-		auto it = lower_bound(obj);
-		if (it == end()) {
-			[[maybe_unused]] auto check = data()[_size];
-			*it = obj;
-			_size++;
-			return {it, true};
-		} else if (*it == obj) {
-			return {it, false};
-		} else {
-			[[maybe_unused]] auto check = data()[_size];
-			auto out = it;
-			while (it != end()) {
-				// swap
-				auto tmp = std::move(*it);
-				*it = std::move(obj);
-				obj = std::move(tmp);
-				
-				it++;
-			}
-			// swap
-			auto tmp = std::move(*it);
-			*it = std::move(obj);
-			obj = std::move(tmp);
-			
-			_size++;
-			return {out, true};
-		}
-	}
-	constexpr void push_back(T obj) {
-		auto it = end();
-		*it = obj;
-		_size++;
-	}
-	template <typename Arg> constexpr bool remove(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) {
-			return remove(it);
-		} else {
-			return false;
-		}
-	}
-	constexpr iterator remove(iterator erase_it) {
-		iterator out = erase_it;
-		if (erase_it == end()) { 
-			return out;
-		}
-		
-		while (erase_it != end()) {
-			auto next = erase_it;
-			next++;
-			if (next != end()) {
-				*erase_it = std::move(*next);
-			}
-			erase_it++;
-		}
-		_size--;
-		return out;
-	}
-};
-
-}
-
-#endif
-
-#ifndef CTFA__BASIC__TRANSITION__HPP
-#define CTFA__BASIC__TRANSITION__HPP
-
-#ifndef CTFA__BASIC__STATE__HPP
-#define CTFA__BASIC__STATE__HPP
-
-#ifndef CTFA__CONDITION__HPP
-#define CTFA__CONDITION__HPP
-
-#include <string_view>
-#ifndef CTFA__UTILITY__HPP
-#define CTFA__UTILITY__HPP
-
-#ifdef _MSC_VER
-#define CTFA_FORCE_INLINE __forceinline
-#define CTFA_FLATTEN
-#else
-#define CTFA_FORCE_INLINE inline __attribute__((always_inline))
-#define CTFA_FLATTEN __attribute__((flatten))
-#endif
-
-namespace ctfa {
-	struct zero_terminated_string_end_iterator {
-		constexpr inline zero_terminated_string_end_iterator() = default;
-		constexpr CTFA_FORCE_INLINE bool operator==(const char * ptr) const noexcept {
-			return *ptr == '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator==(const wchar_t * ptr) const noexcept {
-			return *ptr == 0;
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const char * ptr) const noexcept {
-			return *ptr != '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const wchar_t * ptr) const noexcept {
-			return *ptr != 0;
-		} 
-	};
-}
-
-#endif
-
-namespace ctfa {
-
-namespace impl {
-
-struct range {
-	char32_t low{};
-	char32_t high{};
-	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T v) const noexcept {
-		return (low <= v) && (v <= high);
-	}
-	constexpr bool operator<(const range & rhs) const noexcept {
-		if (low == rhs.low) {
-			return high < rhs.high;
-		}
-		return low < rhs.low;
-	}
-	constexpr bool operator==(const range & rhs) const noexcept {
-		return low == rhs.low && high == rhs.high;
-	}
-	constexpr bool operator!=(const range & rhs) const noexcept {
-		return low != rhs.low || high != rhs.high;
-	}
-	template <typename CB> void debug(CB && cb) const {
-		if (low == std::numeric_limits<char32_t>::min() && high == std::numeric_limits<char32_t>::max()) {
-			cb("anything");
-			return;
-		}
-	
-		if (low == std::numeric_limits<char32_t>::min()) cb("MIN");
-		else if (low >= 32 && low <= 126) cb('\'',static_cast<char>(low),'\'');
-		else cb(low);
-		
-		if (low != high) {
-			cb("..");
-			if (high == std::numeric_limits<char32_t>::max()) cb("MAX");
-			else if (high >= 32 && high <= 126) cb('\'',static_cast<char>(high),'\'');
-			else cb(high);
-		}
-	}
-};
-
-}
-
-struct condition {
-	impl::range r;
-
-	constexpr condition() noexcept { }
-	
-	constexpr condition(const impl::range & r) noexcept: r{r} { }
-	
-	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T value) const noexcept {
-		return r.match(value);
-	}
-	constexpr bool operator<(const condition & rhs) const noexcept {
-		return r < rhs.r;
-	}
-	constexpr bool operator==(const condition & rhs) const noexcept {
-		return r == rhs.r;
-	}
-	constexpr bool operator!=(const condition & rhs) const noexcept {
-		return r != rhs.r;
-	}
-	template <typename CB> constexpr void debug(CB && cb) const {
-		r.debug(cb);
-	}
-};
-
-namespace matcher {
-
-template <char32_t C> static constexpr auto unit = condition(impl::range{C,C});
-template <char32_t A, char32_t B> static constexpr auto range = condition(impl::range{A,B});
-static constexpr auto anything = condition(impl::range{std::numeric_limits<char32_t>::min(), std::numeric_limits<char32_t>::max()});
-
-}
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct state {
-	int id{-1};
-	
-	static constexpr int placeholder = -2;
-	static constexpr int invalid = -1;
-	static constexpr int start = 0;
-	
-	constexpr bool operator<(const state & rhs) const noexcept {
-		return id < rhs.id;
-	}
-	constexpr bool operator<=(const state & rhs) const noexcept {
-		return id <= rhs.id;
-	}
-	constexpr bool operator==(const state & rhs) const noexcept {
-		return id == rhs.id;
-	}
-	constexpr bool operator!=(const state & rhs) const noexcept {
-		return id != rhs.id;
-	}
-	constexpr state prefix_base(state base) const noexcept {
-		return state{id+base.id};
-	}
-	constexpr state prefix(state base) const noexcept {
-		return state{id+base.id};
-	}
-	constexpr state next() const noexcept {
-		return state{id+1};
-	}
-	constexpr bool is_start() const noexcept {
-		return id == start;
-	}
-};
-
-static constexpr auto start_state = state{state::start};
-static constexpr auto invalid_state = state{state::invalid};
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct transition {
-	state source;
-	state target;
-	condition cond;
-	constexpr bool operator<(state current) const noexcept {
-		return source < current;
-	}
-	constexpr bool operator==(state current) const noexcept {
-		return source == current;
-	}
-	constexpr bool operator!=(state current) const noexcept {
-		return !operator==(current);
-	}
-	constexpr bool operator<(const transition & rhs) const noexcept {
-		if (source == rhs.source) {
-			if (cond == rhs.cond) {
-				return target < rhs.target;
-			}
-			return cond < rhs.cond;
-		}
-		return source < rhs.source;
-	}
-	constexpr bool operator==(const transition & rhs) const noexcept {
-		return source == rhs.source && target == rhs.target && cond == rhs.cond;
-	}
-	constexpr bool operator!=(const transition & rhs) const noexcept {
-		return !operator==(rhs);
-	}
-	constexpr bool match(char32_t current) const noexcept {
-		return cond.match(current);
-	}
-	constexpr bool is_start() const noexcept {
-		return source.is_start();
-	}
-	constexpr transition prefix(state base) const noexcept {
-		return transition{
-			source.prefix(base),
-			target.prefix(base),
-			cond
-		};
-	}
-	constexpr transition prefix_base(state base) const noexcept {
-		return transition{
-			source.prefix_base(base),
-			target.prefix_base(base),
-			cond
-		};
-	}
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct transition_count_pair {
-	size_t from_start{0};
-	size_t other{0};
-};
-
-template <size_t Transitions, size_t FinalStates> struct finite_automaton {
-	ctfa::set<transition, Transitions> transitions{};
-	ctfa::set<state, FinalStates> final_states{};
-	
-	constexpr finite_automaton() = default;
-	constexpr finite_automaton(const ctfa::set<transition, Transitions> & t, const ctfa::set<state, FinalStates> & f): transitions{t}, final_states{f} { }
-	
-	constexpr bool is_final(state s) const noexcept {
-		if (s == invalid_state) return false;
-		return final_states.find(s) != final_states.end();
-	}
-
-	constexpr auto create_blank() const noexcept {
-		return finite_automaton<Transitions, FinalStates>{};
-	}
-	
-	constexpr state next_free_state() const noexcept {
-		state highest = invalid_state;
-		// I need to iterate because there can be unaccessible state (it's sorted source,target )
-		for (const auto & t: transitions) {
-			highest = std::max(t.source, highest);
-			highest = std::max(t.target, highest);
-		}
-		for (state s: final_states) {
-			highest = std::max(s, highest);
-		}
-		return highest.next();
-	}
-	constexpr void add(const transition & t) {
-		transitions.insert(t);
-	}
-	constexpr void mark_final(state s) {
-		final_states.insert(s);
-	}
-	template <size_t T, size_t F> constexpr bool operator==(const finite_automaton<T,F> & rhs) const noexcept {
-		return final_states == rhs.final_states && transitions == rhs.transitions;
-	}
-};
-
-template <typename F> struct filtered_out {
-	F fa;
-	size_t transitions;
-	size_t final_states;
-};
-
-template <typename F> filtered_out(const F &, size_t, size_t) -> filtered_out<F>;
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__EPSILON__HPP
-#define CTFA__TRANSFORMATION__EPSILON__HPP
-
-namespace ctfa {
-
-template <typename Fa, typename TransitionCB, typename FinalState> constexpr std::pair<size_t, bool> epsilon_for(const Fa & fa, state source, TransitionCB && transition_cb, FinalState && final_cb) {
-	size_t transition_count = 0;
-	bool is_final = false;
-	auto it = (source == start_state) ? fa.transitions.begin() : fa.transitions.find(source);
-	while (it != fa.transitions.end() && *it == source) {
-		transition_cb(*it++);
-		transition_count++;
-	}
-	auto fit = (source == start_state) ? fa.final_states.begin() : fa.final_states.find(source);
-	if (fit != fa.final_states.end() && *fit == source) {
-		final_cb(source);
-		is_final = true;
-	}
-	return std::pair<size_t, bool>{transition_count, is_final};
-}
-
-template <typename Fa, typename TransitionCB> constexpr std::pair<size_t, bool> epsilon_for(const Fa & fa, state source, TransitionCB && transition_cb) {
-	return epsilon_for(fa, source, std::forward<TransitionCB>(transition_cb), [](auto && ...){});
-}
-
-template <typename Fa> constexpr std::pair<size_t, bool> epsilon_join_count(const Fa & fa, state source) {
-	return epsilon_for(fa, source, [](auto && ...){}, [](auto && ...){});
-}
-
-}
-
-#endif
-
-namespace ctfa {
-
-template <const auto & Lhs, const auto & Rhs> struct alternative_two {
-	static constexpr auto build() {
-		constexpr std::pair lhs_info = epsilon_join_count(Lhs, start_state);
-		constexpr std::pair rhs_info = epsilon_join_count(Rhs, start_state);
-		constexpr size_t transitions = Lhs.transitions.size() + Rhs.transitions.size() + Lhs.final_states.size() * lhs_info.first + rhs_info.first;
-		constexpr size_t final_states = Lhs.final_states.size() + Rhs.final_states.size() + std::max(lhs_info.second, rhs_info.second);
-		
-		finite_automaton<transitions, final_states> output;
-		
-		constexpr state lhs_base = start_state.next();
-		constexpr state rhs_base = Lhs.next_free_state().next();
-		
-		// I can do this two push_backs because I know it's already sorted
-		for (const auto & t: Lhs.transitions) {
-			output.transitions.push_back(t.prefix(lhs_base)); // quicker than .add
-		}
-		
-		for (const auto & t: Rhs.transitions) {
-			output.transitions.push_back(t.prefix(rhs_base)); // quicker than .add
-		}
-		
-		epsilon_for(Lhs, start_state, [&](transition t) {
-			t.source = start_state;
-			t.target = t.target.prefix_base(lhs_base);
-			output.add(t);
-		}, [&](state) {
-			output.mark_final(start_state);
-		});
-		
-		epsilon_for(Rhs, start_state, [&](transition t) {
-			t.source = start_state;
-			t.target = t.target.prefix_base(rhs_base);
-			output.add(t);
-		}, [&](state) {
-			output.mark_final(start_state);
-		});
-		
-		
-		for (state s: Lhs.final_states) {
-			output.mark_final(s.prefix_base(lhs_base));
-		}
-		
-		for (state s: Rhs.final_states) {
-			output.mark_final(s.prefix_base(rhs_base));
-		}
-		
-		return output;
-	}
-	
-	static constexpr auto result = build();
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__CONCAT__HPP
-#define CTFA__TRANSFORMATION__CONCAT__HPP
-
-namespace ctfa {
-
-template <const auto & Lhs, const auto & Rhs> struct concat_two {
-	static constexpr auto build() {
-		constexpr std::pair info = epsilon_join_count(Rhs, start_state);
-		constexpr size_t transitions = Lhs.transitions.size() + Rhs.transitions.size() + Lhs.final_states.size() * info.first;
-		constexpr size_t final_states = Rhs.final_states.size() + info.second + Lhs.final_states.size();
-		
-		finite_automaton<transitions, final_states> output;
-		
-		// copy Lhs transitions
-		for (const auto & t: Lhs.transitions) {
-			output.transitions.push_back(t); // quicker
-		}
-		
-		// prefix for all Rhs states in output
-		constexpr state base = Lhs.next_free_state();
-		
-		static_assert(base != invalid_state);
-		static_assert(base != start_state);
-		
-		for (state s: Lhs.final_states) {
-			epsilon_for(Rhs, start_state, [&](transition t) {
-				t.source = s;
-				t.target = t.target.prefix(base);
-				output.add(t);
-			}, [&](state) {
-				output.mark_final(s);
-			});
-		}
-
-		// copy Rhs transitions + with base prefix
-		for (const auto & t: Rhs.transitions) {
-			output.add(t.prefix(base));
-		}
-		
-		for (state s: Rhs.final_states) {
-			output.mark_final(s.prefix(base));
-		}
-		
-		return output;
-	}
-	
-	static constexpr auto result = build();
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__OPTIONAL__HPP
-#define CTFA__TRANSFORMATION__OPTIONAL__HPP
-
-namespace ctfa {
-
-template <const auto & Fa> struct optional_one {
-	static constexpr auto build() {
-		constexpr std::pair info = epsilon_join_count(Fa, start_state);
-		constexpr size_t transitions = Fa.transitions.size() + info.first;
-		constexpr size_t final_states = Fa.final_states.size() + 1;
-		
-		finite_automaton<transitions, final_states> output;
-		
-		constexpr state base = start_state.next();
-		
-		for (const auto & t: Fa.transitions) {
-			output.transitions.push_back(t.prefix(base)); // quicker
-		}
-		
-		epsilon_for(Fa, start_state, [&](transition t) {
-			t.source = start_state;
-			t.target = t.target.prefix(base);
-			output.add(t);
-		});
-		
-		output.mark_final(start_state);
-		
-		for (state s: Fa.final_states) {
-			output.mark_final(s.prefix(base));
-		}
-		
-		return output;
-	}
-	
-	static constexpr auto result = build();
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__PLUS__HPP
-#define CTFA__TRANSFORMATION__PLUS__HPP
-
-namespace ctfa {
-
-template <const auto & Fa> struct plus_one {
-	static constexpr auto build() {
-		constexpr std::pair info = epsilon_join_count(Fa, start_state);
-		constexpr size_t transitions = Fa.transitions.size() + info.first * Fa.final_states.size() + info.first;
-		constexpr size_t final_states = Fa.final_states.size() + info.second;
-		
-		finite_automaton<transitions, final_states> output;
-		
-		constexpr state base = start_state.next();
-		
-		// A + prefix => (B + prefix) (1 -> 2)
-		for (const auto & t: Fa.transitions) {
-			output.transitions.push_back(t.prefix(base));
-		}
-		
-		// new_start => (old_start -> X) (0 -> 2)
-		epsilon_for(Fa, start_state, [&](transition t) {
-			t.source = start_state;
-			t.target = t.target.prefix(base);
-			output.add(t);
-		}, [&](state f){
-			output.mark_final(f);
-		});
-		
-		// finals => (old_start -> X) (2 -> 2)
-		for (state s: Fa.final_states) {
-			epsilon_for(Fa, start_state, [&](transition t) {
-				t.source = s;
-				output.add(t.prefix(base));
-			});
-			output.mark_final(s.prefix(base));
-		}
-		
-		return output;
-	}
-	
-	static constexpr auto result = build();
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__STAR__HPP
-#define CTFA__TRANSFORMATION__STAR__HPP
-
-namespace ctfa {
-
-template <const auto & Fa> struct star_one {
-	static constexpr auto build() {
-		constexpr std::pair info = epsilon_join_count(Fa, start_state);
-		constexpr size_t transitions = Fa.transitions.size() + info.first * Fa.final_states.size() + info.first;
-		constexpr size_t final_states = Fa.final_states.size() + info.second + 1;
-		
-		finite_automaton<transitions, final_states> output;
-		
-		constexpr state base = start_state.next();
-		
-		// A + prefix => (B + prefix) (1 -> 2)
-		for (const auto & t: Fa.transitions) {
-			output.transitions.push_back(t.prefix(base));
-		}
-		
-		// new_start => (old_start -> X) (0 -> 2)
-		epsilon_for(Fa, start_state, [&](transition t) {
-			t.source = start_state;
-			t.target = t.target.prefix(base);
-			output.add(t);
-		}, [&](state f){
-			output.mark_final(f);
-		});
-		
-		// finals => (old_start -> X) (2 -> 2)
-		for (state s: Fa.final_states) {
-			epsilon_for(Fa, start_state, [&](transition t) {
-				t.source = s;
-				output.add(t.prefix(base));
-			});
-			output.mark_final(s.prefix(base));
-		}
-		
-		output.mark_final(start_state);
-		
-		return output;
-	}
-	
-	static constexpr auto result = build();
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__SHRINK__HPP
-#define CTFA__TRANSFORMATION__SHRINK__HPP
-
-namespace ctfa {
-
-template <const auto & Fa> struct shrink_one {
-	static constexpr auto build() {
-		constexpr size_t transitions = Fa.transitions.size();
-		constexpr size_t final_states = Fa.final_states.size();
-		
-		ctfa::finite_automaton<transitions, final_states> out;
-		
-		for (const auto & t: Fa.transitions) {
-			out.transitions.push_back(t); // I'm sure it's sorted
-		}
-		
-		for (state f: Fa.final_states) {
-			out.final_states.push_back(f); // I'm sure it's sorted
-		}
-		
-		return out;
-	}
-	
-	static constexpr auto result = build();
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__REMOVE_UNNEEDED__HPP
-#define CTFA__TRANSFORMATION__REMOVE_UNNEEDED__HPP
-
-#ifndef CTFA__HELPER__INFO__HPP
-#define CTFA__HELPER__INFO__HPP
-
-#ifndef CTFA__CONTAINER__SET__HPP
-#define CTFA__CONTAINER__SET__HPP
-
-#include <cstddef>
-#include <iterator>
-#ifndef CTFA__HELPER__CONDITIONAL__HPP
-#define CTFA__HELPER__CONDITIONAL__HPP
-
-namespace ctfa {
-
-template <bool> struct conditional_helper;
-
-template <> struct conditional_helper<true> {
-	template <typename T, typename> using type = T;
-};
-
-template <> struct conditional_helper<false> {
-	template <typename, typename T> using type = T;
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-template <bool C, typename T, typename F> using conditional = typename conditional_helper<C>::template type<T,F>;
-
-template <typename T, size_t Capacity> class set {
-	// I'm using C array, because it's much quicker in compile-time
-	size_t _size{0};
-	
-	struct storage {
-		T _data[Capacity]{};
-		constexpr const T * data() const {
-			return _data;
-		}
-		constexpr T * data() {
-			return _data;
-		}
-	};
-	
-	struct empty_storage {
-		constexpr const T * data() const {
-			return nullptr;
-		}
-		constexpr T * data() {
-			return nullptr;
-		}
-	};
-	
-	
-	using data_t = conditional<(Capacity > 0), storage, empty_storage>;
-	
-	data_t _data;
-	
-	template <typename, size_t> friend class set;
-public:
-	static constexpr size_t capacity = Capacity;
-	using iterator = T *;
-	constexpr set() { }
-	
-	constexpr set(const std::initializer_list<T> & list) {
-		for (const auto & v: list) {
-			insert(v);
-		}
-	}
-	constexpr set(const set & rhs) = default;
-	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
-		for (const auto & v: rhs) {
-			push_back(v);
-		}
-	}
-	constexpr const T * data() const {
-		return _data.data();
-	}
-	constexpr T * data() {
-		return _data.data();
-	}
-	constexpr auto begin() {
-		return data();
-	}
-	constexpr auto end() {
-		return data() + _size;
-	}
-	constexpr auto begin() const {
-		return data();
-	}
-	constexpr auto end() const {
-		return data() + _size;
-	}
-	constexpr size_t size() const {
-		return _size;
-	}
-	constexpr const auto & first() const {
-		return *_data;
-	}
-	constexpr const auto & last() const {
-		return _data[_size - 1];
-	}
-	template <size_t C> constexpr bool operator==(const set<T,C> & rhs) const {
-		if (_size != rhs._size) return false;
-		for (size_t i = 0; i != _size; ++i) {
-			if (!(data()[i] == rhs.data()[i])) return false;
-		}
-		return true;
-	}
-	template <size_t C> constexpr bool operator<(const set<T,C> & rhs) const {
-		for (size_t i = 0; i != _size && i != rhs._size; ++i) {
-			if (data()[i] == rhs.data()[i]) continue;
-			else if (data()[i] < rhs.data()[i]) return true;
-			else return false;
-		}
-		return _size < rhs._size;
-	}
-	constexpr auto & operator[](size_t idx) const {
-		return data()[idx];
-	} 
-	constexpr auto & operator[](size_t idx) {
-		return data()[idx];
-	} 
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) const {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) const {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	constexpr std::pair<iterator, bool> insert(T obj) {
-		auto it = lower_bound(obj);
-		if (it == end()) {
-			[[maybe_unused]] auto check = data()[_size];
-			*it = obj;
-			_size++;
-			return {it, true};
-		} else if (*it == obj) {
-			return {it, false};
-		} else {
-			[[maybe_unused]] auto check = data()[_size];
-			auto out = it;
-			while (it != end()) {
-				// swap
-				auto tmp = std::move(*it);
-				*it = std::move(obj);
-				obj = std::move(tmp);
-				
-				it++;
-			}
-			// swap
-			auto tmp = std::move(*it);
-			*it = std::move(obj);
-			obj = std::move(tmp);
-			
-			_size++;
-			return {out, true};
-		}
-	}
-	constexpr void push_back(T obj) {
-		auto it = end();
-		*it = obj;
-		_size++;
-	}
-	template <typename Arg> constexpr bool remove(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) {
-			return remove(it);
-		} else {
-			return false;
-		}
-	}
-	constexpr iterator remove(iterator erase_it) {
-		iterator out = erase_it;
-		if (erase_it == end()) { 
-			return out;
-		}
-		
-		while (erase_it != end()) {
-			auto next = erase_it;
-			next++;
-			if (next != end()) {
-				*erase_it = std::move(*next);
-			}
-			erase_it++;
-		}
-		_size--;
-		return out;
-	}
-};
-
-}
-
-#endif
-
-#ifndef CTFA__BASIC__FA__HPP
-#define CTFA__BASIC__FA__HPP
-
-#include <cstddef>
-#ifndef CTFA__CONTAINER__SET__HPP
-#define CTFA__CONTAINER__SET__HPP
-
-#include <cstddef>
-#include <iterator>
-#ifndef CTFA__HELPER__CONDITIONAL__HPP
-#define CTFA__HELPER__CONDITIONAL__HPP
-
-namespace ctfa {
-
-template <bool> struct conditional_helper;
-
-template <> struct conditional_helper<true> {
-	template <typename T, typename> using type = T;
-};
-
-template <> struct conditional_helper<false> {
-	template <typename, typename T> using type = T;
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-template <bool C, typename T, typename F> using conditional = typename conditional_helper<C>::template type<T,F>;
-
-template <typename T, size_t Capacity> class set {
-	// I'm using C array, because it's much quicker in compile-time
-	size_t _size{0};
-	
-	struct storage {
-		T _data[Capacity]{};
-		constexpr const T * data() const {
-			return _data;
-		}
-		constexpr T * data() {
-			return _data;
-		}
-	};
-	
-	struct empty_storage {
-		constexpr const T * data() const {
-			return nullptr;
-		}
-		constexpr T * data() {
-			return nullptr;
-		}
-	};
-	
-	
-	using data_t = conditional<(Capacity > 0), storage, empty_storage>;
-	
-	data_t _data;
-	
-	template <typename, size_t> friend class set;
-public:
-	static constexpr size_t capacity = Capacity;
-	using iterator = T *;
-	constexpr set() { }
-	
-	constexpr set(const std::initializer_list<T> & list) {
-		for (const auto & v: list) {
-			insert(v);
-		}
-	}
-	constexpr set(const set & rhs) = default;
-	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
-		for (const auto & v: rhs) {
-			push_back(v);
-		}
-	}
-	constexpr const T * data() const {
-		return _data.data();
-	}
-	constexpr T * data() {
-		return _data.data();
-	}
-	constexpr auto begin() {
-		return data();
-	}
-	constexpr auto end() {
-		return data() + _size;
-	}
-	constexpr auto begin() const {
-		return data();
-	}
-	constexpr auto end() const {
-		return data() + _size;
-	}
-	constexpr size_t size() const {
-		return _size;
-	}
-	constexpr const auto & first() const {
-		return *_data;
-	}
-	constexpr const auto & last() const {
-		return _data[_size - 1];
-	}
-	template <size_t C> constexpr bool operator==(const set<T,C> & rhs) const {
-		if (_size != rhs._size) return false;
-		for (size_t i = 0; i != _size; ++i) {
-			if (!(data()[i] == rhs.data()[i])) return false;
-		}
-		return true;
-	}
-	template <size_t C> constexpr bool operator<(const set<T,C> & rhs) const {
-		for (size_t i = 0; i != _size && i != rhs._size; ++i) {
-			if (data()[i] == rhs.data()[i]) continue;
-			else if (data()[i] < rhs.data()[i]) return true;
-			else return false;
-		}
-		return _size < rhs._size;
-	}
-	constexpr auto & operator[](size_t idx) const {
-		return data()[idx];
-	} 
-	constexpr auto & operator[](size_t idx) {
-		return data()[idx];
-	} 
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto upper_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (!(obj < *it)) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto lower_bound(Arg && obj) const {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find(Arg && obj) const {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) return it;
-		else return end();
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	template <typename Arg> constexpr auto find_linear(Arg && obj) const {
-		auto it = begin();
-		while (it != end()) {
-			if (*it == obj) return it;
-			it++;
-		}
-		return it;
-	}
-	constexpr std::pair<iterator, bool> insert(T obj) {
-		auto it = lower_bound(obj);
-		if (it == end()) {
-			[[maybe_unused]] auto check = data()[_size];
-			*it = obj;
-			_size++;
-			return {it, true};
-		} else if (*it == obj) {
-			return {it, false};
-		} else {
-			[[maybe_unused]] auto check = data()[_size];
-			auto out = it;
-			while (it != end()) {
-				// swap
-				auto tmp = std::move(*it);
-				*it = std::move(obj);
-				obj = std::move(tmp);
-				
-				it++;
-			}
-			// swap
-			auto tmp = std::move(*it);
-			*it = std::move(obj);
-			obj = std::move(tmp);
-			
-			_size++;
-			return {out, true};
-		}
-	}
-	constexpr void push_back(T obj) {
-		auto it = end();
-		*it = obj;
-		_size++;
-	}
-	template <typename Arg> constexpr bool remove(Arg && obj) {
-		auto it = lower_bound(std::forward<Arg>(obj));
-		if (it != end() && *it == obj) {
-			return remove(it);
-		} else {
-			return false;
-		}
-	}
-	constexpr iterator remove(iterator erase_it) {
-		iterator out = erase_it;
-		if (erase_it == end()) { 
-			return out;
-		}
-		
-		while (erase_it != end()) {
-			auto next = erase_it;
-			next++;
-			if (next != end()) {
-				*erase_it = std::move(*next);
-			}
-			erase_it++;
-		}
-		_size--;
-		return out;
-	}
-};
-
-}
-
-#endif
-
-#ifndef CTFA__BASIC__TRANSITION__HPP
-#define CTFA__BASIC__TRANSITION__HPP
-
-#ifndef CTFA__BASIC__STATE__HPP
-#define CTFA__BASIC__STATE__HPP
-
-#ifndef CTFA__CONDITION__HPP
-#define CTFA__CONDITION__HPP
-
-#include <string_view>
-#ifndef CTFA__UTILITY__HPP
-#define CTFA__UTILITY__HPP
-
-#ifdef _MSC_VER
-#define CTFA_FORCE_INLINE __forceinline
-#define CTFA_FLATTEN
-#else
-#define CTFA_FORCE_INLINE inline __attribute__((always_inline))
-#define CTFA_FLATTEN __attribute__((flatten))
-#endif
-
-namespace ctfa {
-	struct zero_terminated_string_end_iterator {
-		constexpr inline zero_terminated_string_end_iterator() = default;
-		constexpr CTFA_FORCE_INLINE bool operator==(const char * ptr) const noexcept {
-			return *ptr == '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator==(const wchar_t * ptr) const noexcept {
-			return *ptr == 0;
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const char * ptr) const noexcept {
-			return *ptr != '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const wchar_t * ptr) const noexcept {
-			return *ptr != 0;
-		} 
-	};
-}
-
-#endif
-
-namespace ctfa {
-
-namespace impl {
-
-struct range {
-	char32_t low{};
-	char32_t high{};
-	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T v) const noexcept {
-		return (low <= v) && (v <= high);
-	}
-	constexpr bool operator<(const range & rhs) const noexcept {
-		if (low == rhs.low) {
-			return high < rhs.high;
-		}
-		return low < rhs.low;
-	}
-	constexpr bool operator==(const range & rhs) const noexcept {
-		return low == rhs.low && high == rhs.high;
-	}
-	constexpr bool operator!=(const range & rhs) const noexcept {
-		return low != rhs.low || high != rhs.high;
-	}
-	template <typename CB> void debug(CB && cb) const {
-		if (low == std::numeric_limits<char32_t>::min() && high == std::numeric_limits<char32_t>::max()) {
-			cb("anything");
-			return;
-		}
-	
-		if (low == std::numeric_limits<char32_t>::min()) cb("MIN");
-		else if (low >= 32 && low <= 126) cb('\'',static_cast<char>(low),'\'');
-		else cb(low);
-		
-		if (low != high) {
-			cb("..");
-			if (high == std::numeric_limits<char32_t>::max()) cb("MAX");
-			else if (high >= 32 && high <= 126) cb('\'',static_cast<char>(high),'\'');
-			else cb(high);
-		}
-	}
-};
-
-}
-
-struct condition {
-	impl::range r;
-
-	constexpr condition() noexcept { }
-	
-	constexpr condition(const impl::range & r) noexcept: r{r} { }
-	
-	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T value) const noexcept {
-		return r.match(value);
-	}
-	constexpr bool operator<(const condition & rhs) const noexcept {
-		return r < rhs.r;
-	}
-	constexpr bool operator==(const condition & rhs) const noexcept {
-		return r == rhs.r;
-	}
-	constexpr bool operator!=(const condition & rhs) const noexcept {
-		return r != rhs.r;
-	}
-	template <typename CB> constexpr void debug(CB && cb) const {
-		r.debug(cb);
-	}
-};
-
-namespace matcher {
-
-template <char32_t C> static constexpr auto unit = condition(impl::range{C,C});
-template <char32_t A, char32_t B> static constexpr auto range = condition(impl::range{A,B});
-static constexpr auto anything = condition(impl::range{std::numeric_limits<char32_t>::min(), std::numeric_limits<char32_t>::max()});
-
-}
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct state {
-	int id{-1};
-	
-	static constexpr int placeholder = -2;
-	static constexpr int invalid = -1;
-	static constexpr int start = 0;
-	
-	constexpr bool operator<(const state & rhs) const noexcept {
-		return id < rhs.id;
-	}
-	constexpr bool operator<=(const state & rhs) const noexcept {
-		return id <= rhs.id;
-	}
-	constexpr bool operator==(const state & rhs) const noexcept {
-		return id == rhs.id;
-	}
-	constexpr bool operator!=(const state & rhs) const noexcept {
-		return id != rhs.id;
-	}
-	constexpr state prefix_base(state base) const noexcept {
-		return state{id+base.id};
-	}
-	constexpr state prefix(state base) const noexcept {
-		return state{id+base.id};
-	}
-	constexpr state next() const noexcept {
-		return state{id+1};
-	}
-	constexpr bool is_start() const noexcept {
-		return id == start;
-	}
-};
-
-static constexpr auto start_state = state{state::start};
-static constexpr auto invalid_state = state{state::invalid};
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct transition {
-	state source;
-	state target;
-	condition cond;
-	constexpr bool operator<(state current) const noexcept {
-		return source < current;
-	}
-	constexpr bool operator==(state current) const noexcept {
-		return source == current;
-	}
-	constexpr bool operator!=(state current) const noexcept {
-		return !operator==(current);
-	}
-	constexpr bool operator<(const transition & rhs) const noexcept {
-		if (source == rhs.source) {
-			if (cond == rhs.cond) {
-				return target < rhs.target;
-			}
-			return cond < rhs.cond;
-		}
-		return source < rhs.source;
-	}
-	constexpr bool operator==(const transition & rhs) const noexcept {
-		return source == rhs.source && target == rhs.target && cond == rhs.cond;
-	}
-	constexpr bool operator!=(const transition & rhs) const noexcept {
-		return !operator==(rhs);
-	}
-	constexpr bool match(char32_t current) const noexcept {
-		return cond.match(current);
-	}
-	constexpr bool is_start() const noexcept {
-		return source.is_start();
-	}
-	constexpr transition prefix(state base) const noexcept {
-		return transition{
-			source.prefix(base),
-			target.prefix(base),
-			cond
-		};
-	}
-	constexpr transition prefix_base(state base) const noexcept {
-		return transition{
-			source.prefix_base(base),
-			target.prefix_base(base),
-			cond
-		};
-	}
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-struct transition_count_pair {
-	size_t from_start{0};
-	size_t other{0};
-};
-
-template <size_t Transitions, size_t FinalStates> struct finite_automaton {
-	ctfa::set<transition, Transitions> transitions{};
-	ctfa::set<state, FinalStates> final_states{};
-	
-	constexpr finite_automaton() = default;
-	constexpr finite_automaton(const ctfa::set<transition, Transitions> & t, const ctfa::set<state, FinalStates> & f): transitions{t}, final_states{f} { }
-	
-	constexpr bool is_final(state s) const noexcept {
-		if (s == invalid_state) return false;
-		return final_states.find(s) != final_states.end();
-	}
-
-	constexpr auto create_blank() const noexcept {
-		return finite_automaton<Transitions, FinalStates>{};
-	}
-	
-	constexpr state next_free_state() const noexcept {
-		state highest = invalid_state;
-		// I need to iterate because there can be unaccessible state (it's sorted source,target )
-		for (const auto & t: transitions) {
-			highest = std::max(t.source, highest);
-			highest = std::max(t.target, highest);
-		}
-		for (state s: final_states) {
-			highest = std::max(s, highest);
-		}
-		return highest.next();
-	}
-	constexpr void add(const transition & t) {
-		transitions.insert(t);
-	}
-	constexpr void mark_final(state s) {
-		final_states.insert(s);
-	}
-	template <size_t T, size_t F> constexpr bool operator==(const finite_automaton<T,F> & rhs) const noexcept {
-		return final_states == rhs.final_states && transitions == rhs.transitions;
-	}
-};
-
-template <typename F> struct filtered_out {
-	F fa;
-	size_t transitions;
-	size_t final_states;
-};
-
-template <typename F> filtered_out(const F &, size_t, size_t) -> filtered_out<F>;
-
-}
-
-#endif
-
-#include <algorithm>
-
-namespace ctfa {
-
-struct state_info {
-	state s;
-	size_t count{0};
-	bool is_final{false};
-	constexpr operator state() const noexcept {
-		return s;
-	}
-	constexpr bool operator==(const state_info & rhs) const noexcept {
-		return s == rhs.s;
-	}
-	constexpr bool operator<(const state_info & rhs) const noexcept {
-		return s < rhs.s;
-	}
-};
-
-template <const auto & Fa> struct info {
-	template <typename CB> static constexpr size_t iterate_over_states(CB && cb) noexcept {
-		ctfa::set<state_info, Fa.transitions.size() * 2 + Fa.final_states.size()> known_state;
-		for (const auto & t: Fa.transitions) {
-			auto pair = known_state.insert(state_info{t.source});
-			if (pair.first != known_state.end()) {
-				pair.first->count++;
-			}
-			
-			known_state.insert(state_info{t.target});
-		}
-		for (state s: Fa.final_states) {
-			auto pair = known_state.insert(state_info{s});
-			if (pair.first != known_state.end()) {
-				pair.first->is_final = true;
-			}
-		}
-		for (const state_info & s: known_state) {
-			cb(s);
-		}
-		return known_state.size();
-	}
-	
-	static constexpr size_t max_transitions = []{
-		size_t max{0};
-		iterate_over_states([&](const auto & state_info){
-			max = std::max(state_info.count, max);
-		});
-		return max;
-	}();
-	
-	static constexpr size_t states = iterate_over_states([](const auto &){});
-	
-	static constexpr size_t final_states = Fa.final_states.size();
-};
-
-}
-
-#endif
-
-namespace ctfa {
-	
-namespace impl {
-	
-struct reachable_state {
-	state s;
-	bool reachable_from_start = false;
-	bool reachable_from_final = false;
-	constexpr bool operator<(const reachable_state & rhs) const noexcept {
-		return s < rhs.s;
-	}
-	constexpr bool operator==(const reachable_state & rhs) const noexcept {
-		return s == rhs.s;
-	}
-	constexpr bool operator<(state rhs) const noexcept {
-		return s < rhs;
-	}
-	constexpr bool operator==(state rhs) const noexcept {
-		return s == rhs;
-	}
-	constexpr bool mark_reachable_from_start() noexcept {
-		bool out = reachable_from_start;
-		reachable_from_start = true;
-		return !out;
-	}
-	constexpr bool mark_reachable_from_final() noexcept {
-		bool out = reachable_from_final;
-		reachable_from_final = true;
-		return !out;
-	}
-	constexpr bool is_needed() const noexcept {
-		return reachable_from_start && reachable_from_final;
-	}
-};
-
-}
-
-template <const auto & Fa> struct remove_unneeded_one {
-	static constexpr auto build() {
-		ctfa::set<impl::reachable_state, ctfa::info<Fa>::states> known_states;
-		
-		ctfa::info<Fa>::iterate_over_states([&](const auto & s){
-			known_states.push_back(impl::reachable_state{
-				state(s), (state(s) == start_state), (s.is_final)
-			});
-		});
-		
-		bool changed = true;
-		while (changed) {
-			changed = false;
-			for (const auto & t: Fa.transitions) {
-				auto source = known_states.find(t.source);
-				auto target = known_states.find(t.target);
-				if (source->reachable_from_start) {
-					if (target->mark_reachable_from_start()) changed = true;
-				}
-				if (target->reachable_from_final) {
-					if (source->mark_reachable_from_final()) changed = true;
-				}
-			}
-		}
-		
-		auto out = Fa.create_blank();
-		
-		for (const auto & t: Fa.transitions) {
-			auto source = known_states.find(t.source);
-			auto target = known_states.find(t.target);
-			if (source->is_needed() && target->is_needed()) {
-				out.transitions.push_back(t);  // I know it's sorted
-			}
-		}
-		
-		for (state f: Fa.final_states) {
-			auto final = known_states.find(f);
-			if (final->is_needed()) {
-				out.final_states.push_back(f); // I know it's sorted
-			}
-		}
-		
-		return out;
-	}
-	
-	static constexpr auto result_unshrinked = build();
-	static constexpr auto result = shrink_one<result_unshrinked>::result;
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__MINIMIZE__HPP
-#define CTFA__TRANSFORMATION__MINIMIZE__HPP
-
-#ifndef CTFA__HELPER__INTERVAL__HPP
-#define CTFA__HELPER__INTERVAL__HPP
-
-#include <numeric>
-
-namespace ctfa {
-
-enum class point_type {
-	start = 0,
-	end = 1
-};
-
-constexpr bool operator<(point_type lhs, point_type rhs) {
-	return static_cast<int>(lhs) < static_cast<int>(rhs);
-}
-
-template <typename Point, typename Feature> struct ipoint {
-	Point position;
-	point_type type;
-	Feature feature;
-	unsigned counter;
-	constexpr bool operator<(const ipoint & rhs) const {
-		if (position == rhs.position) {
-			if (type == rhs.type) {
-				if (feature == rhs.feature) {
-					return counter < rhs.counter;
-				} else {
-					return feature < rhs.feature;
-				}
-			} else {
-				return type < rhs.type;
-			}
-		} else {
-			return position < rhs.position;
-		}
-	}
-	constexpr bool operator==(const ipoint & rhs) const {
-		return position == rhs.position && type == rhs.type && feature == rhs.feature && counter == rhs.counter;
-	}
-	constexpr bool similar(const ipoint & rhs) const noexcept {
-		return position == rhs.position && type == rhs.type;
-	}
-	constexpr bool fusable(const ipoint & rhs) const noexcept {
-		return type == point_type::end && rhs.type == point_type::start && feature == rhs.feature;
-	}
-	constexpr size_t distance(const ipoint & rhs) const noexcept {
-		if (position < rhs.position) {
-			return rhs.position - position;
-		} else {
-			return position - rhs.position;
-		}
-	}
-	constexpr Point get_starting_position() const noexcept {
-		if (type == point_type::start) {
-			return position;
-		} else {
-			return position+1;
-		}
-	}
-	constexpr Point get_ending_position() const noexcept {
-		if (type == point_type::start) {
-			return position-1;
-		} else {
-			return position;
-		}
-	}
-};
-
-template <size_t NumberOfRanges, typename Point, typename Feature> struct intervals {
-	using point = ipoint<Point, Feature>;
-	struct feature_with_count {
-		Feature feature{};
-		size_t count{0};
-		constexpr bool operator==(const Feature & rhs) const noexcept {
-			return feature == rhs;
-		}
-		constexpr bool operator<(const Feature & rhs) const noexcept {
-			return feature < rhs;
-		}
-		constexpr bool operator==(const feature_with_count & rhs) const noexcept {
-			return feature == rhs.feature;
-		}
-		constexpr bool operator<(const feature_with_count & rhs) const noexcept {
-			return feature < rhs.feature;
-		}
-		constexpr operator Feature() const noexcept {
-			return feature;
-		}
-	};
-	
-	ctfa::set<point, NumberOfRanges * 2> buffer;
-	unsigned counter{0};
-	
-	constexpr void insert_range(Point low, Point high, Feature f) {
-		buffer.insert(point{low, point_type::start, f, counter++});
-		buffer.insert(point{high, point_type::end, f, counter++});
-	}
-	
-	constexpr auto begin() const {
-		return buffer.begin();
-	}
-	
-	constexpr auto end() const {
-		return buffer.end();
-	}
-	
-	constexpr size_t number_of_ranges() const noexcept {
-		return buffer.size() / 2;
-	}
-	
-	constexpr bool merge() {
-		bool changed = false;
-		
-		ctfa::set<feature_with_count, NumberOfRanges> features;
-		
-		auto add_feature = [&](Feature f) {
-			auto pair = features.insert(feature_with_count{f, 1});
-			if (!pair.second) {
-				// point is not needed, feature was already there
-				pair.first->count++;
-				changed = true;
-				return false;
-			} else {
-				// point is NEEDED, it adds new feature
-				return true;
-			}
-		};
-		
-		auto remove_feature = [&](Feature f) {
-			auto it = features.find(f);
-			if (it->count > 1) {
-				it->count--;
-				// point is not needed, it doesn't remove anything
-				changed = true;
-				return false;
-			} else {
-				features.remove(it);
-				// point is NEEDED, it removes feature
-				return true;
-			}
-		};
-		
-		auto try_fuse_points = [&](auto & it) -> bool {
-			auto next = it;
-			// search for neighbor point which is positive (I'm negative)
-			while (next != buffer.end()) {
-				// I can only fuse with neighbor
-				if (it->distance(*next) == 0) {
-					// skip these
-				} else if (it->distance(*next) == 1) {
-					// fusable ranges are next to each other
-					if (it->fusable(*next)) {
-						// and they are negative->positive with same feature
-						auto tmp = *it;
-						buffer.remove(next);
-						changed = true;
-						it = buffer.remove(buffer.find(tmp));
-						return true;
-					}
-				} else {
-					break;
-				}
-				
-				// try next one
-				next++;
-			}
-			return false;
-		};
-		
-		auto it = buffer.begin();
-		
-		while (it != buffer.end()) {
-			// fuse current point if possible
-			// |---a---|
-			//          |---a---|
-			// should be:
-			// |--------a-------|
-			
-			if (it->type == point_type::end) {
-				if (try_fuse_points(it)) continue;
-			}
-			
-			// remove unneeded points:
-			// |---a---|
-			//      |---a---|
-			// should be:
-			// |------a-----|
-			//
-			// or
-			// |---a---|
-			// |---a---|
-			// or
-			// |---a---|
-			//         |---a---|
-			if (it->type == point_type::start) {
-				if (!add_feature(it->feature)) {
-					it = buffer.remove(it);
-					continue;
-				}
-			} else {
-				if (!remove_feature(it->feature)) {
-					it = buffer.remove(it);
-					continue;
-				}
-			}
-			
-			it++;
-		}
-		
-		return changed;
-	}
-	
-	template <typename CB> constexpr size_t split(CB && output) const {
-		size_t count = 0;
-		
-		ctfa::set<Feature, NumberOfRanges> features;
-		
-		auto it = buffer.begin();
-		bool has_last_point = false;
-		point last_point{};
-		
-		while (it != buffer.end()) {
-			if (has_last_point) {
-				if (last_point.get_starting_position() <= it->get_ending_position()) {
-					output(last_point.get_starting_position(), it->get_ending_position(), features);
-					count++;
-				}
-			}
-			
-			has_last_point = true;
-			last_point = *it;
-			
-			auto first = *it;
-			if (it->type == point_type::start) {
-				while (it != buffer.end() && it->similar(first)) {
-					features.insert(it->feature);
-					it++;
-				}
-			} else {
-				while (it != buffer.end() && it->similar(first)) {
-					features.remove(it->feature);
-					it++;
-				}
-			}
-			if (features.size() == 0) {
-				has_last_point = false;
-			}
-		}
-		
-		return count;
-	}
-	template <typename CB> constexpr size_t merge_and_split(CB && output) {
-		merge();
-		return split(std::forward<CB>(output));
-	}
-	constexpr size_t merge_and_split() {
-		merge();
-		return split([](const auto & ...){});
-	}
-};
-
-template <size_t NumberOfRanges, typename RangeIt, typename CB> constexpr size_t split(const RangeIt & first, const RangeIt & last, CB && cb) {
-	intervals<NumberOfRanges, decltype(first->low), decltype(first->feature)> i;
-	RangeIt current = first;
-	while (current != last) {
-		i.insert_range(current->low, current->high, current->feature);
-		current++;
-	}
-	return i.merge_and_split(std::forward<CB>(cb));
-}
-
-template <size_t NumberOfRanges, typename RangeIt> constexpr size_t split(const RangeIt & first, const RangeIt & last) {
-	intervals<NumberOfRanges, decltype(first->low), decltype(first->feature)> i;
-	RangeIt current = first;
-	while (current != last) {
-		i.insert_range(current->low, current->high, current->feature);
-		current++;
-	}
-	return i.merge_and_split();
-}
-
-template <size_t NumberOfRanges, typename Range, typename CB> constexpr size_t split_range(const Range & range, CB && cb) {
-	return split<NumberOfRanges>(range.begin(), range.end(), std::forward<CB>(cb));
-}
-
-template <size_t NumberOfRanges, typename Range> constexpr size_t split_range(Range && range) {
-	return split<NumberOfRanges>(range.begin(), range.end());
-}
-
-}
-
-#endif
-
-// TODO better minimizing, based on merge_and_split to groups, not based on different signatures of conditions
-
-namespace ctfa {
-	
-namespace impl {
-	
-struct extended_transition {
-	transition t;
-	int target_index;
-	constexpr bool operator<(const extended_transition & rhs) const noexcept {
-		return t < rhs.t;
-	}
-	constexpr bool operator==(const extended_transition & rhs) const noexcept {
-		return t == rhs.t;
-	}
-};
-	
-template <size_t N> struct transitions_from_state {
-	// these are provided 
-
-	state s;
-	bool is_final{false};
-	int index{0};
-	
-	// these will be set later
-	state group{start_state};
-	state next_group{invalid_state};
-	bool is_unique{false};
-	ctfa::set<extended_transition, N> transitions{};
-	ctfa::set<transition, N*2> merged_transitions{};
-	size_t count{0};
-	
-	template <size_t States> constexpr void merge_based_on_group(const ctfa::set<transitions_from_state<N>, States> & table) noexcept {
-		intervals<N, char32_t, state> i;
-		
-		for (const auto & t: transitions) {
-			i.insert_range(t.t.cond.r.low, t.t.cond.r.high, table[t.target_index].group);
-		}
-		
-		count = 0;
-		i.merge_and_split([&](char32_t low, char32_t high, const auto & target_set){
-			for (state t: target_set) {
-				merged_transitions.insert(transition{s, t, condition(impl::range{low, high})});
-				count++;
-			}
-		});
-	}
-	
-	constexpr bool operator<(const transitions_from_state & rhs) const noexcept {
-		return s < rhs.s;
-	}
-	constexpr bool operator==(const transitions_from_state & rhs) const noexcept {
-		return s == rhs.s;
-	}
-	constexpr bool operator<(state rhs) const noexcept {
-		return s < rhs;
-	}
-	constexpr bool operator==(state rhs) const noexcept {
-		return s == rhs;
-	}
-};
-
-template <size_t MaxTransitions> constexpr bool is_similar_state(const transitions_from_state<MaxTransitions> & lhs, const transitions_from_state<MaxTransitions> & rhs) {
-	// should be in same group
-	if (lhs.group != rhs.group) {
-		return false;
-	}
-	if (lhs.is_final != rhs.is_final) {
-		return false;
-	}
-	
-	// should have same size
-	if (lhs.merged_transitions.size() != rhs.merged_transitions.size()) {
-		return false;
-	}
-	
-	for (size_t i = 0; i != lhs.merged_transitions.size(); ++i) {
-		// all transitions should have same condition
-		if (lhs.merged_transitions[i].cond != rhs.merged_transitions[i].cond) {
-			return false;
-		}
-		// and point to same group
-		if (lhs.merged_transitions[i].target != rhs.merged_transitions[i].target) {
-			return false;
-		}
-	}
-	
-	return true;
-}
-
-template <size_t States, size_t MaxTransitions> 
-constexpr void mark_group(const ctfa::set<impl::transitions_from_state<MaxTransitions>, States> & table, transitions_from_state<MaxTransitions> & subject, state & available_group) noexcept {
-	// find same group and use it's identification or generate new one
-	subject.is_unique = true;
-	state found_group = available_group;
-	
-	for (const auto & row: table) {
-		if (row.next_group == invalid_state) {
-			break;
-		}
-		
-		if (is_similar_state(subject, row)) {
-			subject.is_unique = false;
-			found_group = row.next_group;
-			break;
-		}
-	}
-	
-	subject.next_group = found_group;
-	// if it's unique, increment state counter
-	if (found_group == available_group) available_group = available_group.next();
-}
-
-template <size_t States, size_t MaxTransitions> constexpr bool build_groups(ctfa::set<impl::transitions_from_state<MaxTransitions>, States> & table) noexcept {
-	// reset next group to default
-	for (auto & row: table) {
-		row.next_group = invalid_state;
-		row.merge_based_on_group(table);
-	}
-	
-	// first group is 0 (start)
-	state group_counter = start_state;
-	
-	// for reach row find similar
-	for (auto & row: table) {
-		mark_group(table, row, group_counter);
-	}
-	
-	// store next group in group
-	bool changed = false;
-	
-	for (auto & row: table) {
-		if (row.group != row.next_group) changed = true;
-		row.group = row.next_group;
-	}
-
-	return changed;
-}
-
-}
-
-template <const auto & Arg> struct minimize_one {
-	// before we start minimizing, we need to remove anything unneeded
-	static constexpr auto fa = remove_unneeded_one<Arg>::result_unshrinked;
-	
-	using state_and_transitions = impl::transitions_from_state<fa.transitions.size()>;
-
-	static constexpr auto build() {
-		// build known states, split them into groups, return set of groups
-		constexpr auto known_states = []{
-			ctfa::set<state_and_transitions, ctfa::info<fa>::states> known_states;
-		
-			// build state table
-		
-			ctfa::info<fa>::iterate_over_states([&, index = 0] (const auto & s) mutable {
-				known_states.push_back({
-					state(s), s.is_final, index++
-				});
-			});
-		
-			// insert transition with target index in the extended_transition
-			for (const auto & t: fa.transitions) {
-				auto source = known_states.find(t.source);
-				int index = known_states.find(t.target) - known_states.begin();
-				source->transitions.push_back(impl::extended_transition{t, index});
-			}
-		
-			// divide into groups until there is no change
-			while (build_groups(known_states));
-			
-			return known_states;
-		}();
-		
-		// precalculate space needed for the output
-		constexpr auto transitions = [&]{
-			size_t count = 0;
-			for (const auto & s: known_states) {
-				if (s.is_unique) {
-					count += s.count;
-				}
-			}
-			return count;
-		}();
-		
-		// fill output variable
-		auto out = finite_automaton<transitions, fa.final_states.size()>();
-		
-		for (const auto & s: known_states) {
-			if (s.is_unique) {
-				if (s.is_final) {
-					out.final_states.push_back(s.group); // I know it's sorted
-				}
-				
-				intervals<fa.transitions.size(), char32_t, state> i;
-				
-				auto source = s.group;
-				
-				for (const auto & et: s.transitions) {
-					i.insert_range(et.t.cond.r.low, et.t.cond.r.high, known_states[et.target_index].group);
-				}
-		
-				i.merge_and_split([&](char32_t low, char32_t high, const auto & target_set){
-					for (state t: target_set) { // it will happen only once, or it will be nondeterministic
-						out.transitions.push_back(transition{source, t, condition(impl::range{low, high})});
-					}
-				});
-			} 
-		}
-		
-		return out;
-	}
-	
-	static constexpr auto result_unshrinked = build();
-	static constexpr auto result = shrink_one<result_unshrinked>::result;
-};
-
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__DETERMINIZE2__HPP
-#define CTFA__TRANSFORMATION__DETERMINIZE2__HPP
-
-#include <algorithm>
-
-namespace ctfa {
-
-struct resize_info {
-	size_t length;
-	size_t states;
-};
-
-template <size_t States, size_t Length> struct line {
-	ctfa::set<state, Length> states;
-	bool final{false};
-	bool visited{false};
-	
-	constexpr line() { }
-	constexpr line(const ctfa::set<state, Length> & states, bool final): states{states}, final{final} { }
-	constexpr line(const line & other) = default;
-	template <size_t RhsStates, size_t RhsLength> constexpr line(const line<RhsStates, RhsLength> & other): states{other.states}, final{other.final}, visited{other.visited} { }
-	constexpr bool operator<(const line & rhs) const {
-		return states < rhs.states;
-	}
-	constexpr bool operator==(const line & rhs) const {
-		return states == rhs.states;
-	}
-	template <size_t RhsLength> constexpr bool operator<(const ctfa::set<state, RhsLength> & rhs) const {
-		return states < rhs;
-	}
-	template <size_t RhsLength> constexpr bool operator==(const ctfa::set<state, RhsLength> & rhs) const {
-		return states == rhs;
-	}
-};
-
-template <size_t States, size_t Length> struct list_of_states {
-	static constexpr size_t max_length = Length;
-	
-	using line = ctfa::line<States, Length>;
-	
-	ctfa::set<line, States> _data;
-	
-	constexpr list_of_states() {
-		// do nothing
-	}
-	template <size_t RhsStates, size_t RhsLength> constexpr list_of_states(const list_of_states<RhsStates, RhsLength> & older) {
-		for (const auto & l: older) {
-			_data.push_back(line(l));
-		}
-	}
-	constexpr void mark_everything_visited() {
-		for (auto & l: _data) {
-			l.visited = true;
-		}
-	}
-	template <size_t RhsLength> constexpr bool exists(const ctfa::set<state, RhsLength> & rhs) const {
-		return _data.find(rhs) != _data.end();
-	}
-	constexpr auto begin() const {
-		return _data.begin();
-	}
-	constexpr auto end() const {
-		return _data.end();
-	}
-	template <size_t RhsLength> constexpr auto find(const ctfa::set<state, RhsLength> & rhs) const {
-		return _data.find(rhs);
-	}
-	template <size_t RhsLength> constexpr auto one_state(const ctfa::set<state, RhsLength> & rhs) const {
-		return state{int(_data.find(rhs) - _data.begin())};
-	}
-	constexpr size_t size() const {
-		return _data.size();
-	}
-	constexpr void insert(state s, bool is_final = false) {
-		auto pair = _data.insert(line(ctfa::set<state, Length>({s}), is_final));
-		if (!pair.second) {
-			pair.first->final |= is_final;
-		}
-	}
-	constexpr void insert(ctfa::set<state, Length> s, bool is_final = false) {
-		auto pair = _data.insert(line{s, is_final});
-		if (!pair.second) {
-			pair.first->final |= is_final;
-		}
-	}
-	constexpr bool contains_new_states() const {
-		for (const auto & l: _data) {
-			if (l.visited == false) return true;
-		}
-		return false;
-	}
-};
-
-template <const auto & Fa> struct determinize_one {
-
-	// iterate over all transitions from multi-state (no determinization done, they are from original Fa)
-	template <size_t N, typename CB> static constexpr auto iterate_over_multi_state(const ctfa::set<state, N> & states, CB && callback) {
-		for (state s: states) {
-			auto it = Fa.transitions.lower_bound(s);
-			while (it != Fa.transitions.end() && it->source == s) {
-				callback(*it);
-				it++;
-			}
-		}
-	}
-
-	template <size_t N> static constexpr bool is_multi_state_final(const ctfa::set<state, N> & states) {
-		for (state s: states) {
-			if (Fa.is_final(s)) return true;
-		}
-		return false;
-	}
-
-	static constexpr auto max_state_count = Fa.transitions.size() * 2 + Fa.final_states.size();
-	static constexpr auto max_transition_count = Fa.transitions.size();
-
-	static constexpr auto build_seed() noexcept {
-		list_of_states<max_state_count, 1> seed;
-	
-		for (const auto & t: Fa.transitions) {
-			seed.insert(t.source);
-			seed.insert(t.target);
-		}
-	
-		for (state s: Fa.final_states) {
-			seed.insert(s, true);
-		}
-	
-		return seed;
-	}
-
-	static constexpr auto seed = build_seed();
-
-	template <const auto & states> static constexpr auto process() noexcept {
-		// calculate how much of new states we need
-		constexpr resize_info info = [&]{
-			size_t max_length = states.max_length;
-			size_t potential_states = states.size();
-			for (const auto & st: states) {
-				if (st.visited) continue; // ignore visited
-			
-				intervals<max_transition_count, char32_t, state> i;
-				// merge all transitions from state string length
-				iterate_over_multi_state(st.states, [&](const transition & t){
-					i.insert_range(t.cond.r.low, t.cond.r.high, t.target);
-				});
-				// determinize state
-				i.merge_and_split([&](char32_t, char32_t, const auto & target_set){
-					// if new state will be created, resize output, and find maximum of state string length
-					if (!states.exists(target_set)) {
-						if (target_set.size() > 1) {
-							// this is merger
-							max_length = std::max(max_length, target_set.size());
-							potential_states++;
-						}
-					}
-				});
-			}
-			return resize_info{max_length, potential_states};
-		}();
-	
-		// fill output
-		list_of_states<info.states, info.length> out{states}; // it also set visited in copy constructor
-		out.mark_everything_visited();
-	
-		// add new states
-		for (const auto & st: states) {
-			if (st.visited) continue; // ignore visited
-		
-			intervals<max_transition_count, char32_t, state> i;
-			// merge all transitions from state string length
-			iterate_over_multi_state(st.states, [&](const transition & t){
-				i.insert_range(t.cond.r.low, t.cond.r.high, t.target);
-			});
-			// determinize state
-			i.merge_and_split([&](char32_t, char32_t, const auto & target_set){
-				// if new state will be created, resize output, and find maximum of state string length
-				if (!states.exists(target_set)) {
-					if (target_set.size() > 1) {
-						// this is merger
-						bool is_final = is_multi_state_final(target_set);
-						out.insert(target_set, is_final);
-					}
-				}
-			});
-		}
-	
-		return out;
-	}
-	
-	template <const auto & previous> struct recursion_helper {
-		static constexpr auto output = process<previous>();
-	};
-	
-	template <const auto & previous = seed> constexpr static auto cycle_build_states() {
-		if constexpr (recursion_helper<previous>::output.contains_new_states()) {
-			return cycle_build_states<recursion_helper<previous>::output>();
-		} else {
-			return recursion_helper<previous>::output;
-		}
-	}
-	
-	static constexpr auto all_dfa_states = cycle_build_states();
-	
-	constexpr static auto build() {
-		constexpr resize_info info = []{
-			size_t final_states{0};
-			size_t transitions{0};
-			for (const auto & st: all_dfa_states) {
-				// calculate final_states
-				if (st.final) {
-					final_states++;
-				}
-				
-				intervals<max_transition_count, char32_t, state> i;
-				// merge all transitions from state string length
-				iterate_over_multi_state(st.states, [&](const transition & t){
-					i.insert_range(t.cond.r.low, t.cond.r.high, t.target);
-				});
-				// determinize state
-				i.merge_and_split([&](char32_t, char32_t, const auto &){
-					transitions++;
-				});
-			}
-			return resize_info{transitions, final_states};
-		}(); 
-		
-		finite_automaton<info.length, info.states> out;
-		
-		for (const auto & st: all_dfa_states) {
-			auto source_state = all_dfa_states.one_state(st.states);
-			
-			if (st.final) {
-				out.mark_final(source_state);
-			}
-			
-			intervals<max_transition_count, char32_t, state> i;
-			// merge all transitions from state string length
-			iterate_over_multi_state(st.states, [&](const transition & t){
-				i.insert_range(t.cond.r.low, t.cond.r.high, t.target);
-			});
-			// determinize state
-			i.merge_and_split([&](char32_t low, char32_t high, const auto & target_set){
-				auto target_state = all_dfa_states.one_state(target_set);
-				out.add(transition{source_state, target_state, condition(impl::range{low, high})});
-			});
-		}
-		
-		return out;
-	}
-	
-	static constexpr auto result = build();
-};
-	
-}
-
-#endif
-
-#ifndef CTFA__TRANSFORMATION__CHARACTER_SET__HPP
-#define CTFA__TRANSFORMATION__CHARACTER_SET__HPP
-
-#include <limits>
-
-namespace ctfa {
-
-template <const auto & ... Fa> struct character_set_n {
-	static constexpr auto build() {
-		constexpr size_t transitions = (Fa.transitions.size() + ... + 0);
-
-		finite_automaton<transitions, 1> output;
-		
-		// I can do this two push_backs because I know it's already sorted
-		auto add = [&](const auto & current){
-			for (const auto & t: current.transitions) {
-				output.transitions.insert(transition{start_state, state{1}, t.cond}); 
-			}
-		};
-		
-		(add(Fa),...);
-		
-		output.mark_final(state{1});
-		
-		return output;
-	}
-	
-	static constexpr auto result = build();
-};
-
-template <const auto & Fa> struct negative_set_one {
-	static constexpr auto build() {
-		constexpr auto inter = []{
-			intervals<Fa.transitions.size()+1, char32_t, state> i;
-		
-			for (const auto & t: Fa.transitions) {
-				i.insert_range(t.cond.r.low, t.cond.r.high, state{1});
-			}
-		
-			i.insert_range(std::numeric_limits<char32_t>::min(), std::numeric_limits<char32_t>::max(), state{0});
-		
-			i.merge();
-			return i;
-		}();
-		
-		// calculate needed size
-		constexpr size_t count = [&]{
-			size_t c = 0;
-			inter.split([&](char32_t, char32_t, const auto & target_set){
-				if (target_set.size() == 1 && target_set[0] == state{0}) {
-					c++;
-				}
-			});
-			return c;
-		}();
-		
-		finite_automaton<count, 1> output;
-		
-		// create transition from everything else
-		inter.split([&](char32_t low, char32_t high, const auto & target_set){
-			if (target_set.size() == 1 && target_set[0] == state{0}) {
-				output.add(transition{start_state, state{1}, condition(impl::range{low, high})});
-			}
-		});
-		
-		// state 1 is final
-		output.mark_final(state{1});
-		
-		return output;
-	}
-	
-	static constexpr auto result = build();
-};
-
-}
-
-#endif
-
-namespace ctfa {
-
-namespace utility {
-
-template <template <const auto &, const auto &> typename BinaryOp, const auto & ... Fas> struct apply_2;
-	
-template <template <const auto &, const auto &> typename BinaryOp, const auto & Fa> struct apply_2<BinaryOp, Fa> {
-	static constexpr auto & result = Fa;
-};
-
-template <template <const auto &, const auto &> typename BinaryOp, const auto & Lhs, const auto & Rhs> struct apply_2<BinaryOp, Lhs, Rhs> {
-	static constexpr auto & result = BinaryOp<Lhs, Rhs>::result;
-};
-
-template <template <const auto &, const auto &> typename BinaryOp, const auto & Lhs, const auto & Rhs, const auto & ... Fas> struct apply_2<BinaryOp, Lhs, Rhs, Fas...> {
-	static constexpr auto & result = apply_2<BinaryOp, BinaryOp<Lhs, Rhs>::result, Fas...>::result;
-};
- 
-
-}
-
-template <const auto & ... Fas> static constexpr auto concat = utility::apply_2<concat_two, Fas...>::result;
-
-template <const auto & ... Fas> static constexpr auto alternative = utility::apply_2<alternative_two, Fas...>::result;
-
-template <const auto & ... Fas> static constexpr auto plus = plus_one<utility::apply_2<concat_two, Fas...>::result>::result;
-
-template <const auto & ... Fas> static constexpr auto star = star_one<utility::apply_2<concat_two, Fas...>::result>::result;
-
-template <const auto & ... Fas> static constexpr auto optional = optional_one<utility::apply_2<concat_two, Fas...>::result>::result;
-
-template <const auto & ... Fas> static constexpr auto shrink = shrink_one<utility::apply_2<concat_two, Fas...>::result>::result;
-
-template <const auto & ... Fas> static constexpr auto remove_unneeded = remove_unneeded_one<utility::apply_2<concat_two, Fas...>::result>::result;
-
-template <const auto & ... Fas> static constexpr auto minimize = minimize_one<utility::apply_2<concat_two, Fas...>::result>::result;
-
-template <const auto & ... Fas> static constexpr auto determinize = determinize_one<minimize<Fas...>>::result;
-
-template <const auto & ... Fas> static constexpr auto join_character_set = character_set_n<Fas...>::result;
-
-template <const auto & ... Fas> static constexpr auto join_negate_character_set = negative_set_one<character_set_n<Fas...>::result>::result;
-
-}
-
-#endif
-
-#ifndef CTFA__MATCHER__MATCH__HPP
-#define CTFA__MATCHER__MATCH__HPP
-
-#ifndef CTFA__UTILITY__HPP
-#define CTFA__UTILITY__HPP
-
-#ifdef _MSC_VER
-#define CTFA_FORCE_INLINE __forceinline
-#define CTFA_FLATTEN
-#else
-#define CTFA_FORCE_INLINE inline __attribute__((always_inline))
-#define CTFA_FLATTEN __attribute__((flatten))
-#endif
-
-namespace ctfa {
-	struct zero_terminated_string_end_iterator {
-		constexpr inline zero_terminated_string_end_iterator() = default;
-		constexpr CTFA_FORCE_INLINE bool operator==(const char * ptr) const noexcept {
-			return *ptr == '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator==(const wchar_t * ptr) const noexcept {
-			return *ptr == 0;
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const char * ptr) const noexcept {
-			return *ptr != '\0';
-		} 
-		constexpr CTFA_FORCE_INLINE bool operator!=(const wchar_t * ptr) const noexcept {
-			return *ptr != 0;
-		} 
-	};
-}
-
-#endif
-#include <array>
-
-namespace ctfa {
-	
-	template <const auto & Dfa> struct dispatcher {
-		static constexpr auto states() {
-			constexpr size_t size = ctfa::info<Dfa>::states;
-	
-			ctfa::set<state, size> list;
-	
-			ctfa::info<Dfa>::iterate_over_states([&](state s){
-				list.push_back(s);
-			});
-	
-			return list;
-		}
-		
-		static constexpr auto list = states();
-		
-		template <int transition_index, int current_state, typename Iterator, typename EndIterator> static CTFA_FORCE_INLINE constexpr bool choose_transition(Iterator it, const EndIterator end) noexcept {
-			if constexpr (transition_index != Dfa.transitions.size() && Dfa.transitions[transition_index].source.id == current_state) {
-				constexpr auto transition = Dfa.transitions[transition_index];
-				if (transition.cond.match(*it) && end != it) {
-					return match_state<Iterator, EndIterator, transition.target.id>(it+1, end);
-				} else {
-					return choose_transition<transition_index+1, current_state>(it, end);
-				}
-			} else {
-				return false;
-			}
-		}
-	
-		template <typename Iterator, typename EndIterator, int State> static CTFA_FLATTEN constexpr bool match_state(Iterator it, EndIterator end) noexcept {
-			constexpr state current = state{State};
-			constexpr auto transition_index = Dfa.transitions.lower_bound(current) - Dfa.transitions.begin();
-			
-			if constexpr (Dfa.is_final(current)) {
-				if (end == it) return true;
-			} else {
-				if (end == it) return false;
-			}
-			
-			return choose_transition<transition_index, current.id>(it, end);
-		} 
-
-		template <typename Iterator, typename EndIterator> static CTFA_FORCE_INLINE constexpr bool run(Iterator it, const EndIterator end) noexcept {
-			return match_state<Iterator, EndIterator, 0>(it, end);		
-		}
-	};
-
-	template <const auto & DFa> static constexpr auto match_wrap = ctfa::minimize<ctfa::determinize<DFa>>;
-	
-	template <const auto & DFa, typename Range> constexpr bool match(Range && range) noexcept {
-		return dispatcher<match_wrap<DFa>>::run(range.begin(), range.end());
-	}
-
-	template <const auto & DFa, typename Ptr> constexpr bool match_ptr(const Ptr * ptr) noexcept {
-		return dispatcher<match_wrap<DFa>>::run(ptr, ctfa::zero_terminated_string_end_iterator());
-	}
-
-	static constexpr auto any_star = ctfa::star<ctfa::block::anything>;
-
-	template <const auto & DFa> static constexpr auto search_wrap = ctfa::minimize<ctfa::determinize<any_star,DFa,any_star>>;
-	
-	template <const auto & DFa, typename Range> constexpr bool search(Range && range) noexcept {
-		return dispatcher<search_wrap<DFa>>::run(range.begin(), range.end());
-	}
-
-	template <const auto & DFa, typename Ptr> constexpr bool search_ptr(const Ptr * ptr) noexcept {
-		return dispatcher<search_wrap<DFa>>::run(ptr, ctfa::zero_terminated_string_end_iterator());
-	}
-
-	template <const auto & Dfa, typename CharT> struct table_dispatcher {
-		static constexpr size_t size = Dfa.transitions.size() + Dfa.final_states.size() + 1;
-		
-		static constexpr auto index_example = []{
-			if constexpr (size < (256 - 1)) {
-				return uint8_t(0);
-			} else if constexpr (size < (65536 - 1)) {
-				return uint16_t(0);
-			} else {
-				return uint32_t(0);
-			}
-		}();
-		
-		using index_type = uint16_t;
-		
-		using char_type = char32_t;
-	
-		struct jump_extended {
-			index_type source;
-			index_type target;
-			char_type low;
-			char_type high;
-			constexpr bool operator<(const jump_extended & rhs) const {
-				if (source == rhs.source) {
-					if (target == rhs.target) {
-						if (low == rhs.low) {
-							return high < rhs.high;
-						} else {
-							return low < rhs.low;
-						}
-					} else {
-						return target < rhs.target;
-					}
-				} else {
-					return source < rhs.source;
-				}
-			}
-			constexpr bool operator==(const jump_extended & rhs) const {
-				return source == rhs.source && target == rhs.target && low == rhs.low && high == rhs.high;
-			}
-			constexpr bool operator<(index_type idx) const {
-				return source < idx;
-			}
-			constexpr bool operator==(index_type idx) const {
-				return source == idx;
-			}
-		};
-
-		static constexpr auto build_presort() {
-			ctfa::set<jump_extended, size*2> presort;
-			for (const auto & t: Dfa.transitions) {
-				presort.insert(jump_extended{index_type(t.source.id), index_type(t.target.id), char_type(t.cond.r.low), char_type(t.cond.r.high)});
-				if (!Dfa.is_final(t.source)) presort.insert(jump_extended{index_type(t.source.id), std::numeric_limits<index_type>::max(), 0, 0});
-			}
-			for (state f: Dfa.final_states) {
-				presort.insert(jump_extended{index_type(f.id), std::numeric_limits<index_type>::max(), 1, 0});
-			}
-			presort.insert(jump_extended{std::numeric_limits<index_type>::max(), std::numeric_limits<index_type>::max(), 0, 0});
-			return presort;
-		}
-		
-		static constexpr auto presort_table = build_presort();
-		
-		static constexpr auto build_table() {
-			ctfa::set<jump_extended, presort_table.size()> out;
-			
-			for (const auto & j: presort_table) {
-				if (j.source != std::numeric_limits<index_type>::max()) {
-					auto source = presort_table.find(j.source);
-					if (j.target != std::numeric_limits<index_type>::max()) {
-						auto target = presort_table.find(j.target);
-						out.push_back(jump_extended{index_type(source - presort_table.begin()), index_type(target - presort_table.begin()), j.low, j.high});
-					} else {
-						out.push_back(jump_extended{index_type(source - presort_table.begin()), j.target, j.low, j.high});
-					}
-				} else {
-					out.push_back(jump_extended{j.source, j.target, j.low, j.high});
-				}
-				
-			}
-			return out;
-			
-		}
-	    
-		static constexpr auto jump_table = build_table();
-		
-		template <typename Iterator, typename EndIterator> static constexpr bool run(Iterator it, const EndIterator end) noexcept {
-			index_type state = 0; // start
-			index_type current = state;
-			
-			while (true) {
-				if (end == it) {
-					//std::cout << "hit end == it => ";
-					while (true) {
-						const auto & jump = jump_table[state++];
-						if (~jump.target) {
-							//std::cout << (jump.low ? "ACCEPT\n" : "REJECT\n");
-							return jump.low;
-						}
-						else continue;
-					}
-				}
-				
-				//std::cout << "current = " << current << ", state = " << state; 
-				const auto & jump = jump_table[state++];
-				//std::cout << ", target = " << jump.target << "\n";
-				
-				if (jump.source != current) {
-					//std::cout << " end of state => REJECT";
-					return false;
-				}
-				
-				// the final mark can't be matched anyway
-				//std::cout << jump.low << " <= it ( " << unsigned(*it) << ") <= " << jump.high << "\n";
-				if ((jump.low <= *it) && (*it <= jump.high)) {
-					//std::cout << " match char " << *it << "\n";
-					current = state = jump.target;
-					it++;
-				} else {
-					//std::cout << " ... \n";
-				}
-			}
-		}
-	};
-}
-
-#endif
-
-#endif
-
-#endif
-#include <type_traits>
-
-namespace ctre {
-	
-struct unsupported_pattern_tag { };
-
-static constexpr inline auto unsupported_pattern = unsupported_pattern_tag{};
-
-// trasnforming the pattern into NFA
-
-template <const auto & Fa = ctfa::block::empty, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<>) noexcept {
-	return Fa;
-}
-
-// list
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctll::list<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = translate_nfa(ctll::list<Content...>());
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// sequence
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::sequence<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::concat<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// capture without capturing (TODO do the capturing)
-
-template <const auto & Fa = ctfa::block::empty, size_t Id, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::capture<Id, Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::concat<translate_nfa(ctll::list<Content...>())>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// capture with name
-template <const auto & Fa = ctfa::block::empty, size_t Id, typename Name, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::capture_with_name<Id, Name, Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::concat<translate_nfa(ctll::list<Content...>())>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// optional
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::optional<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::optional<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// lazy_optional
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::lazy_optional<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::optional<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-	
-
-// greedy repeat
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::plus<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::plus<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::star<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::star<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// repeat<A,B>
-template <size_t Num, typename... Content> struct head_repeat { };
-template <size_t Num, typename... Content> struct tail_repeat { };
-
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::head_repeat<0, Content...>, Rest...>) noexcept {
-	return translate_nfa<Fa>(ctll::list<Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, size_t A, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::head_repeat<A, Content...>, Rest...>) noexcept {
-	return translate_nfa<Fa>(ctll::list<Content..., ctre::head_repeat<A-1, Content...>, Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::tail_repeat<0, Content...>, Rest...>) noexcept {
-	return translate_nfa<Fa>(ctll::list<Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, size_t B, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::tail_repeat<B, Content...>, Rest...>) noexcept {
-	return translate_nfa<Fa>(ctll::list<optional<Content...>, ctre::tail_repeat<B-1, Content...>, Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, size_t A, size_t B, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::repeat<A,B, Content...>, Rest...>) noexcept {
-	if constexpr (A <= B || B == 0) {
-		if constexpr (B != 0) {
-			return translate_nfa<Fa>(ctll::list<head_repeat<A,Content...>, tail_repeat<B-A,Content...>, Rest...>());
-		} else {
-			return translate_nfa<Fa>(ctll::list<head_repeat<A,Content...>, star<Content...>, Rest...>());
-		}
-	} else {
-		return ctfa::block::reject_all;
-	}
-}
-
-// lazy repeat
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::lazy_plus<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::plus<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::lazy_star<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::star<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// lazy_repeat<A,B>
-template <const auto & Fa = ctfa::block::empty, size_t A, size_t B, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::lazy_repeat<A,B, Content...>, Rest...>) noexcept {
-	return translate_nfa<Fa>(ctll::list<ctre::repeat<A,B,Content...>, Rest...>());
-}
-
-// possesive repeat
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::possessive_plus<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::plus<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::possessive_star<Content...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::star<translate_nfa(ctll::list<Content>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// possessive_repeat<A,B>
-template <const auto & Fa = ctfa::block::empty, size_t A, size_t B, typename... Content, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::possessive_repeat<A,B, Content...>, Rest...>) noexcept {
-	return translate_nfa<Fa>(ctll::list<ctre::repeat<A,B,Content...>, Rest...>());
-}
-
-// select
-template <const auto & Fa = ctfa::block::empty, typename... Options, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::select<Options...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::alternative<translate_nfa(ctll::list<Options>())...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// string
-template <const auto & Fa = ctfa::block::empty, auto... Str, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::string<Str...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::block::string<char32_t(Str)...>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// one character
-template <const auto & Fa = ctfa::block::empty, auto N, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::character<N>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::block::unit<char32_t(N)>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// anything
-template <const auto & Fa = ctfa::block::empty, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::any, Rest...>) noexcept {
-	constexpr auto & output = ctfa::remove_unneeded<Fa, ctfa::block::anything>;
-	
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-// character sets
-
-struct nfa_set_builder {
-	
-	//template <typename Head> static constexpr inline auto & item(Head) noexcept {
-	//	constexpr auto & current = item(Head())
-	//	constexpr auto & output = ctfa::join_character_set<Fa, 
-	//}
-
-	template <auto A, auto B> static constexpr inline auto & item(ctre::char_range<A,B>) {
-		return ctfa::block::range<char32_t(A), char32_t(B)>;
-	}
-
-	template <auto A> static constexpr inline auto & item(ctre::character<A>) {
-		return ctfa::block::unit<char32_t(A)>;
-	}
-
-	static constexpr inline auto & item(ctre::any) {
-		return ctfa::block::anything;
-	}
-
-	template <typename... Items> static constexpr inline auto & build(Items...) noexcept {
-		return ctfa::join_character_set<item(Items())...>;
-	}
-
-	template <typename... Definition> static constexpr inline auto & item(ctre::set<Definition...>) {
-		return build(Definition()...);
-	}
-	
-	template <typename... Items> static constexpr inline auto & item(ctre::negative_set<Items...>) {
-		return ctfa::join_negate_character_set<item(Items())...>;
-	}
-
-};
-
-template <const auto & Fa = ctfa::block::empty, typename... Definition, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::set<Definition...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::determinize<nfa_set_builder::build(Definition()...)>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-template <const auto & Fa = ctfa::block::empty, typename... Definition, typename... Rest> 
-constexpr inline auto & translate_nfa(ctll::list<ctre::negative_set<Definition...>, Rest...>) noexcept {
-	constexpr auto & inner = ctfa::determinize<nfa_set_builder::build(ctre::negative_set<Definition...>())>;
-	constexpr auto & output = ctfa::remove_unneeded<Fa, inner>;
-
-	return translate_nfa<output>(ctll::list<Rest...>());
-}
-
-//template <const auto & Fa = ctfa::block::empty> 
-//constexpr inline auto & translate_nfa(...) noexcept {
-//	return unsupported_pattern;
-//}
-
-// wrapper for DFA
-
-template <typename Pattern> 
-constexpr inline auto & translate_dfa(Pattern) noexcept {
-	const auto & result = translate_nfa<ctfa::block::empty>(ctll::list<Pattern>());
-	using return_type = decltype(result);
-	constexpr bool supported_pattern = !std::is_same_v<return_type, unsupported_pattern_tag>;
-	static_assert(supported_pattern);
-	if constexpr (supported_pattern) return ctfa::minimize<ctfa::determinize<result>>;
-	else return ctfa::block::empty;
-}
-
-template <typename Pattern> 
-constexpr inline auto & search_translate_dfa(Pattern) noexcept {
-	const auto & result = translate_nfa<ctfa::block::empty>(ctll::list<Pattern>());
-	using return_type = decltype(result);
-	constexpr bool supported_pattern = !std::is_same_v<return_type, unsupported_pattern_tag>;
-	static_assert(supported_pattern);
-	if constexpr (supported_pattern) return ctfa::minimize<ctfa::determinize<ctfa::any_star, ctfa::minimize<ctfa::determinize<result>>, ctfa::any_star>>;
-	else return ctfa::block::empty;
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto fast_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	constexpr auto & dfa = translate_dfa(pattern);
-	return ctfa::dispatcher<dfa>::run(begin, end);
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto fast_search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	constexpr auto & dfa = search_translate_dfa(pattern);
-	return ctfa::dispatcher<dfa>::run(begin, end);
-}
-	
-	
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto fast_table_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	constexpr auto & dfa = translate_dfa(pattern);
-	return ctfa::table_dispatcher<dfa, std::remove_const_t<std::remove_reference_t<std::remove_const_t<decltype(*begin)>>>>::run(begin, end);
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto fast_table_search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	constexpr auto & dfa = search_translate_dfa(pattern);
-	return ctfa::table_dispatcher<dfa, std::remove_const_t<std::remove_reference_t<std::remove_const_t<decltype(*begin)>>>>::run(begin, end);
-}
-		
-
-}
-
-#endif
-
 #include <string_view>
 #include <string>
 
@@ -7394,8 +3576,8 @@ template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
-	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { };
-	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { };
+	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
+	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
 		return match_re(begin, end, RE());
 	}
@@ -7429,7 +3611,7 @@ template <typename RE> struct regular_expression {
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto search(Iterator begin, Iterator end) noexcept {
 		return search_re(begin, end, RE());
 	}
-	static constexpr CTRE_FORCE_INLINE auto search(const char * s) noexcept {
+	constexpr CTRE_FORCE_INLINE static auto search(const char * s) noexcept {
 		return search_2(s, zero_terminated_string_end_iterator());
 	}
 	static constexpr CTRE_FORCE_INLINE auto search(const wchar_t * s) noexcept {
@@ -7453,150 +3635,8 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto search(std::u32string_view sv) noexcept {
 		return search(sv.begin(), sv.end());
 	}
-	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
+	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
 		return search(std::begin(range), std::end(range));
-	}
-	
-	
-	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_match_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return fast_match_re(begin, end, RE());
-	}
-	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_search_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return fast_search_re(begin, end, RE());
-	}
-	
-	
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_match(Iterator begin, Iterator end) noexcept {
-		return fast_match_re(begin, end, RE());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(const char * s) noexcept {
-		return fast_match_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(const wchar_t * s) noexcept {
-		return fast_match_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(const std::string & s) noexcept {
-		return fast_match_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(const std::wstring & s) noexcept {
-		return fast_match_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(std::string_view sv) noexcept {
-		return fast_match(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(std::wstring_view sv) noexcept {
-		return fast_match(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(std::u16string_view sv) noexcept {
-		return fast_match(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_match(std::u32string_view sv) noexcept {
-		return fast_match(sv.begin(), sv.end());
-	}
-	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_match(Range && range) noexcept {
-		return fast_match(std::begin(range), std::end(range));
-	}
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_search(Iterator begin, Iterator end) noexcept {
-		return fast_search_re(begin, end, RE());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(const char * s) noexcept {
-		return fast_search_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(const wchar_t * s) noexcept {
-		return fast_search_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(const std::string & s) noexcept {
-		return fast_search_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(const std::wstring & s) noexcept {
-		return fast_search_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(std::string_view sv) noexcept {
-		return fast_search(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(std::wstring_view sv) noexcept {
-		return fast_search(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(std::u16string_view sv) noexcept {
-		return fast_search(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_search(std::u32string_view sv) noexcept {
-		return fast_search(sv.begin(), sv.end());
-	}
-	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_search(Range && range) noexcept {
-		return fast_search(std::begin(range), std::end(range));
-	}
-	
-	
-	
-	
-	
-	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_match_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return fast_table_match_re(begin, end, RE());
-	}
-	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_search_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return fast_table_search_re(begin, end, RE());
-	}
-
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_match(Iterator begin, Iterator end) noexcept {
-		return fast_table_match_re(begin, end, RE());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const char * s) noexcept {
-		return fast_table_match_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const wchar_t * s) noexcept {
-		return fast_table_match_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::string & s) noexcept {
-		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::wstring & s) noexcept {
-		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::string_view sv) noexcept {
-		return fast_table_match(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::wstring_view sv) noexcept {
-		return fast_table_match(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u16string_view sv) noexcept {
-		return fast_table_match(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u32string_view sv) noexcept {
-		return fast_table_match(sv.begin(), sv.end());
-	}
-	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_match(Range && range) noexcept {
-		return fast_table_match(std::begin(range), std::end(range));
-	}
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_search(Iterator begin, Iterator end) noexcept {
-		return fast_table_search_re(begin, end, RE());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const char * s) noexcept {
-		return fast_table_search_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const wchar_t * s) noexcept {
-		return fast_table_search_2(s, zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::string & s) noexcept {
-		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::wstring & s) noexcept {
-		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::string_view sv) noexcept {
-		return fast_table_search(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::wstring_view sv) noexcept {
-		return fast_table_search(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u16string_view sv) noexcept {
-		return fast_table_search(sv.begin(), sv.end());
-	}
-	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u32string_view sv) noexcept {
-		return fast_table_search(sv.begin(), sv.end());
-	}
-	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_search(Range && range) noexcept {
-		return fast_table_search(std::begin(range), std::end(range));
 	}
 };
 
@@ -7605,6 +3645,8 @@ template <typename RE> regular_expression(RE) -> regular_expression<RE>;
 }
 
 #endif
+
+#ifndef __EDG__
 
 namespace ctre {
 
@@ -7630,10 +3672,6 @@ namespace literals {
 #elif defined __GNUC__
 #if not(__GNUC__ == 9)
 #define CTRE_ENABLE_LITERALS
-#else
-#if !__cpp_nontype_template_parameter_class
-#define CTRE_ENABLE_LITERALS
-#endif
 #endif
 #endif
 
@@ -7718,11 +3756,14 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 
 #endif
 
+#endif
+
 #ifndef CTRE_V2__CTRE__FUNCTIONS__HPP
 #define CTRE_V2__CTRE__FUNCTIONS__HPP
 
 namespace ctre {
 
+#if !__cpp_nontype_template_parameter_class
 // avoiding CTAD limitation in C++17
 template <typename CharT, size_t N> class pattern: public ctll::fixed_string<N> {
 	using parent = ctll::fixed_string<N>;
@@ -7740,12 +3781,13 @@ public:
 };
 
 template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<CharT, N>;
+#endif
 
 #if __cpp_nontype_template_parameter_class
 template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #else
-template <const auto &input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
+template <auto & input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {	
 constexpr auto & _input = input; 
 #endif
 	
@@ -7762,6 +3804,9 @@ template <typename RE> struct regex_match_t {
 		auto re_obj = ctre::regular_expression<RE>();
 		return re_obj.match(std::forward<Args>(args)...);
 	}
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args && ... args) const noexcept {
+		return operator()(std::forward<Args>(args)...);
+	}
 };
 
 template <typename RE> struct regex_search_t {
@@ -7769,33 +3814,8 @@ template <typename RE> struct regex_search_t {
 		auto re_obj = ctre::regular_expression<RE>();
 		return re_obj.search(std::forward<Args>(args)...);
 	}
-};
-
-template <typename RE> struct fast_regex_match_t {
-	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
-		auto re_obj = ctre::regular_expression<RE>();
-		return re_obj.fast_match(std::forward<Args>(args)...);
-	}
-};
-
-template <typename RE> struct fast_regex_search_t {
-	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
-		auto re_obj = ctre::regular_expression<RE>();
-		return re_obj.fast_search(std::forward<Args>(args)...);
-	}
-};
-
-template <typename RE> struct fast_table_regex_match_t {
-	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
-		auto re_obj = ctre::regular_expression<RE>();
-		return re_obj.fast_table_match(std::forward<Args>(args)...);
-	}
-};
-
-template <typename RE> struct fast_table_regex_search_t {
-	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
-		auto re_obj = ctre::regular_expression<RE>();
-		return re_obj.fast_table_search(std::forward<Args>(args)...);
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args && ... args) const noexcept {
+		return operator()(std::forward<Args>(args)...);
 	}
 };
 
@@ -7812,33 +3832,17 @@ template <ctll::fixed_string input> static constexpr inline auto match = regex_m
 
 template <ctll::fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
-template <ctll::fixed_string input> static constexpr inline auto fast_match = fast_regex_match_t<typename regex_builder<input>::type>();
-
-template <ctll::fixed_string input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
-
-template <ctll::fixed_string input> static constexpr inline auto fast_table_match = fast_table_regex_match_t<typename regex_builder<input>::type>();
-
-template <ctll::fixed_string input> static constexpr inline auto fast_table_search = fast_table_regex_search_t<typename regex_builder<input>::type>();
-
 #else
 
-template <const auto & input> struct regex_builder {
+template <auto & input> struct regex_builder {
 	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
 	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
 };
 
-template <const auto &input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
+template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
-template <const auto &input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
-
-template <const auto &input> static constexpr inline auto fast_match = fast_regex_match_t<typename regex_builder<input>::type>();
-
-template <const auto &input> static constexpr inline auto fast_search = fast_regex_search_t<typename regex_builder<input>::type>();
-
-template <const auto &input> static constexpr inline auto fast_table_match = fast_table_regex_match_t<typename regex_builder<input>::type>();
-
-template <const auto &input> static constexpr inline auto fast_table_search = fast_table_regex_search_t<typename regex_builder<input>::type>();
+template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
 #endif
 

@@ -1,3 +1,5 @@
+#define CTRE_MSVC_GREEDY_WORKAROUND
+
 #include <ctre.hpp>
 #include <string_view>
 
@@ -220,6 +222,7 @@ static_assert(CTRE_CREATE("[(-)]").match(")"));
 static_assert(CTRE_CREATE("[A-Z_a-z]").match("a"));
 static_assert(CTRE_CREATE("[A-Z_a-z]").match("_"));
 static_assert(CTRE_CREATE("[A-Z_a-z]").match("Z"));
+// FIXME: maybe in future I will allow this again
 // static_assert(CTRE_CREATE("[-]").match("-"));
 // static_assert(CTRE_CREATE("[-x]").match("x"));
 // FIXME: due current limitation of LL1 grammar parser I can make this work "[x-]" without significant change in grammar
@@ -272,5 +275,7 @@ static_assert(CTRE_CREATE("(<[a-z]+>)\\g{1}").match("<aloha><aloha>"sv));
 static_assert(CTRE_CREATE("[^\\^]").match("a"sv));
 static_assert(CTRE_CREATE("[^^]").match("a"sv));
 static_assert(CTRE_CREATE("[\\-]").match("-"sv));
-//static_assert(CTRE_CREATE("[-]").match("-"sv));
 static_assert(CTRE_CREATE("[\\--\\-]").match("-"sv));
+
+// msvc
+static_assert(CTRE_CREATE("[a-z]+abc").match("xxxabc"));

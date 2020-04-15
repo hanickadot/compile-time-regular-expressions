@@ -67,6 +67,14 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return std::basic_string<char_type>(begin(), end());
 		}
 		
+		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
+			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+		}
+		
+		constexpr CTRE_FORCE_INLINE auto str() const noexcept {
+			return std::basic_string<char_type>(begin(), end());
+		}
+		
 		constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
 			return to_view();
 		}
@@ -239,6 +247,14 @@ public:
 		return _captures.template select<0>().to_string();
 	}
 	
+	constexpr CTRE_FORCE_INLINE auto view() const noexcept {
+		return _captures.template select<0>().view();
+	}
+	
+	constexpr CTRE_FORCE_INLINE auto str() const noexcept {
+		return _captures.template select<0>().to_string();
+	}
+	
 	constexpr CTRE_FORCE_INLINE regex_results & set_start_mark(Iterator pos) noexcept {
 		_captures.template select<0>().set_start(pos);
 		return *this;
@@ -266,6 +282,7 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 
 // support for structured bindings
 
+#ifndef __EDG__
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmismatched-tags"
@@ -284,6 +301,7 @@ namespace std {
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 #endif
 
 #endif

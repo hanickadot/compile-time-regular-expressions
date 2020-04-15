@@ -64,4 +64,3 @@ template <auto V, auto B, auto A, typename... Ts, typename Parameters> static co
 }
 
 #endif
-	

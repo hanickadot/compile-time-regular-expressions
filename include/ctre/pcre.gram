@@ -22,6 +22,7 @@ equal_sign={=}
 exclamation_mark={!}
 
 escape_alphanum={b,c,h,i,j,k,l,m,o,q,v,y,z,A,B,C,E,F,G,H,I,J,K,L,M,O,Q,U,V,X,Y,Z,1,2,3,4,5,6,7,8,9}
+escape_backreference={1,2,3,4,5,6,7,8,9}
 hexdec={0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,A,B,C,D,E,F}
 octal={0,1,2,3,4,5,6,7}
 nonspecial_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,,:,!,=,_}
@@ -71,10 +72,10 @@ block_name->alpha_characters,[push_name],<block_name2>
 block_name2->alphanum_characters,[push_name],<block_name2>|epsilon
 
 
-character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set>,[set_make_negative],sclose
-set->minus,[push_character],[set_start],<set2>
-set-><setitem>,[set_start],<set2>
-set2-><setitem>,[set_combine],<set2>|epsilon
+character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set2a>,[set_make_negative],sclose
+set-><setitem>,[set_start],<set2b>
+set2a-><setitem2>,[set_start],<set2b>|epsilon
+set2b-><setitem2>,[set_combine],<set2b>|epsilon
 
 class_named->sopen,colon,<class_named_name>,colon,sclose | sopen,colon,caret,<class_named_name>,[negate_class_named],colon,sclose 
 class_named_name->"alnum",[class_named_alnum]
@@ -97,6 +98,12 @@ setitem->other,[push_character],<range> | nonspecial_characters,[push_character]
 setitem-><class_named>,<range>
 setitem->backslash,<backslash_range>,<range> | backslash,<backslash_set>
 
+setitem2->other,[push_character],<range> | nonspecial_characters,[push_character],<range> | nonspecial_characters_in_class,[push_character],<range> 
+setitem2->caret,[push_character],<range>
+setitem2-><class_named>,<range>
+setitem2->backslash,<backslash_range>,<range> | backslash,<backslash_set>
+
+
 range->epsilon
 range->minus,other,[push_character],[make_range]|minus,nonspecial_characters,[push_character],[make_range]
 range->minus,backslash,<backslash_range>,[make_range]|minus,nonspecial_characters_in_class,[push_character],[make_range]
@@ -104,7 +111,7 @@ range->minus,backslash,<backslash_range>,[make_range]|minus,nonspecial_character
 
 backslash_set-><special>,[push_character]
 special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar|minus
-backslash_set->escape_alphanum,[push_character]
+backslash_set->escape_backreference,[create_number],[make_back_reference]
 
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 
@@ -119,6 +126,7 @@ backslash_range->0,[push_character_null]
 backslash_range->a,[push_character_alarm]
 backslash_range->e,[push_character_escape]
 backslash_range->f,[push_character_formfeed]
+backslash_range->minus,[push_character]
 
 backslash_set->d,[class_digit]|D,[class_nondigit]
 backslash_set->w,[class_word]|W,[class_nonword]

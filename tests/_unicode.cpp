@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+void empty_symbol() { }
+
 template <typename T> struct identify;
 template <size_t N> struct number_id;
 

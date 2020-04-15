@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+void empty_symbol() { }
+
 template <typename Pattern> constexpr bool match(std::string_view input, Pattern pattern) {
 	return bool(ctre::match_re(input.begin(), input.end(), pattern));
 }

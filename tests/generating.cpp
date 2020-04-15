@@ -1,5 +1,7 @@
 #include <ctre.hpp>
 
+void empty_symbol() { }
+
 template <typename... T> struct id_type;
 
 using namespace ctre::test_literals;
