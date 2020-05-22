@@ -142,6 +142,14 @@ template <size_t Id, typename Name = void> struct captured_content {
 		constexpr CTRE_FORCE_INLINE auto select_by_type(other_types) const noexcept {
 			return ignore_result;
 		}
+
+        constexpr CTRE_FORCE_INLINE static bool has_type(name) noexcept {
+            return true;
+        }
+
+        constexpr CTRE_FORCE_INLINE static bool has_type(other_types) noexcept {
+            return false;
+        }
 		
 		constexpr CTRE_FORCE_INLINE static bool has_name([[maybe_unused]] std::basic_string_view<char32_t> requested) noexcept {
 			if constexpr (std::is_same_v<Name, void>) {
@@ -150,6 +158,10 @@ template <size_t Id, typename Name = void> struct captured_content {
 				return name::name == requested;
 			}
 		}
+
+        constexpr CTRE_FORCE_INLINE static bool has_id(size_t requested) noexcept {
+            return requested == Id;
+        }
 		
 		#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 		constexpr CTRE_FORCE_INLINE auto & select_by_name(get_name_tag<name>) noexcept {
@@ -173,21 +185,15 @@ template <size_t Id, typename Name = void> struct captured_content {
 
 template <typename... Content> struct captures: Content... {
 	template <size_t Id> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-		using result_type = decltype((std::declval<Content>().select_by_id(id_tag<Id>{}) || ...));
-		
-		return not std::is_same_v<result_type, ignore_result_tag>;
+    	return (Content::has_id(Id) || ...);
 	}
 	
 	template <CTLL_FIXED_STRING Name> CTRE_FORCE_INLINE static constexpr auto exists() noexcept {
-		using result_type = decltype((std::declval<Content>().has_name(Name) || ...));
-	
-		return not std::is_same_v<result_type, ignore_result_tag>;
+		return (Content::has_name(Name) || ...);
 	}
 	
 	template <typename Name> CTRE_FORCE_INLINE static constexpr auto exists() noexcept {
-		using result_type = decltype((std::declval<Content>().select_by_type(Name{}) || ...));
-
-		return not std::is_same_v<result_type, ignore_result_tag>;
+		return (Content::has_type(Name{}) || ...);
 	}
 	
 	
