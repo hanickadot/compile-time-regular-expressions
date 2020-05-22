@@ -273,7 +273,7 @@ template <size_t N> struct fixed_string {
 	size_t real_size{0};
 	bool correct_flag{true};
 	
-	template <typename T> constexpr fixed_string(const T (&input)[N]) noexcept {
+	template <typename T> constexpr fixed_string(const T (&input)[N+1]) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
 			#if CTRE_STRING_IS_UTF8
 				size_t out{0};
@@ -400,10 +400,13 @@ template <size_t N> struct fixed_string {
 		}
 		return true;
 	}
+	constexpr operator std::basic_string_view<char32_t>() const noexcept {
+		return std::basic_string_view<char32_t>{content, size()};
+	}
 };
 
 template <> class fixed_string<0> {
-	static constexpr char32_t __empty[1] = {0};
+	static constexpr char32_t empty[1] = {0};
 public:
 	template <typename T> constexpr fixed_string(const T *) noexcept {
 		
@@ -421,29 +424,29 @@ public:
 		return 0;
 	}
 	constexpr const char32_t * begin() const noexcept {
-		return __empty;
+		return empty;
 	}
 	constexpr const char32_t * end() const noexcept {
-		return __empty + size();
+		return empty + size();
 	}
 	constexpr char32_t operator[](size_t) const noexcept {
 		return 0;
 	}
+	constexpr operator std::basic_string_view<char32_t>() const noexcept {
+		return std::basic_string_view<char32_t>{empty, 0};
+	}
 };
 
-template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<N>;
+template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<N-1>;
 template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
-template <typename T, size_t N> class basic_fixed_string: public fixed_string<N> {
-	using parent = fixed_string<N>;
-public:
-	template <typename... Args> constexpr basic_fixed_string(Args && ... args) noexcept: parent(std::forward<Args>(args)...) { }
-};
-
-template <typename CharT, size_t N> basic_fixed_string(const CharT (&)[N]) -> basic_fixed_string<CharT, N>;
-template <typename CharT, size_t N> basic_fixed_string(basic_fixed_string<CharT, N>) -> basic_fixed_string<CharT, N>;
-
 }
+
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+	#define CTLL_FIXED_STRING ctll::fixed_string
+#else
+	#define CTLL_FIXED_STRING const auto &
+#endif
 
 #endif
 
@@ -2207,6 +2210,46 @@ namespace ctre {
 struct not_matched_tag_t { };
 
 static constexpr inline auto not_matched = not_matched_tag_t{};
+
+struct other_ids {
+	constexpr other_ids(...) noexcept { }
+};
+
+struct other_types {
+	constexpr other_types(...) noexcept { }
+};
+
+struct without_name { };
+
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+struct other_names { };
+
+template <CTLL_FIXED_STRING Name> struct name_tag {
+	constexpr operator other_names() const noexcept { return other_names{}; }
+};
+
+template <typename Name> struct get_name_tag_t {
+	// around GCC ICE
+	static constexpr auto value = Name::name;
+	using type = name_tag<value>;
+};
+
+template <> struct get_name_tag_t<without_name> {
+	using type = without_name;
+};
+
+template <typename Name> using get_name_tag = get_name_tag_t<Name>::type;
+#endif
+
+template <size_t Id> struct id_tag { };
+
+struct ignore_result_tag {
+	constexpr friend auto operator||(ignore_result_tag, ignore_result_tag) -> ignore_result_tag { return {}; }
+	template <typename T> constexpr friend decltype(auto) operator||(ignore_result_tag, T && val) { return std::forward<T>(val); }
+	template <typename T> constexpr friend decltype(auto) operator||(T && val, ignore_result_tag) { return std::forward<T>(val); }
+};
+
+static constexpr ignore_result_tag ignore_result{};
 	
 template <size_t Id, typename Name = void> struct captured_content {
 	template <typename Iterator> class storage {
@@ -2217,7 +2260,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 	public:
 		using char_type = typename std::iterator_traits<Iterator>::value_type;
 		
-		using name = Name;
+		using name = std::conditional_t<std::is_same_v<Name, void>, without_name, Name>;
 	
 		constexpr CTRE_FORCE_INLINE storage() noexcept {}
 	
@@ -2278,127 +2321,124 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return to_string();
 		}
 		
-		constexpr CTRE_FORCE_INLINE static size_t get_id() noexcept {
-			return Id;
+		
+		constexpr CTRE_FORCE_INLINE const auto & select_by_id(id_tag<Id>) const noexcept {
+			return *this;
 		}
+		constexpr CTRE_FORCE_INLINE auto & select_by_id(id_tag<Id>) noexcept {
+			return *this;
+		}
+		constexpr CTRE_FORCE_INLINE auto select_by_id(other_ids) const noexcept {
+			return ignore_result;
+		}
+		
+		constexpr CTRE_FORCE_INLINE auto & select_by_type(name) noexcept {
+			return *this;
+		}
+		constexpr CTRE_FORCE_INLINE auto select_by_type(other_types) const noexcept {
+			return ignore_result;
+		}
+		
+		constexpr CTRE_FORCE_INLINE static bool has_name([[maybe_unused]] std::basic_string_view<char32_t> requested) noexcept {
+			if constexpr (std::is_same_v<Name, void>) {
+				return false;
+			} else {
+				return name::name == requested;
+			}
+		}
+		
+		#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+		constexpr CTRE_FORCE_INLINE auto & select_by_name(get_name_tag<name>) noexcept {
+			return *this;
+		}
+		constexpr CTRE_FORCE_INLINE auto select_by_name(other_names) const noexcept {
+			return ignore_result;
+		}
+		#else
+		// without CNTTP you can't do the trick :(
+		template <CTLL_FIXED_STRING RequestedName> constexpr decltype(auto) select_by_name() noexcept {
+			if constexpr (has_name(RequestedName)) {
+				return *this;
+			} else {
+				return ignore_result;
+			}
+		}
+		#endif
 	};
 };
 
-struct capture_not_exists_tag { };
+template <typename... Content> struct captures: Content... {
+	template <size_t Id> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+		using result_type = decltype((std::declval<Content>().select_by_id(id_tag<Id>{}) || ...));
+		
+		return not std::is_same_v<result_type, ignore_result_tag>;
+	}
+	
+	template <CTLL_FIXED_STRING Name> CTRE_FORCE_INLINE static constexpr auto exists() noexcept {
+		using result_type = decltype((std::declval<Content>().has_name(Name) || ...));
+	
+		return not std::is_same_v<result_type, ignore_result_tag>;
+	}
+	
+	template <typename Name> CTRE_FORCE_INLINE static constexpr auto exists() noexcept {
+		using result_type = decltype((std::declval<Content>().select_by_type(Name{}) || ...));
 
-static constexpr inline auto capture_not_exists = capture_not_exists_tag{};
+		return not std::is_same_v<result_type, ignore_result_tag>;
+	}
+	
+	
+	template <size_t Id, typename = std::enable_if_t<exists<Id>()>> CTRE_FORCE_INLINE constexpr const auto & get() const noexcept {
+		return (Content::select_by_id(id_tag<Id>{}) || ...);
+	}
 
-template <typename... Captures> struct captures;
+	template <size_t Id, typename = std::enable_if_t<exists<Id>()>> CTRE_FORCE_INLINE constexpr auto & get() noexcept {
+		return (Content::select_by_id(id_tag<Id>{}) || ...);
+	}
+	
+	template <CTLL_FIXED_STRING Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr const auto & get() const noexcept {
+		#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+		constexpr auto name = Name;
+		constexpr auto tag = name_tag<name>{};
+	
+		using result_type = decltype((Content::select_by_name(tag) || ...));
+	
+		static_assert(not std::is_same_v<result_type, ignore_result_tag>);
 
-template <typename Head, typename... Tail> struct captures<Head, Tail...>: captures<Tail...> {
-	Head head{};
-	constexpr CTRE_FORCE_INLINE captures() noexcept { }
-	template <size_t id> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-		if constexpr (id == Head::get_id()) {
-			return true;
-		} else {
-			return captures<Tail...>::template exists<id>();
-		}
+		return (Content::select_by_name(tag) || ...);
+		#else
+		return (Content::template select_by_name<Name>() || ...);
+		#endif
 	}
-	template <typename Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-		if constexpr (std::is_same_v<Name, typename Head::name>) {
-			return true;
-		} else {
-			return captures<Tail...>::template exists<Name>();
-		}
-	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
-	template <ctll::fixed_string Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-#else
-	template <const auto & Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-#endif
-		if constexpr (std::is_same_v<typename Head::name, void>) {
-			return captures<Tail...>::template exists<Name>();
-		} else {
-			if constexpr (Head::name::name.is_same_as(Name)) {
-				return true;
-			} else {
-				return captures<Tail...>::template exists<Name>();
-			}
-		}
-	}
-	template <size_t id> CTRE_FORCE_INLINE constexpr auto & select() noexcept {
-		if constexpr (id == Head::get_id()) {
-			return head;
-		} else {
-			return captures<Tail...>::template select<id>();
-		}
-	}
-	template <typename Name> CTRE_FORCE_INLINE constexpr auto & select() noexcept {
-		if constexpr (std::is_same_v<Name, typename Head::name>) {
-			return head;
-		} else {
-			return captures<Tail...>::template select<Name>();
-		}
-	}
-	template <size_t id> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-		if constexpr (id == Head::get_id()) {
-			return head;
-		} else {
-			return captures<Tail...>::template select<id>();
-		}
-	}
-	template <typename Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-		if constexpr (std::is_same_v<Name, typename Head::name>) {
-			return head;
-		} else {
-			return captures<Tail...>::template select<Name>();
-		}
-	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
-	template <ctll::fixed_string Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-#else
-	template <const auto & Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-#endif
-		if constexpr (std::is_same_v<typename Head::name, void>) {
-			return captures<Tail...>::template select<Name>();
-		} else {
-			if constexpr (Head::name::name.is_same_as(Name)) {
-				return head;
-			} else {
-				return captures<Tail...>::template select<Name>();
-			}
-		}
-	}
-};
+	
+	template <CTLL_FIXED_STRING Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() noexcept {
+		#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+		constexpr auto name = Name;
+		constexpr auto tag = name_tag<name>{};
+		
+		using result_type = decltype((Content::select_by_name(tag) || ...));
+		
+		static_assert(not std::is_same_v<result_type, ignore_result_tag>);
 
-template <> struct captures<> {
-	constexpr CTRE_FORCE_INLINE captures() noexcept { }
-	template <size_t> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-		return false;
+		return (Content::select_by_name(tag) || ...);
+		#else
+		return (Content::template select_by_name<Name>() || ...);
+		#endif
 	}
-	template <typename> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-		return false;
+	
+	template <typename Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr const auto & get() const noexcept {
+		return (Content::select_by_type(Name{}) || ...);
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
-	template <ctll::fixed_string> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-#else
-	template <const auto &> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
-#endif
-		return false;
-	}
-	template <size_t> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-		return capture_not_exists;
-	}
-	template <typename> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-		return capture_not_exists;
-	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
-	template <ctll::fixed_string> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-#else
-	template <const auto &> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
-#endif
-		return capture_not_exists;
+
+	template <typename Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() noexcept {
+		return (Content::select_by_type(Name{}) || ...);
 	}
 };
 
 template <typename Iterator, typename... Captures> class regex_results {
-	captures<captured_content<0>::template storage<Iterator>, typename Captures::template storage<Iterator>...> _captures{};
+	captures<
+		captured_content<0>::template storage<Iterator>, 
+		typename Captures::template storage<Iterator>...
+	> _captures{};
 public:
 	using char_type = typename std::iterator_traits<Iterator>::value_type;
 	
@@ -2408,32 +2448,58 @@ public:
 	// special constructor for deducting
 	constexpr CTRE_FORCE_INLINE regex_results(Iterator, ctll::list<Captures...>) noexcept { }
 	
-	template <size_t Id, typename = std::enable_if_t<decltype(_captures)::template exists<Id>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-		return _captures.template select<Id>();
+	template <size_t Id> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+		return decltype(_captures)::template exists<Id>();
 	}
-	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-		return _captures.template select<Name>();
+	
+	template <CTLL_FIXED_STRING Name> CTRE_FORCE_INLINE static constexpr auto exists() noexcept {
+		return decltype(_captures)::template exists<Name>();
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
-	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-#else
-	template <const auto & Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-#endif
-		return _captures.template select<Name>();
+	
+	template <typename Name> CTRE_FORCE_INLINE static constexpr auto exists() noexcept {
+		return decltype(_captures)::template exists<Name>();
 	}
+	
+	template <size_t Id, typename = std::enable_if_t<exists<Id>()>> CTRE_FORCE_INLINE constexpr const auto & get() const noexcept {
+		return _captures.template get<Id>();
+	}
+	
+	template <size_t Id, typename = std::enable_if_t<exists<Id>()>> CTRE_FORCE_INLINE constexpr auto & get() noexcept {
+		return _captures.template get<Id>();
+	}
+	
+	template <CTLL_FIXED_STRING Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr const auto & get() const noexcept {
+		return _captures.template get<Name>();
+	}
+	
+	template <CTLL_FIXED_STRING Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() noexcept {
+		return _captures.template get<Name>();
+	}
+	
+	template <typename Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr const auto & get() const noexcept {
+		return _captures.template get<Name>();
+	}
+
+	template <typename Name, typename = std::enable_if_t<exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() noexcept {
+		return _captures.template get<Name>();
+	}
+	
 	static constexpr size_t size() noexcept {
 		return sizeof...(Captures) + 1;
 	}
+	
 	constexpr CTRE_FORCE_INLINE regex_results & matched() noexcept {
-		_captures.template select<0>().matched();
+		_captures.template get<0>().matched();
 		return *this;
 	}
+	
 	constexpr CTRE_FORCE_INLINE regex_results & unmatch() noexcept {
-		_captures.template select<0>().unmatch();
+		_captures.template get<0>().unmatch();
 		return *this;
 	}
+	
 	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
-		return bool(_captures.template select<0>());
+		return bool(_captures.template get<0>());
 	}
 	
 	constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
@@ -2445,38 +2511,38 @@ public:
 	}
 	
 	constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
-		return _captures.template select<0>().to_view();
+		return _captures.template get<0>().to_view();
 	}
 	
 	constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
-		return _captures.template select<0>().to_string();
+		return _captures.template get<0>().to_string();
 	}
 	
 	constexpr CTRE_FORCE_INLINE auto view() const noexcept {
-		return _captures.template select<0>().view();
+		return _captures.template get<0>().view();
 	}
 	
 	constexpr CTRE_FORCE_INLINE auto str() const noexcept {
-		return _captures.template select<0>().to_string();
+		return _captures.template get<0>().to_string();
 	}
 	
 	constexpr CTRE_FORCE_INLINE regex_results & set_start_mark(Iterator pos) noexcept {
-		_captures.template select<0>().set_start(pos);
+		_captures.template get<0>().set_start(pos);
 		return *this;
 	}
 	constexpr CTRE_FORCE_INLINE regex_results & set_end_mark(Iterator pos) noexcept {
-		_captures.template select<0>().set_end(pos);
+		_captures.template get<0>().set_end(pos);
 		return *this;
 	}
 	constexpr CTRE_FORCE_INLINE Iterator get_end_position() const noexcept {
-		return _captures.template select<0>().get_end();
+		return _captures.template get<0>().get_end();
 	}
 	template <size_t Id> CTRE_FORCE_INLINE constexpr regex_results & start_capture(Iterator pos) noexcept {
-		_captures.template select<Id>().set_start(pos);
+		_captures.template get<Id>().set_start(pos);
 		return *this;
 	}
 	template <size_t Id> CTRE_FORCE_INLINE constexpr regex_results & end_capture(Iterator pos) noexcept {
-		_captures.template select<Id>().set_end(pos).matched();
+		_captures.template get<Id>().set_end(pos).matched();
 		return *this;
 	}
 };
