@@ -92,16 +92,16 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		friend CTRE_FORCE_INLINE constexpr bool operator==(const storage & lhs, std::basic_string_view<char_type> rhs) noexcept {
-			return lhs.view() == rhs;
+			return bool(lhs) ? lhs.view() == rhs : false;
 		}
 		friend CTRE_FORCE_INLINE constexpr bool operator!=(const storage & lhs, std::basic_string_view<char_type> rhs) noexcept {
-			return lhs.view() != rhs;
+			return bool(lhs) ? lhs.view() != rhs : false;
 		}
 		friend CTRE_FORCE_INLINE constexpr bool operator==(std::basic_string_view<char_type> lhs, const storage & rhs) noexcept {
-			return lhs == rhs.view();
+			return bool(rhs) ? lhs == rhs.view() : false;
 		}
 		friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const storage & rhs) noexcept {
-			return lhs != rhs.view();
+			return bool(rhs) ? lhs != rhs.view() : false;
 		}
 	};
 };
@@ -310,16 +310,16 @@ public:
 		return *this;
 	}
 	friend CTRE_FORCE_INLINE constexpr bool operator==(const regex_results & lhs, std::basic_string_view<char_type> rhs) noexcept {
-		return lhs.view() == rhs;
+		return bool(lhs) ? lhs.view() == rhs : false;
 	}
 	friend CTRE_FORCE_INLINE constexpr bool operator!=(const regex_results & lhs, std::basic_string_view<char_type> rhs) noexcept {
-		return lhs.view() != rhs;
+		return bool(lhs) ? lhs.view() != rhs : true;
 	}
 	friend CTRE_FORCE_INLINE constexpr bool operator==(std::basic_string_view<char_type> lhs, const regex_results & rhs) noexcept {
-		return lhs == rhs.view();
+		return bool(rhs) ? lhs == rhs.view() : false;
 	}
 	friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const regex_results & rhs) noexcept {
-		return lhs != rhs.view();
+		return bool(rhs) ? lhs != rhs.view() : true;
 	}
 };
 
