@@ -2,7 +2,7 @@
 
 void empty_symbol() { }
 
-static constexpr auto Pattern = ctll::basic_fixed_string{ LR"(^\s*(\d+)\s+:(\S):$(\S+?)$(\S+?)$(\S+))" };
+static constexpr auto Pattern = ctll::fixed_string{ LR"(^\s*(\d+)\s+:(\S):$(\S+?)$(\S+?)$(\S+))" };
 
 static_assert(Pattern.size() == 38);
 

@@ -124,6 +124,22 @@ std::optional<date> extract_date(std::string_view s) noexcept {
 ```
 [link to compiler explorer](https://gcc.godbolt.org/z/x64CVp)
 
+##### Using captures
+```c++
+auto result = ctre::match<"(?<year>\\d{4})/(?<month>\\d{1,2})/(?<day>\\d{1,2})">(s);
+return date{result.get<"year">(), result.get<"month">, result.get<"day">};
+
+// or in C++ emulation, but the object must have a linkage
+static constexpr ctll::fixed_string year = "year";
+static constexpr ctll::fixed_string month = "month";
+static constexpr ctll::fixed_string day = "day";
+return date{result.get<year>(), result.get<month>, result.get<day>};
+
+// or use numbered access
+// capture 0 is the whole match
+return date{result.get<1>(), result.get<2>, result.get<3>};
+```
+
 #### Lexer
 ```c++
 enum class type {

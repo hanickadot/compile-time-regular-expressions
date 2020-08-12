@@ -6,7 +6,7 @@ template <typename... T> struct id_type;
 
 using namespace ctre::test_literals;
 
-#if !__cpp_nontype_template_parameter_class
+#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 #define CTRE_GEN(pattern) (pattern ## _ctre_gen)
 #else
 

@@ -21,14 +21,14 @@ struct placeholder { };
 
 template <size_t> using index_placeholder = placeholder;
 
-#if !__cpp_nontype_template_parameter_class
-template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
-#else
+#if ((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) || (__cpp_nontype_template_args >= 201911L))
 template <typename Grammar, ctll::fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
+#else
+template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #endif
 	
 	#ifdef __GNUC__ // workaround to GCC bug
-		#if __cpp_nontype_template_parameter_class
+		#if ((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) || (__cpp_nontype_template_args >= 201911L))
 		static constexpr auto _input = input;  // c++20 mode
 		#else
 		static constexpr auto & _input = input; // c++17 mode
@@ -46,7 +46,7 @@ template <typename Grammar, ctll::fixed_string input, typename ActionSelector = 
 		}
 		
 		#ifdef __GNUC__ // workaround to GCC bug
-			#if __cpp_nontype_template_parameter_class
+			#if ((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) || (__cpp_nontype_template_args >= 201911L))
 			static constexpr auto _input = input;  // c++20 mode
 			#else
 			static constexpr auto & _input = input; // c++17 mode

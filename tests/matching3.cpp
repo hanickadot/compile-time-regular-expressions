@@ -7,7 +7,7 @@ using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 
 #define TEST_MATCH(id, pattern, subject) static_assert(ctre::match<pattern>(subject))
 

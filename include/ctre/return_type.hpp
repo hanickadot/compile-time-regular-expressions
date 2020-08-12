@@ -13,7 +13,7 @@ struct not_matched_tag_t { };
 
 static constexpr inline auto not_matched = not_matched_tag_t{};
 	
-template <size_t Id, typename Name = void, typename Content = void> struct captured_content {
+template <size_t Id, typename Name = void> struct captured_content {
 	template <typename Iterator> class storage {
 		Iterator _begin{};
 		Iterator _end{};
@@ -21,7 +21,7 @@ template <size_t Id, typename Name = void, typename Content = void> struct captu
 		bool _matched{false};
 	public:
 		using char_type = typename std::iterator_traits<Iterator>::value_type;
-		using content_type = Content;
+		
 		using name = Name;
 	
 		constexpr CTRE_FORCE_INLINE storage() noexcept {}
@@ -53,6 +53,10 @@ template <size_t Id, typename Name = void, typename Content = void> struct captu
 	
 		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 			return _matched;
+		}
+		
+		constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
+			return &*_begin;
 		}
 
 		constexpr CTRE_FORCE_INLINE auto size() const noexcept {
@@ -87,8 +91,17 @@ template <size_t Id, typename Name = void, typename Content = void> struct captu
 			return Id;
 		}
 		
-		constexpr CTRE_FORCE_INLINE static content_type get_expression() noexcept {
-			return {};
+		friend CTRE_FORCE_INLINE constexpr bool operator==(const storage & lhs, std::basic_string_view<char_type> rhs) noexcept {
+			return bool(lhs) ? lhs.view() == rhs : false;
+		}
+		friend CTRE_FORCE_INLINE constexpr bool operator!=(const storage & lhs, std::basic_string_view<char_type> rhs) noexcept {
+			return bool(lhs) ? lhs.view() != rhs : false;
+		}
+		friend CTRE_FORCE_INLINE constexpr bool operator==(std::basic_string_view<char_type> lhs, const storage & rhs) noexcept {
+			return bool(rhs) ? lhs == rhs.view() : false;
+		}
+		friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const storage & rhs) noexcept {
+			return bool(rhs) ? lhs != rhs.view() : false;
 		}
 	};
 };
@@ -116,8 +129,11 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template exists<Name>();
 		}
 	}
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	template <ctll::fixed_string Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+#else
+	template <const auto & Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+#endif
 		if constexpr (std::is_same_v<typename Head::name, void>) {
 			return captures<Tail...>::template exists<Name>();
 		} else {
@@ -128,7 +144,6 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			}
 		}
 	}
-#endif
 	template <size_t id> CTRE_FORCE_INLINE constexpr auto & select() noexcept {
 		if constexpr (id == Head::get_id()) {
 			return head;
@@ -157,8 +172,11 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template select<Name>();
 		}
 	}
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	template <ctll::fixed_string Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
+#else
+	template <const auto & Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
+#endif
 		if constexpr (std::is_same_v<typename Head::name, void>) {
 			return captures<Tail...>::template select<Name>();
 		} else {
@@ -169,7 +187,6 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			}
 		}
 	}
-#endif
 };
 
 template <> struct captures<> {
@@ -180,22 +197,26 @@ template <> struct captures<> {
 	template <typename> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		return false;
 	}
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	template <ctll::fixed_string> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+#else
+	template <const auto &> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
+#endif
 		return false;
 	}
-#endif
 	template <size_t> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
 	template <typename> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	template <ctll::fixed_string> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
+#else
+	template <const auto &> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
+#endif
 		return capture_not_exists;
 	}
-#endif
 };
 
 template <typename Iterator, typename... Captures> class regex_results {
@@ -215,12 +236,14 @@ public:
 	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 		return _captures.template select<Name>();
 	}
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+#else
+	template <const auto & Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+#endif
 		return _captures.template select<Name>();
 	}
-#endif
-	static constexpr size_t size() noexcept {
+	static constexpr size_t count() noexcept {
 		return sizeof...(Captures) + 1;
 	}
 	constexpr CTRE_FORCE_INLINE regex_results & matched() noexcept {
@@ -259,6 +282,14 @@ public:
 		return _captures.template select<0>().to_string();
 	}
 	
+	constexpr CTRE_FORCE_INLINE size_t size() const noexcept {
+		return _captures.template select<0>().size();
+	}
+	
+	constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
+		return _captures.template select<0>().data();
+	}
+	
 	constexpr CTRE_FORCE_INLINE regex_results & set_start_mark(Iterator pos) noexcept {
 		_captures.template select<0>().set_start(pos);
 		return *this;
@@ -278,6 +309,18 @@ public:
 		_captures.template select<Id>().set_end(pos).matched();
 		return *this;
 	}
+	friend CTRE_FORCE_INLINE constexpr bool operator==(const regex_results & lhs, std::basic_string_view<char_type> rhs) noexcept {
+		return bool(lhs) ? lhs.view() == rhs : false;
+	}
+	friend CTRE_FORCE_INLINE constexpr bool operator!=(const regex_results & lhs, std::basic_string_view<char_type> rhs) noexcept {
+		return bool(lhs) ? lhs.view() != rhs : true;
+	}
+	friend CTRE_FORCE_INLINE constexpr bool operator==(std::basic_string_view<char_type> lhs, const regex_results & rhs) noexcept {
+		return bool(rhs) ? lhs == rhs.view() : false;
+	}
+	friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const regex_results & rhs) noexcept {
+		return bool(rhs) ? lhs != rhs.view() : true;
+	}
 };
 
 template <typename Iterator, typename... Captures> regex_results(Iterator, ctll::list<Captures...>) -> regex_results<Iterator, Captures...>;
@@ -293,7 +336,7 @@ template <typename Iterator, typename... Captures> regex_results(Iterator, ctll:
 #endif
 
 namespace std {
-	template <typename... Captures> struct tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::size()> { };
+	template <typename... Captures> struct tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::count()> { };
 	
 	template <size_t N, typename... Captures> struct tuple_element<N, ctre::regex_results<Captures...>> {
 	public:
