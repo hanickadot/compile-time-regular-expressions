@@ -71,10 +71,10 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
 			constexpr auto value = input[Pos];
-			if constexpr (value <= std::numeric_limits<char>::max()) {
+			if constexpr (value <= static_cast<decltype(value)>(std::numeric_limits<char>::max())) {
 				return term<static_cast<char>(value)>{};
 			} else {
-				return term<input[Pos]>{};
+				return term<value>{};
 			}
 			
 		} else {
@@ -88,7 +88,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 			return epsilon{};
 		} else if constexpr ((Pos-1) < input.size()) {
 			constexpr auto value = input[Pos-1];
-			if constexpr (value <= std::numeric_limits<char>::max()) {
+			if constexpr (value <= static_cast<decltype(value)>(std::numeric_limits<char>::max())) {
 				return term<static_cast<char>(value)>{};
 			} else {
 				return term<value>{};
