@@ -3313,7 +3313,7 @@ template <typename Iterator, typename EndIterator, typename Pattern>
 constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	
-	[[maybe_unused]] constexpr bool fixed = starts_with_anchor(ctll::list<Pattern>{});
+	constexpr bool fixed = starts_with_anchor(ctll::list<Pattern>{});
 	
 	auto it = begin;
 	for (; end != it && !fixed; ++it) {
