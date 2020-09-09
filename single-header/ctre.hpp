@@ -1793,10 +1793,11 @@ template <auto V, size_t N, typename... Ts, typename Parameters> static constexp
 }
 // hexdec character support (convert to character)
 template <auto V, size_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::finish_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
-	if constexpr (N <= std::numeric_limits<unsigned char>::max()) {
+	constexpr size_t max_char = std::numeric_limits<char>::max();
+	if constexpr (N <= max_char) {
 		return pcre_context{ctll::push_front(character<(char)N>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
-		return pcre_context{ctll::push_front(character<N>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(character<(char32_t)N>(), ctll::list<Ts...>()), subject.parameters};
 	} 
 }	
 
@@ -3137,6 +3138,24 @@ template <typename... A, typename... B> constexpr bool collides(ctll::list<A...>
 
 namespace ctre {
 
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) {
+	if constexpr (Limit == 0) {
+		// infinite
+		return true;
+	} else {
+		return i < Limit;
+	}
+}
+
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
+	if constexpr (Limit == 0) {
+		// infinite
+		return false;
+	} else {
+		return i < Limit;
+	}
+}
+
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
@@ -3312,7 +3331,7 @@ template <typename R, typename Iterator, typename EndIterator, size_t A, size_t 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
 	// A..B
 	size_t i{0};
-	for (; i < A && (A != 0); ++i) {
+	for (; less_than<A>(i); ++i) {
 		if (auto outer_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			captures = outer_result.unmatch();
 			current = outer_result.get_end_position();
@@ -3324,7 +3343,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	if (auto outer_result = evaluate(begin, current, end, captures, ctll::list<Tail...>())) {
 		return outer_result;
 	} else {
-		for (; (i < B) || (B == 0); ++i) {
+		for (; less_than_or_infinite<B>(i); ++i) {
 			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 				if (auto outer_result = evaluate(begin, inner_result.get_end_position(), end, inner_result.unmatch(), ctll::list<Tail...>())) {
 					return outer_result;
@@ -3345,13 +3364,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
 
-	for (size_t i{0}; (i < B) || (B == 0); ++i) {
+	for (size_t i{0}; less_than_or_infinite<B>(i); ++i) {
 		// try as many of inner as possible and then try outer once
 		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
-			if (i < A && (A != 0)) return not_matched;
+			if (less_than<A>(i)) return not_matched;
 			else return evaluate(begin, current, end, captures, ctll::list<Tail...>());
 		}
 	}
@@ -3366,7 +3385,7 @@ constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator be
 #else
 constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 #endif
-	if ((B == 0) || (i < B)) {
+	if (less_than_or_infinite<B>(i)) {
 		 
 		// a*ab
 		// aab
@@ -3414,7 +3433,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 #endif
 		// A..B
 		size_t i{0};
-		for (; i < A && (A != 0); ++i) {
+		for (; less_than<A>(i); ++i) {
 			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 				captures = inner_result.unmatch();
 				current = inner_result.get_end_position();
