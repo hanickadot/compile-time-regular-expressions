@@ -3230,6 +3230,12 @@ constexpr inline auto match_re(const Iterator begin, const EndIterator end, Patt
 }
 
 template <typename Iterator, typename EndIterator, typename Pattern> 
+constexpr inline auto starts_with_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
+	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+}
+
+template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	
@@ -3687,6 +3693,9 @@ template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto starts_with_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return starts_with(begin, end, RE());
+	}
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
@@ -3719,6 +3728,7 @@ template <typename RE> struct regular_expression {
 	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto match(Range && range) noexcept {
 		return match(std::begin(range), std::end(range));
 	}
+	
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto search(Iterator begin, Iterator end) noexcept {
 		return search_re(begin, end, RE());
 	}
@@ -3748,6 +3758,37 @@ template <typename RE> struct regular_expression {
 	}
 	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
 		return search(std::begin(range), std::end(range));
+	}
+	
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto starts_with(Iterator begin, Iterator end) noexcept {
+		return starts_with_re(begin, end, RE());
+	}
+	constexpr CTRE_FORCE_INLINE static auto starts_with(const char * s) noexcept {
+		return starts_with_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(const wchar_t * s) noexcept {
+		return starts_with_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(const std::string & s) noexcept {
+		return starts_with_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(const std::wstring & s) noexcept {
+		return starts_with_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::string_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::wstring_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::u16string_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::u32string_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	template <typename Range> static constexpr CTRE_FORCE_INLINE auto starts_with(Range && range) noexcept {
+		return starts_with(std::begin(range), std::end(range));
 	}
 };
 
@@ -3930,6 +3971,16 @@ template <typename RE> struct regex_search_t {
 	}
 };
 
+template <typename RE> struct regex_starts_with_t {
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
+		auto re_obj = ctre::regular_expression<RE>();
+		return re_obj.starts_with(std::forward<Args>(args)...);
+	}
+	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args && ... args) const noexcept {
+		return operator()(std::forward<Args>(args)...);
+	}
+};
+
 #if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 
 template <auto input> struct regex_builder {
@@ -3943,6 +3994,8 @@ template <ctll::fixed_string input> static constexpr inline auto match = regex_m
 
 template <ctll::fixed_string input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
 
+template <ctll::fixed_string input> static constexpr inline auto starts_with = regex_starts_with_t<typename regex_builder<input>::type>();
+
 #else
 
 template <auto & input> struct regex_builder {
@@ -3954,6 +4007,8 @@ template <auto & input> struct regex_builder {
 template <auto & input> static constexpr inline auto match = regex_match_t<typename regex_builder<input>::type>();
 
 template <auto & input> static constexpr inline auto search = regex_search_t<typename regex_builder<input>::type>();
+
+template <auto & input> static constexpr inline auto starts_with = regex_starts_with_t<typename regex_builder<input>::type>();
 
 #endif
 

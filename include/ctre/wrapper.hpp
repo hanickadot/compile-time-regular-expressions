@@ -38,6 +38,9 @@ template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto starts_with_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return starts_with(begin, end, RE());
+	}
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
@@ -70,6 +73,7 @@ template <typename RE> struct regular_expression {
 	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto match(Range && range) noexcept {
 		return match(std::begin(range), std::end(range));
 	}
+	
 	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto search(Iterator begin, Iterator end) noexcept {
 		return search_re(begin, end, RE());
 	}
@@ -99,6 +103,37 @@ template <typename RE> struct regular_expression {
 	}
 	template <typename Range> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
 		return search(std::begin(range), std::end(range));
+	}
+	
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto starts_with(Iterator begin, Iterator end) noexcept {
+		return starts_with_re(begin, end, RE());
+	}
+	constexpr CTRE_FORCE_INLINE static auto starts_with(const char * s) noexcept {
+		return starts_with_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(const wchar_t * s) noexcept {
+		return starts_with_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(const std::string & s) noexcept {
+		return starts_with_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(const std::wstring & s) noexcept {
+		return starts_with_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::string_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::wstring_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::u16string_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::u32string_view sv) noexcept {
+		return starts_with(sv.begin(), sv.end());
+	}
+	template <typename Range> static constexpr CTRE_FORCE_INLINE auto starts_with(Range && range) noexcept {
+		return starts_with(std::begin(range), std::end(range));
 	}
 };
 
