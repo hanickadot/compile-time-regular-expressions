@@ -5,7 +5,7 @@ default: all
 TARGETS := $(wildcard tests/benchmark-exec/*.cpp)
 IGNORE := $(wildcard tests/benchmark/*.cpp) $(wildcard tests/benchmark-exec/*.cpp)
 
-DESATOMAT := /www/root/desatomat/console/desatomat.php
+DESATOMAT := /bin/false
 
 CPP_STANDARD := $(shell ./cpp-20-check.sh $(CXX))
 

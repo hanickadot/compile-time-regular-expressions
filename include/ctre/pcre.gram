@@ -132,6 +132,8 @@ backslash_set->d,[class_digit]|D,[class_nondigit]
 backslash_set->w,[class_word]|W,[class_nonword]
 backslash_set->N,[class_nonnewline]
 backslash_set->s,[class_space]|S,[class_nonspace]
+backslash_set->v,[class_vertical_space]|V,[class_non_vertical_space]
+backslash_set->h,[class_horizontal_space]|H,[class_non_horizontal_space]
 backslash_set->p,copen,<property_name>,cclose,[make_property]
 backslash_set->P,copen,<property_name>,cclose,[make_property_negative]
 

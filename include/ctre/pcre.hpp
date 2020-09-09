@@ -53,6 +53,7 @@ struct pcre {
 
 // 'action' types:
 	struct class_digit: ctll::action {};
+	struct class_horizontal_space: ctll::action {};
 	struct class_named_alnum: ctll::action {};
 	struct class_named_alpha: ctll::action {};
 	struct class_named_ascii: ctll::action {};
@@ -67,11 +68,14 @@ struct pcre {
 	struct class_named_upper: ctll::action {};
 	struct class_named_word: ctll::action {};
 	struct class_named_xdigit: ctll::action {};
+	struct class_non_horizontal_space: ctll::action {};
+	struct class_non_vertical_space: ctll::action {};
 	struct class_nondigit: ctll::action {};
 	struct class_nonnewline: ctll::action {};
 	struct class_nonspace: ctll::action {};
 	struct class_nonword: ctll::action {};
 	struct class_space: ctll::action {};
+	struct class_vertical_space: ctll::action {};
 	struct class_word: ctll::action {};
 	struct create_hexdec: ctll::action {};
 	struct create_number: ctll::action {};
@@ -150,11 +154,15 @@ struct pcre {
 	static constexpr auto rule(b, ctll::term<'\x7D'>) -> ctll::push<repeat_exactly, ctll::anything>;
 
 	static constexpr auto rule(backslash, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
+	static constexpr auto rule(backslash, ctll::term<'h'>) -> ctll::push<ctll::anything, class_horizontal_space>;
+	static constexpr auto rule(backslash, ctll::term<'H'>) -> ctll::push<ctll::anything, class_non_horizontal_space>;
+	static constexpr auto rule(backslash, ctll::term<'V'>) -> ctll::push<ctll::anything, class_non_vertical_space>;
 	static constexpr auto rule(backslash, ctll::term<'D'>) -> ctll::push<ctll::anything, class_nondigit>;
 	static constexpr auto rule(backslash, ctll::term<'N'>) -> ctll::push<ctll::anything, class_nonnewline>;
 	static constexpr auto rule(backslash, ctll::term<'S'>) -> ctll::push<ctll::anything, class_nonspace>;
 	static constexpr auto rule(backslash, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
 	static constexpr auto rule(backslash, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
+	static constexpr auto rule(backslash, ctll::term<'v'>) -> ctll::push<ctll::anything, class_vertical_space>;
 	static constexpr auto rule(backslash, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
 	static constexpr auto rule(backslash, ctll::set<'1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, make_back_reference>;
 	static constexpr auto rule(backslash, ctll::term<'g'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, m>;
@@ -239,11 +247,15 @@ struct pcre {
 	static constexpr auto rule(d, ctll::term<'='>) -> ctll::push<reset_capture, ctll::anything, start_lookahead_positive, content_in_capture, look_finish, ctll::term<'\x29'>>;
 
 	static constexpr auto rule(e, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
+	static constexpr auto rule(e, ctll::term<'h'>) -> ctll::push<ctll::anything, class_horizontal_space>;
+	static constexpr auto rule(e, ctll::term<'H'>) -> ctll::push<ctll::anything, class_non_horizontal_space>;
+	static constexpr auto rule(e, ctll::term<'V'>) -> ctll::push<ctll::anything, class_non_vertical_space>;
 	static constexpr auto rule(e, ctll::term<'D'>) -> ctll::push<ctll::anything, class_nondigit>;
 	static constexpr auto rule(e, ctll::term<'N'>) -> ctll::push<ctll::anything, class_nonnewline>;
 	static constexpr auto rule(e, ctll::term<'S'>) -> ctll::push<ctll::anything, class_nonspace>;
 	static constexpr auto rule(e, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
 	static constexpr auto rule(e, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
+	static constexpr auto rule(e, ctll::term<'v'>) -> ctll::push<ctll::anything, class_vertical_space>;
 	static constexpr auto rule(e, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
 	static constexpr auto rule(e, ctll::set<'1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, make_back_reference>;
 	static constexpr auto rule(e, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
@@ -261,11 +273,15 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'t'>) -> ctll::push<ctll::anything, push_character_tab, range>;
 
 	static constexpr auto rule(f, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
+	static constexpr auto rule(f, ctll::term<'h'>) -> ctll::push<ctll::anything, class_horizontal_space>;
+	static constexpr auto rule(f, ctll::term<'H'>) -> ctll::push<ctll::anything, class_non_horizontal_space>;
+	static constexpr auto rule(f, ctll::term<'V'>) -> ctll::push<ctll::anything, class_non_vertical_space>;
 	static constexpr auto rule(f, ctll::term<'D'>) -> ctll::push<ctll::anything, class_nondigit>;
 	static constexpr auto rule(f, ctll::term<'N'>) -> ctll::push<ctll::anything, class_nonnewline>;
 	static constexpr auto rule(f, ctll::term<'S'>) -> ctll::push<ctll::anything, class_nonspace>;
 	static constexpr auto rule(f, ctll::term<'W'>) -> ctll::push<ctll::anything, class_nonword>;
 	static constexpr auto rule(f, ctll::term<'s'>) -> ctll::push<ctll::anything, class_space>;
+	static constexpr auto rule(f, ctll::term<'v'>) -> ctll::push<ctll::anything, class_vertical_space>;
 	static constexpr auto rule(f, ctll::term<'w'>) -> ctll::push<ctll::anything, class_word>;
 	static constexpr auto rule(f, ctll::set<'1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, make_back_reference>;
 	static constexpr auto rule(f, ctll::term<'p'>) -> ctll::push<ctll::anything, ctll::term<'\x7B'>, property_name, ctll::term<'\x7D'>, make_property>;
