@@ -71,7 +71,7 @@ mtent12.txt: mtent12.zip
 single-header: single-header/ctre.hpp
 
 single-header/ctre.hpp:
-	python3.7 -m quom include/ctre.hpp ctre.hpp.tmp
+	python3 -m quom include/ctre.hpp ctre.hpp.tmp
 	echo "/*\n" > single-header/ctre.hpp
 	cat LICENSE >> single-header/ctre.hpp
 	echo "\n*/\n" >> single-header/ctre.hpp 
