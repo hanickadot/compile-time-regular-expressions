@@ -1,7 +1,9 @@
 #ifndef CTRE_V2__CTRE__RANGE__HPP
 #define CTRE_V2__CTRE__RANGE__HPP
 
-#include "iterators.hpp"
+#ifndef CTRE_V2__CTRE__ITERATOR__HPP
+#include "ctre/iterators.hpp"
+#endif
 
 namespace ctre {
 
