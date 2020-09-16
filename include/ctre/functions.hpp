@@ -2,10 +2,22 @@
 #define CTRE_V2__CTRE__FUNCTIONS__HPP
 
 #include "../ctll.hpp"
+
+#ifndef CTRE__PCRE_ACTIONS__HPP
 #include "pcre_actions.hpp"
+#endif
+
+#ifndef CTRE__EVALUATION__HPP
 #include "evaluation.hpp"
+#endif
+
+#ifndef CTRE__WRAPPER__HPP
 #include "wrapper.hpp"
+#endif
+
+#ifndef CTRE__ID__HPP
 #include "id.hpp"
+#endif
 
 namespace ctre {
 
