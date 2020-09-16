@@ -1,7 +1,10 @@
 #ifndef CTRE__RETURN_TYPE__HPP
 #define CTRE__RETURN_TYPE__HPP
 
+#ifndef CTRE__ID__HPP
 #include "id.hpp"
+#endif
+
 #include <type_traits>
 #include <tuple>
 #include <string_view>
