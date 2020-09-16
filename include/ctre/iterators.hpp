@@ -1,8 +1,13 @@
 #ifndef CTRE_V2__CTRE__ITERATOR__HPP
 #define CTRE_V2__CTRE__ITERATOR__HPP
 
+#ifndef CTRE_V2__CTRE__LITERALS__HPP
 #include "literals.hpp"
+#endif
+
+#ifndef CTRE_V2__CTRE__FUNCTIONS__HPP
 #include "functions.hpp"
+#endif
 
 namespace ctre {
 

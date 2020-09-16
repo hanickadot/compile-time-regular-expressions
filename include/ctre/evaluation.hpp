@@ -1,14 +1,38 @@
 #ifndef CTRE__EVALUATION__HPP
 #define CTRE__EVALUATION__HPP
 
+
+#ifndef CTRE__ATOMS__HPP
 #include "atoms.hpp"
+#endif
+
+#ifndef CTRE__ATOMS_CHARACTERS__HPP
 #include "atoms_characters.hpp"
+#endif
+
+#ifndef CTRE__ATOMS_UNICODE__HPP
 #include "atoms_unicode.hpp"
+#endif
+
+#ifndef CTRE__STARTS_WITH_ANCHOR__HPP
 #include "starts_with_anchor.hpp"
+#endif
+
+#ifndef CTRE__UTILITY__HPP
 #include "utility.hpp"
+#endif
+
+#ifndef CTRE__RETURN_TYPE__HPP
 #include "return_type.hpp"
+#endif
+
+#ifndef CTRE__FIND_CAPTURES__HPP
 #include "find_captures.hpp"
+#endif
+
+#ifndef CTRE__FIRST__HPP
 #include "first.hpp"
+#endif
 
 // remove me when MSVC fix the constexpr bug
 #ifdef _MSC_VER

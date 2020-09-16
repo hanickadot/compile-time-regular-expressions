@@ -1,10 +1,21 @@
 #ifndef CTLL__PARSER__HPP
 #define CTLL__PARSER__HPP
 
+#ifndef CTLL__FIXED_STRING__GPP
 #include "fixed_string.hpp"
+#endif
+
+#ifndef CTLL__TYPE_STACK__HPP
 #include "list.hpp"
+#endif
+
+#ifndef CTLL__GRAMMARS__HPP
 #include "grammars.hpp"
+#endif
+
+#ifndef CTLL__ACTIONS__HPP
 #include "actions.hpp"
+#endif
 
 #include <limits>
 

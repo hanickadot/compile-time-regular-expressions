@@ -1,8 +1,14 @@
 #ifndef CTRE__WRAPPER__HPP
 #define CTRE__WRAPPER__HPP
 
+#ifndef CTRE__EVALUATION__HPP
 #include "evaluation.hpp"
+#endif
+
+#ifndef CTRE__UTILITY__HPP
 #include "utility.hpp"
+#endif
+
 #include <string_view>
 #include <string>
 

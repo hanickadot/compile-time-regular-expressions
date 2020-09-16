@@ -1,9 +1,18 @@
 #ifndef CTRE__FIRST__HPP
 #define CTRE__FIRST__HPP
 
+#ifndef CTRE__ATOMS__HPP
 #include "atoms.hpp"
+#endif
+
+#ifndef CTRE__ATOMS_CHARACTERS__HPP
 #include "atoms_characters.hpp"
+#endif
+
+#ifndef CTRE__ATOMS_UNICODE__HPP
 #include "atoms_unicode.hpp"
+#endif
+
 
 namespace ctre {
 	

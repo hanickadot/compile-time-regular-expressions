@@ -1,11 +1,26 @@
 #ifndef CTRE__PCRE_ACTIONS__HPP
 #define CTRE__PCRE_ACTIONS__HPP
 
+#ifndef CTRE__PCRE__HPP
 #include "pcre.hpp"
+#endif
+
+#ifndef CTRE__ATOMS__HPP
 #include "atoms.hpp"
+#endif
+
+#ifndef CTRE__ATOMS_CHARACTERS__HPP
 #include "atoms_characters.hpp"
+#endif
+
+#ifndef CTRE__ATOMS_UNICODE__HPP
 #include "atoms_unicode.hpp"
+#endif
+
+#ifndef CTRE__ID__HPP
 #include "id.hpp"
+#endif
+
 #include <cstdint>
 #include <limits>
 
