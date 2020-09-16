@@ -1,7 +1,10 @@
 #ifndef CTRE__ATOMS_CHARACTERS__HPP
 #define CTRE__ATOMS_CHARACTERS__HPP
 
+#ifndef CTRE__UTILITY__HPP
 #include "utility.hpp"
+#endif
+
 #include <cstdint>
 
 namespace ctre {
