@@ -1,7 +1,9 @@
 #ifndef CTRE_V2__CTRE__FUNCTIONS__HPP
 #define CTRE_V2__CTRE__FUNCTIONS__HPP
 
+#ifndef CTRE_V2__CTLL__HPP
 #include "../ctll.hpp"
+#endif
 
 #ifndef CTRE__PCRE_ACTIONS__HPP
 #include "pcre_actions.hpp"
