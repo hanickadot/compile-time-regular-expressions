@@ -1,10 +1,21 @@
 #ifndef CTRE__FIND_CAPTURES__HPP
 #define CTRE__FIND_CAPTURES__HPP
 
+#ifndef CTRE__ATOMS_CHARACTERS__HPP
 #include "atoms_characters.hpp"
+#endif
+
+#ifndef CTRE__ATOMS_UNICODE__HPP
 #include "atoms_unicode.hpp"
+#endif
+
+#ifndef CTRE__UTILITY__HPP
 #include "utility.hpp"
+#endif
+
+#ifndef CTRE__RETURN_TYPE__HPP
 #include "return_type.hpp"
+#endif
 
 namespace ctre {
 
