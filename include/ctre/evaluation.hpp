@@ -2,15 +2,13 @@
 #define CTRE__EVALUATION__HPP
 
 
-#endif
-
 #ifndef CTRE__ATOMS__HPP
 #include "atoms.hpp"
-
 #endif
 
 #ifndef CTRE__ATOMS_CHARACTERS__HPP
 #include "atoms_characters.hpp"
+#endif
 
 #ifndef CTRE__ATOMS_UNICODE__HPP
 #include "atoms_unicode.hpp"
