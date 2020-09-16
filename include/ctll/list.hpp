@@ -1,7 +1,9 @@
 #ifndef CTLL__TYPE_STACK__HPP
 #define CTLL__TYPE_STACK__HPP
 
+#ifndef CTLL__UTILITIES__HPP
 #include "utilities.hpp"
+#endif
 
 namespace ctll {
 
