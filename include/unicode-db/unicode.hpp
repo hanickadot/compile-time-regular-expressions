@@ -292,10 +292,6 @@ constexpr numeric_value cp_numeric_value(char32_t cp);
 
 }    // namespace uni
 
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "base.h"
-#endif
 namespace uni {
 struct __string_with_idx {
     const char* name;
@@ -7294,11 +7290,6 @@ static constexpr __bool_trie<32, 991, 1, 0, 149, 255, 1, 0, 1535, 1, 0, 164> __p
      0x0000000010200000, 0x0008000000000000, 0x0000000010000000, 0x0000000100000000,
      0x0000000080000000, 0x0000000000000200, 0xffffffff00000002, 0x0000ffffffffffff}};
 }    // namespace uni
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "props.h"
-#endif
-#include <string_view>
 
 namespace uni {
 
@@ -7584,10 +7575,6 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
 
 }    // namespace uni
 
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "unicode.h"
-#endif
 namespace uni {
 enum class __binary_prop {
     ahex,
@@ -9519,10 +9506,6 @@ static constexpr __string_with_idx __binary_prop_names[] = {
     __string_with_idx{"zyyy", 242},
     __string_with_idx{"zzzz", 243}};
 }    // namespace uni
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "extra.h"
-#endif
 
 // More regex support for ctre
 

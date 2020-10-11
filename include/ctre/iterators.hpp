@@ -62,7 +62,7 @@ template <typename Subject, typename RE> constexpr auto iterator(const Subject &
 
 
 
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 template <ctll::fixed_string input, typename BeginIterator, typename EndIterator> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(BeginIterator begin, EndIterator end) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -73,7 +73,7 @@ template <ctll::fixed_string input, typename BeginIterator, typename EndIterator
 #endif
 
 
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 template <ctll::fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(const Subject & subject) noexcept {
 	constexpr auto _input = input;
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;

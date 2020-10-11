@@ -134,15 +134,14 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<repeat<0, B, Seq...>, 
 
 // lookahead_positive
 template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
-	auto out = first(l, ctll::list<Seq..., Tail...>{});
-	return first(out, ctll::list<Tail...>{});
+constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
 }
 
 // lookahead_negative TODO fixme
 template <typename... Content, typename... Seq, typename... Tail> 
 constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_negative<Seq...>, Tail...>) noexcept {
-	return can_be_anything{};
+	return ctll::list<can_be_anything>{};
 }
 
 // capture
@@ -274,6 +273,10 @@ constexpr size_t calculate_size_of_first(...) {
 
 
 template <typename... Content> constexpr size_t calculate_size_of_first(ctll::list<Content...>) {
+	return (calculate_size_of_first(Content{}) + ... + 0);
+}
+
+template <typename... Content> constexpr size_t calculate_size_of_first(ctre::set<Content...>) {
 	return (calculate_size_of_first(Content{}) + ... + 0);
 }
 
@@ -447,6 +450,9 @@ public:
 	template <typename... Content> constexpr bool check(ctll::list<Content...>) {
 		return (check(Content{}) || ... || false);
 	}
+	template <typename... Content> constexpr bool check(ctre::set<Content...>) {
+		return (check(Content{}) || ... || false);
+	}
 	
 	
 	template <auto V> constexpr void populate(ctre::character<V>) {
@@ -463,8 +469,8 @@ public:
 			this->insert(low, high);
 		});
 	}
-	template <auto... V> constexpr void populate(ctre::enumeration<V...>) {
-		return (insert(V,V), ...);
+	template <typename... Content> constexpr void populate(ctre::set<Content...>) {
+		(populate(Content{}), ...);
 	}
 	template <typename... Content> constexpr void populate(ctll::list<Content...>) {
 		(populate(Content{}), ...);

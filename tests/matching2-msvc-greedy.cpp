@@ -1,3 +1,5 @@
+#define CTRE_MSVC_GREEDY_WORKAROUND
+
 #include <ctre.hpp>
 #include <string_view>
 
@@ -206,17 +208,6 @@ static_assert(CTRE_CREATE(R"(\[([A-Z]*?)\])").match("[URL]"sv));
 
 static_assert(CTRE_CREATE(R"(\[([\s\S]*?)\]\(([\s\S]*?)\))").match("[URL](https://cpp.fail/ctre)"));
 
-static_assert(CTRE_CREATE("\\s").match(" "));
-static_assert(CTRE_CREATE("[[:space:]]").match(" "));
-static_assert(CTRE_CREATE("\\h").match(" "));
-static_assert(CTRE_CREATE("\\h").match(L"\x2009"));
-static_assert(CTRE_CREATE("\\v").match("\n"));
-
-static_assert(CTRE_CREATE("\\S").match("A"));
-static_assert(CTRE_CREATE("\\H").match("A"));
-static_assert(CTRE_CREATE("\\V").match("A"));
-
-
 static_assert(CTRE_CREATE("abc").match("abc"));
 static_assert(CTRE_CREATE("[_]").match("_"));
 static_assert(CTRE_CREATE("[()]").match("("));
@@ -231,6 +222,7 @@ static_assert(CTRE_CREATE("[(-)]").match(")"));
 static_assert(CTRE_CREATE("[A-Z_a-z]").match("a"));
 static_assert(CTRE_CREATE("[A-Z_a-z]").match("_"));
 static_assert(CTRE_CREATE("[A-Z_a-z]").match("Z"));
+// FIXME: maybe in future I will allow this again
 // static_assert(CTRE_CREATE("[-]").match("-"));
 // static_assert(CTRE_CREATE("[-x]").match("x"));
 // FIXME: due current limitation of LL1 grammar parser I can make this work "[x-]" without significant change in grammar
@@ -283,5 +275,7 @@ static_assert(CTRE_CREATE("(<[a-z]+>)\\g{1}").match("<aloha><aloha>"sv));
 static_assert(CTRE_CREATE("[^\\^]").match("a"sv));
 static_assert(CTRE_CREATE("[^^]").match("a"sv));
 static_assert(CTRE_CREATE("[\\-]").match("-"sv));
-//static_assert(CTRE_CREATE("[-]").match("-"sv));
 static_assert(CTRE_CREATE("[\\--\\-]").match("-"sv));
+
+// msvc
+static_assert(CTRE_CREATE("[a-z]+abc").match("xxxabc"));

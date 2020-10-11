@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+void empty_symbol() { }
+
 using namespace std::string_view_literals;
 
 static inline constexpr auto pattern1 = ctll::fixed_string{"^[\\x30-\\x39]+?$"};
@@ -11,7 +13,7 @@ static_assert(ctre::re<pattern1>().match("123456789"sv));
 static_assert(ctre::re<pattern2>().match(""sv));
 
 template <auto & ptn> constexpr bool re() {
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	constexpr auto _ptn = ptn;
 #else
 	constexpr auto & _ptn = ptn;
@@ -24,7 +26,7 @@ static_assert(re<pattern2>());
 static inline constexpr ctll::fixed_string pat = "hello";
 
 template <auto & ptn> constexpr bool re2() {
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	constexpr auto _ptn = ptn;
 #else
 	constexpr auto & _ptn = ptn;

@@ -1,6 +1,8 @@
 #include <ctll/fixed_string.hpp>
 
-static constexpr auto Pattern = ctll::basic_fixed_string{ LR"(^\s*(\d+)\s+:(\S):$(\S+?)$(\S+?)$(\S+))" };
+void empty_symbol() { }
+
+static constexpr auto Pattern = ctll::fixed_string{ LR"(^\s*(\d+)\s+:(\S):$(\S+?)$(\S+?)$(\S+))" };
 
 static_assert(Pattern.size() == 38);
 

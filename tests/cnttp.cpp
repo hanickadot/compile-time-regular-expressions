@@ -5,7 +5,7 @@
 struct name { bool has; std::string_view first, family; };
 
 name extract(std::string_view sv) noexcept {
-	#if __cpp_nontype_template_parameter_class
+	#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 	if (auto [re,f,l] = ctre::match<"([A-Za-z]+?),([A-Za-z]+?)">(sv); re) {
 	#else
 	using namespace ctre::literals;

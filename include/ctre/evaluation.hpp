@@ -4,12 +4,38 @@
 #include "atoms.hpp"
 #include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
+#include "starts_with_anchor.hpp"
 #include "utility.hpp"
 #include "return_type.hpp"
 #include "find_captures.hpp"
 #include "first.hpp"
 
+// remove me when MSVC fix the constexpr bug
+#ifdef _MSC_VER
+#ifndef CTRE_MSVC_GREEDY_WORKAROUND
+#define CTRE_MSVC_GREEDY_WORKAROUND
+#endif
+#endif
+
 namespace ctre {
+
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) {
+	if constexpr (Limit == 0) {
+		// infinite
+		return true;
+	} else {
+		return i < Limit;
+	}
+}
+
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
+	if constexpr (Limit == 0) {
+		// infinite
+		return false;
+	} else {
+		return i < Limit;
+	}
+}
 
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename EndIterator, typename Pattern> 
@@ -19,17 +45,25 @@ constexpr inline auto match_re(const Iterator begin, const EndIterator end, Patt
 }
 
 template <typename Iterator, typename EndIterator, typename Pattern> 
+constexpr inline auto starts_with_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
+	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
+	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+}
+
+template <typename Iterator, typename EndIterator, typename Pattern> 
 constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
 	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
 	
+	constexpr bool fixed = starts_with_anchor(ctll::list<Pattern>{});
+	
 	auto it = begin;
-	for (; end != it; ++it) {
+	for (; end != it && !fixed; ++it) {
 		if (auto out = evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {
 			return out;
 		}
 	}
 	
-	// in case the RE is empty
+	// in case the RE is empty or fixed
 	return evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
@@ -95,7 +129,7 @@ template <auto Head, auto... String, typename Iterator, typename EndIterator> co
 			return {++current, true};
 		}
 	} else {
-		return {++current, false}; // not needed but will optimize
+		return {current, false}; // not needed but will optimize
 	}
 }
 
@@ -188,7 +222,7 @@ template <typename R, typename Iterator, typename EndIterator, size_t A, size_t 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
 	// A..B
 	size_t i{0};
-	for (; i < A && (A != 0); ++i) {
+	for (; less_than<A>(i); ++i) {
 		if (auto outer_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			captures = outer_result.unmatch();
 			current = outer_result.get_end_position();
@@ -200,7 +234,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	if (auto outer_result = evaluate(begin, current, end, captures, ctll::list<Tail...>())) {
 		return outer_result;
 	} else {
-		for (; (i < B) || (B == 0); ++i) {
+		for (; less_than_or_infinite<B>(i); ++i) {
 			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 				if (auto outer_result = evaluate(begin, inner_result.get_end_position(), end, inner_result.unmatch(), ctll::list<Tail...>())) {
 					return outer_result;
@@ -221,13 +255,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
 
-	for (size_t i{0}; (i < B) || (B == 0); ++i) {
+	for (size_t i{0}; less_than_or_infinite<B>(i); ++i) {
 		// try as many of inner as possible and then try outer once
 		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
-			if (i < A && (A != 0)) return not_matched;
+			if (less_than<A>(i)) return not_matched;
 			else return evaluate(begin, current, end, captures, ctll::list<Tail...>());
 		}
 	}
@@ -237,8 +271,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+#else
 constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
-	if ((i < B) || (B == 0)) {
+#endif
+	if (less_than_or_infinite<B>(i)) {
 		 
 		// a*ab
 		// aab
@@ -248,12 +286,23 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
 			//  return inner_result
 			// I tried to add all constructors to R but without any success 
+			#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+			evaluate_recursive(result, i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack);
+			if (result) {
+				return;
+			}
+			#else
 			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack)) {
 				return rec_result;
 			}
+			#endif
 		}
 	} 
+	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+	result = evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#else
 	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+	#endif
 }	
 
 
@@ -276,7 +325,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 #endif
 		// A..B
 		size_t i{0};
-		for (; i < A && (A != 0); ++i) {
+		for (; less_than<A>(i); ++i) {
 			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 				captures = inner_result.unmatch();
 				current = inner_result.get_end_position();
@@ -284,8 +333,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 				return not_matched;
 			}
 		}
-	
+	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+		R result;
+		evaluate_recursive(result, i, begin, current, end, captures, stack);
+		return result;
+	#else
 		return evaluate_recursive(i, begin, current, end, captures, stack);
+	#endif
 #ifndef CTRE_DISABLE_GREEDY_OPT
 	} else {
 		// if there is no collision we can go possessive
@@ -353,7 +407,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // backreference support (match agains content of iterators)
 template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> match_against_range(Iterator current, const EndIterator end, Iterator range_current, const Iterator range_end) noexcept {
-	while (current != end && range_current != range_end) {
+	while (end != current && range_end != range_current) {
 		if (*current == *range_current) {
 			current++;
 			range_current++;

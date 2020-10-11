@@ -1,11 +1,13 @@
 #include <ctre.hpp>
 #include <string_view>
 
+void empty_symbol() { }
+
 template <typename T> struct identify;
 template <size_t N> struct number_id;
 
 
-#if !__cpp_nontype_template_parameter_class
+#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 #define CTRE_CREATE(pattern) (pattern ## _ctre)
 #define CTRE_SYNTAX(pattern) (pattern ## _ctre_syntax)
 #define CTRE_GEN(pattern) decltype(pattern ## _ctre_gen)
