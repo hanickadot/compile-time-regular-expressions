@@ -330,7 +330,7 @@ enum class version : uint8_t {
     minimum_version = v13_0,
     latest_version = v13_0
 };
-static constexpr std::array __age_strings = {
+static constexpr const char* __age_strings[] = {
     "unassigned", "1.1", "2.0", "2.1", "3.0", "3.1", "3.2", "4.0",  "4.1",  "5.0",  "5.1",  "5.2",
     "6.0",        "6.1", "6.2", "6.3", "7.0", "8.0", "9.0", "10.0", "11.0", "12.0", "12.1", "13.0"};
 static constexpr _compact_range __age_data = {
@@ -725,7 +725,7 @@ enum class category {
     space_separator = zs,
     __max
 };
-static constexpr const std::array __categories_names = {
+static constexpr __string_with_idx __categories_names[] = {
     __string_with_idx{"c", 0},
     __string_with_idx{"cased_letter", 7},
     __string_with_idx{"cc", 1},
@@ -2891,7 +2891,7 @@ enum class block {
     sup_pua_b = supplementary_private_use_area_b,
     __max
 };
-static constexpr const std::array __blocks_names = {
+static constexpr __string_with_idx __blocks_names[] = {
     __string_with_idx{"adlam", 278},
     __string_with_idx{"aegean_numbers", 166},
     __string_with_idx{"ahom", 228},
@@ -3685,7 +3685,7 @@ enum class script {
     unknown = zzzz,
     __max
 };
-static constexpr const std::array __scripts_names = {
+static constexpr __string_with_idx __scripts_names[] = {
     __string_with_idx{"adlam", 0},
     __string_with_idx{"adlm", 0},
     __string_with_idx{"aghb", 1},
@@ -4782,7 +4782,7 @@ static constexpr _compact_list __numeric_data8 = {
     0x01FBF707, 0x01FBF808, 0x01FBF909, 0x02000107, 0x02006404, 0x0200E204, 0x02012105, 0x02092A01,
     0x0209831E, 0x02098C28, 0x02099C28, 0x020AEA06, 0x020AFD03, 0x020B1903, 0x02239002, 0x02299803,
     0x023B1B03, 0x02626D04, 0x02F89009};
-static constexpr std::array __numeric_data16 = {
+static constexpr std::pair<char32_t, int16_t> __numeric_data16[] = {
     std::pair<char32_t, int16_t>{0x0BF2, 1000},   std::pair<char32_t, int16_t>{0x0D72, 1000},
     std::pair<char32_t, int16_t>{0x0F33, -1},     std::pair<char32_t, int16_t>{0x137C, 10000},
     std::pair<char32_t, int16_t>{0x216E, 500},    std::pair<char32_t, int16_t>{0x216F, 1000},
@@ -4856,7 +4856,7 @@ static constexpr std::array __numeric_data16 = {
     std::pair<char32_t, int16_t>{0x1ED39, 600},   std::pair<char32_t, int16_t>{0x1ED3A, 2000},
     std::pair<char32_t, int16_t>{0x1ED3B, 10000},
 };
-static constexpr std::array __numeric_data32 = {
+static constexpr std::pair<char32_t, int32_t> __numeric_data32[] = {
     std::pair<char32_t, int32_t>{0x2187, 50000},
     std::pair<char32_t, int32_t>{0x2188, 100000},
     std::pair<char32_t, int32_t>{0x4EBF, 100000000},
@@ -4907,12 +4907,12 @@ static constexpr std::array __numeric_data32 = {
     std::pair<char32_t, int32_t>{0x1ED2C, 80000},
     std::pair<char32_t, int32_t>{0x1ED2D, 90000},
 };
-static constexpr std::array __numeric_data64 = {
+static constexpr std::pair<char32_t, int64_t> __numeric_data64[] = {
     std::pair<char32_t, int64_t>{0x5146, 1000000000000},
     std::pair<char32_t, int64_t>{0x16B60, 10000000000},
     std::pair<char32_t, int64_t>{0x16B61, 1000000000000},
 };
-static constexpr std::array __numeric_data_d = {
+static constexpr std::pair<char32_t, int16_t> __numeric_data_d[] = {
     std::pair<char32_t, int16_t>{0x00BC, 4},    std::pair<char32_t, int16_t>{0x00BD, 2},
     std::pair<char32_t, int16_t>{0x00BE, 4},    std::pair<char32_t, int16_t>{0x09F4, 16},
     std::pair<char32_t, int16_t>{0x09F5, 8},    std::pair<char32_t, int16_t>{0x09F6, 16},
@@ -7319,7 +7319,7 @@ constexpr category cp_category(char32_t cp) {
 }
 
 constexpr uni::version __age_from_string(std::string_view a) {
-    for(std::size_t i = 0; i < __age_strings.size(); ++i) {
+    for(std::size_t i = 0; i < std::size(__age_strings); ++i) {
         const auto res = __pronamecomp(a, __age_strings[i]);
         if(res == 0)
             return uni::version(i);
@@ -7328,8 +7328,7 @@ constexpr uni::version __age_from_string(std::string_view a) {
 }
 
 constexpr category __category_from_string(const std::string_view s) {
-    for(std::size_t i = 0; i < __categories_names.size(); ++i) {
-        const auto& c = __categories_names[i];
+    for(const auto& c : __categories_names) {
         const auto res = __pronamecomp(s, c.name);
         if(res == 0)
             return category(c.value);
@@ -7338,8 +7337,7 @@ constexpr category __category_from_string(const std::string_view s) {
 }
 
 constexpr block __block_from_string(const std::string_view s) {
-    for(std::size_t i = 0; i < __blocks_names.size(); ++i) {
-        const auto& c = __blocks_names[i];
+    for(const auto& c : __blocks_names) {
         const auto res = __pronamecomp(s, c.name);
         if(res == 0)
             return block(c.value);
@@ -7348,8 +7346,7 @@ constexpr block __block_from_string(const std::string_view s) {
 }
 
 constexpr script __script_from_string(const std::string_view s) {
-    for(std::size_t i = 0; i < __scripts_names.size(); ++i) {
-        const auto& c = __scripts_names[i];
+    for(const auto& c : __scripts_names) {
         const auto res = __pronamecomp(s, c.name);
         if(res == 0)
             return script(c.value);
@@ -7561,9 +7558,9 @@ constexpr bool cp_is<property::id_continue>(char32_t cp) {
 
 template<typename Array, typename Res = long long>
 constexpr bool _get_numeric_value(char32_t cp, const Array& array, Res& res) {
-    auto it = uni::lower_bound(array.begin(), array.end(), cp,
+    auto it = uni::lower_bound(std::begin(array), std::end(array), cp,
                                [](const auto& d, char32_t cp) { return d.first < cp; });
-    if(it == array.end() || it->first != cp)
+    if(it == std::end(array) || it->first != cp)
         return false;
     res = it->second;
     return true;
@@ -9050,7 +9047,7 @@ template<>
 constexpr bool __get_binary_prop<__binary_prop::zzzz>(char32_t c) {
     return cp_script(c) == script::zzzz;
 }
-static constexpr const std::array __binary_prop_names = {
+static constexpr __string_with_idx __binary_prop_names[] = {
     __string_with_idx{"adlam", 86},
     __string_with_idx{"adlm", 86},
     __string_with_idx{"aghb", 87},
@@ -9533,8 +9530,7 @@ namespace uni {
 
 
 constexpr __binary_prop __binary_prop_from_string(const std::string_view s) {
-    for(std::size_t i = 0; i < __binary_prop_names.size(); ++i) {
-        const auto& c = __binary_prop_names[i];
+    for(const auto& c : __binary_prop_names) {
         const auto res = __pronamecomp(s, c.name);
         if(res == 0)
             return __binary_prop(c.value);
