@@ -69,7 +69,7 @@ static_assert(CTRE_CREATE(U"\\p{script=Latin}+").match(U"abcd"));
 static_assert(CTRE_CREATE(U"\\p{script=Greek}+").match(U"βΩ"));
 static_assert(!CTRE_CREATE(U"\\p{script=Latin}+").match(U"βΩ"));
 static_assert(!CTRE_CREATE(U"\\p{script=Greek}+").match(U"abcd"));
-static_assert(CTRE_CREATE(U"\\p{emoji}+").match(U"🤪😍"));
+static_assert(CTRE_CREATE(U"\\p{emoji}+").match(U"🤪😍✨\U0001F3F3"));
 static_assert(CTRE_SYNTAX(U"\\p{sc=greek}+?\\p{Emoji}\\p{sc=greek}+?"));
 static_assert(CTRE_CREATE(U"\\p{sc=greek}+?\\p{Emoji}").match(U"αΩ😍"));
 static_assert(CTRE_CREATE(U"\\p{sc=greek}+?\\p{Emoji}\\p{sc=greek}+?").match(U"α😍Ω"));
