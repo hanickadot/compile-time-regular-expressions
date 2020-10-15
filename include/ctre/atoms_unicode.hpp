@@ -2,7 +2,7 @@
 #define CTRE__ATOMS_UNICODE__HPP
 
 // master branch is not including unicode db (for now)
-#include "../unicode-db/unicode.hpp"
+#include "../unicode-db/unicode_interface.hpp"
 #include <array>
 
 namespace ctre {
@@ -23,9 +23,9 @@ template <auto Name> struct binary_property;
 template <auto Name, auto Value> struct property;
 
 // unicode TS#18 level 1.2 general_category
-template <uni::__binary_prop Property> struct binary_property<Property> {
+template <uni::detail::binary_prop Property> struct binary_property<Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::__get_binary_prop<Property>(c);
+		return uni::detail::get_binary_prop<Property>(c);
 	}
 };
 
@@ -66,16 +66,16 @@ template <uni::block Block> struct binary_property<Block> {
 
 // nonbinary properties
 
+template <typename = void> // Make it always a template as propnamecomp isn't defined yet
 constexpr property_type property_type_from_name(std::string_view str) noexcept {
-	//return property_type::unknown;
 	using namespace std::string_view_literals;
-	if (uni::__pronamecomp(str, "script"sv) == 0 || uni::__pronamecomp(str, "sc"sv) == 0) {
+	if (uni::detail::propnamecomp(str, "script"sv) == 0 || uni::detail::propnamecomp(str, "sc"sv) == 0) {
 		return property_type::script;
-	} else if (uni::__pronamecomp(str, "script_extension"sv) == 0 || uni::__pronamecomp(str, "scx"sv) == 0) {
+	} else if (uni::detail::propnamecomp(str, "script_extension"sv) == 0 || uni::detail::propnamecomp(str, "scx"sv) == 0) {
 		return property_type::script_extension;
-	} else if (uni::__pronamecomp(str, "age"sv) == 0) {
+	} else if (uni::detail::propnamecomp(str, "age"sv) == 0) {
 		return property_type::age;
-	} else if (uni::__pronamecomp(str, "block"sv) == 0) {
+	} else if (uni::detail::propnamecomp(str, "block"sv) == 0) {
 		return property_type::block;
 	} else {
 		return property_type::unknown;
@@ -91,9 +91,9 @@ template <property_type Property> struct property_type_builder {
 template <auto... Name> struct property_builder {
 	static constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
 	static constexpr property_type type = property_type_from_name(get_string_view(name));
-	
+
 	using helper = property_type_builder<type>;
-	
+
 	template <auto... Value> static constexpr auto get() {
 		return helper::template get<Value...>();
 	}
@@ -104,8 +104,8 @@ template <auto... Name> struct property_builder {
 template <> struct property_type_builder<property_type::script> {
 	template <auto... Value> static constexpr auto get() {
 		constexpr std::array<char, sizeof...(Value)> value{Value...};
-		constexpr auto sc = uni::__script_from_string(get_string_view(value));
-		if constexpr (sc == uni::script::unknown) {
+		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
 		} else {
 			return binary_property<sc>();
@@ -116,8 +116,8 @@ template <> struct property_type_builder<property_type::script> {
 template <> struct property_type_builder<property_type::script_extension> {
 	template <auto... Value> static constexpr auto get() {
 		constexpr std::array<char, sizeof...(Value)> value{Value...};
-		constexpr auto sc = uni::__script_from_string(get_string_view(value));
-		if constexpr (sc == uni::script::unknown) {
+		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
 		} else {
 			return property<property_type::script_extension, sc>();
@@ -128,8 +128,8 @@ template <> struct property_type_builder<property_type::script_extension> {
 template <> struct property_type_builder<property_type::age> {
 	template <auto... Value> static constexpr auto get() {
 		constexpr std::array<char, sizeof...(Value)> value{Value...};
-		constexpr auto age = uni::__age_from_string(get_string_view(value));
-		if constexpr (age == uni::version::unassigned) {
+		constexpr auto age = uni::detail::age_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unassigned(age)) {
 			return ctll::reject{};
 		} else {
 			return binary_property<age>();
@@ -140,8 +140,8 @@ template <> struct property_type_builder<property_type::age> {
 template <> struct property_type_builder<property_type::block> {
 	template <auto... Value> static constexpr auto get() {
 		constexpr std::array<char, sizeof...(Value)> value{Value...};
-		constexpr auto block = uni::__block_from_string(get_string_view(value));
-		if constexpr (block == uni::block::no_block) {
+		constexpr auto block = uni::detail::block_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(block)) {
 			return ctll::reject{};
 		} else {
 			return binary_property<block>();
@@ -151,4 +151,4 @@ template <> struct property_type_builder<property_type::block> {
 
 }
 
-#endif 
+#endif
