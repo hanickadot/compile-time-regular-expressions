@@ -239,17 +239,15 @@ struct bool_trie {
     constexpr bool lookup(char32_t u) const {
         std::uint32_t c = u;
         if(c < 0x800) {
-            if constexpr(r1_s == 0){
+            if constexpr(r1_s == 0) {
                 return false;
-            }
-            else {
+            } else {
                 return trie_range_leaf(c, r1[c >> 6]);
             }
         } else if(c < 0x10000) {
             if constexpr(r3_s == 0) {
                 return false;
-            }
-            else {
+            } else {
                 std::size_t i = ((c >> 6) - 0x20);
                 auto child = 0;
                 if(i >= r2_t_f && i < r2_t_f + r2_s)
@@ -257,20 +255,23 @@ struct bool_trie {
                 return trie_range_leaf(c, r3[child]);
             }
         } else {
-            if constexpr(r6_s == 0)
+            if constexpr(r6_s == 0) {
                 return false;
+            }
             std::size_t i4 = (c >> 12) - 0x10;
             auto child = 0;
             if constexpr(r4_s > 0) {
-                if(i4 >= r4_t_f && i4 < r4_t_f + r4_s)
+                if(i4 >= r4_t_f && i4 < r4_t_f + r4_s) {
                     child = r4[i4 - r4_t_f];
+                }
             }
 
             std::size_t i5 = (child << 6) + ((c >> 6) & 0x3f);
             auto leaf = 0;
             if constexpr(r5_s > 0) {
-                if(i5 >= r5_t_f && i5 < r5_t_f + r5_s)
+                if(i5 >= r5_t_f && i5 < r5_t_f + r5_s) {
                     leaf = r5[i5 - r5_t_f];
+                }
             }
             return trie_range_leaf(c, r6[leaf]);
         }
