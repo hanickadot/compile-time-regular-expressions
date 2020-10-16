@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8.0)
 # When updating to a newer version of CMake, see if we can use the following
 project(ctre
   HOMEPAGE_URL "https://compile-time.re"
-  VERSION 2.9.2
+  VERSION 3.0
   LANGUAGES CXX)
 
 include(CMakePackageConfigHelpers)

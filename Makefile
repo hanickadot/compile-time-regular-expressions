@@ -59,7 +59,10 @@ mtent12.txt: mtent12.zip
 	unzip -o mtent12.zip
 	touch mtent12.txt
 
-single-header: single-header/ctre.hpp
+single-header: single-header/ctre.hpp single-header/ctre-unicode.hpp single-header/unicode-db.hpp
+
+single-header/unicode-db.hpp: include/unicode-db/unicode-db.hpp
+	cp $+ $@
 
 single-header/ctre.hpp:
 	python3 -m quom include/ctre.hpp ctre.hpp.tmp
@@ -68,6 +71,14 @@ single-header/ctre.hpp:
 	echo "*/" >> single-header/ctre.hpp
 	cat ctre.hpp.tmp >> single-header/ctre.hpp
 	rm ctre.hpp.tmp
+
+single-header/ctre-unicode.hpp:
+	python3 -m quom include/ctre-unicode.hpp ctre-unicode.hpp.tmp
+	echo "/*" > single-header/ctre-unicode.hpp
+	cat LICENSE >> single-header/ctre-unicode.hpp
+	echo "*/" >> single-header/ctre-unicode.hpp
+	cat ctre-unicode.hpp.tmp >> single-header/ctre-unicode.hpp
+	rm ctre-unicode.hpp.tmp
 	
 REPEAT:=10
 

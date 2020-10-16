@@ -272,7 +272,6 @@ template <size_t N> struct fixed_string {
 	char32_t content[N] = {};
 	size_t real_size{0};
 	bool correct_flag{true};
-	
 	template <typename T> constexpr fixed_string(const T (&input)[N+1]) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
 			#if CTRE_STRING_IS_UTF8
@@ -1462,7 +1461,105 @@ using ascii_chars = char_range<'\x00','\x7F'>;
 #define CTRE__ATOMS_UNICODE__HPP
 
 // master branch is not including unicode db (for now)
-// #include "../unicode-db/unicode.hpp"
+#ifndef H_COR3NTIN_UNICODE_SYNOPSYS
+#define H_COR3NTIN_UNICODE_SYNOPSYS
+
+#include <string_view>
+
+namespace uni
+{
+    enum class category;
+    enum class property;
+    enum class version : unsigned char;
+    enum class script ;
+    enum class block;
+
+    struct script_extensions_view {
+        constexpr script_extensions_view(char32_t c);
+
+        struct sentinel {};
+        struct iterator {
+
+            constexpr iterator(char32_t c);
+            constexpr script operator*() const;
+
+            constexpr iterator& operator++(int);
+
+            constexpr iterator operator++();
+
+            constexpr bool operator==(sentinel) const;
+            constexpr bool operator!=(sentinel) const;
+
+        private:
+            char32_t m_c;
+            script m_script;
+            int idx = 1;
+        };
+
+        constexpr iterator begin() const;
+        constexpr sentinel end() const;
+
+        private:
+            char32_t c;
+    };
+
+    struct numeric_value {
+
+        constexpr double value() const;
+        constexpr long long numerator() const;
+        constexpr int denominator() const;
+        constexpr bool is_valid() const;
+
+    protected:
+        constexpr numeric_value() = default;
+        constexpr numeric_value(long long n, int16_t d);
+
+        long long _n = 0;
+        int16_t _d = 0;
+        friend constexpr numeric_value cp_numeric_value(char32_t cp);
+    };
+
+    constexpr category cp_category(char32_t cp);
+    constexpr script cp_script(char32_t cp);
+    constexpr script_extensions_view cp_script_extensions(char32_t cp);
+    constexpr version cp_age(char32_t cp);
+    constexpr block cp_block(char32_t cp);
+    constexpr bool cp_is_valid(char32_t cp);
+    constexpr bool cp_is_assigned(char32_t cp);
+    constexpr bool cp_is_ascii(char32_t cp);
+    constexpr numeric_value cp_numeric_value(char32_t cp);
+
+    template<script>
+    constexpr bool cp_is(char32_t);
+    template<property>
+    constexpr bool cp_is(char32_t);
+    template<category>
+    constexpr bool cp_is(char32_t);
+
+    namespace detail
+    {
+        enum class binary_prop;
+        constexpr int propnamecomp(std::string_view sa, std::string_view sb);
+        constexpr binary_prop binary_prop_from_string(std::string_view s);
+
+        template<binary_prop p>
+        constexpr bool get_binary_prop(char32_t) = delete;
+
+        constexpr script   script_from_string(std::string_view s);
+        constexpr block    block_from_string(std::string_view s);
+        constexpr version  age_from_string(std::string_view a);
+        constexpr category category_from_string(std::string_view a);
+
+        constexpr bool is_unassigned(category cat);
+        constexpr bool is_unknown(script s);
+        constexpr bool is_unknown(block b);
+        constexpr bool is_unassigned(version v);
+        constexpr bool is_unknown(binary_prop s);
+    }
+}
+
+#endif
+
 #include <array>
 
 namespace ctre {
@@ -1482,11 +1579,11 @@ template <auto Name> struct binary_property;
 template <auto Name, auto Value> struct property;
 
 // unicode TS#18 level 1.2 general_category
-//template <uni::__binary_prop Property> struct binary_property<Property> {
-//	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
-//		return uni::__get_binary_prop<Property>(c);
-//	}
-//};
+template <uni::detail::binary_prop Property> struct binary_property<Property> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::detail::get_binary_prop<Property>(c);
+	}
+};
 
 // unicode TS#18 level 1.2.2
 
@@ -1496,49 +1593,49 @@ enum class property_type {
 
 // unicode TS#18 level 1.2.2
 
-//template <uni::script Script> struct binary_property<Script> {
-//	template <typename CharT> inline static constexpr bool match_char(CharT) noexcept {
-//		return uni::cp_script(c) == Script;
-//	}
-//};
-//
-//template <uni::script Script> struct property<property_type::script_extension, Script> {
-//	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-//		for (uni::script sc: uni::cp_script_extensions(c)) {
-//			if (sc == Script) return true;
-//		}
-//		return false;
-//	}
-//};
+template <uni::script Script> struct binary_property<Script> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_script(c) == Script;
+	}
+};
 
-//template <uni::version Age> struct binary_property<Age> {
-//	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-//		return uni::cp_age(c) <= Age;
-//	}
-//};
-//
-//template <uni::block Block> struct binary_property<Block> {
-//	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-//		return uni::cp_block(c) == Block;
-//	}
-//};
+template <uni::script Script> struct property<property_type::script_extension, Script> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		for (uni::script sc: uni::cp_script_extensions(c)) {
+			if (sc == Script) return true;
+		}
+		return false;
+	}
+};
+
+template <uni::version Age> struct binary_property<Age> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_age(c) <= Age;
+	}
+};
+
+template <uni::block Block> struct binary_property<Block> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_block(c) == Block;
+	}
+};
 
 // nonbinary properties
 
-constexpr property_type property_type_from_name(std::string_view) noexcept {
-	return property_type::unknown;
-	//using namespace std::string_view_literals;
-	//if (uni::__pronamecomp(str, "script"sv) == 0 || uni::__pronamecomp(str, "sc"sv) == 0) {
-	//	return property_type::script;
-	//} else if (uni::__pronamecomp(str, "script_extension"sv) == 0 || uni::__pronamecomp(str, "scx"sv) == 0) {
-	//	return property_type::script_extension;
-	//} else if (uni::__pronamecomp(str, "age"sv) == 0) {
-	//	return property_type::age;
-	//} else if (uni::__pronamecomp(str, "block"sv) == 0) {
-	//	return property_type::block;
-	//} else {
-	//	return property_type::unknown;
-	//}
+template <typename = void> // Make it always a template as propnamecomp isn't defined yet
+constexpr property_type property_type_from_name(std::string_view str) noexcept {
+	using namespace std::string_view_literals;
+	if (uni::detail::propnamecomp(str, "script"sv) == 0 || uni::detail::propnamecomp(str, "sc"sv) == 0) {
+		return property_type::script;
+	} else if (uni::detail::propnamecomp(str, "script_extension"sv) == 0 || uni::detail::propnamecomp(str, "scx"sv) == 0) {
+		return property_type::script_extension;
+	} else if (uni::detail::propnamecomp(str, "age"sv) == 0) {
+		return property_type::age;
+	} else if (uni::detail::propnamecomp(str, "block"sv) == 0) {
+		return property_type::block;
+	} else {
+		return property_type::unknown;
+	}
 }
 
 template <property_type Property> struct property_type_builder {
@@ -1550,9 +1647,9 @@ template <property_type Property> struct property_type_builder {
 template <auto... Name> struct property_builder {
 	static constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
 	static constexpr property_type type = property_type_from_name(get_string_view(name));
-	
+
 	using helper = property_type_builder<type>;
-	
+
 	template <auto... Value> static constexpr auto get() {
 		return helper::template get<Value...>();
 	}
@@ -1560,57 +1657,57 @@ template <auto... Name> struct property_builder {
 
 // unicode TS#18 level 1.2.2 script support
 
-//template <> struct property_type_builder<property_type::script> {
-//	template <auto... Value> static constexpr auto get() {
-//		constexpr std::array<char, sizeof...(Value)> value{Value...};
-//		constexpr auto sc = uni::__script_from_string(get_string_view(value));
-//		if constexpr (sc == uni::script::unknown) {
-//			return ctll::reject{};
-//		} else {
-//			return binary_property<sc>();
-//		}
-//	}
-//};
-//
-//template <> struct property_type_builder<property_type::script_extension> {
-//	template <auto... Value> static constexpr auto get() {
-//		constexpr std::array<char, sizeof...(Value)> value{Value...};
-//		constexpr auto sc = uni::__script_from_string(get_string_view(value));
-//		if constexpr (sc == uni::script::unknown) {
-//			return ctll::reject{};
-//		} else {
-//			return property<property_type::script_extension, sc>();
-//		}
-//	}
-//};
-//
-//template <> struct property_type_builder<property_type::age> {
-//	template <auto... Value> static constexpr auto get() {
-//		constexpr std::array<char, sizeof...(Value)> value{Value...};
-//		constexpr auto age = uni::__age_from_string(get_string_view(value));
-//		if constexpr (age == uni::version::unassigned) {
-//			return ctll::reject{};
-//		} else {
-//			return binary_property<age>();
-//		}
-//	}
-//};
-//
-//template <> struct property_type_builder<property_type::block> {
-//	template <auto... Value> static constexpr auto get() {
-//		constexpr std::array<char, sizeof...(Value)> value{Value...};
-//		constexpr auto block = uni::__block_from_string(get_string_view(value));
-//		if constexpr (block == uni::block::no_block) {
-//			return ctll::reject{};
-//		} else {
-//			return binary_property<block>();
-//		}
-//	}
-//};
+template <> struct property_type_builder<property_type::script> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(sc)) {
+			return ctll::reject{};
+		} else {
+			return binary_property<sc>();
+		}
+	}
+};
+
+template <> struct property_type_builder<property_type::script_extension> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(sc)) {
+			return ctll::reject{};
+		} else {
+			return property<property_type::script_extension, sc>();
+		}
+	}
+};
+
+template <> struct property_type_builder<property_type::age> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto age = uni::detail::age_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unassigned(age)) {
+			return ctll::reject{};
+		} else {
+			return binary_property<age>();
+		}
+	}
+};
+
+template <> struct property_type_builder<property_type::block> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr auto block = uni::detail::block_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(block)) {
+			return ctll::reject{};
+		} else {
+			return binary_property<block>();
+		}
+	}
+};
 
 }
 
-#endif 
+#endif
 
 #ifndef CTRE__ID__HPP
 #define CTRE__ID__HPP
@@ -2205,52 +2302,52 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 
 // make_property
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	return ctll::reject{};
-	//constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
-	//constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
-    //
-	//if constexpr (p == uni::__binary_prop::unknown) {
-	//	return ctll::reject{};
-	//} else {
-	//	return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
-	//}
+	//return ctll::reject{};
+	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
+
+	if constexpr (uni::detail::is_unknown(p)) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+	}
 }
 
 // make_property
 template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	return ctll::reject{};
-	//constexpr auto prop = property_builder<Name...>::template get<Value...>();
-	//
-	//if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
-	//	return ctll::reject{};
-	//} else {
-	//	return pcre_context{ctll::push_front(prop, ctll::list<Ts...>()), subject.parameters};
-	//}
+	//return ctll::reject{};
+	constexpr auto prop = property_builder<Name...>::template get<Value...>();
+
+	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(prop, ctll::list<Ts...>()), subject.parameters};
+	}
 }
 
 // make_property_negative
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	return ctll::reject{};
-	//constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
-	//constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
-    //
-	//if constexpr (p == uni::__binary_prop::unknown) {
-	//	return ctll::reject{};
-	//} else {
-	//	return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
-	//}
+	//return ctll::reject{};
+	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
+
+	if constexpr (uni::detail::is_unknown(p)) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+	}
 }
 
 // make_property_negative
 template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	return ctll::reject{};
-	//constexpr auto prop = property_builder<Name...>::template get<Value...>();
-	//
-	//if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
-	//	return ctll::reject{};
-	//} else {
-	//	return pcre_context{ctll::push_front(negate<decltype(prop)>(), ctll::list<Ts...>()), subject.parameters};
-	//}
+	//return ctll::reject{};
+	constexpr auto prop = property_builder<Name...>::template get<Value...>();
+
+	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(negate<decltype(prop)>(), ctll::list<Ts...>()), subject.parameters};
+	}
 }
 
 #endif
@@ -2993,6 +3090,17 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<select<SHead, STail...
 template <typename... Content, typename... Tail> 
 constexpr auto first(ctll::list<Content...> l, ctll::list<select<>, Tail...>) noexcept {
 	return l;
+}
+
+// unicode property => anything
+template <typename... Content, auto Property, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<Property>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
+}
+
+template <typename... Content, auto Property, auto Value, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<Property, Value>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
 }
 
 // characters / sets
