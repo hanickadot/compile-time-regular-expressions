@@ -1,13 +1,13 @@
 #ifndef H_COR3NTIN_UNICODE_SYNOPSYS
 #define H_COR3NTIN_UNICODE_SYNOPSYS
 
-#include <iterator>
+#include <string_view>
 
 namespace uni
 {
     enum class category;
     enum class property;
-    enum class version : uint8_t;
+    enum class version : unsigned char;
     enum class script ;
     enum class block;
 
@@ -16,9 +16,6 @@ namespace uni
 
         struct sentinel {};
         struct iterator {
-
-            using value_type = script;
-            using iterator_category = std::forward_iterator_tag;
 
             constexpr iterator(char32_t c);
             constexpr script operator*() const;

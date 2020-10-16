@@ -3,13 +3,13 @@
 #ifndef H_COR3NTIN_UNICODE_SYNOPSYS
 #define H_COR3NTIN_UNICODE_SYNOPSYS
 
-#include <iterator>
+#include <string_view>
 
 namespace uni
 {
     enum class category;
     enum class property;
-    enum class version : uint8_t;
+    enum class version : unsigned char;
     enum class script ;
     enum class block;
 
@@ -18,9 +18,6 @@ namespace uni
 
         struct sentinel {};
         struct iterator {
-
-            using value_type = script;
-            using iterator_category = std::forward_iterator_tag;
 
             constexpr iterator(char32_t c);
             constexpr script operator*() const;
@@ -7449,6 +7446,7 @@ constexpr bool cp_is<property::xids>(char32_t c) {
     return detail::tables::prop_xids_data.lookup(c);
 }
 }    // namespace uni
+#include <iterator>
 #ifndef UNI_SINGLE_HEADER
 #    pragma once
 #    include "props.h"
@@ -7722,6 +7720,18 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
 
 }    // namespace uni
 
+namespace std
+{
+    template<>
+    struct iterator_traits<uni::script_extensions_view::iterator>
+    {
+        using difference_type = std::ptrdiff_t;
+        using value_type = uni::script;
+        using pointer =  uni::script *;
+        using reference	=  uni::script;
+        using iterator_category = std::forward_iterator_tag;
+    };
+}
 #ifndef UNI_SINGLE_HEADER
 #    pragma once
 #    include "unicode.h"
