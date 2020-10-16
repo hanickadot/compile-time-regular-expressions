@@ -1,5 +1,5 @@
 #include <ctre.hpp>
-#include <unicode-db/unicode.hpp>
+#include <ctre-unicode.hpp>
 #include <string_view>
 
 void empty_symbol() { }

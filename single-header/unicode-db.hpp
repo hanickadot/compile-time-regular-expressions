@@ -102,11 +102,6 @@ namespace uni
 #include <algorithm>
 #include <string_view>
 
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "synopsys.h"
-#endif
-
 namespace uni::detail {
 
 template<class ForwardIt, class T, class Compare>
@@ -392,11 +387,6 @@ constexpr numeric_value::numeric_value(long long n, int16_t d) : _n(n), _d(d) {}
 
 
 }    // namespace uni
-
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "base.h"
-#endif
 
 namespace uni {
 enum class version : uint8_t {
@@ -7447,10 +7437,6 @@ constexpr bool cp_is<property::xids>(char32_t c) {
 }
 }    // namespace uni
 #include <iterator>
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "props.h"
-#endif
 
 namespace uni {
 
@@ -7732,10 +7718,7 @@ namespace std
         using iterator_category = std::forward_iterator_tag;
     };
 }
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#    include "unicode.h"
-#endif
+
 namespace uni::detail {
 enum class binary_prop {
     ahex,
@@ -9663,9 +9646,6 @@ namespace tables {
         string_with_idx{"zzzz", 243}};
 }
 }    // namespace uni::detail
-#ifndef UNI_SINGLE_HEADER
-#    pragma once
-#endif
 
 // More regex support for ctre
 

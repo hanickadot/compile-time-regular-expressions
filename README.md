@@ -44,6 +44,14 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 * `std::string`-like object (`std::string_view` or your own string if it's providing `begin`/`end` functions with forward iterators)
 * pair of forward iterators
 
+### Unicode support
+
+To enable you need to include:
+* `<ctre-unicode.hpp>`
+* or `<ctre.hpp>` and `<unicode-db.hpp>`
+
+Otherwise you will get missing symbols if you try to use the unicode support without enabling it.
+
 ## Supported compilers
 
 * clang 6.0+ (template UDL, C++17 syntax)
