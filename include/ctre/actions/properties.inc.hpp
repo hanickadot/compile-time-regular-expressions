@@ -23,9 +23,9 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	//return ctll::reject{};
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
-	constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
-    
-	if constexpr (p == uni::__binary_prop::unknown) {
+	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
+
+	if constexpr (uni::detail::is_unknown(p)) {
 		return ctll::reject{};
 	} else {
 		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
@@ -36,7 +36,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
 	//return ctll::reject{};
 	constexpr auto prop = property_builder<Name...>::template get<Value...>();
-	
+
 	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
 		return ctll::reject{};
 	} else {
@@ -49,9 +49,9 @@ template <auto V, auto... Value, auto... Name, typename... Ts, typename Paramete
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	//return ctll::reject{};
 	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
-	constexpr auto p = uni::__binary_prop_from_string(get_string_view(name));
-    
-	if constexpr (p == uni::__binary_prop::unknown) {
+	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
+
+	if constexpr (uni::detail::is_unknown(p)) {
 		return ctll::reject{};
 	} else {
 		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
@@ -62,7 +62,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
 	//return ctll::reject{};
 	constexpr auto prop = property_builder<Name...>::template get<Value...>();
-	
+
 	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
 		return ctll::reject{};
 	} else {

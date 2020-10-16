@@ -1,4 +1,5 @@
 #include <ctre.hpp>
+#include <unicode-db/unicode.hpp>
 #include <string_view>
 
 void empty_symbol() { }
@@ -16,7 +17,7 @@ template <size_t N> struct number_id;
 
 template <ctll::fixed_string input> constexpr auto create() {
 	constexpr auto _input = input;
-	
+
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<ctre::pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	using re = decltype(front(typename tmp::output_type::stack_type()));
@@ -25,13 +26,13 @@ template <ctll::fixed_string input> constexpr auto create() {
 
 template <ctll::fixed_string input> constexpr bool syntax() {
 	constexpr auto _input = input;
-	
+
 	return ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template correct_with<ctre::pcre_context<>>;
 }
 
 template <ctll::fixed_string input> constexpr auto gen() {
 	constexpr auto _input = input;
-	
+
 	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<ctre::pcre_context<>>;
 	static_assert(tmp(), "Regular Expression contains syntax error.");
 	return typename tmp::output_type::stack_type();
