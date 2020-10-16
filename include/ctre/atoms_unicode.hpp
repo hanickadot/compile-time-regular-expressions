@@ -3,7 +3,6 @@
 
 // master branch is not including unicode db (for now)
 #include "../unicode-db/unicode_interface.hpp"
-#include <array>
 
 namespace ctre {
 
@@ -12,8 +11,8 @@ namespace ctre {
 template <auto... Str> struct property_name { };
 template <auto... Str> struct property_value { };
 
-template <size_t Sz> constexpr std::string_view get_string_view(const std::array<char, Sz> & arr) noexcept {
-	return std::string_view(arr.data(), arr.size());
+template <size_t Sz> constexpr std::string_view get_string_view(const char (& arr)[Sz]) noexcept {
+	return std::string_view(arr, Sz);
 }
 
 
@@ -89,7 +88,7 @@ template <property_type Property> struct property_type_builder {
 };
 
 template <auto... Name> struct property_builder {
-	static constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	static constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
 	static constexpr property_type type = property_type_from_name(get_string_view(name));
 
 	using helper = property_type_builder<type>;
@@ -103,7 +102,7 @@ template <auto... Name> struct property_builder {
 
 template <> struct property_type_builder<property_type::script> {
 	template <auto... Value> static constexpr auto get() {
-		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
 		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
 		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
@@ -115,7 +114,7 @@ template <> struct property_type_builder<property_type::script> {
 
 template <> struct property_type_builder<property_type::script_extension> {
 	template <auto... Value> static constexpr auto get() {
-		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
 		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
 		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
@@ -127,7 +126,7 @@ template <> struct property_type_builder<property_type::script_extension> {
 
 template <> struct property_type_builder<property_type::age> {
 	template <auto... Value> static constexpr auto get() {
-		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
 		constexpr auto age = uni::detail::age_from_string(get_string_view(value));
 		if constexpr (uni::detail::is_unassigned(age)) {
 			return ctll::reject{};
@@ -139,7 +138,7 @@ template <> struct property_type_builder<property_type::age> {
 
 template <> struct property_type_builder<property_type::block> {
 	template <auto... Value> static constexpr auto get() {
-		constexpr std::array<char, sizeof...(Value)> value{Value...};
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
 		constexpr auto block = uni::detail::block_from_string(get_string_view(value));
 		if constexpr (uni::detail::is_unknown(block)) {
 			return ctll::reject{};

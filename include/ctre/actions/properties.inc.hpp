@@ -22,7 +22,7 @@ template <auto... Str, auto V, typename... Ts, typename Parameters> static const
 // make_property
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	//return ctll::reject{};
-	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
 	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
 
 	if constexpr (uni::detail::is_unknown(p)) {
@@ -48,7 +48,7 @@ template <auto V, auto... Value, auto... Name, typename... Ts, typename Paramete
 // make_property_negative
 template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
 	//return ctll::reject{};
-	constexpr std::array<char, sizeof...(Name)> name{static_cast<char>(Name)...};
+	constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
 	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
 
 	if constexpr (uni::detail::is_unknown(p)) {
