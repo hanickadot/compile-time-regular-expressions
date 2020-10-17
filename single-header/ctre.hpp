@@ -1343,6 +1343,18 @@ struct assert_end { };
 #ifndef CTRE__UTILITY__HPP
 #define CTRE__UTILITY__HPP
 
+#if __has_cpp_attribute(likely)
+#define CTRE_LIKELY [[likely]]
+#else
+#define CTRE_LIKELY
+#endif
+
+#if __has_cpp_attribute(unlikely)
+#define CTRE_UNLIKELY [[unlikely]]
+#else
+#define CTRE_UNLIKELY
+#endif
+
 #ifdef _MSC_VER
 #define CTRE_FORCE_INLINE __forceinline
 #define CTRE_FLATTEN
@@ -2436,6 +2448,152 @@ constexpr bool starts_with_anchor(ctll::list<capture_with_name<Index, Seq...>, C
 #ifndef CTRE__RETURN_TYPE__HPP
 #define CTRE__RETURN_TYPE__HPP
 
+#ifndef CTRE__UTF8__HPP
+#define CTRE__UTF8__HPP
+
+#if __cpp_char8_t >= 201811
+
+#include <iterator>
+
+namespace ctre {
+
+struct utf8_iterator {
+	using self_type = utf8_iterator;
+	using value_type = char8_t;
+	using reference = char8_t;
+	using pointer = const char8_t *;
+	using iterator_category = std::forward_iterator_tag;
+	using difference_type = int;
+	
+	struct sentinel {
+
+	};
+	
+	const char8_t * ptr{nullptr};
+	const char8_t * end{nullptr};
+	
+	constexpr friend bool operator!=(const utf8_iterator & lhs, sentinel) {
+		return lhs.ptr < lhs.end;
+	}
+	
+	constexpr friend bool operator!=(const utf8_iterator & lhs, const utf8_iterator & rhs) {
+		return lhs.ptr != rhs.ptr;
+	}
+	
+	constexpr friend bool operator==(const utf8_iterator & lhs, sentinel) {
+		return lhs.ptr >= lhs.end;
+	}
+	
+	constexpr utf8_iterator & operator=(const char8_t * rhs) {
+		ptr = rhs;
+		return *this;
+	}
+	
+	constexpr operator const char8_t *() const noexcept {
+		return ptr;
+	}
+	
+	constexpr utf8_iterator & operator++() noexcept {
+		// the contant is mapping from first 5 bits of first code unit to length of UTF8 code point -1
+		// xxxxx -> yy (5 bits to 2 bits)
+		// 5 bits are 32 combination, and for each I need 2 bits, hence 64 bit constant
+		// (*ptr >> 3)  looks at left 5 bits
+		// << 1  will multiply it by 2
+		// & 0b11u  selects only needed two bits
+		// +1  because each iteration is at least one code unit forward
+		
+		ptr += ((0x3A55000000000000ull >> ((*ptr >> 3) << 1)) & 0b11u) + 1;
+		return *this;
+	}
+	
+	constexpr utf8_iterator operator+(unsigned step) const noexcept {
+		utf8_iterator result = *this;
+		while (step > 0) {
+			++result;
+			step--;
+		}
+		return result;
+	}
+	
+	constexpr char32_t operator*() const noexcept {
+		constexpr uint64_t lengths = 0x3A55000000000000ull;
+		constexpr char32_t mojibake = 0xFFFDull;
+		
+		// quickpath
+		if (!(*ptr & 0b1000'0000u)) CTRE_LIKELY {
+			return *ptr;
+		}
+ 
+		// calculate length based on first 5 bits
+		const unsigned length = (lengths >> ((*ptr >> 3) * 2)) & 0b11u;
+
+		// actual length is number + 1 bytes
+		
+		// length 0 here means it's a bad front unit
+		if (!length) CTRE_UNLIKELY {
+			return mojibake;
+		}
+
+		// if part of the utf-8 sequence is past the end
+		if (((ptr + length) >= end)) CTRE_UNLIKELY {
+			return mojibake;
+		}
+		
+		if ((ptr[1] >> 6) != 0b10) CTRE_UNLIKELY {
+			return mojibake;
+		}
+
+		const char8_t mask = (0b0010'0000u >> length) - 1;
+		
+		// length = 1 (2 bytes) mask = 0b0001'1111u
+		// length = 2 (3 bytes) mask = 0b0000'1111u
+		// length = 3 (4 bytes) mask = 0b0000'0111u
+
+		// remove utf8 front bits, get only significant part
+		// and add first trailing unit
+
+		char32_t result = ((ptr[0] & mask) << 6) | (ptr[1] & 0b0011'1111u);
+
+		// add rest of trailing units
+		if (length == 1) CTRE_LIKELY {
+			return result;
+		}
+
+		if ((ptr[2] >> 6) != 0b10) CTRE_UNLIKELY {
+			return mojibake;
+		}
+
+		result = (result << 6) | (ptr[2] & 0b0011'1111u);
+
+		if (length == 2) CTRE_LIKELY {
+			return result;
+		}
+
+		if ((ptr[3] >> 6) != 0b10) CTRE_UNLIKELY {
+			return mojibake;
+		}
+
+		return (result << 6) | (ptr[3] & 0b0011'1111u);
+	}
+};
+
+struct utf8_range {
+	std::u8string_view range;
+	constexpr utf8_range(std::u8string_view r) noexcept: range{r} { }
+	
+	constexpr auto begin() const noexcept {
+		return utf8_iterator{range.data(), range.data() + range.size()};
+	}
+	constexpr auto end() const noexcept {
+		return utf8_iterator::sentinel{};
+	}
+};
+
+}
+
+#endif
+
+#endif
 #include <type_traits>
 #include <tuple>
 #include <string_view>
@@ -2490,27 +2648,54 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
+			#if __cpp_char8_t >= 201811
+			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
+				return _begin.ptr;
+			} else {
+				return &*_begin;
+			}
+			#else
 			return &*_begin;
+			#endif
+		}
+		
+		constexpr CTRE_FORCE_INLINE const auto * ptr_end() const noexcept {
+			#if __cpp_char8_t >= 201811
+			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
+				return _end.ptr;
+			} else {
+				return &*_end;
+			}
+			#else
+			return &*_end;
+			#endif
 		}
 
 		constexpr CTRE_FORCE_INLINE auto size() const noexcept {
-			return static_cast<size_t>(std::distance(_begin, _end));
+			#if __cpp_char8_t >= 201811
+			if constexpr (std::is_same_v<char_type, char8_t>) {
+				return static_cast<size_t>(std::distance(data(), ptr_end()));
+			}
+			#endif
+			return static_cast<size_t>(std::distance(data(), ptr_end()));
 		}
 
 		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
-			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+			// TODO make sure we are working with contiguous range
+			return std::basic_string_view<char_type>(data(), static_cast<size_t>(size()));
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
-			return std::basic_string<char_type>(begin(), end());
+			// TODO make sure we are working with contiguous range
+			return std::basic_string<char_type>(data(), ptr_end());
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
-			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+			return to_view();
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto str() const noexcept {
-			return std::basic_string<char_type>(begin(), end());
+			return to_string();
 		}
 		
 		constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {
@@ -3402,34 +3587,32 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 	}
 }
 
+template <typename ResultIterator, typename Pattern> using return_type = decltype(regex_results(std::declval<ResultIterator>(), find_captures(Pattern{})));
+
 // calling with pattern prepare stack and triplet of iterators
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
-	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
+template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
+constexpr inline auto match_re(const Iterator begin, const EndIterator end, Pattern) noexcept {
+	return evaluate(begin, begin, end, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
 }
 
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto starts_with_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
-	return evaluate(begin, begin, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
+constexpr inline auto starts_with_re(const Iterator begin, const EndIterator end, Pattern) noexcept {
+	return evaluate(begin, begin, end, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	using return_type = decltype(regex_results(std::declval<Iterator>(), find_captures(pattern)));
-	
+template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
+constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pattern) noexcept {
 	constexpr bool fixed = starts_with_anchor(ctll::list<Pattern>{});
 	
 	auto it = begin;
 	for (; end != it && !fixed; ++it) {
-		if (auto out = evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {
+		if (auto out = evaluate(begin, it, end, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {
 			return out;
 		}
 	}
 	
 	// in case the RE is empty or fixed
-	return evaluate(begin, it, end, return_type{}, ctll::list<start_mark, Pattern, end_mark, accept>());
+	return evaluate(begin, it, end, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
 // sink for making the errors shorter
@@ -3472,7 +3655,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const E
 
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
-	if (end == current) return not_matched;
+	if (current == end) return not_matched;
 	if (!CharacterLike::match_char(*current)) return not_matched;
 	return evaluate(begin, current+1, end, captures, ctll::list<Tail...>());
 }
@@ -3880,7 +4063,7 @@ template <typename RE> struct regular_expression {
 	}
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto match(Iterator begin, Iterator end) noexcept {
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto match(IteratorBegin begin, IteratorEnd end) noexcept {
 		return match_re(begin, end, RE());
 	}
 	static constexpr CTRE_FORCE_INLINE auto match(const char * s) noexcept {
@@ -3901,6 +4084,11 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto match(std::wstring_view sv) noexcept {
 		return match(sv.begin(), sv.end());
 	}
+#if __cpp_char8_t >= 201811
+	static constexpr CTRE_FORCE_INLINE auto match(std::u8string_view sv) noexcept {
+		return match_re<utf8_iterator, utf8_iterator::sentinel, RE, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {});
+	}
+#endif
 	static constexpr CTRE_FORCE_INLINE auto match(std::u16string_view sv) noexcept {
 		return match(sv.begin(), sv.end());
 	}
@@ -3911,7 +4099,7 @@ template <typename RE> struct regular_expression {
 		return match(std::begin(range), std::end(range));
 	}
 	
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto search(Iterator begin, Iterator end) noexcept {
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search(IteratorBegin begin, IteratorEnd end) noexcept {
 		return search_re(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE static auto search(const char * s) noexcept {
@@ -3932,6 +4120,11 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto search(std::wstring_view sv) noexcept {
 		return search(sv.begin(), sv.end());
 	}
+#if __cpp_char8_t >= 201811
+	static constexpr CTRE_FORCE_INLINE auto search(std::u8string_view sv) noexcept {
+		return search_re<utf8_iterator, utf8_iterator::sentinel, RE, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {});
+	}
+#endif
 	static constexpr CTRE_FORCE_INLINE auto search(std::u16string_view sv) noexcept {
 		return search(sv.begin(), sv.end());
 	}
@@ -3942,7 +4135,7 @@ template <typename RE> struct regular_expression {
 		return search(std::begin(range), std::end(range));
 	}
 	
-	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto starts_with(Iterator begin, Iterator end) noexcept {
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto starts_with(IteratorBegin begin, IteratorEnd end) noexcept {
 		return starts_with_re(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE static auto starts_with(const char * s) noexcept {
@@ -3957,6 +4150,11 @@ template <typename RE> struct regular_expression {
 	static constexpr CTRE_FORCE_INLINE auto starts_with(const std::wstring & s) noexcept {
 		return starts_with_2(s.c_str(), zero_terminated_string_end_iterator());
 	}
+#if __cpp_char8_t >= 201811
+	static constexpr CTRE_FORCE_INLINE auto starts_with(std::u8string_view sv) noexcept {
+		return starts_with<utf8_iterator, utf8_iterator::sentinel, RE, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {});
+	}
+#endif
 	static constexpr CTRE_FORCE_INLINE auto starts_with(std::string_view sv) noexcept {
 		return starts_with(sv.begin(), sv.end());
 	}
