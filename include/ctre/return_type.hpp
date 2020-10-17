@@ -2,6 +2,7 @@
 #define CTRE__RETURN_TYPE__HPP
 
 #include "id.hpp"
+#include "utf8.hpp"
 #include <type_traits>
 #include <tuple>
 #include <string_view>
@@ -56,27 +57,46 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
+			#if __cpp_char8_t >= 201811
+			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
+				return _begin.ptr;
+			} else {
+				return &*_begin;
+			}
+			#else
 			return &*_begin;
+			#endif
 		}
 
 		constexpr CTRE_FORCE_INLINE auto size() const noexcept {
-			return static_cast<size_t>(std::distance(_begin, _end));
+			return static_cast<size_t>(std::distance(begin(), end()));
+		}
+		
+		constexpr CTRE_FORCE_INLINE size_t unit_size() const noexcept {
+			#if __cpp_char8_t >= 201811
+			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
+				return static_cast<size_t>(std::distance(_begin.ptr, _end.ptr));
+			}
+			#endif
+			return static_cast<size_t>(std::distance(begin(), end()));
 		}
 
 		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
-			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+			// TODO make sure we are working with contiguous range
+			return std::basic_string_view<char_type>(data(), static_cast<size_t>(unit_size()));
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
-			return std::basic_string<char_type>(begin(), end());
+			// TODO make sure we are working with contiguous range
+			return std::basic_string<char_type>(data(), static_cast<size_t>(unit_size()));
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
-			return std::basic_string_view<char_type>(&*_begin, static_cast<size_t>(std::distance(_begin, _end)));
+			return to_view();
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto str() const noexcept {
-			return std::basic_string<char_type>(begin(), end());
+			return to_string();
 		}
 		
 		constexpr CTRE_FORCE_INLINE operator std::basic_string_view<char_type>() const noexcept {

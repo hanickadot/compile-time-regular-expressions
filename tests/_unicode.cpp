@@ -60,6 +60,7 @@ static_assert(CTRE_CREATE(U"\\u20AC").match(U"€"));
 // TODO only \p and \P is not supported
 static_assert(CTRE_SYNTAX(U"\\p{L}"));
 static_assert(CTRE_SYNTAX(U"\\p{Letter}"));
+static_assert(CTRE_CREATE(U"\\p{Letter}+").match(u8"abcDEF"));
 static_assert(CTRE_CREATE(U"\\p{Letter}+").match(U"abcDEF"));
 static_assert(CTRE_CREATE(U"\\p{Ll}+").match(U"abcdef"));
 static_assert(CTRE_CREATE(U"\\p{Lu}+").match(U"ABCD"));
@@ -70,6 +71,10 @@ static_assert(CTRE_CREATE(U"\\p{script=Latin}+").match(U"abcd"));
 static_assert(CTRE_CREATE(U"\\p{script=Greek}+").match(U"βΩ"));
 static_assert(!CTRE_CREATE(U"\\p{script=Latin}+").match(U"βΩ"));
 static_assert(!CTRE_CREATE(U"\\p{script=Greek}+").match(U"abcd"));
+#if __cpp_char8_t >= 201811
+static_assert(CTRE_CREATE(U"\\p{emoji}+").match(u8"🤪😍"));
+static_assert(CTRE_CREATE("\\p{emoji}+").match(u8"🤪😍"));
+#endif
 static_assert(CTRE_CREATE(U"\\p{emoji}+").match(U"🤪😍✨\U0001F3F3"));
 static_assert(CTRE_SYNTAX(U"\\p{sc=greek}+?\\p{Emoji}\\p{sc=greek}+?"));
 static_assert(CTRE_CREATE(U"\\p{sc=greek}+?\\p{Emoji}").match(U"αΩ😍"));
