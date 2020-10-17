@@ -67,36 +67,28 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return &*_begin;
 			#endif
 		}
-		
-		constexpr CTRE_FORCE_INLINE const auto * ptr_end() const noexcept {
-			#if __cpp_char8_t >= 201811
-			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
-				return _end.ptr;
-			} else {
-				return &*_end;
-			}
-			#else
-			return &*_end;
-			#endif
-		}
 
 		constexpr CTRE_FORCE_INLINE auto size() const noexcept {
+			return static_cast<size_t>(std::distance(begin(), end()));
+		}
+		
+		constexpr CTRE_FORCE_INLINE size_t unit_size() const noexcept {
 			#if __cpp_char8_t >= 201811
-			if constexpr (std::is_same_v<char_type, char8_t>) {
-				return static_cast<size_t>(std::distance(data(), ptr_end()));
+			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
+				return static_cast<size_t>(std::distance(_begin.ptr, _end.ptr));
 			}
 			#endif
-			return static_cast<size_t>(std::distance(data(), ptr_end()));
+			return static_cast<size_t>(std::distance(begin(), end()));
 		}
 
 		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			// TODO make sure we are working with contiguous range
-			return std::basic_string_view<char_type>(data(), static_cast<size_t>(size()));
+			return std::basic_string_view<char_type>(data(), static_cast<size_t>(unit_size()));
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
 			// TODO make sure we are working with contiguous range
-			return std::basic_string<char_type>(data(), ptr_end());
+			return std::basic_string<char_type>(data(), static_cast<size_t>(unit_size()));
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
