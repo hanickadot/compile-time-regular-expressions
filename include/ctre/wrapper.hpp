@@ -11,16 +11,28 @@ namespace ctre {
 	
 struct zero_terminated_string_end_iterator {
 	constexpr inline zero_terminated_string_end_iterator() = default;
-	constexpr CTRE_FORCE_INLINE bool operator==(const char * ptr) const noexcept {
+	constexpr CTRE_FORCE_INLINE friend bool operator==(const char * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr == '\0';
 	} 
-	constexpr CTRE_FORCE_INLINE bool operator==(const wchar_t * ptr) const noexcept {
+	constexpr CTRE_FORCE_INLINE friend bool operator==(const wchar_t * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr == 0;
 	} 
-	constexpr CTRE_FORCE_INLINE bool operator!=(const char * ptr) const noexcept {
+	constexpr CTRE_FORCE_INLINE friend bool operator!=(const char * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr != '\0';
 	} 
-	constexpr CTRE_FORCE_INLINE bool operator!=(const wchar_t * ptr) const noexcept {
+	constexpr CTRE_FORCE_INLINE friend bool operator!=(const wchar_t * ptr, zero_terminated_string_end_iterator) noexcept {
+		return *ptr != 0;
+	} 
+	constexpr CTRE_FORCE_INLINE friend bool operator==(zero_terminated_string_end_iterator, const char * ptr) noexcept {
+		return *ptr == '\0';
+	} 
+	constexpr CTRE_FORCE_INLINE friend bool operator==(zero_terminated_string_end_iterator, const wchar_t * ptr) noexcept {
+		return *ptr == 0;
+	} 
+	constexpr CTRE_FORCE_INLINE friend bool operator!=(zero_terminated_string_end_iterator, const char * ptr) noexcept {
+		return *ptr != '\0';
+	} 
+	constexpr CTRE_FORCE_INLINE friend bool operator!=(zero_terminated_string_end_iterator, const wchar_t * ptr) noexcept {
 		return *ptr != 0;
 	} 
 };
