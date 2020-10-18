@@ -2487,6 +2487,10 @@ struct utf8_iterator {
 		return lhs.ptr < lhs.end;
 	}
 	
+	constexpr friend bool operator!=(sentinel, const utf8_iterator & rhs) {
+		return rhs.ptr < rhs.end;
+	}
+	
 	constexpr friend bool operator!=(const utf8_iterator & lhs, const utf8_iterator & rhs) {
 		return lhs.ptr != rhs.ptr;
 	}
