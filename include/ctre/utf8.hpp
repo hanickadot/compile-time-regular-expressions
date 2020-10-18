@@ -4,6 +4,7 @@
 #if __cpp_char8_t >= 201811
 
 #include "utility.hpp"
+#include <string_view>
 #include <iterator>
 
 namespace ctre {
@@ -94,7 +95,7 @@ struct utf8_iterator {
 			return mojibake;
 		}
 
-		const char8_t mask = (0b0010'0000u >> length) - 1;
+		const char8_t mask = (0b0100'0000u >> length) - 1;
 		
 		// length = 1 (2 bytes) mask = 0b0001'1111u
 		// length = 2 (3 bytes) mask = 0b0000'1111u
