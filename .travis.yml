@@ -1,8 +1,8 @@
-sudo: true
 language: cpp
 dist: focal
+os: linux
 
-matrix:
+jobs:
   include:
   - os: linux
     compiler: gcc
