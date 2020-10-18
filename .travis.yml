@@ -17,7 +17,7 @@ jobs:
     compiler: gcc
     env:
       - COMPILER=g++-8
-      - CXX_STANDARD=20
+      - CXX_STANDARD=2a
     addons:
       apt:
         packages: ['g++-8']
