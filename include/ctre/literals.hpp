@@ -31,8 +31,14 @@ namespace literals {
 #ifdef __INTEL_COMPILER
 // not enable literals
 #elif defined __GNUC__
-#if not(__GNUC__ == 9)
+#if __GNUC__ < 9
 #define CTRE_ENABLE_LITERALS
+#elif __GNUC__ >= 10
+#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) 
+// newer versions of GCC will give error when trying to use GNU extension
+#else
+#define CTRE_ENABLE_LITERALS
+#endif	
 #endif
 #endif
 
