@@ -114,19 +114,16 @@ static_assert(!CTRE_CREATE(U"[😍a\\x{1F92A}]+").match(U"😍a😍aa😍😍a�
 constexpr auto m2 = CTRE_CREATE(U"[😍a-z\\x{1F92A}]+").match(U"abc😍😍xyz");
 static_assert(m2.to_view().length() == 8);
 
-//identify<decltype(CTRE_CREATE(u8"😍+"))> i;
-//static_assert(CTRE_CREATE(u8"😍+").match(U"😍"));
-//ctre::match<u8"😍">(u8"😍😍😍");
-
-//static_assert(CTRE_CREATE(u8"😍+").match(u8"😍😍😍"));
+#if __cpp_char8_t >= 201811
+static_assert(CTRE_CREATE(u8"😍+").match(u8"😍😍😍"));
 static_assert(CTRE_CREATE(U"[ěščřabc]+").match(U"ěěcěěař"));
-//static_assert(CTRE_CREATE(u"ěščř").match(u8"ěščř"));
-//static_assert(CTRE_CREATE(L"ěščř").match(u8"ěščř"));
-//static_assert(CTRE_CREATE(u8"ěščř").match(u8"ěščř"));
-//
-//static_assert(CTRE_SYNTAX("\\p{Latin}"));
-//static_assert(!CTRE_SYNTAX("\\p{Latin42}"));
-//
-//static_assert(CTRE_CREATE("\\p{Latin}").match("a"sv));
-//static_assert(CTRE_CREATE("\\p{Emoji}").match("a"sv));
-//
+static_assert(CTRE_CREATE(u"ěščř").match(u8"ěščř"));
+static_assert(CTRE_CREATE(L"ěščř").match(u8"ěščř"));
+static_assert(CTRE_CREATE(u8"ěščř").match(u8"ěščř"));
+#endif
+
+static_assert(CTRE_SYNTAX("\\p{Latin}"));
+static_assert(!CTRE_SYNTAX("\\p{Latin42}"));
+
+static_assert(CTRE_CREATE("\\p{Latin}").match("a"sv));
+static_assert(!CTRE_CREATE("\\p{Emoji}").match("a"sv));

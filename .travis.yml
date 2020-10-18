@@ -42,14 +42,15 @@ jobs:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
         packages: ['g++-8', 'clang-6.0']
 
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-10
-      - CXX_STANDARD=17
-    addons:
-      apt:
-        packages: ['g++-10']
+# FIXME: don't use GCC10 in 17 mode for tests as they are depending on operator""
+#  - os: linux
+#    compiler: gcc
+#    env:
+#      - COMPILER=g++-10
+#      - CXX_STANDARD=17
+#    addons:
+#      apt:
+#        packages: ['g++-10']
 
   - os: linux
     compiler: gcc
