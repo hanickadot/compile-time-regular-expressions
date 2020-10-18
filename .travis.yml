@@ -1,6 +1,6 @@
 sudo: true
 language: cpp
-dist: trusty
+dist: focal
 
 matrix:
   include:
@@ -10,7 +10,6 @@ matrix:
       - COMPILER=g++-8
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-8']
 
   - os: linux
@@ -21,6 +20,14 @@ matrix:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
         packages: ['g++-8', 'clang-6.0']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-10
+    addons:
+      apt:
+        packages: ['g++-10']
 
   - os: linux
     language: python

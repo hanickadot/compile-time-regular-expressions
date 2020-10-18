@@ -209,7 +209,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<assert_end, Tail...>) noexcept {
-	if (end != current) {
+	if (current != end) {
 		return not_matched;
 	}
 	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
