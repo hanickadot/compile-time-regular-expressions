@@ -1343,6 +1343,7 @@ struct assert_end { };
 #ifndef CTRE__UTILITY__HPP
 #define CTRE__UTILITY__HPP
 
+#if __GNUC__ > 9
 #if __has_cpp_attribute(likely)
 #define CTRE_LIKELY [[likely]]
 #else
@@ -1352,6 +1353,10 @@ struct assert_end { };
 #if __has_cpp_attribute(unlikely)
 #define CTRE_UNLIKELY [[unlikely]]
 #else
+#define CTRE_UNLIKELY
+#endif
+#else
+#define CTRE_LIKELY
 #define CTRE_UNLIKELY
 #endif
 
@@ -2523,8 +2528,8 @@ struct utf8_iterator {
 		constexpr char32_t mojibake = 0xFFFDull;
 		
 		// quickpath
-		if (!(*ptr & 0b1000'0000u)) {
-			CTRE_LIKELY return *ptr;
+		if (!(*ptr & 0b1000'0000u)) CTRE_LIKELY {
+			return *ptr;
 		}
  
 		// calculate length based on first 5 bits
@@ -2533,17 +2538,17 @@ struct utf8_iterator {
 		// actual length is number + 1 bytes
 		
 		// length 0 here means it's a bad front unit
-		if (!length {
-			CTRE_UNLIKELY return mojibake;
+		if (!length) CTRE_UNLIKELY {
+			return mojibake;
 		}
 
 		// if part of the utf-8 sequence is past the end
-		if (((ptr + length) >= end) {
-			CTRE_UNLIKELY return mojibake;
+		if (((ptr + length) >= end)) CTRE_UNLIKELY {
+			return mojibake;
 		}
 		
 		if ((ptr[1] >> 6) != 0b10) CTRE_UNLIKELY {
-			CTRE_UNLIKELY return mojibake;
+			return mojibake;
 		}
 
 		const char8_t mask = (0b0100'0000u >> length) - 1;
@@ -2558,22 +2563,22 @@ struct utf8_iterator {
 		char32_t result = ((ptr[0] & mask) << 6) | (ptr[1] & 0b0011'1111u);
 
 		// add rest of trailing units
-		if (length == 1) {
-			CTRE_LIKELY return result;
+		if (length == 1) CTRE_LIKELY {
+			return result;
 		}
 
-		if ((ptr[2] >> 6) != 0b10 {
-			CTRE_UNLIKELY return mojibake;
+		if ((ptr[2] >> 6) != 0b10) CTRE_UNLIKELY {
+			return mojibake;
 		}
 
 		result = (result << 6) | (ptr[2] & 0b0011'1111u);
 
-		if (length == 2) {
-			CTRE_LIKELY return result;
+		if (length == 2) CTRE_LIKELY {
+			return result;
 		}
 
-		if ((ptr[3] >> 6) != 0b10) {
-			CTRE_UNLIKELY return mojibake;
+		if ((ptr[3] >> 6) != 0b10) CTRE_UNLIKELY {
+			return mojibake;
 		}
 
 		return (result << 6) | (ptr[3] & 0b0011'1111u);
