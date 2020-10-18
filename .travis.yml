@@ -43,6 +43,26 @@ jobs:
         packages: ['g++-8', 'clang-6.0']
 
   - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-10.0
+      - CXX_STANDARD=17
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-focal-10.0']
+        packages: ['g++-10', 'clang-10.0']
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-10.0
+      - CXX_STANDARD=2a
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-focal-10.0']
+        packages: ['g++-10', 'clang-10.0']
+
+  - os: linux
     compiler: gcc
     env:
       - COMPILER=g++-10
