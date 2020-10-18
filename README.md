@@ -1,4 +1,4 @@
-# Compile time regular expressions v2
+# Compile time regular expressions v3
 
 [![Build Status](https://travis-ci.org/hanickadot/compile-time-regular-expressions.svg?branch=master)](https://travis-ci.org/hanickadot/compile-time-regular-expressions)
 
@@ -56,7 +56,7 @@ Otherwise you will get missing symbols if you try to use the unicode support wit
 
 * clang 6.0+ (template UDL, C++17 syntax)
 * xcode clang 10.0+ (template UDL, C++17 syntax)
-* gcc 7.4+ (template UDL, C++17 syntax)
+* gcc 8.0+ (template UDL, C++17 syntax)
 * gcc 9.0+ (C++17 & C++20 cNTTP syntax)
 * MSVC 15.8.8+ (C++17 syntax only) (semi-supported, I don't have windows machine)
 
