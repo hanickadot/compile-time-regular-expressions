@@ -7,9 +7,9 @@ IGNORE := $(wildcard tests/benchmark/*.cpp) $(wildcard tests/benchmark-exec/*.cp
 
 DESATOMAT := /bin/false
 
-CPP_STANDARD := $(shell ./cpp-20-check.sh $(CXX))
+CXX_STANDARD := 20
 
-override CXXFLAGS := $(CXXFLAGS) $(CPP_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra -Werror
+override CXXFLAGS := $(CXXFLAGS) -std=c++$(CXX_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra -Werror
 LDFLAGS := 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
@@ -28,7 +28,7 @@ $(TRUE_TARGETS): %: %.o
 	$(CXX)  $< $(LDFLAGS) -o $@ 
 	
 $(OBJECTS): %.o: %.cpp
-	time $(CXX) $(CXXFLAGS) -MMD -c $< -o $@
+	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
 
 -include $(DEPEDENCY_FILES)
 
