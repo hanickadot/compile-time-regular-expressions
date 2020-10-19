@@ -81,6 +81,16 @@ jobs:
       - CXX_STANDARD=17
 
   - os: osx
+    osx_image: xcode10
+    env:
+      - CXX_STANDARD=2a
+
+  - os: osx
+    osx_image: xcode11
+    env:
+      - CXX_STANDARD=17
+
+  - os: osx
     osx_image: xcode11
     env:
       - CXX_STANDARD=2a
