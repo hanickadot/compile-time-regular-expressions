@@ -3668,7 +3668,8 @@ template <typename R, typename Iterator, typename EndIterator, typename Characte
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
 	if (current == end) return not_matched;
 	if (!CharacterLike::match_char(*current)) return not_matched;
-	return evaluate(begin, current+1, end, captures, ctll::list<Tail...>());
+	
+	return evaluate(begin, ++current, end, captures, ctll::list<Tail...>());
 }
 
 // matching strings in patterns
