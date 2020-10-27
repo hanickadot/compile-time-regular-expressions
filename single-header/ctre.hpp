@@ -2513,8 +2513,7 @@ struct utf8_iterator {
 		// the contant is mapping from first 5 bits of first code unit to length of UTF8 code point -1
 		// xxxxx -> yy (5 bits to 2 bits)
 		// 5 bits are 32 combination, and for each I need 2 bits, hence 64 bit constant
-		// (*ptr >> 3)  looks at left 5 bits
-		// << 1  will multiply it by 2
+		// (*ptr >> 2) & 0b111110 look at the left 5 bits ignoring the least significant
 		// & 0b11u  selects only needed two bits
 		// +1  because each iteration is at least one code unit forward
 		
