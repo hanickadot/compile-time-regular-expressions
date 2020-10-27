@@ -62,7 +62,7 @@ struct utf8_iterator {
 		// & 0b11u  selects only needed two bits
 		// +1  because each iteration is at least one code unit forward
 		
-		ptr += ((0x3A55000000000000ull >> ((*ptr >> 3) << 1)) & 0b11u) + 1;
+		ptr += ((0x3A55000000000000ull >> ((*ptr >> 2) & 0b111110u)) & 0b11u) + 1;
 		return *this;
 	}
 	
@@ -76,7 +76,6 @@ struct utf8_iterator {
 	}
 	
 	constexpr char32_t operator*() const noexcept {
-		constexpr uint64_t lengths = 0x3A55000000000000ull;
 		constexpr char32_t mojibake = 0xFFFDull;
 		
 		// quickpath
@@ -85,7 +84,7 @@ struct utf8_iterator {
 		}
  
 		// calculate length based on first 5 bits
-		const unsigned length = (lengths >> ((*ptr >> 3) * 2)) & 0b11u;
+		const unsigned length = ((0x3A55000000000000ull >> ((*ptr >> 2) & 0b111110u)) & 0b11u);
 
 		// actual length is number + 1 bytes
 		
@@ -99,11 +98,11 @@ struct utf8_iterator {
 			return mojibake;
 		}
 		
-		if ((ptr[1] >> 6) != 0b10) CTRE_UNLIKELY {
+		if ((ptr[1] & 0b1100'0000u) != 0b1000'0000) CTRE_UNLIKELY {
 			return mojibake;
 		}
 
-		const char8_t mask = (0b0100'0000u >> length) - 1;
+		const char8_t mask = (0b0011'1111u >> length);
 		
 		// length = 1 (2 bytes) mask = 0b0001'1111u
 		// length = 2 (3 bytes) mask = 0b0000'1111u
@@ -119,7 +118,7 @@ struct utf8_iterator {
 			return result;
 		}
 
-		if ((ptr[2] >> 6) != 0b10) CTRE_UNLIKELY {
+		if ((ptr[2] & 0b1100'0000u) != 0b1000'0000) CTRE_UNLIKELY {
 			return mojibake;
 		}
 
@@ -129,7 +128,7 @@ struct utf8_iterator {
 			return result;
 		}
 
-		if ((ptr[3] >> 6) != 0b10) CTRE_UNLIKELY {
+		if ((ptr[3] & 0b1100'0000u) != 0b1000'0000) CTRE_UNLIKELY {
 			return mojibake;
 		}
 
