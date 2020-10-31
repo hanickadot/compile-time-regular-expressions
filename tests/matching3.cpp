@@ -194,6 +194,8 @@ TEST_MATCH(113, "a+(?!b)", "aaaaaa");
 TEST_MATCH(114, "a+(?!b).", "aaaaaac");
 TEST_MATCH(115, "a+(?=b).", "aaaaaab");
 
+TEST_NOT_MATCH(116, "a++a", "aaa"sv);
+TEST_MATCH(117, "a++a*+", "aaa"sv);
 
 
 

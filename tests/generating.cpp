@@ -128,6 +128,24 @@ static_assert(same_f(CTRE_GEN("[x]{567,1234}"), ctre::repeat<567,1234,ctre::set<
 static_assert(same_f(CTRE_GEN("[^x]{567,1234}"), ctre::repeat<567,1234,ctre::negative_set<ctre::character<'x'>>>()));
 static_assert(same_f(CTRE_GEN("(?:abc){3,42}"), ctre::repeat<3,42,ctre::string<'a','b','c'>>()));
 
+// combine repeat
+static_assert(same_f(CTRE_GEN("x*x*"), ctre::star<ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x+x+"), ctre::repeat<2,0,ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x+x*"), ctre::plus<ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x*x+"), ctre::plus<ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x{1,3}x{2,4}"), ctre::repeat<3,7,ctre::character<'x'>>()));
+
+// combine lazy repeat
+static_assert(same_f(CTRE_GEN("x*?x*?"), ctre::lazy_star<ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x+?x+?"), ctre::lazy_repeat<2,0,ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x+?x*?"), ctre::lazy_plus<ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x*?x+?"), ctre::lazy_plus<ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("x{1,3}?x{2,4}?"), ctre::lazy_repeat<3,7,ctre::character<'x'>>()));
+
+// don't combine different types of repeats
+static_assert(same_f(CTRE_GEN("x+?x+"), ctre::sequence<ctre::lazy_plus<ctre::character<'x'>>, ctre::plus<ctre::character<'x'>>>()));
+
+
 // possessive/lazy
 static_assert(same_f(CTRE_GEN("c++"), ctre::possessive_plus<ctre::character<'c'>>()));
 static_assert(same_f(CTRE_GEN("c+?"), ctre::lazy_plus<ctre::character<'c'>>()));
