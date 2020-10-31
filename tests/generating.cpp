@@ -105,6 +105,8 @@ static_assert(same_f(CTRE_GEN("(?:a|b|c|)"), ctre::select<ctre::character<'a'>,c
 // optional
 static_assert(same_f(CTRE_GEN("xx?"), ctre::sequence<ctre::character<'x'>,ctre::optional<ctre::character<'x'>>>()));
 static_assert(same_f(CTRE_GEN("(?:abc)?"), ctre::optional<ctre::string<'a','b','c'>>()));
+static_assert(same_f(CTRE_GEN("(?:x)?"), ctre::optional<ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("(?:x?)?"), ctre::optional<ctre::character<'x'>>()));
 
 // repeat
 static_assert(same_f(CTRE_GEN("x+"), ctre::plus<ctre::character<'x'>>()));
