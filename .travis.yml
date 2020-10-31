@@ -62,14 +62,15 @@ jobs:
         packages: ['g++-10']
 
   - os: linux
-    language: python
-    python: "3.6"
-    services:
-      - docker
+  	language: python
+    compiler: gcc
+    python: "3.8"
     env:
-      - COMPILER=g++-8
-      - CONAN_GCC_VERSIONS=8
-      - CONAN_DOCKER_IMAGE=lasote/conangcc8
+      - COMPILER=g++-10
+      - CXX_STANDARD=20
+    addons:
+      apt:
+        packages: ['g++-10']
     install:
        - pip install -U conan conan-package-tools
     script:
