@@ -1304,22 +1304,23 @@ template <size_t Id> struct numeric_mark { };
 // actual AST of regexp
 template <auto... Str> struct string { };
 template <typename... Opts> struct select { };
-template <typename... Content> struct optional { };
-template <typename... Content> struct lazy_optional { };
 template <typename... Content> struct sequence { };
 struct empty { };
 
-template <typename... Content> struct plus { };
-template <typename... Content> struct star { };
 template <size_t a, size_t b, typename... Content> struct repeat { };
+template <typename... Content> using plus = repeat<1,0,Content...>;
+template <typename... Content> using star = repeat<0,0,Content...>;
 
-template <typename... Content> struct lazy_plus { };
-template <typename... Content> struct lazy_star { };
 template <size_t a, size_t b, typename... Content> struct lazy_repeat { };
+template <typename... Content> using lazy_plus = lazy_repeat<1,0,Content...>;
+template <typename... Content> using lazy_star = lazy_repeat<0,0,Content...>;
 
-template <typename... Content> struct possessive_plus { };
-template <typename... Content> struct possessive_star { };
 template <size_t a, size_t b, typename... Content> struct possessive_repeat { };
+template <typename... Content> using possessive_plus = possessive_repeat<1,0,Content...>;
+template <typename... Content> using possessive_star = possessive_repeat<0,0,Content...>;
+
+template <typename... Content> using optional = repeat<0,1,Content...>;
+template <typename... Content> using lazy_optional = lazy_repeat<0,1,Content...>;
 
 template <size_t Index, typename... Content> struct capture { };
 
@@ -3755,30 +3756,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 	return not_matched;
 }
 
-// matching optional in patterns
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<optional<Content...>, Tail...>) noexcept {
-	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, Tail...>())) {
-		return r1;
-	} else if (auto r2 = evaluate(begin, current, end, captures, ctll::list<Tail...>())) {
-		return r2;
-	} else {
-		return not_matched;
-	}
-}
-
-// lazy optional
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lazy_optional<Content...>, Tail...>) noexcept {
-	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<Tail...>())) {
-		return r1;
-	} else if (auto r2 = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, Tail...>())) {
-		return r2;
-	} else {
-		return not_matched;
-	}
-}
-
 // matching sequence in patterns
 template <typename R, typename Iterator, typename EndIterator, typename HeadContent, typename... TailContent, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<sequence<HeadContent, TailContent...>, Tail...>) noexcept {
@@ -3941,42 +3918,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 #endif
 
-}
-
-// repeat lazy_star
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lazy_star<Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures, ctll::list<lazy_repeat<0,0,Content...>, Tail...>());
-}
-
-// repeat (lazy_plus)
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lazy_plus<Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures, ctll::list<lazy_repeat<1,0,Content...>, Tail...>());
-}
-
-// repeat (possessive_star)
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<possessive_star<Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<0,0,Content...>, Tail...>());
-}
-
-// repeat (possessive_plus)
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<possessive_plus<Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<1,0,Content...>, Tail...>());
-}
-
-// repeat (greedy) star
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<star<Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures, ctll::list<repeat<0,0,Content...>, Tail...>());
-}
-
-// repeat (greedy) plus
-template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<plus<Content...>, Tail...>) noexcept {
-	return evaluate(begin, current, end, captures, ctll::list<repeat<1,0,Content...>, Tail...>());
 }
 
 // capture (numeric ID)
