@@ -46,6 +46,7 @@ struct pcre_actions {
 #include "actions/sequence.inc.hpp"
 #include "actions/set.inc.hpp"
 #include "actions/properties.inc.hpp"
+#include "actions/fusion.inc.hpp"
 
 };
 
