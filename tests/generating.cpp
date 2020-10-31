@@ -142,6 +142,39 @@ static_assert(same_f(CTRE_GEN("x+?x*?"), ctre::lazy_plus<ctre::character<'x'>>()
 static_assert(same_f(CTRE_GEN("x*?x+?"), ctre::lazy_plus<ctre::character<'x'>>()));
 static_assert(same_f(CTRE_GEN("x{1,3}?x{2,4}?"), ctre::lazy_repeat<3,7,ctre::character<'x'>>()));
 
+// combine possessive
+
+template <typename T> struct identify;
+
+//auto v = CTRE_GEN("a{0,0}+a{1,0}+");
+//identify<decltype(v)> i;
+
+static_assert(same_f(CTRE_GEN("a{0,0}+a{0,0}+"), ctre::possessive_repeat<0,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,0}+a{0,0}+"), ctre::possessive_repeat<1,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{0,0}+a{1,0}+"), ctre::sequence<ctre::reject, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,0}+a{1,0}+"), ctre::sequence<ctre::reject, ctre::character<'a'>>()));
+
+static_assert(same_f(CTRE_GEN("a{0,1}+a{0,0}+"), ctre::possessive_repeat<0,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,1}+a{0,0}+"), ctre::possessive_repeat<1,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{0,1}+a{1,0}+"), ctre::possessive_repeat<2,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,1}+a{1,0}+"), ctre::possessive_repeat<2,0, ctre::character<'a'>>()));
+
+static_assert(same_f(CTRE_GEN("a{0,0}+a{0,1}+"), ctre::possessive_repeat<0,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,0}+a{0,1}+"), ctre::possessive_repeat<1,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{0,0}+a{1,1}+"), ctre::sequence<ctre::reject, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,0}+a{1,1}+"), ctre::sequence<ctre::reject, ctre::character<'a'>>()));
+
+static_assert(same_f(CTRE_GEN("a{0,1}+a{0,1}+"), ctre::possessive_repeat<0,2, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,1}+a{0,1}+"), ctre::possessive_repeat<1,2, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{0,1}+a{1,1}+"), ctre::possessive_repeat<2,2, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,1}+a{1,1}+"), ctre::possessive_repeat<2,2, ctre::character<'a'>>()));
+
+static_assert(same_f(CTRE_GEN("a{1,2}+a{2,0}+"), ctre::possessive_repeat<4,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,2}+a{1,2}+"), ctre::possessive_repeat<3,4, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,1}+a{2,0}+"), ctre::possessive_repeat<3,0, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("a{1,1}+a{1,2}+"), ctre::possessive_repeat<2,3, ctre::character<'a'>>()));
+
+
 // don't combine different types of repeats
 static_assert(same_f(CTRE_GEN("x+?x+"), ctre::sequence<ctre::lazy_plus<ctre::character<'x'>>, ctre::plus<ctre::character<'x'>>>()));
 

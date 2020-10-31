@@ -2277,7 +2277,7 @@ static constexpr size_t combine_max_repeat_length(size_t A, size_t B) {
 }
 
 // concat repeat sequences
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<repeat<MinA, MaxA, Content...>, repeat<MinB, MaxB, Content...>, Ts...>, Parameters> subject) {
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<repeat<MinB, MaxB, Content...>, repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
 	constexpr size_t A = MinA + MinB;
 	constexpr size_t B = combine_max_repeat_length(MaxA, MaxB);
 	
@@ -2285,11 +2285,30 @@ template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename..
 }
 
 // concat lazy repeat seqeunces
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<lazy_repeat<MinA, MaxA, Content...>, lazy_repeat<MinB, MaxB, Content...>, Ts...>, Parameters> subject) {
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<lazy_repeat<MinB, MaxB, Content...>, lazy_repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
 	constexpr size_t A = MinA + MinB;
 	constexpr size_t B = combine_max_repeat_length(MaxA, MaxB);
 	
 	return pcre_context{ctll::push_front(lazy_repeat<A, B, Content...>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// concat possessive repeat seqeunces
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<possessive_repeat<MinB, MaxB, Content...>, possessive_repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
+
+	constexpr bool first_is_unbounded = (MaxA == 0);
+	constexpr bool second_is_nonempty = (MinB > 0);
+	constexpr bool second_can_be_empty = (MinB == 0);
+	
+	if constexpr (first_is_unbounded && second_is_nonempty) {
+		// will always reject, but I keep the content, so I have some amount of captures
+		return pcre_context{ctll::push_front(sequence<reject, Content...>(), ctll::list<Ts...>()), subject.parameters};
+	} else if constexpr (first_is_unbounded) {
+		return pcre_context{ctll::push_front(possessive_repeat<MinA, MaxA, Content...>(), ctll::list<Ts...>()), subject.parameters};
+	} else if constexpr (second_can_be_empty) {
+		return pcre_context{ctll::push_front(possessive_repeat<MinA, combine_max_repeat_length(MaxA, MaxB), Content...>(), ctll::list<Ts...>()), subject.parameters};
+	} else {
+		return pcre_context{ctll::push_front(possessive_repeat<MaxA + MinB, combine_max_repeat_length(MaxA, MaxB), Content...>(), ctll::list<Ts...>()), subject.parameters};
+	}
 }
 
 #endif
