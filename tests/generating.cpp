@@ -134,6 +134,7 @@ static_assert(same_f(CTRE_GEN("x+x+"), ctre::repeat<2,0,ctre::character<'x'>>())
 static_assert(same_f(CTRE_GEN("x+x*"), ctre::plus<ctre::character<'x'>>()));
 static_assert(same_f(CTRE_GEN("x*x+"), ctre::plus<ctre::character<'x'>>()));
 static_assert(same_f(CTRE_GEN("x{1,3}x{2,4}"), ctre::repeat<3,7,ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("a?a?a?"), ctre::repeat<0,3,ctre::character<'a'>>()));
 
 // combine lazy repeat
 static_assert(same_f(CTRE_GEN("x*?x*?"), ctre::lazy_star<ctre::character<'x'>>()));
@@ -141,14 +142,9 @@ static_assert(same_f(CTRE_GEN("x+?x+?"), ctre::lazy_repeat<2,0,ctre::character<'
 static_assert(same_f(CTRE_GEN("x+?x*?"), ctre::lazy_plus<ctre::character<'x'>>()));
 static_assert(same_f(CTRE_GEN("x*?x+?"), ctre::lazy_plus<ctre::character<'x'>>()));
 static_assert(same_f(CTRE_GEN("x{1,3}?x{2,4}?"), ctre::lazy_repeat<3,7,ctre::character<'x'>>()));
+static_assert(same_f(CTRE_GEN("a?+a?+a?+"), ctre::lazy_repeat<0,3,ctre::character<'a'>>()));
 
 // combine possessive
-
-template <typename T> struct identify;
-
-//auto v = CTRE_GEN("a{0,0}+a{1,0}+");
-//identify<decltype(v)> i;
-
 static_assert(same_f(CTRE_GEN("a{0,0}+a{0,0}+"), ctre::possessive_repeat<0,0, ctre::character<'a'>>()));
 static_assert(same_f(CTRE_GEN("a{1,0}+a{0,0}+"), ctre::possessive_repeat<1,0, ctre::character<'a'>>()));
 static_assert(same_f(CTRE_GEN("a{0,0}+a{1,0}+"), ctre::sequence<ctre::reject, ctre::character<'a'>>()));
