@@ -42,9 +42,9 @@ template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename..
 // concat possessive repeat seqeunces
 template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<possessive_repeat<MinB, MaxB, Content...>, possessive_repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
 
-	constexpr bool first_is_unbounded = (MaxA == 0);
-	constexpr bool second_is_nonempty = (MinB > 0);
-	constexpr bool second_can_be_empty = (MinB == 0);
+	[[maybe_unused]] constexpr bool first_is_unbounded = (MaxA == 0);
+	[[maybe_unused]] constexpr bool second_is_nonempty = (MinB > 0);
+	[[maybe_unused]] constexpr bool second_can_be_empty = (MinB == 0);
 	
 	if constexpr (first_is_unbounded && second_is_nonempty) {
 		// will always reject, but I keep the content, so I have some amount of captures
