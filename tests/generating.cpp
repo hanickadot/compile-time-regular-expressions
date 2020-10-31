@@ -169,6 +169,11 @@ static_assert(same_f(CTRE_GEN("^abc$"), ctre::sequence<ctre::assert_begin, ctre:
 
 static_assert(same_f(CTRE_GEN("^a|b$"), ctre::select<ctre::sequence<ctre::assert_begin, ctre::character<'a'>>, ctre::sequence<ctre::character<'b'>, ctre::assert_end>>()));
 
+// atomic group
+static_assert(same_f(CTRE_GEN("(?>a)"), ctre::atomic_group<ctre::character<'a'>>())); 
+static_assert(same_f(CTRE_GEN("(?>ab)"), ctre::atomic_group<ctre::string<'a','b'>>())); 
+static_assert(same_f(CTRE_GEN("(?>a+b)"), ctre::atomic_group<ctre::plus<ctre::character<'a'>>,ctre::character<'b'>>())); 
+
 // lookahead positive/negative
 static_assert(same_f(CTRE_GEN("(?=a)"), ctre::lookahead_positive<ctre::character<'a'>>()));
 static_assert(same_f(CTRE_GEN("(?=ax)"), ctre::lookahead_positive<ctre::string<'a','x'>>()));

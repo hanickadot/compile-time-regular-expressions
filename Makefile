@@ -1,4 +1,4 @@
-.PHONY: default all clean grammar compare single-header single-header/ctre.hpp
+.PHONY: default all clean grammar compare single-header single-header/ctre.hpp single-header/ctre-unicode.hpp single-header/unicode-db.hpp
 
 default: all
 	

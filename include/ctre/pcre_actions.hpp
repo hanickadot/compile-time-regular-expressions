@@ -32,6 +32,7 @@ template <size_t Id> struct capture_id { };
 	
 struct pcre_actions {
 // i know it's ugly, but it's more readable
+#include "actions/atomic_group.inc.hpp"
 #include "actions/asserts.inc.hpp"
 #include "actions/backreference.inc.hpp"
 #include "actions/capture.inc.hpp"

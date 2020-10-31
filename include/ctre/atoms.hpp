@@ -47,6 +47,10 @@ template <typename Type> struct look_start { };
 template <typename... Content> struct lookahead_positive { };
 template <typename... Content> struct lookahead_negative { };
 
+struct atomic_start { };
+
+template <typename... Content> struct atomic_group { };
+
 struct assert_begin { };
 struct assert_end { };
 

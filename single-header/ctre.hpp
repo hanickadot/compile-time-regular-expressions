@@ -935,6 +935,7 @@ struct pcre {
 	struct finish_hexdec: ctll::action {};
 	struct look_finish: ctll::action {};
 	struct make_alternate: ctll::action {};
+	struct make_atomic: ctll::action {};
 	struct make_back_reference: ctll::action {};
 	struct make_capture: ctll::action {};
 	struct make_capture_with_name: ctll::action {};
@@ -975,6 +976,7 @@ struct pcre {
 	struct set_make: ctll::action {};
 	struct set_make_negative: ctll::action {};
 	struct set_start: ctll::action {};
+	struct start_atomic: ctll::action {};
 	struct start_lookahead_negative: ctll::action {};
 	struct start_lookahead_positive: ctll::action {};
 
@@ -1096,6 +1098,7 @@ struct pcre {
 
 	static constexpr auto rule(d, ctll::term<'<'>) -> ctll::push<ctll::anything, block_name, ctll::term<'>'>, content_in_capture, make_capture_with_name, ctll::term<'\x29'>>;
 	static constexpr auto rule(d, ctll::term<':'>) -> ctll::push<reset_capture, ctll::anything, content_in_capture, ctll::term<'\x29'>>;
+	static constexpr auto rule(d, ctll::term<'>'>) -> ctll::push<reset_capture, ctll::anything, start_atomic, content_in_capture, make_atomic, ctll::term<'\x29'>>;
 	static constexpr auto rule(d, ctll::term<'!'>) -> ctll::push<reset_capture, ctll::anything, start_lookahead_negative, content_in_capture, look_finish, ctll::term<'\x29'>>;
 	static constexpr auto rule(d, ctll::term<'='>) -> ctll::push<reset_capture, ctll::anything, start_lookahead_positive, content_in_capture, look_finish, ctll::term<'\x29'>>;
 
@@ -1329,6 +1332,10 @@ template <typename Type> struct look_start { };
 
 template <typename... Content> struct lookahead_positive { };
 template <typename... Content> struct lookahead_negative { };
+
+struct atomic_start { };
+
+template <typename... Content> struct atomic_group { };
 
 struct assert_begin { };
 struct assert_end { };
@@ -1773,6 +1780,26 @@ template <size_t Id> struct capture_id { };
 	
 struct pcre_actions {
 // i know it's ugly, but it's more readable
+#ifndef CTRE__ACTIONS__ATOMIC_GROUP__HPP
+#define CTRE__ACTIONS__ATOMIC_GROUP__HPP
+
+// atomic start
+template <auto V, typename... Ts, size_t Counter> static constexpr auto apply(pcre::start_atomic, ctll::term<V>, pcre_context<ctll::list<Ts...>, pcre_parameters<Counter>>) {
+	return pcre_context{ctll::list<atomic_start, Ts...>(), pcre_parameters<Counter>()};
+}
+
+// atomic
+template <auto V, typename Atomic, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_atomic, ctll::term<V>, pcre_context<ctll::list<Atomic, atomic_start, Ts...>, pcre_parameters<Counter>>) {
+	return pcre_context{ctll::list<atomic_group<Atomic>, Ts...>(), pcre_parameters<Counter>()};
+}
+
+// atomic sequence
+template <auto V, typename... Atomic, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_atomic, ctll::term<V>, pcre_context<ctll::list<sequence<Atomic...>, atomic_start, Ts...>, pcre_parameters<Counter>>) {
+	return pcre_context{ctll::list<atomic_group<Atomic...>, Ts...>(), pcre_parameters<Counter>()};
+}
+
+#endif
+
 #ifndef CTRE__ACTIONS__ASSERTS__HPP
 #define CTRE__ACTIONS__ASSERTS__HPP
 

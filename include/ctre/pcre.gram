@@ -63,6 +63,7 @@ number2->epsilon | num,[push_number],<number2>
 preblock->open,[prepare_capture],<block>
 
 block-><content_in_capture>,[make_capture],close
+block->questionmark,[reset_capture],angle_close,[start_atomic],<content_in_capture>,[make_atomic],close
 block->questionmark,[reset_capture],equal_sign,[start_lookahead_positive],<content_in_capture>,[look_finish],close
 block->questionmark,[reset_capture],exclamation_mark,[start_lookahead_negative],<content_in_capture>,[look_finish],close
 block->questionmark,[reset_capture],colon,<content_in_capture>,close
