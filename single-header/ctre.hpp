@@ -2143,8 +2143,18 @@ template <auto V, typename A, typename... Ts, typename Parameters> static conste
 	return pcre_context{ctll::push_front(optional<A>(), ctll::list<Ts...>()), subject.parameters};
 }
 
+// in case inner optional is lazy, result should be lazy too
+template <auto V, typename A, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_optional, ctll::term<V>, pcre_context<ctll::list<lazy_optional<A>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(lazy_optional<A>(), ctll::list<Ts...>()), subject.parameters};
+}
+
 // make_lazy (optional)
 template <auto V, typename... Subject, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_lazy, ctll::term<V>, pcre_context<ctll::list<optional<Subject...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(lazy_optional<Subject...>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// if you already got a lazy optional, make_lazy is no-op
+template <auto V, typename... Subject, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_lazy, ctll::term<V>, pcre_context<ctll::list<lazy_optional<Subject...>, Ts...>, Parameters> subject) {
 	return pcre_context{ctll::push_front(lazy_optional<Subject...>(), ctll::list<Ts...>()), subject.parameters};
 }
 
