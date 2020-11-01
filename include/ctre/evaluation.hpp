@@ -408,6 +408,115 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 }
 
+// atomic groups
+template <typename R, typename Iterator, typename EndIterator, typename HeadContent, typename... TailContent, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<atomic_group<HeadContent, TailContent...>, Tail...>) noexcept {
+	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<HeadContent, end_cycle_mark>())) { //find the first match like a regular sequence*
+			captures = r1.unmatch();
+			current = r1.get_end_position();
+			if constexpr (sizeof...(TailContent) > 0) {
+				return evaluate(begin, current, end, captures, ctll::list<atomic_group<TailContent...>, Tail...>()); //continue w/o being able to backtrack past the atomic group
+			} else {
+				return evaluate(begin, current, end, captures, ctll::list<Tail...>()); //continue w/o being able to backtrack past the atomic group
+			}
+	} else {
+		return not_matched;
+	}
+}
+
+// turns sequences into atomic sequences...
+template <typename R, typename Iterator, typename EndIterator, typename HeadContent, typename... Content, typename... TailContent, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<atomic_group<sequence<HeadContent, Content...>, TailContent...>, Tail...>) noexcept {
+	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<HeadContent, end_cycle_mark>())) { //find the first match like a regular sequence*
+		captures = r1.unmatch();
+		current = r1.get_end_position();
+		//continue w/o being able to backtrack past the atomic group
+		if constexpr (sizeof...(Content) > 0 && sizeof...(TailContent) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<Content..., TailContent...>, Tail...>()); 
+		} else if (sizeof...(Content) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<Content...>, Tail...>());
+		} else if (sizeof...(TailContent) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<TailContent...>, Tail...>());
+		} else {
+			return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+		}
+	} else {
+		return not_matched;
+	}
+}
+
+// appends atomic sequences together...
+template <typename R, typename Iterator, typename EndIterator, typename HeadContent, typename... Content, typename... TailContent, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<atomic_group<atomic_group<HeadContent, Content...>, TailContent...>, Tail...>) noexcept {
+	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<HeadContent, end_cycle_mark>())) { //find the first match like a regular sequence*
+		captures = r1.unmatch();
+		current = r1.get_end_position();
+		//continue w/o being able to backtrack past the atomic group
+		if constexpr (sizeof...(Content) > 0 && sizeof...(TailContent) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<Content..., TailContent...>, Tail...>()); 
+		} else if (sizeof...(Content) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<Content...>, Tail...>());
+		} else if (sizeof...(TailContent) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<TailContent...>, Tail...>());
+		} else {
+			return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+		}
+	} else {
+		return not_matched;
+	}
+}
+
+// turns repeats into possessive repeats...
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... TailContent, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<atomic_group<repeat<A,B, Content...>, TailContent...>, Tail...>) noexcept {
+	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, end_cycle_mark>())) { //find the first match like a regular sequence*
+		captures = r1.unmatch();
+		current = r1.get_end_position();
+		//continue w/o being able to backtrack past the atomic group
+		if constexpr (sizeof...(TailContent) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<TailContent...>, Tail...>());
+		} else {
+			return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+		}
+	} else {
+		return not_matched;
+	}
+}
+
+// makes captures atomic capture (string ID)
+template <typename R, typename Iterator, typename EndIterator, size_t Id, typename Name, typename... Content, typename... TailContent, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<atomic_group<capture_with_name<Id, Name, Content...>, TailContent...>, Tail...>) noexcept {
+	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<capture_with_name<Id, Name, atomic_group<Content...>>, end_cycle_mark>())) {
+		captures = r1.unmatch();
+		current = r1.get_end_position();
+		//continue w/o being able to backtrack past the atomic group
+		if constexpr (sizeof...(TailContent) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<TailContent...>, Tail...>());
+		} else {
+			return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+		}
+	} else {
+		return not_matched;
+	}
+}
+
+// makes captures atomic (numeric ID)
+template <typename R, typename Iterator, typename EndIterator, size_t Id, typename... Content, typename... TailContent, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<atomic_group<capture<Id, Content...>, TailContent...>, Tail...>) noexcept {
+	if (auto r1 = evaluate(begin, current, end, captures, ctll::list<capture<Id,atomic_group<Content...>>, end_cycle_mark>())) {
+		captures = r1.unmatch();
+		current = r1.get_end_position();
+		//continue w/o being able to backtrack past the atomic group
+		if constexpr (sizeof...(TailContent) > 0) {
+			return evaluate(begin, current, end, captures, ctll::list<atomic_group<TailContent...>, Tail...>());
+		} else {
+			return evaluate(begin, current, end, captures, ctll::list<Tail...>());
+		}
+	} else {
+		return not_matched;
+	}
+}
+
 // property matching
 
 
