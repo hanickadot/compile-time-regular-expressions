@@ -74,7 +74,7 @@ template <size_t N> struct fixed_string {
 				}
 			#else
 				for (size_t i{0}; i < N; ++i) {
-					content[i] = static_cast<uint8_t>(input[i]);
+					content[i] = input[i];
 					if ((i == (N-1)) && (input[i] == 0)) break;
 					real_size++;
 				}

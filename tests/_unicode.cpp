@@ -127,3 +127,9 @@ static_assert(!CTRE_SYNTAX("\\p{Latin42}"));
 
 static_assert(CTRE_CREATE("\\p{Latin}").match("a"sv));
 static_assert(!CTRE_CREATE("\\p{Emoji}").match("a"sv));
+
+// not unicode at all
+static_assert(CTRE_CREATE("щ").match("щ"));
+#if __cpp_char8_t >= 201811
+static_assert(!CTRE_CREATE("щ").match(u8"щ"));
+#endif

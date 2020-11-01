@@ -309,7 +309,7 @@ template <size_t N> struct fixed_string {
 				}
 			#else
 				for (size_t i{0}; i < N; ++i) {
-					content[i] = static_cast<uint8_t>(input[i]);
+					content[i] = input[i];
 					if ((i == (N-1)) && (input[i] == 0)) break;
 					real_size++;
 				}
@@ -1396,7 +1396,7 @@ public:
 
 template <auto V> struct character {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return value == V;
+		return static_cast<decltype(V)>(value) == V;
 	}
 };
 
@@ -1426,7 +1426,7 @@ template <typename... Content> struct negate {
 
 template <auto A, auto B> struct char_range {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return (value >= A) && (value <= B);
+		return (static_cast<decltype(A)>(value) >= A) && (static_cast<decltype(B)>(value) <= B);
 	}
 };
 
@@ -3792,7 +3792,7 @@ template <typename Iterator> struct string_match_result {
 };
 
 template <auto Head, auto... String, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, const EndIterator end) noexcept {
-	if ((end != current) && (Head == *current)) {
+	if ((end != current) && (Head == static_cast<decltype(Head)>(*current))) {
 		if constexpr (sizeof...(String) > 0) {
 			return evaluate_match_string<String...>(++current, end);
 		} else {

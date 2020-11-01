@@ -19,7 +19,7 @@ public:
 
 template <auto V> struct character {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return value == V;
+		return static_cast<decltype(V)>(value) == V;
 	}
 };
 
@@ -49,7 +49,7 @@ template <typename... Content> struct negate {
 
 template <auto A, auto B> struct char_range {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return (value >= A) && (value <= B);
+		return (static_cast<decltype(A)>(value) >= A) && (static_cast<decltype(B)>(value) <= B);
 	}
 };
 
