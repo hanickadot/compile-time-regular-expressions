@@ -5,6 +5,21 @@ os: linux
 jobs:
   include:
   - os: linux
+    language: python
+    compiler: gcc
+    python: "3.8"
+    env:
+      - COMPILER=g++-10
+      - CXX_STANDARD=20
+    addons:
+      apt:
+        packages: ['g++-10']
+    install:
+      - pip install -U "conan<1.30" conan-package-tools
+    script:
+      - python .conan/build.py
+
+  - os: linux
     compiler: gcc
     env:
       - COMPILER=g++-8
@@ -60,21 +75,6 @@ jobs:
     addons:
       apt:
         packages: ['g++-10']
-
-  - os: linux
-    language: python
-    compiler: gcc
-    python: "3.8"
-    env:
-      - COMPILER=g++-10
-      - CXX_STANDARD=20
-    addons:
-      apt:
-        packages: ['g++-10']
-    install:
-      - pip install -U "conan<1.30" conan-package-tools
-    script:
-      - python .conan/build.py
 
   - os: osx
     osx_image: xcode10
