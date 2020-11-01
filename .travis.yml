@@ -6,17 +6,15 @@ jobs:
   include:
   - os: linux
     language: python
-    compiler: gcc
-    python: "3.8"
+    python: "3.6"
+    services:
+      - docker
     env:
-      - CONAN_GCC_VERSIONS=9
-      - COMPILER=g++-9
-      - CXX_STANDARD=20
-    addons:
-      apt:
-        packages: ['g++-9', 'gcc-9-multilib', 'g++-9-multilib', 'linux-libc-dev']
+      - COMPILER=g++-8
+      - CONAN_GCC_VERSIONS=8
+      - CONAN_DOCKER_IMAGE=lasote/conangcc8
     install:
-      - pip install -U "conan<1.30" conan-package-tools
+       - pip install -U "conan<1.30" conan-package-tools
     script:
       - python .conan/build.py
 
