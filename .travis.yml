@@ -14,7 +14,7 @@ jobs:
       - CXX_STANDARD=20
     addons:
       apt:
-        packages: ['g++-9']
+        packages: ['g++-9', 'gcc-9-multilib', 'g++-9-multilib']
     install:
       - pip install -U "conan<1.30" conan-package-tools
     script:
