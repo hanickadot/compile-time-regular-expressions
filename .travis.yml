@@ -9,11 +9,12 @@ jobs:
     compiler: gcc
     python: "3.8"
     env:
-      - COMPILER=g++-10
+      - CONAN_GCC_VERSIONS=9
+      - COMPILER=g++-9
       - CXX_STANDARD=20
     addons:
       apt:
-        packages: ['g++-10']
+        packages: ['g++-9']
     install:
       - pip install -U "conan<1.30" conan-package-tools
     script:
