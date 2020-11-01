@@ -72,7 +72,7 @@ jobs:
       apt:
         packages: ['g++-10']
     install:
-      - pip install -U conan conan-package-tools
+      - pip install -U "conan<1.30" conan-package-tools
     script:
       - python .conan/build.py
 
