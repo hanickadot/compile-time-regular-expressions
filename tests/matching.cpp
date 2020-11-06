@@ -105,3 +105,7 @@ static_assert(match("aaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<'
 static_assert(match("aaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<'a'>>, ctre::string<'a','b'>>()));
 static_assert(match("aaaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<'a'>>, ctre::string<'a','b'>>()));
 static_assert(!match("aaaaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<'a'>>, ctre::string<'a','b'>>()));
+
+// issue #131
+static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::any>>, ctre::character<'x'>>()));
+static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> > >, ctre::character<'x'>>()));
