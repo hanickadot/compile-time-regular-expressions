@@ -286,11 +286,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, assert_end, Tail...>());
 }
 
-template <typename... T> struct identify_type;
-
 // (greedy) repeat 
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 	
 	// TODO do the greedy cycle nicer
 	
