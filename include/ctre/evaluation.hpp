@@ -65,12 +65,9 @@ constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pat
 	return evaluate(begin, it, end, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
-
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R, ...) noexcept {
-	return R{};
-}
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, R, ...) noexcept = delete;
 
 // if we found "accept" object on stack => ACCEPT
 template <typename R, typename Iterator, typename EndIterator> 
@@ -293,7 +290,21 @@ template <typename... T> struct identify_type;
 
 // (greedy) repeat 
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+	
+	// TODO do the greedy cycle nicer
+	
+	// special case for loop-fusion
+	if constexpr (A == 0 && B == 1) {
+		if (auto r1 = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, Tail...>())) {
+			return r1;
+		} else if (auto r2 = evaluate(begin, current, end, captures, ctll::list<Tail...>())) {
+			return r2;
+		} else {
+			return not_matched;
+		}
+	}
+	
 	// check if it can be optimized
 #ifndef CTRE_DISABLE_GREEDY_OPT
 	if constexpr (collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
