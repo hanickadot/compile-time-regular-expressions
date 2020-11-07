@@ -59,8 +59,8 @@ template <typename T> struct item_matcher {
 
 	constexpr auto check(T) { return std::true_type{}; }
 	constexpr auto check(...) { return std::false_type{}; }
-	constexpr auto select(T) { return wrapper<T>{}; }
-	constexpr auto select(...) { return not_selected{}; }
+	constexpr auto select(T) { return not_selected{}; }
+	template <typename Y> constexpr auto select(Y) { return wrapper<Y>{}; }
 };
 
 template <typename T, typename... Ts> constexpr bool exists_in(T, list<Ts...>) noexcept {
@@ -68,7 +68,7 @@ template <typename T, typename... Ts> constexpr bool exists_in(T, list<Ts...>) n
 	return (same.check(Ts{}) || ... || false);
 }
 
-template <typename T, typename... Ts> constexpr bool add_item(T item, list<Ts...> l) noexcept {
+template <typename T, typename... Ts> constexpr auto add_item(T item, list<Ts...> l) noexcept {
 	if constexpr (exists_in(item, l)) {
 		return l;
 	} else {
@@ -76,15 +76,10 @@ template <typename T, typename... Ts> constexpr bool add_item(T item, list<Ts...
 	}
 }
 
-template <typename T, typename... Ts> constexpr bool remove_item(T item, list<Ts...> l) noexcept {
-	if constexpr (!exists_in(item, l)) {
-		return l;
-	} else {
-		item_matcher<T> matcher;
-		return (list<>{} + ... + matcher.select(Ts{}));
-	}
+template <typename T, typename... Ts> constexpr auto remove_item(T, list<Ts...>) noexcept {
+	item_matcher<T> matcher;
+	return decltype((list<>{} + ... + matcher.select(Ts{}))){};
 }
-
 
 }
 

@@ -111,5 +111,5 @@ static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::
 static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> > >, ctre::character<'x'>>()));
 static_assert(match("1yx"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> >, ctre::character<'y'> >, ctre::character<'x'>>()));
 static_assert(match("aaab"sv, ctre::sequence<ctre::possessive_plus<ctre::optional<ctre::character<'a'>>>, ctre::character<'b'>>()));
-//static_assert(match("aaa"sv, ctre::possessive_plus<ctre::select<ctre::empty, ctre::character<'a'>>>()));
+static_assert(match("aaa"sv, ctre::possessive_plus<ctre::select<ctre::empty, ctre::character<'a'>>>()));
 

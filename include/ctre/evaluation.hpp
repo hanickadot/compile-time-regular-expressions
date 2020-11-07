@@ -21,18 +21,18 @@ namespace ctre {
 	
 using no_flags = ctll::list<>;
 
-struct not_allow_empty_match { };
+struct not_empty_match_t { };
 
-template <typename Flag, typename Flags> constexpr CTRE_FORCE_INLINE auto add_flag(Flags flags) {
-	return ctll::add_item(Flag{}, flags);
+template <typename Flags> constexpr CTRE_FORCE_INLINE auto not_empty_match(Flags f) {
+	return ctll::add_item(not_empty_match_t{}, f);
 }
 
-template <typename Flag, typename Flags> constexpr CTRE_FORCE_INLINE auto remove_flag(Flags flags) {
-	return ctll::remove_item(Flag{}, flags);
+template <typename Flags> constexpr CTRE_FORCE_INLINE auto consumed_something(Flags f) {
+	return ctll::remove_item(not_empty_match_t{}, f);
 }
 
-template <typename Flag, typename Flags> constexpr CTRE_FORCE_INLINE auto has_flag(Flags flags) {
-	return ctll::exists_in(Flag{}, flags);
+template <typename Flags> constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(Flags f) {
+	return ctll::exists_in(not_empty_match_t{}, f);
 }
 
 
@@ -95,7 +95,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 // if we found "reject" object on stack => REJECT
 template <typename R, typename... Rest, typename Iterator, typename EndIterator, typename Flags> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, Flags, R, ctll::list<reject, Rest...>) noexcept {
-	return R{}; // just return not matched return type
+	return not_matched;
 }
 
 // mark start of outer capture
@@ -112,19 +112,31 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // mark end of cycle
 template <typename R, typename Iterator, typename EndIterator, typename Flags, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, Flags, R captures, ctll::list<end_cycle_mark>) noexcept {
-	return captures.set_end_mark(current).matched();
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] Flags f, R captures, ctll::list<end_cycle_mark>) noexcept {
+	//if constexpr (cannot_be_empty_match(f)) {
+	//	return not_matched;
+	//} else {
+		return captures.set_end_mark(current).matched();
+	//}
 }
 
+// mark end of nonempty cycle
+template <typename R, typename Iterator, typename EndIterator, typename Flags, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] Flags f, R captures, ctll::list<end_non_empty_cycle_mark>) noexcept {
+	if constexpr (cannot_be_empty_match(f)) {
+		return not_matched;
+	} else {
+	return captures.set_end_mark(current).matched();
+	}
+}
 
 // matching everything which behave as a one character matcher
 
 template <typename R, typename Iterator, typename EndIterator, typename Flags, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags f, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
 	if (current == end) return not_matched;
 	if (!CharacterLike::match_char(*current)) return not_matched;
-	
-	return evaluate(begin, ++current, end, Flags{}, captures, ctll::list<Tail...>());
+	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 
 // matching strings in patterns
@@ -147,11 +159,11 @@ template <auto Head, auto... String, typename Iterator, typename EndIterator, ty
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename Flags, auto... String, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags, R captures, ctll::list<string<String...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<string<String...>, Tail...>) noexcept {
 	if constexpr (sizeof...(String) == 0) {
-		return evaluate(begin, current, end, Flags{}, captures, ctll::list<Tail...>());
-	} else if (auto tmp = evaluate_match_string<String...>(current, end, Flags{}); tmp.match) {
-		return evaluate(begin, tmp.current, end, Flags{}, captures, ctll::list<Tail...>());
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	} else if (auto tmp = evaluate_match_string<String...>(current, end, f); tmp.match) {
+		return evaluate(begin, tmp.current, end, consumed_something(f), captures, ctll::list<Tail...>());
 	} else {
 		return not_matched;
 	}
@@ -208,15 +220,17 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, typename Flags, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
 	// A..B
 	
-	if constexpr (B != 0 && A > B) {
+	constexpr size_t minimum = (cannot_be_empty_match(f) && (A == 0)) ? A + 1 : A;
+	
+	if constexpr (B != 0 && minimum > B) {
 		return not_matched;
 	}
 	
 	size_t i{0};
-	for (; less_than<A>(i); ++i) {
+	for (; less_than<minimum>(i); ++i) {
 		if (auto outer_result = evaluate(begin, current, end, Flags{}, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			captures = outer_result.unmatch();
 			current = outer_result.get_end_position();
@@ -229,7 +243,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		return outer_result;
 	} else {
 		for (; less_than_or_infinite<B>(i); ++i) {
-			if (auto inner_result = evaluate(begin, current, end, Flags{}, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 				auto tmp = current; tmp = inner_result.get_end_position();
 				if (auto outer_result = evaluate(begin, tmp, end, Flags{}, inner_result.unmatch(), ctll::list<Tail...>())) {
 					return outer_result;
@@ -248,19 +262,21 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // possessive repeat
 template <typename R, typename Iterator, typename EndIterator, typename Flags, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags flags, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
 
-	if constexpr ((B != 0) && (A > B)) {
+	constexpr size_t minimum = (cannot_be_empty_match(f) && (A == 0)) ? A + 1 : A;
+
+	if constexpr ((B != 0) && (minimum > B)) {
 		return not_matched;
 	}
 
 	for (size_t i{0}; less_than_or_infinite<B>(i); ++i) {
 		// try as many of inner as possible and then try outer once
-		if (auto inner_result = evaluate(begin, current, end, Flags{}, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_non_empty_cycle_mark>())) {
 			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
-			if (less_than<A>(i)) return not_matched;
+			if (less_than<minimum>(i)) return not_matched;
 			else return evaluate(begin, current, end, Flags{}, captures, ctll::list<Tail...>());
 		}
 	}
@@ -271,16 +287,16 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, typename Flags, size_t A, size_t B, typename... Content, typename... Tail> 
 #ifdef CTRE_MSVC_GREEDY_WORKAROUND
-constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags flags, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 #else
-constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags flags, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
 #endif
 	if (less_than_or_infinite<B>(i)) {
 		 
 		// a*ab
 		// aab
 		
-		if (auto inner_result = evaluate(begin, current, end, Flags{}, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			// TODO MSVC issue:
 			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
 			//  return inner_result
@@ -310,9 +326,11 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 
 // (greedy) repeat 
 template <typename R, typename Iterator, typename EndIterator, typename Flags, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags flags, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+	
+	constexpr size_t minimum = (cannot_be_empty_match(f) && (A == 0)) ? A + 1 : A;
 
-	if constexpr ((B != 0) && (A > B)) {
+	if constexpr ((B != 0) && (minimum > B)) {
 		return not_matched;
 	}
 
@@ -324,8 +342,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	// A..B
 	size_t i{0};
-	for (; less_than<A>(i); ++i) {
-		if (auto inner_result = evaluate(begin, current, end, Flags{}, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+	for (; less_than<minimum>(i); ++i) {
+		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
@@ -375,11 +393,15 @@ template <typename Iterator, typename EndIterator, typename Flags> constexpr CTR
 
 // backreference with name
 template <typename R, typename Id, typename Iterator, typename EndIterator, typename Flags, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags, R captures, ctll::list<back_reference_with_name<Id>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags f, R captures, ctll::list<back_reference_with_name<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto tmp = match_against_range(current, end, ref.begin(), ref.end(), Flags{}); tmp.match) {
-			return evaluate(begin, tmp.current, end, Flags{}, captures, ctll::list<Tail...>());
+			if (ref.begin() != ref.end()) {
+				return evaluate(begin, tmp.current, end, consumed_something(f), captures, ctll::list<Tail...>());
+			} else {
+				return evaluate(begin, tmp.current, end, f, captures, ctll::list<Tail...>());
+			}
 		}
 	}
 	return not_matched;
@@ -387,11 +409,15 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // backreference
 template <typename R, size_t Id, typename Iterator, typename EndIterator, typename Flags, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags, R captures, ctll::list<back_reference<Id>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags f, R captures, ctll::list<back_reference<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto tmp = match_against_range(current, end, ref.begin(), ref.end(), Flags{}); tmp.match) {
-			return evaluate(begin, tmp.current, end, Flags{}, captures, ctll::list<Tail...>());
+			if (ref.begin() != ref.end()) {
+				return evaluate(begin, tmp.current, end, consumed_something(f), captures, ctll::list<Tail...>());
+			} else {
+				return evaluate(begin, tmp.current, end, f, captures, ctll::list<Tail...>());
+			}
 		}
 	}
 	return not_matched;
@@ -400,6 +426,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // end of lookahead
 template <typename R, typename Iterator, typename EndIterator, typename Flags, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, Flags, R captures, ctll::list<end_lookahead_mark>) noexcept {
+	// TODO check interaction with non-empty flag
 	return captures.matched();
 }
 
@@ -425,8 +452,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		return evaluate(begin, current, end, Flags{}, captures, ctll::list<Tail...>());
 	}
 }
-
-// property matching
 
 
 }
