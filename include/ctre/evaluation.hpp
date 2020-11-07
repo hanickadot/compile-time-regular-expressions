@@ -22,6 +22,7 @@ namespace ctre {
 using no_flags = ctll::list<>;
 
 struct not_empty_match_t { };
+struct case_insensitive { };
 
 template <typename Flags> constexpr CTRE_FORCE_INLINE auto not_empty_match(Flags f) {
 	return ctll::add_item(not_empty_match_t{}, f);
@@ -33,6 +34,10 @@ template <typename Flags> constexpr CTRE_FORCE_INLINE auto consumed_something(Fl
 
 template <typename Flags> constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(Flags f) {
 	return ctll::exists_in(not_empty_match_t{}, f);
+}
+
+template <typename Flags> constexpr CTRE_FORCE_INLINE bool is_case_insensitive(Flags f) {
+	return ctll::exists_in(case_insensitive{}, f);
 }
 
 
