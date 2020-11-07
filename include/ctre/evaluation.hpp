@@ -119,9 +119,11 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 template <typename R, typename Iterator, typename EndIterator, typename Flags, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] Flags f, R captures, ctll::list<end_cycle_mark>) noexcept {
 	if constexpr (cannot_be_empty_match(f)) {
+		//puts("end_cycle_mark => CANNOT BE EMPTY");
 		return not_matched;
 	} else {
-	return captures.set_end_mark(current).matched();
+		//puts("end_cycle_mark => OK");
+		return captures.set_end_mark(current).matched();
 	}
 }
 
@@ -139,8 +141,15 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const E
 
 template <typename R, typename Iterator, typename EndIterator, typename Flags, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, Flags f, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
-	if (current == end) return not_matched;
-	if (!CharacterLike::match_char(*current)) return not_matched;
+	if (current == end) {
+		//puts("matching character => FAIL (END)");
+		return not_matched;
+	}
+	if (!CharacterLike::match_char(*current)) {
+		//puts("matching character => FAIL (DIFFERENCE)");
+		return not_matched;
+	}
+	//puts("matching character => OK");
 	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 
@@ -234,44 +243,50 @@ template <typename... Content> std::string stack_string(Content...) {
 template <typename R, typename Iterator, typename EndIterator, typename Flags, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
 	// A..B
-	printf("start lazy cycle: %s\n",stack_string(lazy_repeat<A,B,Content...>{}, Tail{}...).c_str());
+	//printf("start lazy cycle: %s\n",stack_string(lazy_repeat<A,B,Content...>{}, Tail{}...).c_str());
 	constexpr size_t minimum = A;
 	
 	if constexpr (B != 0 && minimum > B) {
-		puts("bigger than minimum");
+		//puts("bigger than minimum");
 		return not_matched;
 	}
 	
 	size_t i{0};
 	for (; less_than<minimum>(i); ++i) {
+		//printf("minimum loop: %s\n",stack_string(sequence<Content...>{}, end_cycle_mark{}).c_str());
 		if (auto outer_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+			//puts("success");
 			captures = outer_result.unmatch();
 			current = outer_result.get_end_position();
 		} else {
-			puts("outer not match (i < minimum)");
+			//puts("outer not match (i < minimum)");
 			return not_matched;
 		}
 	}
 	
-	if (auto outer_result = evaluate(begin, current, end, Flags{}, captures, ctll::list<Tail...>())) {
-		puts("outer match");
+	//printf("outer: %s\n",stack_string(Tail{}...).c_str());
+	if (auto outer_result = evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>())) {
+		//puts("outer match");
 		return outer_result;
-	} 
+	} else {
+		//puts("outer not match");
+	}
 	
 	for (; less_than_or_infinite<B>(i); ++i) {
+		//puts("optional loop");
 		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			auto tmp = current; tmp = inner_result.get_end_position();
 			if (auto outer_result = evaluate(begin, tmp, end, Flags{}, inner_result.unmatch(), ctll::list<Tail...>())) {
-				puts("inner+outer match");
+				//puts("inner+outer match");
 				return outer_result;
 			} else {
 				captures = inner_result.unmatch();
 				current = inner_result.get_end_position();
-				puts("continue...");
+				//puts("continue...");
 				continue;
 			}
 		} else {
-			puts("inner not match");
+			//puts("inner not match");
 			return not_matched;
 		}
 	}
