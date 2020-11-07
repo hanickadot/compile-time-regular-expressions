@@ -242,63 +242,60 @@ template <typename... Content> std::string stack_string(Content...) {
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, typename Flags, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
-	// A..B
-	//printf("start lazy cycle: %s\n",stack_string(lazy_repeat<A,B,Content...>{}, Tail{}...).c_str());
-	constexpr size_t minimum = A;
-	
-	if constexpr (B != 0 && minimum > B) {
-		//puts("bigger than minimum");
+
+	if constexpr (B != 0 && A > B) {
 		return not_matched;
 	}
 	
 	const Iterator backup_current = current;
 	
 	size_t i{0};
-	for (; less_than<minimum>(i); ++i) {
-		//printf("minimum loop: %s\n",stack_string(sequence<Content...>{}, end_cycle_mark{}).c_str());
-		if (auto outer_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			//puts("success");
-			captures = outer_result.unmatch();
-			current = outer_result.get_end_position();
-		} else {
-			//puts("outer not match (i < minimum)");
-			return not_matched;
-		}
+	
+	while (less_than<A>(i)) {
+		auto outer_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+		
+		if (!outer_result) return not_matched;
+		
+		captures = outer_result.unmatch();
+		current = outer_result.get_end_position();
+		
+		++i;
 	}
 	
+	// TODO use value here
 	if (backup_current != current) {
-		//printf("outer: %s\n",stack_string(Tail{}...).c_str());
 		if (auto outer_result = evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>())) {
-			//puts("outer match");
 			return outer_result;
 		}
 	} else {
 		if (auto outer_result = evaluate(begin, current, end, f, captures, ctll::list<Tail...>())) {
-			//puts("outer match");
 			return outer_result;
 		}
 	}
 	
-	
-	for (; less_than_or_infinite<B>(i); ++i) {
-		//puts("optional loop");
-		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			auto tmp = current; tmp = inner_result.get_end_position();
-			if (auto outer_result = evaluate(begin, tmp, end, consumed_something(f), inner_result.unmatch(), ctll::list<Tail...>())) {
-				//puts("inner+outer match");
-				return outer_result;
-			} else {
-				captures = inner_result.unmatch();
-				current = inner_result.get_end_position();
-				//puts("continue...");
-				continue;
-			}
-		} else {
-			//puts("inner not match");
-			return not_matched;
+	while (less_than_or_infinite<B>(i)) {
+		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+		
+		if (!inner_result) return not_matched;
+		
+		auto outer_result = evaluate(begin, inner_result.get_end_position(), end, consumed_something(f), inner_result.unmatch(), ctll::list<Tail...>());
+		
+		if (outer_result) {
+			return outer_result;
 		}
+		
+		captures = inner_result.unmatch();
+		current = inner_result.get_end_position();
+		
+		++i;
 	}
-	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	
+	// rest of regex
+	if (backup_current != current) {
+		return evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>());
+	} else {
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	}
 }
 
 // possessive repeat
@@ -313,13 +310,15 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 	for (size_t i{0}; less_than_or_infinite<B>(i); ++i) {
 		// try as many of inner as possible and then try outer once
-		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			captures = inner_result.unmatch();
-			current = inner_result.get_end_position();
-		} else {
+		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+		
+		if (!inner_result) {
 			if (!less_than<A>(i)) break;
 			return not_matched;
 		}
+		
+		captures = inner_result.unmatch();
+		current = inner_result.get_end_position();
 	}
 	
 	if (backup_current != current) {
@@ -341,7 +340,7 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 		// a*ab
 		// aab
 		
-		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>())) {
 			// TODO MSVC issue:
 			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
 			//  return inner_result
@@ -385,14 +384,17 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	// A..B
 	size_t i{0};
-	for (; less_than<A>(i); ++i) {
-		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-			captures = inner_result.unmatch();
-			current = inner_result.get_end_position();
-		} else {
-			return not_matched;
-		}
+	while (less_than<A>(i)) {
+		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+		
+		if (!inner_result) return not_matched;
+		
+		captures = inner_result.unmatch();
+		current = inner_result.get_end_position();
+		
+		++i;
 	}
+	
 #ifdef CTRE_MSVC_GREEDY_WORKAROUND
 	R result;
 	evaluate_recursive(result, i, begin, current, end, f, captures, stack);

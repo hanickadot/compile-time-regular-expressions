@@ -19,6 +19,7 @@ using namespace std::string_view_literals;
 
 // issue #131
 static_assert(match("x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::any>>, ctre::character<'x'>>()));
+static_assert(match("1x"sv, ctre::sequence<ctre::lazy_optional<ctre::lazy_star<ctre::any>>, ctre::character<'x'>>()));
 static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::any>>, ctre::character<'x'>>()));
 static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> > >, ctre::character<'x'>>()));
 static_assert(match("1yx"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> >, ctre::character<'y'> >, ctre::character<'x'>>()));
