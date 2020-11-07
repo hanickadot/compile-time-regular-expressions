@@ -118,11 +118,11 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // mark end of cycle
 template <typename R, typename Iterator, typename EndIterator, typename Flags, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] Flags f, R captures, ctll::list<end_cycle_mark>) noexcept {
-	//if constexpr (cannot_be_empty_match(f)) {
-	//	return not_matched;
-	//} else {
-		return captures.set_end_mark(current).matched();
-	//}
+	if constexpr (cannot_be_empty_match(f)) {
+		return not_matched;
+	} else {
+	return captures.set_end_mark(current).matched();
+	}
 }
 
 // mark end of nonempty cycle
