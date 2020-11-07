@@ -4700,6 +4700,18 @@ template <ctll::fixed_string input, typename Subject> constexpr auto range(const
 	auto re_obj = ctre::regular_expression(re());
 	return range(subject.begin(), subject.end(), re_obj);
 }
+
+#if __cpp_char8_t >= 201811
+template <ctll::fixed_string input> constexpr auto range(std::u8string_view sv) noexcept {
+	constexpr auto _input = input;
+	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(tmp(), "Regular Expression contains syntax error.");
+	using re = decltype(front(typename tmp::output_type::stack_type()));
+	auto re_obj = ctre::regular_expression(re());
+	return range(utf8_range(sv).begin(), utf8_range(sv).end(), re_obj);
+}
+#endif
+
 #else
 template <auto & input, typename Subject> constexpr auto range(const Subject & subject) noexcept {
 	constexpr auto & _input = input;
@@ -4709,6 +4721,18 @@ template <auto & input, typename Subject> constexpr auto range(const Subject & s
 	auto re_obj = ctre::regular_expression(re());
 	return range(subject.begin(), subject.end(), re_obj);
 }
+
+#if __cpp_char8_t >= 201811
+template <auto & input> constexpr auto range(std::u8string_view sv) noexcept {
+	constexpr auto _input = input;
+	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
+	static_assert(tmp(), "Regular Expression contains syntax error.");
+	using re = decltype(front(typename tmp::output_type::stack_type()));
+	auto re_obj = ctre::regular_expression(re());
+	return range(utf8_range(sv).begin(), utf8_range(sv).end(), re_obj);
+}
+#endif
+
 #endif
 
 }
