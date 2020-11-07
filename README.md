@@ -25,11 +25,9 @@ The library is implementing most of the PCRE syntax with a few exceptions:
 * atomic groups
 * boundaries other than `^$`
 * callouts
-* character properties
 * comments
 * conditional patterns
 * control characters (`\cX`)
-* horizontal / vertical character classes (`\h\H\v\V`)
 * match point reset (`\K`)
 * named characters
 * octal numbers
