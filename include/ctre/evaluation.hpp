@@ -125,46 +125,42 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const E
 
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
-	if (current == end) {
-		//puts("matching character => FAIL (END)");
-		return not_matched;
-	}
-	if (!CharacterLike::match_char(*current)) {
-		//puts("matching character => FAIL (DIFFERENCE)");
-		return not_matched;
-	}
-	//puts("matching character => OK");
+	if (current == end) return not_matched;
+	if (!CharacterLike::match_char(*current)) return not_matched;
+	
 	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 
 // matching strings in patterns
 
 template <typename Iterator> struct string_match_result {
-	Iterator current;
+	Iterator position;
 	bool match;
 };
 
-template <auto Head, auto... String, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, const EndIterator end, const flags & f) noexcept {
-	if ((end != current) && (Head == *current)) {
-		if constexpr (sizeof...(String) > 0) {
-			return evaluate_match_string<String...>(++current, end, f);
-		} else {
-			return {++current, true};
-		}
-	} else {
-		return {current, false}; // not needed but will optimize
-	}
+template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, const EndIterator end, std::index_sequence<Idx...>) noexcept {
+
+	auto compare = [&](auto c) {
+		if (current == end) return false;
+		bool same = (*current == c);
+		++current;
+		return same;
+	};
+	
+	bool same = (compare(String) && ... && true);
+
+	return {current, same};
 }
 
 template <typename R, typename Iterator, typename EndIterator, auto... String, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<string<String...>, Tail...>) noexcept {
-	if constexpr (sizeof...(String) == 0) {
-		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
-	} else if (auto tmp = evaluate_match_string<String...>(current, end, f); tmp.match) {
-		return evaluate(begin, tmp.current, end, consumed_something(f), captures, ctll::list<Tail...>());
-	} else {
+	auto result = evaluate_match_string<String...>(current, end, std::make_index_sequence<sizeof...(String)>());
+	
+	if (!result.match) {
 		return not_matched;
 	}
+	
+	return evaluate(begin, result.position, end, consumed_something(f, sizeof...(String) > 0), captures, ctll::list<Tail...>());
 }
 
 // matching select in patterns
@@ -410,11 +406,11 @@ template <typename R, typename Id, typename Iterator, typename EndIterator, type
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<back_reference_with_name<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
-		if (auto tmp = match_against_range(current, end, ref.begin(), ref.end(), f); tmp.match) {
+		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
 			if (ref.begin() != ref.end()) {
-				return evaluate(begin, tmp.current, end, consumed_something(f), captures, ctll::list<Tail...>());
+				return evaluate(begin, result.position, end, consumed_something(f), captures, ctll::list<Tail...>());
 			} else {
-				return evaluate(begin, tmp.current, end, f, captures, ctll::list<Tail...>());
+				return evaluate(begin, result.position, end, f, captures, ctll::list<Tail...>());
 			}
 		}
 	}
@@ -426,11 +422,11 @@ template <typename R, size_t Id, typename Iterator, typename EndIterator, typena
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<back_reference<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
-		if (auto tmp = match_against_range(current, end, ref.begin(), ref.end(), f); tmp.match) {
+		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
 			if (ref.begin() != ref.end()) {
-				return evaluate(begin, tmp.current, end, consumed_something(f), captures, ctll::list<Tail...>());
+				return evaluate(begin, result.position, end, consumed_something(f), captures, ctll::list<Tail...>());
 			} else {
-				return evaluate(begin, tmp.current, end, f, captures, ctll::list<Tail...>());
+				return evaluate(begin, result.position, end, f, captures, ctll::list<Tail...>());
 			}
 		}
 	}
