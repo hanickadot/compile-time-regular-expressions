@@ -189,13 +189,45 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, captures, ctll::list<Tail...>());
 }
 
+// match only if current iterator changes
+template <typename R, typename Iterator, typename EndIterator, typename... Content>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<match_only_nonempty<Content...>, end_cycle_mark>) noexcept {
+	if (auto result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+		if (result.get_end_position() != current) {
+			return result;
+		}
+	}
+	return not_matched;
+}
+
+// loops inside loop, can't be empty
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<match_only_nonempty<lazy_repeat<A,B,Content...>>, end_cycle_mark>) noexcept {
+	return evaluate(begin, current, end, captures, ctll::list<lazy_repeat<A+1,B,Content...>, end_cycle_mark>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<match_only_nonempty<possessive_repeat<A,B,Content...>>, end_cycle_mark>) noexcept {
+	return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A+1,B,Content...>, end_cycle_mark>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<match_only_nonempty<repeat<A,B,Content...>>, end_cycle_mark>) noexcept {
+	return evaluate(begin, current, end, captures, ctll::list<repeat<A+1,B,Content...>, end_cycle_mark>());
+}
+
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
 	// A..B
+	
+	if constexpr (B != 0 && A > B) {
+		return not_matched;
+	}
+	
 	size_t i{0};
 	for (; less_than<A>(i); ++i) {
-		if (auto outer_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+		if (auto outer_result = evaluate(begin, current, end, captures, ctll::list<match_only_nonempty<Content...>, end_cycle_mark>())) {
 			captures = outer_result.unmatch();
 			current = outer_result.get_end_position();
 		} else {
@@ -207,8 +239,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		return outer_result;
 	} else {
 		for (; less_than_or_infinite<B>(i); ++i) {
-			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-				if (auto outer_result = evaluate(begin, inner_result.get_end_position(), end, inner_result.unmatch(), ctll::list<Tail...>())) {
+			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<match_only_nonempty<Content...>, end_cycle_mark>())) {
+				auto tmp = current; tmp = inner_result.get_end_position();
+				if (auto outer_result = evaluate(begin, tmp, end, inner_result.unmatch(), ctll::list<Tail...>())) {
 					return outer_result;
 				} else {
 					captures = inner_result.unmatch();
@@ -227,9 +260,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
 
+	if constexpr ((B != 0) && (A > B)) {
+		return not_matched;
+	}
+
 	for (size_t i{0}; less_than_or_infinite<B>(i); ++i) {
 		// try as many of inner as possible and then try outer once
-		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<match_only_nonempty<Content...>, end_cycle_mark>())) {
 			captures = inner_result.unmatch();
 			current = inner_result.get_end_position();
 		} else {
@@ -253,18 +290,20 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 		// a*ab
 		// aab
 		
-		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
+		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<match_only_nonempty<Content...>, end_cycle_mark>())) {
 			// TODO MSVC issue:
 			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
 			//  return inner_result
-			// I tried to add all constructors to R but without any success 
+			// I tried to add all constructors to R but without any success
+			auto tmp_current = current;
+			tmp_current = inner_result.get_end_position();
 			#ifdef CTRE_MSVC_GREEDY_WORKAROUND
-			evaluate_recursive(result, i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack);
+			evaluate_recursive(result, i+1, begin, tmp_current, end, inner_result.unmatch(), stack);
 			if (result) {
 				return;
 			}
 			#else
-			if (auto rec_result = evaluate_recursive(i+1, begin, inner_result.get_end_position(), end, inner_result.unmatch(), stack)) {
+			if (auto rec_result = evaluate_recursive(i+1, begin, tmp_current, end, inner_result.unmatch(), stack)) {
 				return rec_result;
 			}
 			#endif
@@ -278,57 +317,37 @@ constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator c
 }	
 
 
-// (gready) repeat optimization
-// basic one, if you are at the end of RE, just change it into possessive
-// TODO do the same if there is no collision with rest of the RE
-template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, ctll::list<repeat<A,B,Content...>,assert_end, Tail...>) {
-	return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, assert_end, Tail...>());
-}
 
 // (greedy) repeat 
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+
+	if constexpr ((B != 0) && (A > B)) {
+		return not_matched;
+	}
+
+#ifndef CTRE_DISABLE_GREEDY_OPT
+	if constexpr (!collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
+		return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
+	}
+#endif
 	
-	// TODO do the greedy cycle nicer
-	
-	// special case for loop-fusion
-	if constexpr (A == 0 && B == 1) {
-		if (auto r1 = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, Tail...>())) {
-			return r1;
-		} else if (auto r2 = evaluate(begin, current, end, captures, ctll::list<Tail...>())) {
-			return r2;
+	// A..B
+	size_t i{0};
+	for (; less_than<A>(i); ++i) {
+		if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<match_only_nonempty<Content...>, end_cycle_mark>())) {
+			captures = inner_result.unmatch();
+			current = inner_result.get_end_position();
 		} else {
 			return not_matched;
 		}
 	}
-	
-	// check if it can be optimized
-#ifndef CTRE_DISABLE_GREEDY_OPT
-	if constexpr (collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
-#endif
-		// A..B
-		size_t i{0};
-		for (; less_than<A>(i); ++i) {
-			if (auto inner_result = evaluate(begin, current, end, captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
-				captures = inner_result.unmatch();
-				current = inner_result.get_end_position();
-			} else {
-				return not_matched;
-			}
-		}
-	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
-		R result;
-		evaluate_recursive(result, i, begin, current, end, captures, stack);
-		return result;
-	#else
-		return evaluate_recursive(i, begin, current, end, captures, stack);
-	#endif
-#ifndef CTRE_DISABLE_GREEDY_OPT
-	} else {
-		// if there is no collision we can go possessive
-		return evaluate(begin, current, end, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
-	}
+#ifdef CTRE_MSVC_GREEDY_WORKAROUND
+	R result;
+	evaluate_recursive(result, i, begin, current, end, captures, stack);
+	return result;
+#else
+	return evaluate_recursive(i, begin, current, end, captures, stack);
 #endif
 
 }
