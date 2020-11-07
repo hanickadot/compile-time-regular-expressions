@@ -1,7 +1,7 @@
 #include <ctre.hpp>
 #include <iostream>
 
-static constexpr auto pattern = ctll::fixed_string("([a-z]+),([a-z]+),([a-z]+),([a-z]+),([a-z]+),([a-z]+),([a-z]+),([a-z]+),([a-z]+),([a-z]+)");
+static constexpr auto pattern = ctll::fixed_string("([a-z]++),([a-z]++),([a-z]++),([a-z]++),([a-z]++)");
 
 size_t total_size(std::string_view subject) {
 	auto result = ctre::match<pattern>(subject);
@@ -14,11 +14,6 @@ size_t total_size(std::string_view subject) {
 	size += std::string_view(result.get<3>()).size();
 	size += std::string_view(result.get<4>()).size();
 	size += std::string_view(result.get<5>()).size();
-	size += std::string_view(result.get<6>()).size();
-	size += std::string_view(result.get<7>()).size();
-	size += std::string_view(result.get<8>()).size();
-	size += std::string_view(result.get<9>()).size();
-	size += std::string_view(result.get<10>()).size();
-	
+
 	return size;
 }

@@ -46,18 +46,18 @@ public:
 
 template <typename RE> struct regular_expression {
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto match_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return match_re(begin, end, RE(), ctre::no_flags{});
+		return match_re(begin, end, RE());
 	}
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return search_re(begin, end, RE(), ctre::no_flags{});
+		return search_re(begin, end, RE());
 	}
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto starts_with_2(IteratorBegin begin, IteratorEnd end) noexcept {
-		return starts_with(begin, end, RE(), ctre::no_flags{});
+		return starts_with(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto match(IteratorBegin begin, IteratorEnd end) noexcept {
-		return match_re(begin, end, RE(), ctre::no_flags{});
+		return match_re(begin, end, RE());
 	}
 	static constexpr CTRE_FORCE_INLINE auto match(const char * s) noexcept {
 		return match_2(s, zero_terminated_string_end_iterator());
@@ -79,7 +79,7 @@ template <typename RE> struct regular_expression {
 	}
 #if __cpp_char8_t >= 201811
 	static constexpr CTRE_FORCE_INLINE auto match(std::u8string_view sv) noexcept {
-		return match_re<utf8_iterator, utf8_iterator::sentinel, RE, ctre::no_flags, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {}, {});
+		return match_re<utf8_iterator, utf8_iterator::sentinel, RE, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {}, {});
 	}
 #endif
 	static constexpr CTRE_FORCE_INLINE auto match(std::u16string_view sv) noexcept {
@@ -93,7 +93,7 @@ template <typename RE> struct regular_expression {
 	}
 	
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto search(IteratorBegin begin, IteratorEnd end) noexcept {
-		return search_re(begin, end, RE(), ctre::no_flags{});
+		return search_re(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE static auto search(const char * s) noexcept {
 		return search_2(s, zero_terminated_string_end_iterator());
@@ -115,7 +115,7 @@ template <typename RE> struct regular_expression {
 	}
 #if __cpp_char8_t >= 201811
 	static constexpr CTRE_FORCE_INLINE auto search(std::u8string_view sv) noexcept {
-		return search_re<utf8_iterator, utf8_iterator::sentinel, RE, ctre::no_flags, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {}, {});
+		return search_re<utf8_iterator, utf8_iterator::sentinel, RE, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {}, {});
 	}
 #endif
 	static constexpr CTRE_FORCE_INLINE auto search(std::u16string_view sv) noexcept {
@@ -129,7 +129,7 @@ template <typename RE> struct regular_expression {
 	}
 	
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto starts_with(IteratorBegin begin, IteratorEnd end) noexcept {
-		return starts_with_re(begin, end, RE(), ctre::no_flags{});
+		return starts_with_re(begin, end, RE());
 	}
 	constexpr CTRE_FORCE_INLINE static auto starts_with(const char * s) noexcept {
 		return starts_with_2(s, zero_terminated_string_end_iterator());
@@ -145,7 +145,7 @@ template <typename RE> struct regular_expression {
 	}
 #if __cpp_char8_t >= 201811
 	static constexpr CTRE_FORCE_INLINE auto starts_with(std::u8string_view sv) noexcept {
-		return starts_with<utf8_iterator, utf8_iterator::sentinel, RE, ctre::no_flags, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {}, {});
+		return starts_with<utf8_iterator, utf8_iterator::sentinel, RE, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), {}, {});
 	}
 #endif
 	static constexpr CTRE_FORCE_INLINE auto starts_with(std::string_view sv) noexcept {
