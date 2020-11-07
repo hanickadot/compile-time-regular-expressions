@@ -4,15 +4,15 @@
 void empty_symbol() { }
 
 template <typename Pattern> constexpr bool match(std::string_view input, Pattern pattern) {
-	return bool(ctre::match_re(input.begin(), input.end(), pattern));
+	return bool(ctre::match_re(input.begin(), input.end(), pattern, ctre::no_flags{}));
 }
 
 template <typename Pattern> constexpr bool search(std::string_view input, Pattern pattern) {
-	return bool(ctre::search_re(input.begin(), input.end(), pattern));
+	return bool(ctre::search_re(input.begin(), input.end(), pattern, ctre::no_flags{}));
 }
 
 template <typename Pattern> constexpr bool starts_with(std::string_view input, Pattern pattern) {
-	return bool(ctre::starts_with_re(input.begin(), input.end(), pattern));
+	return bool(ctre::starts_with_re(input.begin(), input.end(), pattern, ctre::no_flags{}));
 }
 
 using namespace std::string_view_literals;

@@ -54,8 +54,6 @@ template <typename... Content> struct atomic_group { };
 struct assert_begin { };
 struct assert_end { };
 
-template <typename... Content> struct match_only_nonempty { };
-
 
 }
 

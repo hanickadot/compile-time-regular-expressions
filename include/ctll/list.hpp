@@ -48,6 +48,44 @@ template <typename Head, typename... As, typename T = _nothing> constexpr auto f
 template <typename T = _nothing> constexpr auto front(empty_list, T = T()) noexcept -> T { return {}; }
 
 
+// set operations
+template <typename T> struct item_matcher {
+	struct not_selected {
+		template <typename... Ts> friend constexpr auto operator+(list<Ts...>, not_selected) -> list<Ts...>;
+	};
+	template <typename Y> struct wrapper {
+		template <typename... Ts> friend constexpr auto operator+(list<Ts...>, wrapper<Y>) -> list<Ts...,Y>;
+	};
+
+	constexpr auto check(T) { return std::true_type{}; }
+	constexpr auto check(...) { return std::false_type{}; }
+	constexpr auto select(T) { return wrapper<T>{}; }
+	constexpr auto select(...) { return not_selected{}; }
+};
+
+template <typename T, typename... Ts> constexpr bool exists_in(T, list<Ts...>) noexcept {
+	item_matcher<T> same;
+	return (same.check(Ts{}) || ... || false);
+}
+
+template <typename T, typename... Ts> constexpr bool add_item(T item, list<Ts...> l) noexcept {
+	if constexpr (exists_in(item, l)) {
+		return l;
+	} else {
+		return list<Ts..., T>{};
+	}
+}
+
+template <typename T, typename... Ts> constexpr bool remove_item(T item, list<Ts...> l) noexcept {
+	if constexpr (!exists_in(item, l)) {
+		return l;
+	} else {
+		item_matcher<T> matcher;
+		return (list<>{} + ... + matcher.select(Ts{}));
+	}
+}
+
+
 }
 
 #endif
