@@ -11,7 +11,6 @@ struct reject { };
 struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
-struct end_non_empty_cycle_mark { };
 struct end_lookahead_mark { };
 template <size_t Id> struct numeric_mark { };
 

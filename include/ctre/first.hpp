@@ -31,11 +31,6 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<end_cycle_mark, Tail..
 }
 
 template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<end_non_empty_cycle_mark, Tail...>) noexcept {
-	return l;
-}
-
-template <typename... Content, typename... Tail> 
 constexpr auto first(ctll::list<Content...> l, ctll::list<end_lookahead_mark, Tail...>) noexcept {
 	return l;
 }
