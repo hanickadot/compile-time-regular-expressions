@@ -29,7 +29,7 @@ constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
 }
 
 constexpr CTRE_FORCE_INLINE auto consumed_something(flags f, bool condition = true) {
-	f.block_empty_match = !condition;
+	if (condition) f.block_empty_match = false;
 	return f;
 }
 
@@ -268,7 +268,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 	
 	// rest of regex
-	return evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>());
+	return evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 
 // possessive repeat
