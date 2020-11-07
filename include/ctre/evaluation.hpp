@@ -59,17 +59,17 @@ template <typename ResultIterator, typename Pattern> using return_type = decltyp
 
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr inline auto match_re(const Iterator begin, const EndIterator end, Pattern, flags f = {}) noexcept {
+constexpr CTRE_FORCE_INLINE auto match_re(const Iterator begin, const EndIterator end, Pattern, flags f = {}) noexcept {
 	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
 }
 
 template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr inline auto starts_with_re(const Iterator begin, const EndIterator end, Pattern, flags f = {}) noexcept {
+constexpr CTRE_FORCE_INLINE auto starts_with_re(const Iterator begin, const EndIterator end, Pattern, flags f = {}) noexcept {
 	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
 }
 
 template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr inline auto search_re(const Iterator begin, const EndIterator end, Pattern, flags f = {}) noexcept {
+constexpr CTRE_FORCE_INLINE auto search_re(const Iterator begin, const EndIterator end, Pattern, flags f = {}) noexcept {
 	constexpr bool fixed = starts_with_anchor(ctll::list<Pattern>{});
 	
 	auto it = begin;
