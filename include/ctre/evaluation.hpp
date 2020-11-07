@@ -211,13 +211,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
-template <typename... Content> std::string stack_string(Content...) {
-	auto data = std::string_view(__PRETTY_FUNCTION__);
-	data = data.substr(61);
-	auto pos = data.find(';')-1;
-	return std::string{data.substr(0, pos)};
-}
-
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
