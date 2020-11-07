@@ -3860,7 +3860,7 @@ template <typename CharT, typename Iterator, typename EndIterator> constexpr CTR
 	return same;
 }
 
-template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, const EndIterator end, std::index_sequence<Idx...>) noexcept {
+template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, [[maybe_unused]] const EndIterator end, std::index_sequence<Idx...>) noexcept {
 
 	bool same = (compare_character(String, current, end) && ... && true);
 
