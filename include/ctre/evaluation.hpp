@@ -140,9 +140,8 @@ template <typename Iterator> struct string_match_result {
 
 template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, const EndIterator end, std::index_sequence<Idx...>) noexcept {
 
-	auto compare = [&](auto c) {
-		if (current == end) return false;
-		bool same = (*current == c);
+	[[maybe_unused]] auto compare = [&](auto c) {
+		bool same = ((current != end) && (*current == c));
 		++current;
 		return same;
 	};
