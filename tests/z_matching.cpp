@@ -27,5 +27,7 @@ static_assert(match("aaab"sv, ctre::sequence<ctre::possessive_plus<ctre::optiona
 static_assert(match("aaa"sv, ctre::possessive_plus<ctre::select<ctre::empty, ctre::character<'a'>>>()));
 static_assert(match("aaa"sv, ctre::lazy_plus<ctre::select<ctre::empty, ctre::character<'a'>>>()));
 static_assert(match("aaaa"sv, ctre::possessive_plus<ctre::lazy_star<ctre::character<'a'>>>()));
+static_assert(match(""sv, ctre::lazy_star<ctre::character<'b'>>()));
+static_assert(match("aaaa"sv, ctre::possessive_plus<ctre::lazy_star<ctre::character<'a'>>, ctre::lazy_star<ctre::character<'b'>>>()));
 static_assert(match("aaaab"sv, ctre::possessive_plus<ctre::lazy_star<ctre::character<'a'>>, ctre::lazy_star<ctre::character<'b'>>>()));
 
