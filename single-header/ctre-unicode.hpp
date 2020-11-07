@@ -3857,15 +3857,15 @@ template <typename Iterator> struct string_match_result {
 	bool match;
 };
 
+template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & end) {
+	bool same = ((it != end) && (*it == c));
+	++it;
+	return same;
+}
+
 template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, const EndIterator end, std::index_sequence<Idx...>) noexcept {
 
-	[[maybe_unused]] auto compare = [&](auto c) {
-		bool same = ((current != end) && (*current == c));
-		++current;
-		return same;
-	};
-	
-	bool same = (compare(String) && ... && true);
+	bool same = (compare_character(String, current, end) && ... && true);
 
 	return {current, same};
 }
