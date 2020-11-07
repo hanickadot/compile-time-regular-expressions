@@ -107,9 +107,14 @@ static_assert(match("aaaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character
 static_assert(!match("aaaaaaab"sv, ctre::sequence<ctre::repeat<2,5,ctre::character<'a'>>, ctre::string<'a','b'>>()));
 
 // issue #131
-static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::any>>, ctre::character<'x'>>()));
+static_assert(match("x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'>>>, ctre::character<'x'>>()));
+
+static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_optional<ctre::character<'1'>>>, ctre::character<'x'>>()));
+static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'>>>, ctre::character<'x'>>()));
 static_assert(match("1x"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> > >, ctre::character<'x'>>()));
-static_assert(match("1yx"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> >, ctre::character<'y'> >, ctre::character<'x'>>()));
 static_assert(match("aaab"sv, ctre::sequence<ctre::possessive_plus<ctre::optional<ctre::character<'a'>>>, ctre::character<'b'>>()));
+
+
+static_assert(match("1yx"sv, ctre::sequence<ctre::optional<ctre::lazy_star<ctre::character<'1'> >, ctre::character<'y'> >, ctre::character<'x'>>()));
 static_assert(match("aaa"sv, ctre::possessive_plus<ctre::select<ctre::empty, ctre::character<'a'>>>()));
 

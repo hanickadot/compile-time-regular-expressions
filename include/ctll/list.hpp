@@ -57,15 +57,14 @@ template <typename T> struct item_matcher {
 		template <typename... Ts> friend constexpr auto operator+(list<Ts...>, wrapper<Y>) -> list<Ts...,Y>;
 	};
 
-	constexpr auto check(T) { return std::true_type{}; }
-	constexpr auto check(...) { return std::false_type{}; }
-	constexpr auto select(T) { return not_selected{}; }
-	template <typename Y> constexpr auto select(Y) { return wrapper<Y>{}; }
+	static constexpr auto check(T) { return std::true_type{}; }
+	static constexpr auto check(...) { return std::false_type{}; }
+	static constexpr auto select(T) { return not_selected{}; }
+	template <typename Y> static constexpr auto select(Y) { return wrapper<Y>{}; }
 };
 
 template <typename T, typename... Ts> constexpr bool exists_in(T, list<Ts...>) noexcept {
-	item_matcher<T> same;
-	return (same.check(Ts{}) || ... || false);
+	return (item_matcher<T>::check(Ts{}) || ... || false);
 }
 
 template <typename T, typename... Ts> constexpr auto add_item(T item, list<Ts...> l) noexcept {
