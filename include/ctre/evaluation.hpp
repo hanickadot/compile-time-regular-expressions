@@ -223,14 +223,22 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, Flags{}, captures, ctll::list<Tail...>());
 }
 
+template <typename... Content> std::string stack_string(Content...) {
+	auto data = std::string_view(__PRETTY_FUNCTION__);
+	data = data.substr(61);
+	auto pos = data.find(';')-1;
+	return std::string{data.substr(0, pos)};
+}
+
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, typename Flags, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] Flags f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
 	// A..B
-	
+	printf("start lazy cycle: %s\n",stack_string(lazy_repeat<A,B,Content...>{}, Tail{}...).c_str());
 	constexpr size_t minimum = A;
 	
 	if constexpr (B != 0 && minimum > B) {
+		puts("bigger than minimum");
 		return not_matched;
 	}
 	
@@ -240,11 +248,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 			captures = outer_result.unmatch();
 			current = outer_result.get_end_position();
 		} else {
+			puts("outer not match (i < minimum)");
 			return not_matched;
 		}
 	}
 	
 	if (auto outer_result = evaluate(begin, current, end, Flags{}, captures, ctll::list<Tail...>())) {
+		puts("outer match");
 		return outer_result;
 	} 
 	
@@ -252,13 +262,16 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<sequence<Content...>, end_cycle_mark>())) {
 			auto tmp = current; tmp = inner_result.get_end_position();
 			if (auto outer_result = evaluate(begin, tmp, end, Flags{}, inner_result.unmatch(), ctll::list<Tail...>())) {
+				puts("inner+outer match");
 				return outer_result;
 			} else {
 				captures = inner_result.unmatch();
 				current = inner_result.get_end_position();
+				puts("continue...");
 				continue;
 			}
 		} else {
+			puts("inner not match");
 			return not_matched;
 		}
 	}
