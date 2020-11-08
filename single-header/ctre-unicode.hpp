@@ -4190,11 +4190,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
-			if (ref.begin() != ref.end()) {
-				return evaluate(begin, result.position, end, consumed_something(f), captures, ctll::list<Tail...>());
-			} else {
-				return evaluate(begin, result.position, end, f, captures, ctll::list<Tail...>());
-			}
+			return evaluate(begin, result.position, end, consumed_something(f, ref.begin() != ref.end()), captures, ctll::list<Tail...>());
 		}
 	}
 	return not_matched;
@@ -4206,11 +4202,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
-			if (ref.begin() != ref.end()) {
-				return evaluate(begin, result.position, end, consumed_something(f), captures, ctll::list<Tail...>());
-			} else {
-				return evaluate(begin, result.position, end, f, captures, ctll::list<Tail...>());
-			}
+			return evaluate(begin, result.position, end, consumed_something(f, ref.begin() != ref.end()), captures, ctll::list<Tail...>());
 		}
 	}
 	return not_matched;
