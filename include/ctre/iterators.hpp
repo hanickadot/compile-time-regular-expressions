@@ -13,11 +13,12 @@ struct regex_end_iterator {
 };
 
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_iterator {
+	BeginIterator orig_begin;
 	BeginIterator current;
 	const EndIterator end;
 	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
 
-	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
+	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: orig_begin{begin}, current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -26,7 +27,8 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		return current_match;
 	}
 	constexpr CTRE_FORCE_INLINE regex_iterator & operator++() noexcept {
-		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
+		current_match = RE::template exec_with_result_iterator<ResultIterator>(orig_begin, current, end);
+		
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -34,7 +36,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	}
 	constexpr CTRE_FORCE_INLINE regex_iterator operator++(int) noexcept {
 		auto previous = *this;
-		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
+		current_match = RE::template exec_with_result_iterator<ResultIterator>(orig_begin, current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}

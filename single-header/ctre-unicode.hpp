@@ -2596,87 +2596,123 @@ template <auto V, auto B, auto A, typename... Ts, typename Parameters> static co
 #ifndef CTRE__EVALUATION__HPP
 #define CTRE__EVALUATION__HPP
 
+#ifndef CTRE_V2__CTRE__FLAGS_AND_MODES__HPP
+#define CTRE_V2__CTRE__FLAGS_AND_MODES__HPP
+
+namespace ctre {
+
+struct singleline { };
+struct multiline { };
+
+struct flags {
+	bool block_empty_match = false;
+	bool multiline = false;
+	constexpr CTRE_FORCE_INLINE flags(ctre::singleline) { }
+	constexpr CTRE_FORCE_INLINE flags(ctre::multiline): multiline{true} { }
+};
+
+constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
+	f.block_empty_match = true;
+	return f;
+}
+
+constexpr CTRE_FORCE_INLINE auto consumed_something(flags f, bool condition = true) {
+	if (condition) f.block_empty_match = false;
+	return f;
+}
+
+constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(flags f) {
+	return f.block_empty_match;
+}
+
+constexpr CTRE_FORCE_INLINE bool multiline_mode(flags f) {
+	return f.multiline;
+}
+
+} // namespace ctre
+
+#endif
+
 #ifndef CTRE__STARTS_WITH_ANCHOR__HPP
 #define CTRE__STARTS_WITH_ANCHOR__HPP
 
 namespace ctre {
 
 template <typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags &, ctll::list<Content...>) noexcept {
 	return false;
 }
 
 template <typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<assert_subject_begin, Content...>) noexcept {
-	// yes! start anchor is here
+constexpr bool starts_with_anchor(const flags &, ctll::list<assert_subject_begin, Content...>) noexcept {
+	// yes! start subject anchor is here
 	return true;
 }
 
 template <typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<assert_line_begin, Content...>) noexcept {
-	// yes! start anchor is here
-	// TODO in multiline mode it's a bit different, will need flags here
-	return true;
+constexpr bool starts_with_anchor(const flags & f, ctll::list<assert_line_begin, Content...>) noexcept {
+	// yes! start line anchor is here
+	return !ctre::multiline_mode(f) || starts_with_anchor(f, ctll::list<Content...>{});
 }
 
 template <typename CharLike, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<boundary<CharLike>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<boundary<CharLike>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Content...>{});
+	return starts_with_anchor(f, ctll::list<Content...>{});
 }
 
 template <typename... Options, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<select<Options...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<select<Options...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return (starts_with_anchor(ctll::list<Options, Content...>{}) && ... && true);
+	return (starts_with_anchor(f, ctll::list<Options, Content...>{}) && ... && true);
 }
 
 template <typename... Optional, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<optional<Optional...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<optional<Optional...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Optional..., Content...>{}) && starts_with_anchor(ctll::list<Content...>{});
+	return starts_with_anchor(f, ctll::list<Optional..., Content...>{}) && starts_with_anchor(f, ctll::list<Content...>{});
 }
 
 template <typename... Optional, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<lazy_optional<Optional...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<lazy_optional<Optional...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Optional..., Content...>{}) && starts_with_anchor(ctll::list<Content...>{});
+	return starts_with_anchor(f, ctll::list<Optional..., Content...>{}) && starts_with_anchor(f, ctll::list<Content...>{});
 }
 
 template <typename... Seq, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<sequence<Seq...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<sequence<Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Seq..., Content...>{});
+	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
 }
 
 template <size_t A, size_t B, typename... Seq, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<repeat<A, B, Seq...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<repeat<A, B, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Seq..., Content...>{});
+	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
 }
 
 template <size_t A, size_t B, typename... Seq, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<lazy_repeat<A, B, Seq...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<lazy_repeat<A, B, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Seq..., Content...>{});
+	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
 }
 
 template <size_t A, size_t B, typename... Seq, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<possessive_repeat<A, B, Seq...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<possessive_repeat<A, B, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Seq..., Content...>{});
+	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
 }
 
 template <size_t Index, typename... Seq, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<capture<Index, Seq...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<capture<Index, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Seq..., Content...>{});
+	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
 }
 
 template <size_t Index, typename... Seq, typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<capture_with_name<Index, Seq...>, Content...>) noexcept {
+constexpr bool starts_with_anchor(const flags & f, ctll::list<capture_with_name<Index, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(ctll::list<Seq..., Content...>{});
+	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
 }
 
 }
@@ -3900,24 +3936,6 @@ template <typename... A, typename... B> constexpr bool collides(ctll::list<A...>
 
 namespace ctre {
 
-struct flags {
-	bool block_empty_match = false;
-};
-
-constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
-	f.block_empty_match = true;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE auto consumed_something(flags f, bool condition = true) {
-	if (condition) f.block_empty_match = false;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(flags f) {
-	return f.block_empty_match;
-}
-
 template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) {
 	if constexpr (Limit == 0) {
 		// infinite
@@ -4069,24 +4087,57 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_end_line, Tail...>) noexcept {
-	// TODO properly match the line end
-	if (end != current) {
-		return not_matched;
+	if (multiline_mode(f)) {
+		if (end == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*current == '\n' && std::next(current) == end) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (end != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 	}
-	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_begin, Tail...>) noexcept {
-	// TODO properly match line begin
-	if (begin != current) {
-		return not_matched;
+	if (multiline_mode(f)) {
+		if (begin == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*std::prev(current) == '\n') {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (begin != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 	}
-	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_end, Tail...>) noexcept {
+	if (multiline_mode(f)) {
+		if (end == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*current == '\n') {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (end != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	}
+	
 	// TODO properly match line end
 	if (end != current) {
 		return not_matched;
@@ -4372,11 +4423,12 @@ struct regex_end_iterator {
 };
 
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_iterator {
+	BeginIterator orig_begin;
 	BeginIterator current;
 	const EndIterator end;
 	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
 
-	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
+	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: orig_begin{begin}, current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -4385,7 +4437,8 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		return current_match;
 	}
 	constexpr CTRE_FORCE_INLINE regex_iterator & operator++() noexcept {
-		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
+		current_match = RE::template exec_with_result_iterator<ResultIterator>(orig_begin, current, end);
+		
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -4393,7 +4446,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	}
 	constexpr CTRE_FORCE_INLINE regex_iterator operator++(int) noexcept {
 		auto previous = *this;
-		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
+		current_match = RE::template exec_with_result_iterator<ResultIterator>(orig_begin, current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -4434,9 +4487,6 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 
 namespace ctre {
 
-struct singleline { };
-struct multiline { };
-
 template <typename RE, typename Method = void, typename Modifier = singleline> struct regular_expression;
 	
 struct zero_terminated_string_end_iterator {
@@ -4475,36 +4525,48 @@ public:
 };
 
 struct match_method {
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		
-		return evaluate(begin, begin, end, flags{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, assert_subject_end, end_mark, accept>());
+		return evaluate(orig_begin, begin, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, assert_subject_end, end_mark, accept>());
+	}
+	
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		return exec<Modifier, ResultIterator>(begin, begin, end, RE{});
 	}
 };
 
 struct search_method {
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		
-		constexpr bool fixed = starts_with_anchor(ctll::list<RE>{});
+		constexpr bool fixed = starts_with_anchor(Modifier{}, ctll::list<RE>{});
 	
 		auto it = begin;
 	
 		for (; end != it && !fixed; ++it) {
-			if (auto out = evaluate(begin, it, end, flags{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>())) {
+			if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>())) {
 				return out;
 			}
 		}
 	
 		// in case the RE is empty or fixed
-		return evaluate(begin, it, end, flags{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+		return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+	}
+	
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		return exec<Modifier, ResultIterator>(begin, begin, end, RE{});
 	}
 };
 
 struct starts_with_method {
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
-		return evaluate(begin, begin, end, flags{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+		return evaluate(orig_begin, begin, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+	}
+	
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		return exec<Modifier, ResultIterator>(begin, begin, end, RE{});
 	}
 };
 
@@ -4513,6 +4575,15 @@ struct range_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
+	
+		return regex_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+	}
+};
+
+struct tokenize_method {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
+		using wrapped_regex = regular_expression<RE, starts_with_method, Modifier>;
 	
 		return regex_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
 	}
@@ -4534,6 +4605,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	
+	template <typename ResultIterator, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec_with_result_iterator(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end) noexcept {
+		return Method::template exec<Modifier, ResultIterator>(orig_begin, begin, end, RE{});
+	}
 	template <typename ResultIterator, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec_with_result_iterator(IteratorBegin begin, IteratorEnd end) noexcept {
 		return Method::template exec<Modifier, ResultIterator>(begin, end, RE{});
 	}
@@ -4591,6 +4665,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, singleline>::exec(std::forward<Args>(args)...);
 	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto tokenize(Args && ... args) noexcept {
+		return regular_expression<RE, tokenize_method, singleline>::exec(std::forward<Args>(args)...);
+	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto iterator(Args && ... args) noexcept {
 		return regular_expression<RE, iterator_method, singleline>::exec(std::forward<Args>(args)...);
 	}
@@ -4606,6 +4683,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, multiline>::exec(std::forward<Args>(args)...);
+	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_tokenize(Args && ... args) noexcept {
+		return regular_expression<RE, tokenize_method, multiline>::exec(std::forward<Args>(args)...);
 	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_iterator(Args && ... args) noexcept {
 		return regular_expression<RE, iterator_method, multiline>::exec(std::forward<Args>(args)...);
@@ -4637,6 +4717,8 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto starts_with 
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, singleline>();
 
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, singleline>();
+
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, singleline>();
 
 static constexpr inline auto sentinel = regex_end_iterator();
@@ -4646,6 +4728,10 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_ma
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_search = regular_expression<typename regex_builder<input>::type, search_method, multiline>();
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, multiline>();
+
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, multiline>();
+
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, multiline>();
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_iterator = regular_expression<typename regex_builder<input>::type, iterator_method, multiline>();
 

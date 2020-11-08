@@ -1,6 +1,7 @@
 #ifndef CTRE__EVALUATION__HPP
 #define CTRE__EVALUATION__HPP
 
+#include "flags_and_modes.hpp"
 #include "atoms.hpp"
 #include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
@@ -19,24 +20,6 @@
 #endif
 
 namespace ctre {
-
-struct flags {
-	bool block_empty_match = false;
-};
-
-constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
-	f.block_empty_match = true;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE auto consumed_something(flags f, bool condition = true) {
-	if (condition) f.block_empty_match = false;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(flags f) {
-	return f.block_empty_match;
-}
 
 template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) {
 	if constexpr (Limit == 0) {
@@ -189,24 +172,57 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_end_line, Tail...>) noexcept {
-	// TODO properly match the line end
-	if (end != current) {
-		return not_matched;
+	if (multiline_mode(f)) {
+		if (end == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*current == '\n' && std::next(current) == end) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (end != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 	}
-	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_begin, Tail...>) noexcept {
-	// TODO properly match line begin
-	if (begin != current) {
-		return not_matched;
+	if (multiline_mode(f)) {
+		if (begin == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*std::prev(current) == '\n') {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (begin != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 	}
-	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_end, Tail...>) noexcept {
+	if (multiline_mode(f)) {
+		if (end == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*current == '\n') {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (end != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	}
+	
 	// TODO properly match line end
 	if (end != current) {
 		return not_matched;
