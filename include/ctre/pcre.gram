@@ -140,6 +140,12 @@ backslash_set->h,[class_horizontal_space]|H,[class_non_horizontal_space]
 backslash_set->p,copen,<property_name>,cclose,[make_property]
 backslash_set->P,copen,<property_name>,cclose,[make_property_negative]
 
+backslash_set->A,[push_assert_subject_begin]
+backslash_set->z,[push_assert_subject_end]
+backslash_set->Z,[push_assert_subject_end_with_possible_line]
+backslash_set->b,[push_word_boundary]
+backslash_set->B,[push_not_word_boundary]
+
 property_name->alphanum_characters,[push_property_name],<property_name2>
 property_name->dot,[push_property_name],<property_name2>
 property_name2->alphanum_characters,[push_property_name],<property_name2>|epsilon|equal_sign,<property_value>
@@ -161,4 +167,5 @@ character->other,[push_character] | nonspecial_characters,[push_character] | set
 character_in_capture-><character>
 
 asserts->caret,[push_assert_begin] | dolar,[push_assert_end]
+
 

@@ -153,9 +153,10 @@ static_assert(CTRE_TEST("(?=test)"));
 static_assert(CTRE_TEST("^(?=.*(.)\\g{1}+.*)[a-z]+"));
 static_assert(CTRE_TEST("^(?=.*(a)\\g{1}.*)$"));
 
-static_assert(!CTRE_TEST("\\b"));
-static_assert(!CTRE_TEST("\\A"));
-static_assert(!CTRE_TEST("[\\A]"));
+static_assert(CTRE_TEST("\\b"));
+static_assert(CTRE_TEST("\\A"));
+static_assert(CTRE_TEST("[\\A]"));
+static_assert(!CTRE_TEST("\\i")); // this is not existing backslash
 static_assert(CTRE_TEST("(.*)\\1"));
 
 
