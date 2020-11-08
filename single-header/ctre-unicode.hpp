@@ -2922,7 +2922,7 @@ struct utf8_range {
 namespace ctre {
 
 constexpr bool is_random_accessible(const std::random_access_iterator_tag &) { return true; }
-constexpr bool is_random_accessible(...) { return false; };
+constexpr bool is_random_accessible(...) { return false; }
 
 struct not_matched_tag_t { };
 
@@ -4271,6 +4271,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>());
 }
 
+// greedy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...>) {
 	if constexpr ((B != 0) && (A > B)) {
@@ -4299,6 +4300,20 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 	} else {
 		return not_matched;
 	}
+}
+
+// atomic group
+template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<atomic_group<Content...>, Tail...>) noexcept {
+
+	auto inner_result = evaluate(begin, current, end, f, captures, ctll::list<Content..., end_mark, accept>());
+	
+	if (!inner_result) return not_matched;
+	
+	captures = inner_result.unmatch();
+	current = inner_result.get_end_position();
+	
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
 // capture (numeric ID)
