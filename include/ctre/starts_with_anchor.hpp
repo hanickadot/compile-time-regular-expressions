@@ -21,6 +21,12 @@ constexpr bool starts_with_anchor(ctll::list<assert_line_begin, Content...>) noe
 	return true;
 }
 
+template <typename CharLike, typename... Content> 
+constexpr bool starts_with_anchor(ctll::list<boundary<CharLike>, Content...>) noexcept {
+	// check if all options starts with anchor or if they are empty, there is an anchor behind them
+	return starts_with_anchor(ctll::list<Content...>{});
+}
+
 template <typename... Options, typename... Content> 
 constexpr bool starts_with_anchor(ctll::list<select<Options...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them

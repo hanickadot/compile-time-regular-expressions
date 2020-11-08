@@ -46,6 +46,12 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<empty, Tail...>) noexc
 	return first(l, ctll::list<Tail...>{});
 }
 
+// boundary
+template <typename... Content, typename CharLike, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<boundary<CharLike>, Tail...>) noexcept {
+	return first(l, ctll::list<Tail...>{});
+}
+
 // asserts
 template <typename... Content, typename... Tail> 
 constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_begin, Tail...>) noexcept {

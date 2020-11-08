@@ -1404,6 +1404,8 @@ struct atomic_start { };
 
 template <typename... Content> struct atomic_group { };
 
+template <typename... Content> struct boundary { };
+
 struct assert_subject_begin { };
 struct assert_subject_end { };
 struct assert_subject_end_line{ };
@@ -1850,26 +1852,6 @@ template <size_t Id> struct capture_id { };
 	
 struct pcre_actions {
 // i know it's ugly, but it's more readable
-#ifndef CTRE__ACTIONS__ATOMIC_GROUP__HPP
-#define CTRE__ACTIONS__ATOMIC_GROUP__HPP
-
-// atomic start
-template <auto V, typename... Ts, size_t Counter> static constexpr auto apply(pcre::start_atomic, ctll::term<V>, pcre_context<ctll::list<Ts...>, pcre_parameters<Counter>>) {
-	return pcre_context{ctll::list<atomic_start, Ts...>(), pcre_parameters<Counter>()};
-}
-
-// atomic
-template <auto V, typename Atomic, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_atomic, ctll::term<V>, pcre_context<ctll::list<Atomic, atomic_start, Ts...>, pcre_parameters<Counter>>) {
-	return pcre_context{ctll::list<atomic_group<Atomic>, Ts...>(), pcre_parameters<Counter>()};
-}
-
-// atomic sequence
-template <auto V, typename... Atomic, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_atomic, ctll::term<V>, pcre_context<ctll::list<sequence<Atomic...>, atomic_start, Ts...>, pcre_parameters<Counter>>) {
-	return pcre_context{ctll::list<atomic_group<Atomic...>, Ts...>(), pcre_parameters<Counter>()};
-}
-
-#endif
-
 #ifndef CTRE__ACTIONS__ASSERTS__HPP
 #define CTRE__ACTIONS__ASSERTS__HPP
 
@@ -1896,6 +1878,26 @@ template <auto V, typename... Ts, typename Parameters> static constexpr auto app
 // push_assert_subject_end_with_lineend
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_assert_subject_end_with_lineend, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
 	return pcre_context{ctll::push_front(assert_subject_end_line(), subject.stack), subject.parameters};
+}
+
+#endif
+
+#ifndef CTRE__ACTIONS__ATOMIC_GROUP__HPP
+#define CTRE__ACTIONS__ATOMIC_GROUP__HPP
+
+// atomic start
+template <auto V, typename... Ts, size_t Counter> static constexpr auto apply(pcre::start_atomic, ctll::term<V>, pcre_context<ctll::list<Ts...>, pcre_parameters<Counter>>) {
+	return pcre_context{ctll::list<atomic_start, Ts...>(), pcre_parameters<Counter>()};
+}
+
+// atomic
+template <auto V, typename Atomic, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_atomic, ctll::term<V>, pcre_context<ctll::list<Atomic, atomic_start, Ts...>, pcre_parameters<Counter>>) {
+	return pcre_context{ctll::list<atomic_group<Atomic>, Ts...>(), pcre_parameters<Counter>()};
+}
+
+// atomic sequence
+template <auto V, typename... Atomic, typename... Ts, size_t Counter> static constexpr auto apply(pcre::make_atomic, ctll::term<V>, pcre_context<ctll::list<sequence<Atomic...>, atomic_start, Ts...>, pcre_parameters<Counter>>) {
+	return pcre_context{ctll::list<atomic_group<Atomic...>, Ts...>(), pcre_parameters<Counter>()};
 }
 
 #endif
@@ -1927,6 +1929,21 @@ template <auto V, size_t Id, typename... Ts, size_t Counter> static constexpr au
 		constexpr size_t absolute_id = (Counter + 1) - Id;
 		return pcre_context{ctll::push_front(back_reference<absolute_id>(), ctll::list<Ts...>()), pcre_parameters<Counter>()};
 	}
+}
+
+#endif
+
+#ifndef CTRE__ACTIONS__BOUNDARIES__HPP
+#define CTRE__ACTIONS__BOUNDARIES__HPP
+
+// push_word_boundary
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_word_boundary, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(boundary<word_chars>(), subject.stack), subject.parameters};
+}
+
+// push_not_word_boundary
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_not_word_boundary, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(boundary<negative_set<word_chars>>(), subject.stack), subject.parameters};
 }
 
 #endif
@@ -2061,6 +2078,77 @@ template <auto V, typename... Ts, typename Parameters> static constexpr auto app
 // class_nonnewline
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::class_nonnewline, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
 	return pcre_context{ctll::push_front(ctre::negative_set<character<'\n'>>(), subject.stack), subject.parameters};
+}
+
+#endif
+
+#ifndef CTRE__ACTIONS__FUSION__HPP
+#define CTRE__ACTIONS__FUSION__HPP
+
+static constexpr size_t combine_max_repeat_length(size_t A, size_t B) {
+	if (A && B) return A+B;
+	else return 0;
+}
+
+template <size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content> static constexpr auto combine_repeat(repeat<MinA, MaxA, Content...>, repeat<MinB, MaxB, Content...>) {
+	return repeat<MinA + MinB, combine_max_repeat_length(MaxA, MaxB), Content...>();
+}
+
+template <size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content> static constexpr auto combine_repeat(lazy_repeat<MinA, MaxA, Content...>, lazy_repeat<MinB, MaxB, Content...>) {
+	return lazy_repeat<MinA + MinB, combine_max_repeat_length(MaxA, MaxB), Content...>();
+}
+
+template <size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content> static constexpr auto combine_repeat(possessive_repeat<MinA, MaxA, Content...>, possessive_repeat<MinB, MaxB, Content...>) {
+	[[maybe_unused]] constexpr bool first_is_unbounded = (MaxA == 0);
+	[[maybe_unused]] constexpr bool second_is_nonempty = (MinB > 0);
+	[[maybe_unused]] constexpr bool second_can_be_empty = (MinB == 0);
+
+	if constexpr (first_is_unbounded && second_is_nonempty) {
+		// will always reject, but I keep the content, so I have some amount of captures
+		return sequence<reject, Content...>();
+	} else if constexpr (first_is_unbounded) {
+		return possessive_repeat<MinA, MaxA, Content...>();
+	} else if constexpr (second_can_be_empty) {
+		return possessive_repeat<MinA, combine_max_repeat_length(MaxA, MaxB), Content...>();
+	} else {
+		return possessive_repeat<MaxA + MinB, combine_max_repeat_length(MaxA, MaxB), Content...>();
+	}
+}
+
+// concat repeat sequences
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<repeat<MinB, MaxB, Content...>, repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(combine_repeat(repeat<MinA, MaxA, Content...>(), repeat<MinB, MaxB, Content...>()), ctll::list<Ts...>()), subject.parameters};
+}
+
+// concat lazy repeat sequences
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<lazy_repeat<MinB, MaxB, Content...>, lazy_repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(combine_repeat(lazy_repeat<MinA, MaxA, Content...>(), lazy_repeat<MinB, MaxB, Content...>()), ctll::list<Ts...>()), subject.parameters};
+}
+
+// concat possessive repeat seqeunces
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<possessive_repeat<MinB, MaxB, Content...>, possessive_repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(combine_repeat(possessive_repeat<MinA, MaxA, Content...>(), possessive_repeat<MinB, MaxB, Content...>()), ctll::list<Ts...>()), subject.parameters};
+}
+
+// concat repeat sequences into sequence
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... As, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<sequence<repeat<MinB, MaxB, Content...>, As...>,repeat<MinA, MaxA, Content...>,Ts...>, Parameters> subject) {
+	using result = decltype(combine_repeat(repeat<MinB, MaxB, Content...>(), repeat<MinA, MaxA, Content...>()));
+	
+	return pcre_context{ctll::push_front(sequence<result,As...>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// concat lazy repeat sequences into sequence
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... As, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<sequence<lazy_repeat<MinB, MaxB, Content...>, As...>,lazy_repeat<MinA, MaxA, Content...>,Ts...>, Parameters> subject) {
+	using result = decltype(combine_repeat(lazy_repeat<MinB, MaxB, Content...>(), lazy_repeat<MinA, MaxA, Content...>()));
+	
+	return pcre_context{ctll::push_front(sequence<result,As...>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// concat possessive repeat sequences into sequence
+template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... As, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<sequence<possessive_repeat<MinB, MaxB, Content...>, As...>,possessive_repeat<MinA, MaxA, Content...>,Ts...>, Parameters> subject) {
+	using result = decltype(combine_repeat(possessive_repeat<MinB, MaxB, Content...>(), possessive_repeat<MinA, MaxA, Content...>()));
+	
+	return pcre_context{ctll::push_front(sequence<result,As...>(), ctll::list<Ts...>()), subject.parameters};
 }
 
 #endif
@@ -2245,6 +2333,79 @@ template <auto V, typename... Subject, typename... Ts, typename Parameters> stat
 
 #endif
 
+#ifndef CTRE__ACTIONS__PROPERTIES__HPP
+#define CTRE__ACTIONS__PROPERTIES__HPP
+
+// push_property_name
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_name, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_name<V>(), subject.stack), subject.parameters};
+}
+// push_property_name (concat)
+template <auto... Str, auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_name, ctll::term<V>, pcre_context<ctll::list<property_name<Str...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_name<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// push_property_value
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_value, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_value<V>(), subject.stack), subject.parameters};
+}
+// push_property_value (concat)
+template <auto... Str, auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_value, ctll::term<V>, pcre_context<ctll::list<property_value<Str...>, Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(property_value<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
+}
+
+// make_property
+template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
+	//return ctll::reject{};
+	constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
+	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
+
+	if constexpr (uni::detail::is_unknown(p)) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+	}
+}
+
+// make_property
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	//return ctll::reject{};
+	constexpr auto prop = property_builder<Name...>::template get<Value...>();
+
+	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(prop, ctll::list<Ts...>()), subject.parameters};
+	}
+}
+
+// make_property_negative
+template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
+	//return ctll::reject{};
+	constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
+	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
+
+	if constexpr (uni::detail::is_unknown(p)) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+	}
+}
+
+// make_property_negative
+template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
+	//return ctll::reject{};
+	constexpr auto prop = property_builder<Name...>::template get<Value...>();
+
+	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
+		return ctll::reject{};
+	} else {
+		return pcre_context{ctll::push_front(negate<decltype(prop)>(), ctll::list<Ts...>()), subject.parameters};
+	}
+}
+
+#endif
+
 #ifndef CTRE__ACTIONS__REPEAT__HPP
 #define CTRE__ACTIONS__REPEAT__HPP
 
@@ -2423,150 +2584,6 @@ template <auto V, auto B, auto A, typename... Ts, typename Parameters> static co
 
 #endif
 
-#ifndef CTRE__ACTIONS__PROPERTIES__HPP
-#define CTRE__ACTIONS__PROPERTIES__HPP
-
-// push_property_name
-template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_name, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property_name<V>(), subject.stack), subject.parameters};
-}
-// push_property_name (concat)
-template <auto... Str, auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_name, ctll::term<V>, pcre_context<ctll::list<property_name<Str...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property_name<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
-}
-
-// push_property_value
-template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_value, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property_value<V>(), subject.stack), subject.parameters};
-}
-// push_property_value (concat)
-template <auto... Str, auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_property_value, ctll::term<V>, pcre_context<ctll::list<property_value<Str...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(property_value<Str..., V>(), ctll::list<Ts...>()), subject.parameters};
-}
-
-// make_property
-template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	//return ctll::reject{};
-	constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
-	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
-
-	if constexpr (uni::detail::is_unknown(p)) {
-		return ctll::reject{};
-	} else {
-		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
-	}
-}
-
-// make_property
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	//return ctll::reject{};
-	constexpr auto prop = property_builder<Name...>::template get<Value...>();
-
-	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
-		return ctll::reject{};
-	} else {
-		return pcre_context{ctll::push_front(prop, ctll::list<Ts...>()), subject.parameters};
-	}
-}
-
-// make_property_negative
-template <auto V, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_name<Name...>, Ts...>, Parameters> subject) {
-	//return ctll::reject{};
-	constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
-	constexpr auto p = uni::detail::binary_prop_from_string(get_string_view(name));
-
-	if constexpr (uni::detail::is_unknown(p)) {
-		return ctll::reject{};
-	} else {
-		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
-	}
-}
-
-// make_property_negative
-template <auto V, auto... Value, auto... Name, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_property_negative, ctll::term<V>, [[maybe_unused]] pcre_context<ctll::list<property_value<Value...>, property_name<Name...>, Ts...>, Parameters> subject) {
-	//return ctll::reject{};
-	constexpr auto prop = property_builder<Name...>::template get<Value...>();
-
-	if constexpr (std::is_same_v<decltype(prop), ctll::reject>) {
-		return ctll::reject{};
-	} else {
-		return pcre_context{ctll::push_front(negate<decltype(prop)>(), ctll::list<Ts...>()), subject.parameters};
-	}
-}
-
-#endif
-
-#ifndef CTRE__ACTIONS__FUSION__HPP
-#define CTRE__ACTIONS__FUSION__HPP
-
-static constexpr size_t combine_max_repeat_length(size_t A, size_t B) {
-	if (A && B) return A+B;
-	else return 0;
-}
-
-template <size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content> static constexpr auto combine_repeat(repeat<MinA, MaxA, Content...>, repeat<MinB, MaxB, Content...>) {
-	return repeat<MinA + MinB, combine_max_repeat_length(MaxA, MaxB), Content...>();
-}
-
-template <size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content> static constexpr auto combine_repeat(lazy_repeat<MinA, MaxA, Content...>, lazy_repeat<MinB, MaxB, Content...>) {
-	return lazy_repeat<MinA + MinB, combine_max_repeat_length(MaxA, MaxB), Content...>();
-}
-
-template <size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content> static constexpr auto combine_repeat(possessive_repeat<MinA, MaxA, Content...>, possessive_repeat<MinB, MaxB, Content...>) {
-	[[maybe_unused]] constexpr bool first_is_unbounded = (MaxA == 0);
-	[[maybe_unused]] constexpr bool second_is_nonempty = (MinB > 0);
-	[[maybe_unused]] constexpr bool second_can_be_empty = (MinB == 0);
-
-	if constexpr (first_is_unbounded && second_is_nonempty) {
-		// will always reject, but I keep the content, so I have some amount of captures
-		return sequence<reject, Content...>();
-	} else if constexpr (first_is_unbounded) {
-		return possessive_repeat<MinA, MaxA, Content...>();
-	} else if constexpr (second_can_be_empty) {
-		return possessive_repeat<MinA, combine_max_repeat_length(MaxA, MaxB), Content...>();
-	} else {
-		return possessive_repeat<MaxA + MinB, combine_max_repeat_length(MaxA, MaxB), Content...>();
-	}
-}
-
-// concat repeat sequences
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<repeat<MinB, MaxB, Content...>, repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(combine_repeat(repeat<MinA, MaxA, Content...>(), repeat<MinB, MaxB, Content...>()), ctll::list<Ts...>()), subject.parameters};
-}
-
-// concat lazy repeat sequences
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<lazy_repeat<MinB, MaxB, Content...>, lazy_repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(combine_repeat(lazy_repeat<MinA, MaxA, Content...>(), lazy_repeat<MinB, MaxB, Content...>()), ctll::list<Ts...>()), subject.parameters};
-}
-
-// concat possessive repeat seqeunces
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<possessive_repeat<MinB, MaxB, Content...>, possessive_repeat<MinA, MaxA, Content...>, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(combine_repeat(possessive_repeat<MinA, MaxA, Content...>(), possessive_repeat<MinB, MaxB, Content...>()), ctll::list<Ts...>()), subject.parameters};
-}
-
-// concat repeat sequences into sequence
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... As, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<sequence<repeat<MinB, MaxB, Content...>, As...>,repeat<MinA, MaxA, Content...>,Ts...>, Parameters> subject) {
-	using result = decltype(combine_repeat(repeat<MinB, MaxB, Content...>(), repeat<MinA, MaxA, Content...>()));
-	
-	return pcre_context{ctll::push_front(sequence<result,As...>(), ctll::list<Ts...>()), subject.parameters};
-}
-
-// concat lazy repeat sequences into sequence
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... As, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<sequence<lazy_repeat<MinB, MaxB, Content...>, As...>,lazy_repeat<MinA, MaxA, Content...>,Ts...>, Parameters> subject) {
-	using result = decltype(combine_repeat(lazy_repeat<MinB, MaxB, Content...>(), lazy_repeat<MinA, MaxA, Content...>()));
-	
-	return pcre_context{ctll::push_front(sequence<result,As...>(), ctll::list<Ts...>()), subject.parameters};
-}
-
-// concat possessive repeat sequences into sequence
-template <auto V, size_t MinA, size_t MaxA, size_t MinB, size_t MaxB, typename... Content, typename... As, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_sequence, ctll::term<V>, pcre_context<ctll::list<sequence<possessive_repeat<MinB, MaxB, Content...>, As...>,possessive_repeat<MinA, MaxA, Content...>,Ts...>, Parameters> subject) {
-	using result = decltype(combine_repeat(possessive_repeat<MinB, MaxB, Content...>(), possessive_repeat<MinA, MaxA, Content...>()));
-	
-	return pcre_context{ctll::push_front(sequence<result,As...>(), ctll::list<Ts...>()), subject.parameters};
-}
-
-#endif
-
 };
 
 }
@@ -2597,6 +2614,12 @@ constexpr bool starts_with_anchor(ctll::list<assert_line_begin, Content...>) noe
 	// yes! start anchor is here
 	// TODO in multiline mode it's a bit different, will need flags here
 	return true;
+}
+
+template <typename CharLike, typename... Content> 
+constexpr bool starts_with_anchor(ctll::list<boundary<CharLike>, Content...>) noexcept {
+	// check if all options starts with anchor or if they are empty, there is an anchor behind them
+	return starts_with_anchor(ctll::list<Content...>{});
 }
 
 template <typename... Options, typename... Content> 
@@ -2675,7 +2698,7 @@ struct utf8_iterator {
 	using value_type = char8_t;
 	using reference = char8_t;
 	using pointer = const char8_t *;
-	using iterator_category = std::forward_iterator_tag;
+	using iterator_category = std::bidirectional_iterator_tag;
 	using difference_type = int;
 	
 	struct sentinel {
@@ -2726,10 +2749,45 @@ struct utf8_iterator {
 		return *this;
 	}
 	
+	constexpr utf8_iterator & operator--() noexcept {
+		if (ptr > end) {
+			ptr = end-1;
+		} else {
+			--ptr;
+		}
+		
+		while ((*ptr & 0b11000000u) == 0b10'000000) {
+			--ptr;
+		}
+		
+		return *this;
+	}
+	
+	constexpr utf8_iterator operator--(int) noexcept {
+		auto self = *this;
+		this->operator--();
+		return self;
+	}
+	
+	constexpr utf8_iterator operator++(int) noexcept {
+		auto self = *this;
+		this->operator++();
+		return self;
+	}
+	
 	constexpr utf8_iterator operator+(unsigned step) const noexcept {
 		utf8_iterator result = *this;
 		while (step > 0) {
 			++result;
+			step--;
+		}
+		return result;
+	}
+	
+	constexpr utf8_iterator operator-(unsigned step) const noexcept {
+		utf8_iterator result = *this;
+		while (step > 0) {
+			--result;
 			step--;
 		}
 		return result;
@@ -3335,6 +3393,12 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<empty, Tail...>) noexc
 	return first(l, ctll::list<Tail...>{});
 }
 
+// boundary
+template <typename... Content, typename CharLike, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<boundary<CharLike>, Tail...>) noexcept {
+	return first(l, ctll::list<Tail...>{});
+}
+
 // asserts
 template <typename... Content, typename... Tail> 
 constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_begin, Tail...>) noexcept {
@@ -3801,6 +3865,8 @@ template <typename... A, typename... B> constexpr bool collides(ctll::list<A...>
 
 #endif
 
+#include <iterator>
+
 // remove me when MSVC fix the constexpr bug
 #ifdef _MSC_VER
 #ifndef CTRE_MSVC_GREEDY_WORKAROUND
@@ -3998,6 +4064,33 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	if (end != current) {
 		return not_matched;
 	}
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
+constexpr bool is_bidirectional(...) { return false; };
+
+template <typename T> struct identify;
+
+// matching boundary
+template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<boundary<CharacterLike>, Tail...>) noexcept {
+	
+	// reason why I need bidirectional iterators or some clever hack
+	bool before = false;
+	bool after = false;
+	
+	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator.");
+	
+	if (end != current) {
+		after = CharacterLike::match_char(*current);
+	}
+	if (begin != current) {
+		before = CharacterLike::match_char(*(current-1));
+	}
+	
+	if (before == after) return not_matched;
+	
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
@@ -4259,7 +4352,7 @@ struct regex_end_iterator {
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_iterator {
 	BeginIterator current;
 	const EndIterator end;
-	decltype(RE::exec(std::declval<BeginIterator>(), std::declval<EndIterator>())) current_match;
+	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
 
 	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
@@ -4284,10 +4377,10 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		}
 		return previous;
 	}
-	friend constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE> & left, regex_end_iterator) {
+	friend constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
 		return bool(left.current_match);
 	}
-	friend constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE> & right) {
+	friend constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
 		return bool(right.current_match);
 	}
 };

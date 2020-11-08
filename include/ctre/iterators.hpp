@@ -15,7 +15,7 @@ struct regex_end_iterator {
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_iterator {
 	BeginIterator current;
 	const EndIterator end;
-	decltype(RE::exec(std::declval<BeginIterator>(), std::declval<EndIterator>())) current_match;
+	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
 
 	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
@@ -40,10 +40,10 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		}
 		return previous;
 	}
-	friend constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE> & left, regex_end_iterator) {
+	friend constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
 		return bool(left.current_match);
 	}
-	friend constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE> & right) {
+	friend constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
 		return bool(right.current_match);
 	}
 };

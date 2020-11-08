@@ -3,15 +3,15 @@
 
 void empty_symbol() { }
 
-template <typename Pattern> constexpr bool match(std::string_view input, Pattern) {
+template <typename Subject, typename Pattern> constexpr bool match(Subject input, Pattern) {
 	return bool(ctre::regular_expression<Pattern>::match(input.begin(), input.end()));
 }
 
-template <typename Pattern> constexpr bool search(std::string_view input, Pattern) {
+template <typename Subject, typename Pattern> constexpr bool search(Subject input, Pattern) {
 	return bool(ctre::regular_expression<Pattern>::search(input.begin(), input.end()));
 }
 
-template <typename Pattern> constexpr bool starts_with(std::string_view input, Pattern) {
+template <typename Subject, typename Pattern> constexpr bool starts_with(Subject input, Pattern) {
 	return bool(ctre::regular_expression<Pattern>::starts_with(input.begin(), input.end()));
 }
 
@@ -154,3 +154,11 @@ static_assert(match("xy"sv, ctre::sequence<ctre::lazy_repeat<0,0,ctre::possessiv
 static_assert(match("xy"sv, ctre::sequence<ctre::possessive_repeat<0,0,ctre::repeat<1,0,ctre::character<'x'>>>, ctre::character<'y'>>()));
 static_assert(match("xy"sv, ctre::sequence<ctre::possessive_repeat<0,0,ctre::lazy_repeat<1,0,ctre::character<'x'>>>, ctre::character<'y'>>()));
 static_assert(match("xy"sv, ctre::sequence<ctre::possessive_repeat<1,0,ctre::possessive_repeat<0,0,ctre::character<'x'>>>, ctre::character<'y'>>()));
+
+// word boundary
+static_assert(starts_with("a "sv, ctre::sequence<ctre::character<'a'>, ctre::boundary<ctre::word_chars>>()));
+static_assert(starts_with(u8"a "sv, ctre::sequence<ctre::character<'a'>, ctre::boundary<ctre::word_chars>>()));
+static_assert(starts_with("aaaa "sv, ctre::sequence<ctre::plus<ctre::character<'a'>>, ctre::boundary<ctre::word_chars>, ctre::any>()));
+static_assert(starts_with("  aaaa"sv, ctre::sequence<ctre::plus<ctre::any>, ctre::boundary<ctre::word_chars>>()));
+static_assert(starts_with(u8"aaaa "sv, ctre::sequence<ctre::plus<ctre::character<'a'>>, ctre::boundary<ctre::word_chars>, ctre::any>()));
+static_assert(starts_with(u8"  aaaa"sv, ctre::sequence<ctre::plus<ctre::any>, ctre::boundary<ctre::word_chars>>()));

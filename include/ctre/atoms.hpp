@@ -51,6 +51,8 @@ struct atomic_start { };
 
 template <typename... Content> struct atomic_group { };
 
+template <typename... Content> struct boundary { };
+
 struct assert_subject_begin { };
 struct assert_subject_end { };
 struct assert_subject_end_line{ };

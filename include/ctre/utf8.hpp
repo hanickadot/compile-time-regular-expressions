@@ -14,7 +14,7 @@ struct utf8_iterator {
 	using value_type = char8_t;
 	using reference = char8_t;
 	using pointer = const char8_t *;
-	using iterator_category = std::forward_iterator_tag;
+	using iterator_category = std::bidirectional_iterator_tag;
 	using difference_type = int;
 	
 	struct sentinel {
@@ -65,10 +65,45 @@ struct utf8_iterator {
 		return *this;
 	}
 	
+	constexpr utf8_iterator & operator--() noexcept {
+		if (ptr > end) {
+			ptr = end-1;
+		} else {
+			--ptr;
+		}
+		
+		while ((*ptr & 0b11000000u) == 0b10'000000) {
+			--ptr;
+		}
+		
+		return *this;
+	}
+	
+	constexpr utf8_iterator operator--(int) noexcept {
+		auto self = *this;
+		this->operator--();
+		return self;
+	}
+	
+	constexpr utf8_iterator operator++(int) noexcept {
+		auto self = *this;
+		this->operator++();
+		return self;
+	}
+	
 	constexpr utf8_iterator operator+(unsigned step) const noexcept {
 		utf8_iterator result = *this;
 		while (step > 0) {
 			++result;
+			step--;
+		}
+		return result;
+	}
+	
+	constexpr utf8_iterator operator-(unsigned step) const noexcept {
+		utf8_iterator result = *this;
+		while (step > 0) {
+			--result;
 			step--;
 		}
 		return result;

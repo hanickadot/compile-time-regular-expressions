@@ -9,6 +9,7 @@
 #include "return_type.hpp"
 #include "find_captures.hpp"
 #include "first.hpp"
+#include <iterator>
 
 // remove me when MSVC fix the constexpr bug
 #ifdef _MSC_VER
@@ -207,6 +208,33 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	if (end != current) {
 		return not_matched;
 	}
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
+constexpr bool is_bidirectional(...) { return false; };
+
+template <typename T> struct identify;
+
+// matching boundary
+template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<boundary<CharacterLike>, Tail...>) noexcept {
+	
+	// reason why I need bidirectional iterators or some clever hack
+	bool before = false;
+	bool after = false;
+	
+	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator.");
+	
+	if (end != current) {
+		after = CharacterLike::match_char(*current);
+	}
+	if (begin != current) {
+		before = CharacterLike::match_char(*(current-1));
+	}
+	
+	if (before == after) return not_matched;
+	
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
