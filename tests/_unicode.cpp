@@ -60,6 +60,9 @@ static_assert(CTRE_CREATE(U"\\u20AC").match(U"€"));
 // TODO only \p and \P is not supported
 static_assert(CTRE_SYNTAX(U"\\p{L}"));
 static_assert(CTRE_SYNTAX(U"\\p{Letter}"));
+static_assert(CTRE_CREATE(U"\\P{Letter}").match(U"1"));
+static_assert(CTRE_CREATE(U"\\P{latin}").match(U"Є"));
+static_assert(CTRE_CREATE(U"[^\\p{latin}\\p{script=Greek}]").match(U"ש"));
 static_assert(CTRE_CREATE(U"\\p{Letter}+").match(u8"abcDEF"));
 static_assert(CTRE_CREATE(U"\\p{Letter}+").match(U"abcDEF"));
 static_assert(CTRE_CREATE(U"\\p{Ll}+").match(U"abcdef"));

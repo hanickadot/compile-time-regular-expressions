@@ -319,6 +319,16 @@ template <typename CB> constexpr int64_t negative_helper(ctre::set<>, CB &, int6
 	return start;
 }
 
+template <auto Property, typename CB> 
+constexpr auto negative_helper(ctre::binary_property<Property>, CB &&, int64_t start) {
+	return start;
+}
+
+template <auto Property, auto Value, typename CB> 
+constexpr auto negative_helper(ctre::property<Property, Value>, CB &&, int64_t start) {
+	return start;
+}
+
 template <typename Head, typename... Rest, typename CB> constexpr int64_t negative_helper(ctre::set<Head, Rest...>, CB & cb, int64_t start) {
 	start = negative_helper(Head{}, cb, start);
 	return negative_helper(ctre::set<Rest...>{}, cb, start);
