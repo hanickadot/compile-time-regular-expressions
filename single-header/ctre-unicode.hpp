@@ -1370,6 +1370,8 @@ struct end_cycle_mark { };
 struct end_lookahead_mark { };
 template <size_t Id> struct numeric_mark { };
 
+struct any { };
+
 // actual AST of regexp
 template <auto... Str> struct string { };
 template <typename... Opts> struct select { };
@@ -1469,10 +1471,6 @@ template <auto V> struct character {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return value == V;
 	}
-};
-
-struct any {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT) noexcept { return true; }
 };
 
 template <typename... Content> struct negative_set {
@@ -4002,6 +4000,17 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	if (current == end) return not_matched;
 	if (!CharacterLike::match_char(*current)) return not_matched;
 	
+	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<any, Tail...>) noexcept {
+	if (current == end) return not_matched;
+	
+	if (multiline_mode(f)) {
+		// TODO add support for different line ending and unicode (in a future unicode mode)
+		if (*current == '\n') return not_matched;
+	}
 	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 

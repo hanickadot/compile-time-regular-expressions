@@ -90,6 +90,17 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<any, Tail...>) noexcept {
+	if (current == end) return not_matched;
+	
+	if (multiline_mode(f)) {
+		// TODO add support for different line ending and unicode (in a future unicode mode)
+		if (*current == '\n') return not_matched;
+	}
+	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
+}
+
 // matching strings in patterns
 
 template <typename Iterator> struct string_match_result {

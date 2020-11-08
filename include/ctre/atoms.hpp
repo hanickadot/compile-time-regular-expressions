@@ -14,6 +14,8 @@ struct end_cycle_mark { };
 struct end_lookahead_mark { };
 template <size_t Id> struct numeric_mark { };
 
+struct any { };
+
 // actual AST of regexp
 template <auto... Str> struct string { };
 template <typename... Opts> struct select { };
