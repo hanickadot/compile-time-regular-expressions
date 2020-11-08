@@ -22,8 +22,8 @@ ctre::match<"REGEX">(subject); // C++20
 
 The library is implementing most of the PCRE syntax with a few exceptions:
 
+* multiline support (WIP)
 * atomic groups
-* boundaries other than `^$`
 * callouts
 * comments
 * conditional patterns
