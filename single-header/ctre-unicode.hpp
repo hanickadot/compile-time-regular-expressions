@@ -2878,9 +2878,13 @@ struct utf8_range {
 #include <tuple>
 #include <string_view>
 #include <string>
+#include <iterator>
 
 namespace ctre {
-	
+
+constexpr bool is_random_accessible(const std::random_access_iterator_tag &) { return true; }
+constexpr bool is_random_accessible(...) { return false; };
+
 struct not_matched_tag_t { };
 
 static constexpr inline auto not_matched = not_matched_tag_t{};
@@ -2923,11 +2927,12 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _end;
 		}
 	
+		// TODO explicit
 		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 			return _matched;
 		}
 		
-		constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
+		constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return _begin.ptr;
@@ -2937,6 +2942,14 @@ template <size_t Id, typename Name = void> struct captured_content {
 			#else
 			return &*_begin;
 			#endif
+		}
+		
+		constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
+			constexpr bool must_be_contiguous_iterator = is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{});
+			
+			static_assert(must_be_contiguous_iterator, "To access result as a pointer you need to provide a random access iterator/range to regex.");
+			
+			return data_unsafe();
 		}
 
 		constexpr CTRE_FORCE_INLINE auto size() const noexcept {
@@ -2952,14 +2965,22 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return static_cast<size_t>(std::distance(begin(), end()));
 		}
 
-		constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
-			// TODO make sure we are working with contiguous range
-			return std::basic_string_view<char_type>(data(), static_cast<size_t>(unit_size()));
+		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
+			// random access, because C++ (waving hands around)
+			constexpr bool must_be_contiguous_iterator = is_random_accessible(typename std::iterator_traits<std::remove_const_t<It>>::iterator_category{});
+			
+			static_assert(must_be_contiguous_iterator, "To convert capture into a basic_string_view you need to provide a pointer or a contiguous iterator/range to regex.");
+	
+			return std::basic_string_view<char_type>(data_unsafe(), static_cast<size_t>(unit_size()));
 		}
 		
-		constexpr CTRE_FORCE_INLINE auto to_string() const noexcept {
-			// TODO make sure we are working with contiguous range
-			return std::basic_string<char_type>(data(), static_cast<size_t>(unit_size()));
+		constexpr CTRE_FORCE_INLINE std::basic_string<char_type> to_string() const noexcept {
+			#if __cpp_char8_t >= 201811
+			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
+				return std::basic_string<char_type>(data_unsafe(), static_cast<size_t>(unit_size()));
+			}
+			#endif
+			return std::basic_string<char_type>(begin(), end());
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
@@ -3915,6 +3936,9 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 	}
 }
 
+constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
+constexpr bool is_bidirectional(...) { return false; };
+
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ...) noexcept = delete;
@@ -4070,11 +4094,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
-constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
-constexpr bool is_bidirectional(...) { return false; };
-
-template <typename T> struct identify;
-
 // matching boundary
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<boundary<CharacterLike>, Tail...>) noexcept {
@@ -4083,13 +4102,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	bool before = false;
 	bool after = false;
 	
-	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator.");
+	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
 	
 	if (end != current) {
 		after = CharacterLike::match_char(*current);
 	}
 	if (begin != current) {
-		before = CharacterLike::match_char(*(current-1));
+		before = CharacterLike::match_char(*std::prev(current));
 	}
 	
 	if (before == after) return not_matched;

@@ -56,6 +56,9 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 	}
 }
 
+constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
+constexpr bool is_bidirectional(...) { return false; };
+
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ...) noexcept = delete;
@@ -211,11 +214,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
-constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
-constexpr bool is_bidirectional(...) { return false; };
-
-template <typename T> struct identify;
-
 // matching boundary
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<boundary<CharacterLike>, Tail...>) noexcept {
@@ -224,13 +222,13 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	bool before = false;
 	bool after = false;
 	
-	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator.");
+	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
 	
 	if (end != current) {
 		after = CharacterLike::match_char(*current);
 	}
 	if (begin != current) {
-		before = CharacterLike::match_char(*(current-1));
+		before = CharacterLike::match_char(*std::prev(current));
 	}
 	
 	if (before == after) return not_matched;
