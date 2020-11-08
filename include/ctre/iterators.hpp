@@ -17,22 +17,22 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	const EndIterator end;
 	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
 
-	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
+	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
 	}
-	constexpr const auto & operator*() const noexcept {
+	constexpr CTRE_FORCE_INLINE const auto & operator*() const noexcept {
 		return current_match;
 	}
-	constexpr regex_iterator & operator++() noexcept {
+	constexpr CTRE_FORCE_INLINE regex_iterator & operator++() noexcept {
 		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
 		return *this;
 	}
-	constexpr regex_iterator operator++(int) noexcept {
+	constexpr CTRE_FORCE_INLINE regex_iterator operator++(int) noexcept {
 		auto previous = *this;
 		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
 		if (current_match) {
@@ -40,10 +40,10 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		}
 		return previous;
 	}
-	friend constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
 		return bool(left.current_match);
 	}
-	friend constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
 		return bool(right.current_match);
 	}
 };

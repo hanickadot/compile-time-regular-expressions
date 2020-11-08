@@ -1476,13 +1476,13 @@ struct any {
 };
 
 template <typename... Content> struct negative_set {
-	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return !(Content::match_char(value) || ... || false);
 	}
 };
 
 template <typename... Content> struct set {
-	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return (Content::match_char(value) || ... || false);
 	}
 };
@@ -1490,7 +1490,7 @@ template <typename... Content> struct set {
 template <auto... Cs> struct enumeration : set<character<Cs>...> { };
 
 template <typename... Content> struct negate {
-	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return !(Content::match_char(value) || ... || false);
 	}
 };
@@ -4376,22 +4376,22 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	const EndIterator end;
 	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
 
-	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
+	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
 	}
-	constexpr const auto & operator*() const noexcept {
+	constexpr CTRE_FORCE_INLINE const auto & operator*() const noexcept {
 		return current_match;
 	}
-	constexpr regex_iterator & operator++() noexcept {
+	constexpr CTRE_FORCE_INLINE regex_iterator & operator++() noexcept {
 		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
 		return *this;
 	}
-	constexpr regex_iterator operator++(int) noexcept {
+	constexpr CTRE_FORCE_INLINE regex_iterator operator++(int) noexcept {
 		auto previous = *this;
 		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
 		if (current_match) {
@@ -4399,10 +4399,10 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		}
 		return previous;
 	}
-	friend constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
 		return bool(left.current_match);
 	}
-	friend constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
 		return bool(right.current_match);
 	}
 };
@@ -4416,12 +4416,12 @@ namespace ctre {
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_range {
 	BeginIterator _begin;
 	const EndIterator _end;
-	constexpr regex_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
+	constexpr CTRE_FORCE_INLINE regex_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
 	
-	constexpr auto begin() const noexcept {
+	constexpr CTRE_FORCE_INLINE auto begin() const noexcept {
 		return regex_iterator<BeginIterator, EndIterator, RE, ResultIterator>(_begin, _end);
 	}
-	constexpr auto end() const noexcept {
+	constexpr CTRE_FORCE_INLINE auto end() const noexcept {
 		return regex_end_iterator{};
 	}
 };
