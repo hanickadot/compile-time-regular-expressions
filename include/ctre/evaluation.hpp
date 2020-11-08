@@ -3,7 +3,6 @@
 
 #include "flags_and_modes.hpp"
 #include "atoms.hpp"
-#include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
 #include "starts_with_anchor.hpp"
 #include "utility.hpp"
@@ -259,6 +258,28 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 	
 	if (before == after) return not_matched;
+	
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+// matching not_boundary
+template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<not_boundary<CharacterLike>, Tail...>) noexcept {
+	
+	// reason why I need bidirectional iterators or some clever hack
+	bool before = false;
+	bool after = false;
+	
+	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
+	
+	if (end != current) {
+		after = CharacterLike::match_char(*current);
+	}
+	if (begin != current) {
+		before = CharacterLike::match_char(*std::prev(current));
+	}
+	
+	if (before != after) return not_matched;
 	
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }

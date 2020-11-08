@@ -1,6 +1,7 @@
 #ifndef CTRE__ATOMS__HPP
 #define CTRE__ATOMS__HPP
 
+#include "atoms_characters.hpp"
 #include <cstdint>
 
 namespace ctre {
@@ -54,6 +55,10 @@ struct atomic_start { };
 template <typename... Content> struct atomic_group { };
 
 template <typename... Content> struct boundary { };
+template <typename... Content> struct not_boundary { };
+
+using word_boundary = boundary<word_chars>;
+using not_word_boundary = not_boundary<word_chars>;
 
 struct assert_subject_begin { };
 struct assert_subject_end { };

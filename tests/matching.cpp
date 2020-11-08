@@ -1,18 +1,34 @@
 #include <ctre.hpp>
 #include <string_view>
+#include <optional>
 
 void empty_symbol() { }
 
 template <typename Subject, typename Pattern> constexpr bool match(Subject input, Pattern) {
-	return bool(ctre::regular_expression<Pattern>::match(input.begin(), input.end()));
+	return ctre::regular_expression<Pattern>::match(input);
 }
 
 template <typename Subject, typename Pattern> constexpr bool search(Subject input, Pattern) {
-	return bool(ctre::regular_expression<Pattern>::search(input.begin(), input.end()));
+	return ctre::regular_expression<Pattern>::search(input);
 }
 
 template <typename Subject, typename Pattern> constexpr bool starts_with(Subject input, Pattern) {
-	return bool(ctre::regular_expression<Pattern>::starts_with(input.begin(), input.end()));
+	return ctre::regular_expression<Pattern>::starts_with(input);
+}
+
+template <typename Subject, typename Pattern> constexpr std::optional<size_t> multiline_match(Subject input, Pattern) {
+	auto result = ctre::regular_expression<Pattern>::multiline_match(input);
+	return bool(result) ? std::optional<size_t>(result.size()) : std::nullopt;
+}
+
+template <typename Subject, typename Pattern> constexpr std::optional<size_t> multiline_search(Subject input, Pattern) {
+	auto result = ctre::regular_expression<Pattern>::multiline_search(input);
+	return bool(result) ? std::optional<size_t>(result.size()) : std::nullopt;
+}
+
+template <typename Subject, typename Pattern> constexpr std::optional<size_t> multiline_starts_with(Subject input, Pattern) {
+	auto result = ctre::regular_expression<Pattern>::multiline_starts_with(input);
+	return bool(result) ? std::optional<size_t>(result.size()) : std::nullopt;
 }
 
 using namespace std::string_view_literals;
@@ -162,3 +178,15 @@ static_assert(starts_with("aaaa "sv, ctre::sequence<ctre::plus<ctre::character<'
 static_assert(starts_with("  aaaa"sv, ctre::sequence<ctre::plus<ctre::any>, ctre::boundary<ctre::word_chars>>()));
 static_assert(starts_with(u8"aaaa "sv, ctre::sequence<ctre::plus<ctre::character<'a'>>, ctre::boundary<ctre::word_chars>, ctre::any>()));
 static_assert(starts_with(u8"  aaaa"sv, ctre::sequence<ctre::plus<ctre::any>, ctre::boundary<ctre::word_chars>>()));
+static_assert(match("a ", ctre::sequence<ctre::character<'a'>, ctre::word_boundary, ctre::character<' '>>() ));
+static_assert(match("ab", ctre::sequence<ctre::character<'a'>, ctre::not_word_boundary, ctre::character<'b'>>() ));
+
+// multiline
+static_assert(multiline_match("", ctre::assert_subject_begin()).value() == 0);
+static_assert(multiline_match("", ctre::assert_subject_end()).value() == 0);
+static_assert(multiline_match("", ctre::assert_line_begin()).value() == 0);
+static_assert(multiline_match("", ctre::assert_line_end()).value() == 0);
+static_assert(multiline_match("", ctre::assert_subject_end_line()).value() == 0);
+static_assert(!multiline_match("\n", ctre::any()));
+static_assert(multiline_starts_with("aaa\nbbb", ctre::plus<ctre::any>()).value() == 3);
+static_assert(multiline_starts_with("aaa\nbbb", ctre::sequence<ctre::plus<ctre::any>,ctre::assert_line_end,ctre::character<'\n'>>()).value() == 4);

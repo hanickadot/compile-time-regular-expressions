@@ -2,7 +2,6 @@
 #define CTRE__FIRST__HPP
 
 #include "atoms.hpp"
-#include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
 
 namespace ctre {
