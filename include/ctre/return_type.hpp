@@ -345,6 +345,8 @@ public:
 
 template <typename Iterator, typename... Captures> regex_results(Iterator, ctll::list<Captures...>) -> regex_results<Iterator, Captures...>;
 
+template <typename ResultIterator, typename Pattern> using return_type = decltype(regex_results(std::declval<ResultIterator>(), find_captures(Pattern{})));
+
 }
 
 // support for structured bindings

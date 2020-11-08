@@ -55,34 +55,6 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 	}
 }
 
-template <typename ResultIterator, typename Pattern> using return_type = decltype(regex_results(std::declval<ResultIterator>(), find_captures(Pattern{})));
-
-// calling with pattern prepare stack and triplet of iterators
-template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr CTRE_FORCE_INLINE auto match_re(const Iterator begin, const EndIterator end, Pattern, const flags & f = {}) noexcept {
-	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, assert_subject_end, end_mark, accept>());
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr CTRE_FORCE_INLINE auto starts_with_re(const Iterator begin, const EndIterator end, Pattern, const flags & f = {}) noexcept {
-	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr CTRE_FORCE_INLINE auto search_re(const Iterator begin, const EndIterator end, Pattern, const flags & f = {}) noexcept {
-	constexpr bool fixed = starts_with_anchor(ctll::list<Pattern>{});
-	
-	auto it = begin;
-	for (; end != it && !fixed; ++it) {
-		if (auto out = evaluate(begin, it, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {
-			return out;
-		}
-	}
-	
-	// in case the RE is empty or fixed
-	return evaluate(begin, it, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
-}
-
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ...) noexcept = delete;

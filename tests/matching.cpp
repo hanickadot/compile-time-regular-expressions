@@ -3,16 +3,16 @@
 
 void empty_symbol() { }
 
-template <typename Pattern> constexpr bool match(std::string_view input, Pattern pattern) {
-	return bool(ctre::match_re(input.begin(), input.end(), pattern));
+template <typename Pattern> constexpr bool match(std::string_view input, Pattern) {
+	return bool(ctre::regular_expression<Pattern>::match(input.begin(), input.end()));
 }
 
-template <typename Pattern> constexpr bool search(std::string_view input, Pattern pattern) {
-	return bool(ctre::search_re(input.begin(), input.end(), pattern));
+template <typename Pattern> constexpr bool search(std::string_view input, Pattern) {
+	return bool(ctre::regular_expression<Pattern>::search(input.begin(), input.end()));
 }
 
-template <typename Pattern> constexpr bool starts_with(std::string_view input, Pattern pattern) {
-	return bool(ctre::starts_with_re(input.begin(), input.end(), pattern));
+template <typename Pattern> constexpr bool starts_with(std::string_view input, Pattern) {
+	return bool(ctre::regular_expression<Pattern>::starts_with(input.begin(), input.end()));
 }
 
 using namespace std::string_view_literals;
@@ -20,6 +20,7 @@ using namespace std::string_view_literals;
 static_assert(match("a"sv, ctre::character<'a'>()));
 static_assert(search("abc"sv, ctre::character<'a'>()));
 static_assert(search("abc"sv, ctre::character<'b'>())); 
+static_assert(search("abc"sv, ctre::character<'c'>())); 
 static_assert(starts_with("abc"sv, ctre::character<'a'>())); 
 static_assert(!starts_with("abc"sv, ctre::character<'b'>()));
 static_assert(!match("abc"sv, ctre::character<'b'>()));

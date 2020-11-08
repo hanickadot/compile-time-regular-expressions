@@ -2,7 +2,7 @@
 #define CTRE_V2__CTRE__ITERATOR__HPP
 
 #include "literals.hpp"
-#include "functions.hpp"
+#include "wrapper.hpp"
 
 namespace ctre {
 
@@ -13,9 +13,9 @@ struct regex_end_iterator {
 template <typename BeginIterator, typename EndIterator, typename RE> struct regex_iterator {
 	BeginIterator current;
 	const EndIterator end;
-	decltype(RE::search_2(std::declval<BeginIterator>(), std::declval<EndIterator>())) current_match;
+	decltype(RE::exec(std::declval<BeginIterator>(), std::declval<EndIterator>())) current_match;
 
-	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::search_2(current, end)} {
+	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::exec(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -24,7 +24,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> struct rege
 		return current_match;
 	}
 	constexpr regex_iterator & operator++() noexcept {
-		current_match = RE::search_2(current, end);
+		current_match = RE::exec(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -32,7 +32,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> struct rege
 	}
 	constexpr regex_iterator operator++(int) noexcept {
 		auto previous = *this;
-		current_match = RE::search_2(current, end);
+		current_match = RE::exec(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
