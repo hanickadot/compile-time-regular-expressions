@@ -4258,16 +4258,18 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 namespace ctre {
 
+// TODO make proper iterator traits here
+
 struct regex_end_iterator {
 	constexpr regex_end_iterator() noexcept { }
 };
 
-template <typename BeginIterator, typename EndIterator, typename RE> struct regex_iterator {
+template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_iterator {
 	BeginIterator current;
 	const EndIterator end;
 	decltype(RE::exec(std::declval<BeginIterator>(), std::declval<EndIterator>())) current_match;
 
-	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::exec(current, end)} {
+	constexpr regex_iterator(BeginIterator begin, EndIterator end) noexcept: current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -4276,7 +4278,7 @@ template <typename BeginIterator, typename EndIterator, typename RE> struct rege
 		return current_match;
 	}
 	constexpr regex_iterator & operator++() noexcept {
-		current_match = RE::exec(current, end);
+		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
@@ -4284,53 +4286,19 @@ template <typename BeginIterator, typename EndIterator, typename RE> struct rege
 	}
 	constexpr regex_iterator operator++(int) noexcept {
 		auto previous = *this;
-		current_match = RE::exec(current, end);
+		current_match = RE::template exec_with_result_iterator<ResultIterator>(current, end);
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
 		return previous;
 	}
+	friend constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE> & left, regex_end_iterator) {
+		return bool(left.current_match);
+	}
+	friend constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE> & right) {
+		return bool(right.current_match);
+	}
 };
-
-template <typename BeginIterator, typename EndIterator, typename RE> constexpr bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE> & left, regex_end_iterator) {
-	return bool(left.current_match);
-}
-
-template <typename BeginIterator, typename EndIterator, typename RE> constexpr bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE> & right) {
-	return bool(right.current_match);
-}
-
-template <typename BeginIterator, typename EndIterator, typename RE> constexpr auto iterator(BeginIterator begin, EndIterator end, RE) noexcept {
-	return regex_iterator<BeginIterator, EndIterator, RE>(begin, end);
-}
-
-constexpr auto iterator() noexcept {
-	return regex_end_iterator{};
-}
-
-template <typename Subject, typename RE> constexpr auto iterator(const Subject & subject, RE re) noexcept {
-	return iterator(subject.begin(), subject.end(), re);
-}
-
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
-template <ctll::fixed_string input, typename BeginIterator, typename EndIterator> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(BeginIterator begin, EndIterator end) noexcept {
-	constexpr auto _input = input;
-	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return iterator(begin, end, re());
-}
-#endif
-
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
-template <ctll::fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto iterator(const Subject & subject) noexcept {
-	constexpr auto _input = input;
-	using tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(tmp(), "Regular Expression contains syntax error.");
-	using re = decltype(front(typename tmp::output_type::stack_type()));
-	return iterator(subject.begin(), subject.end(), re());
-}
-#endif
 
 } // ctre
 
@@ -4338,13 +4306,13 @@ template <ctll::fixed_string input, typename Subject> CTRE_FLATTEN constexpr CTR
 
 namespace ctre {
 
-template <typename BeginIterator, typename EndIterator, typename RE> struct regex_range {
+template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_range {
 	BeginIterator _begin;
 	const EndIterator _end;
 	constexpr regex_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
 	
 	constexpr auto begin() const noexcept {
-		return regex_iterator<BeginIterator, EndIterator, RE>(_begin, _end);
+		return regex_iterator<BeginIterator, EndIterator, RE, ResultIterator>(_begin, _end);
 	}
 	constexpr auto end() const noexcept {
 		return regex_end_iterator{};
@@ -4436,11 +4404,22 @@ struct starts_with_method {
 // wrapper which calls search on input
 struct range_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
-		//using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
-		// TODO propagate result iterator
+		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
 	
-		return regex_range<IteratorBegin, IteratorEnd, wrapped_regex>(begin, end);
+		return regex_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+	}
+};
+
+struct iterator_method {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
+		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
+	
+		return regex_iterator<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+	}
+	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
+		return regex_end_iterator{};
 	}
 };
 
@@ -4448,6 +4427,12 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	
+	template <typename ResultIterator, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec_with_result_iterator(IteratorBegin begin, IteratorEnd end) noexcept {
+		return Method::template exec<Modifier, ResultIterator>(begin, end, RE{});
+	}
+	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
+		return Method::template exec();
+	}
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end) noexcept {
 		return Method::template exec<Modifier>(begin, end, RE{});
 	}
@@ -4465,7 +4450,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	}
 #if __cpp_char8_t >= 201811
 	static constexpr CTRE_FORCE_INLINE auto exec(std::u8string_view sv) noexcept {
-		return Method::template exec<Modifier, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), RE{});
+		return exec_with_result_iterator<const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end());
 	}
 #endif
 	static constexpr CTRE_FORCE_INLINE auto exec(std::u16string_view sv) noexcept {
@@ -4499,6 +4484,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, singleline>::exec(std::forward<Args>(args)...);
 	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto iterator(Args && ... args) noexcept {
+		return regular_expression<RE, iterator_method, singleline>::exec(std::forward<Args>(args)...);
+	}
 	
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_match(Args && ... args) noexcept {
 		return regular_expression<RE, match_method, multiline>::exec(std::forward<Args>(args)...);
@@ -4511,6 +4499,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, multiline>::exec(std::forward<Args>(args)...);
+	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_iterator(Args && ... args) noexcept {
+		return regular_expression<RE, iterator_method, multiline>::exec(std::forward<Args>(args)...);
 	}
 };
 
@@ -4539,13 +4530,19 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto starts_with 
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, singleline>();
 
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, singleline>();
+
+static constexpr inline auto sentinel = regex_end_iterator();
+
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_match = regular_expression<typename regex_builder<input>::type, match_method, multiline>();
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_search = regular_expression<typename regex_builder<input>::type, search_method, multiline>();
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, multiline>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_iterator = regular_expression<typename regex_builder<input>::type, iterator_method, multiline>();
+
+static constexpr inline auto multiline_sentinel = regex_end_iterator();
 
 }
 

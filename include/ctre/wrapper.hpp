@@ -87,11 +87,22 @@ struct starts_with_method {
 // wrapper which calls search on input
 struct range_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
-		//using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
-		// TODO propagate result iterator
+		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
 	
-		return regex_range<IteratorBegin, IteratorEnd, wrapped_regex>(begin, end);
+		return regex_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+	}
+};
+
+struct iterator_method {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
+		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
+	
+		return regex_iterator<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+	}
+	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
+		return regex_end_iterator{};
 	}
 };
 
@@ -99,6 +110,12 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 	
+	template <typename ResultIterator, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec_with_result_iterator(IteratorBegin begin, IteratorEnd end) noexcept {
+		return Method::template exec<Modifier, ResultIterator>(begin, end, RE{});
+	}
+	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
+		return Method::template exec();
+	}
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end) noexcept {
 		return Method::template exec<Modifier>(begin, end, RE{});
 	}
@@ -116,7 +133,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	}
 #if __cpp_char8_t >= 201811
 	static constexpr CTRE_FORCE_INLINE auto exec(std::u8string_view sv) noexcept {
-		return Method::template exec<Modifier, const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end(), RE{});
+		return exec_with_result_iterator<const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end());
 	}
 #endif
 	static constexpr CTRE_FORCE_INLINE auto exec(std::u16string_view sv) noexcept {
@@ -150,6 +167,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, singleline>::exec(std::forward<Args>(args)...);
 	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto iterator(Args && ... args) noexcept {
+		return regular_expression<RE, iterator_method, singleline>::exec(std::forward<Args>(args)...);
+	}
 	
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_match(Args && ... args) noexcept {
 		return regular_expression<RE, match_method, multiline>::exec(std::forward<Args>(args)...);
@@ -162,6 +182,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, multiline>::exec(std::forward<Args>(args)...);
+	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_iterator(Args && ... args) noexcept {
+		return regular_expression<RE, iterator_method, multiline>::exec(std::forward<Args>(args)...);
 	}
 };
 
@@ -191,6 +214,10 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto starts_with 
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, singleline>();
 
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, singleline>();
+
+static constexpr inline auto sentinel = regex_end_iterator();
+
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_match = regular_expression<typename regex_builder<input>::type, match_method, multiline>();
 
@@ -198,8 +225,9 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_se
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, multiline>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_iterator = regular_expression<typename regex_builder<input>::type, iterator_method, multiline>();
 
+static constexpr inline auto multiline_sentinel = regex_end_iterator();
 
 
 }
