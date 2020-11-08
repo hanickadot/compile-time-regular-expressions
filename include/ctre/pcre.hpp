@@ -101,7 +101,7 @@ struct pcre {
 	struct push_assert_end: ctll::action {};
 	struct push_assert_subject_begin: ctll::action {};
 	struct push_assert_subject_end: ctll::action {};
-	struct push_assert_subject_end_with_possible_line: ctll::action {};
+	struct push_assert_subject_end_with_lineend: ctll::action {};
 	struct push_character: ctll::action {};
 	struct push_character_alarm: ctll::action {};
 	struct push_character_anything: ctll::action {};
@@ -181,7 +181,7 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, l>;
 	static constexpr auto rule(backslash, ctll::term<'A'>) -> ctll::push<ctll::anything, push_assert_subject_begin>;
 	static constexpr auto rule(backslash, ctll::term<'z'>) -> ctll::push<ctll::anything, push_assert_subject_end>;
-	static constexpr auto rule(backslash, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_possible_line>;
+	static constexpr auto rule(backslash, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_lineend>;
 	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(backslash, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
@@ -292,7 +292,7 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'-'>) -> ctll::push<ctll::anything, p>;
 	static constexpr auto rule(e, ctll::term<'A'>) -> ctll::push<ctll::anything, push_assert_subject_begin>;
 	static constexpr auto rule(e, ctll::term<'z'>) -> ctll::push<ctll::anything, push_assert_subject_end>;
-	static constexpr auto rule(e, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_possible_line>;
+	static constexpr auto rule(e, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_lineend>;
 	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(e, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(e, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
@@ -322,7 +322,7 @@ struct pcre {
 	static constexpr auto rule(f, ctll::term<'x'>) -> ctll::push<ctll::anything, l, range>;
 	static constexpr auto rule(f, ctll::term<'A'>) -> ctll::push<ctll::anything, push_assert_subject_begin>;
 	static constexpr auto rule(f, ctll::term<'z'>) -> ctll::push<ctll::anything, push_assert_subject_end>;
-	static constexpr auto rule(f, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_possible_line>;
+	static constexpr auto rule(f, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_lineend>;
 	static constexpr auto rule(f, ctll::set<'$','\x28','\x29','*','+','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(f, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(f, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;

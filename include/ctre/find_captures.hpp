@@ -43,12 +43,12 @@ template <typename... Tail, typename Output> constexpr auto find_captures(ctll::
 }
 
 
-template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_begin, Tail...>, Output output) noexcept {
+template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_begin, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
 
-template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_end, Tail...>, Output output) noexcept {
+template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_end, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 

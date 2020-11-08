@@ -9,8 +9,15 @@ constexpr bool starts_with_anchor(ctll::list<Content...>) noexcept {
 }
 
 template <typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<assert_begin, Content...>) noexcept {
+constexpr bool starts_with_anchor(ctll::list<assert_subject_begin, Content...>) noexcept {
 	// yes! start anchor is here
+	return true;
+}
+
+template <typename... Content> 
+constexpr bool starts_with_anchor(ctll::list<assert_line_begin, Content...>) noexcept {
+	// yes! start anchor is here
+	// TODO in multiline mode it's a bit different, will need flags here
 	return true;
 }
 

@@ -1,5 +1,6 @@
 *.o
 *.d
+**/*.tmp
 test
 result
 tests/benchmark-exec/*

@@ -142,7 +142,7 @@ backslash_set->P,copen,<property_name>,cclose,[make_property_negative]
 
 backslash_set->A,[push_assert_subject_begin]
 backslash_set->z,[push_assert_subject_end]
-backslash_set->Z,[push_assert_subject_end_with_possible_line]
+backslash_set->Z,[push_assert_subject_end_with_lineend]
 backslash_set->b,[push_word_boundary]
 backslash_set->B,[push_not_word_boundary]
 

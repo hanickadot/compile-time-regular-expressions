@@ -45,10 +45,10 @@ static_assert(match("c"sv, ctre::select<ctre::character<'a'>, ctre::character<'b
 static_assert(!match("d"sv, ctre::select<ctre::character<'a'>, ctre::character<'b'>, ctre::character<'c'>>()));
 static_assert(match("xy"sv, ctre::optional<ctre::string<'x','y'>>()));
 static_assert(match(""sv, ctre::optional<ctre::string<'x','y'>>()));
-static_assert(match("abc"sv, ctre::sequence<ctre::assert_begin, ctre::string<'a','b','c'>>()));
-static_assert(match("def"sv, ctre::sequence<ctre::assert_begin, ctre::string<'d','e','f'>, ctre::assert_end>()));
-static_assert(!match("a"sv, ctre::sequence<ctre::character<'a'>, ctre::assert_begin>()));
-static_assert(!match("a"sv, ctre::sequence<ctre::assert_end, ctre::character<'a'>>()));
+static_assert(match("abc"sv, ctre::sequence<ctre::assert_subject_begin, ctre::string<'a','b','c'>>()));
+static_assert(match("def"sv, ctre::sequence<ctre::assert_subject_begin, ctre::string<'d','e','f'>, ctre::assert_subject_end>()));
+static_assert(!match("a"sv, ctre::sequence<ctre::character<'a'>, ctre::assert_subject_begin>()));
+static_assert(!match("a"sv, ctre::sequence<ctre::assert_subject_end, ctre::character<'a'>>()));
 
 static_assert(match("aaax"sv, ctre::sequence<ctre::lazy_plus<ctre::character<'a'>>, ctre::character<'x'>>()));
 static_assert(match("ax"sv, ctre::sequence<ctre::lazy_plus<ctre::character<'a'>>, ctre::character<'x'>>()));
@@ -81,8 +81,8 @@ static_assert(match("aba"sv, ctre::sequence<ctre::possessive_plus<ctre::characte
 static_assert(match("aaax"sv, ctre::sequence<ctre::lazy_repeat<3,0,ctre::character<'a'>>, ctre::character<'x'>>()));
 
 static_assert(search("aaaaaa"sv, ctre::repeat<0,5,ctre::character<'a'>>()));
-static_assert(!match("aaaaaa"sv, ctre::sequence<ctre::repeat<0,5,ctre::character<'a'>>, ctre::assert_end>()));
-static_assert(match("aaaaa"sv, ctre::sequence<ctre::repeat<0,5,ctre::character<'a'>>, ctre::assert_end>()));
+static_assert(!match("aaaaaa"sv, ctre::sequence<ctre::repeat<0,5,ctre::character<'a'>>, ctre::assert_subject_end>()));
+static_assert(match("aaaaa"sv, ctre::sequence<ctre::repeat<0,5,ctre::character<'a'>>, ctre::assert_subject_end>()));
 
 static_assert(match("aaa"sv, ctre::star<ctre::character<'a'>>()));
 static_assert(match("aaa"sv, ctre::plus<ctre::character<'a'>>()));

@@ -48,12 +48,30 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<empty, Tail...>) noexc
 
 // asserts
 template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_begin, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_begin, Tail...>) noexcept {
 	return first(l, ctll::list<Tail...>{});
 }
 
 template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_end, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end, Tail...>) noexcept {
+	return l;
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end_line, Tail...>) noexcept {
+	// FIXME allow endline here
+	return l;
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_begin, Tail...>) noexcept {
+	// FIXME line begin is a bit different than subject begin
+	return first(l, ctll::list<Tail...>{});
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_end, Tail...>) noexcept {
+	// FIXME line end is a bit different than subject begin
 	return l;
 }
 

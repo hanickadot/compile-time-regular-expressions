@@ -989,7 +989,7 @@ struct pcre {
 	struct push_assert_end: ctll::action {};
 	struct push_assert_subject_begin: ctll::action {};
 	struct push_assert_subject_end: ctll::action {};
-	struct push_assert_subject_end_with_possible_line: ctll::action {};
+	struct push_assert_subject_end_with_lineend: ctll::action {};
 	struct push_character: ctll::action {};
 	struct push_character_alarm: ctll::action {};
 	struct push_character_anything: ctll::action {};
@@ -1069,7 +1069,7 @@ struct pcre {
 	static constexpr auto rule(backslash, ctll::term<'x'>) -> ctll::push<ctll::anything, l>;
 	static constexpr auto rule(backslash, ctll::term<'A'>) -> ctll::push<ctll::anything, push_assert_subject_begin>;
 	static constexpr auto rule(backslash, ctll::term<'z'>) -> ctll::push<ctll::anything, push_assert_subject_end>;
-	static constexpr auto rule(backslash, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_possible_line>;
+	static constexpr auto rule(backslash, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_lineend>;
 	static constexpr auto rule(backslash, ctll::set<'$','\x28','\x29','*','+','-','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(backslash, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm>;
 	static constexpr auto rule(backslash, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape>;
@@ -1180,7 +1180,7 @@ struct pcre {
 	static constexpr auto rule(e, ctll::term<'-'>) -> ctll::push<ctll::anything, p>;
 	static constexpr auto rule(e, ctll::term<'A'>) -> ctll::push<ctll::anything, push_assert_subject_begin>;
 	static constexpr auto rule(e, ctll::term<'z'>) -> ctll::push<ctll::anything, push_assert_subject_end>;
-	static constexpr auto rule(e, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_possible_line>;
+	static constexpr auto rule(e, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_lineend>;
 	static constexpr auto rule(e, ctll::set<'$','\x28','\x29','*','+','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(e, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(e, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
@@ -1210,7 +1210,7 @@ struct pcre {
 	static constexpr auto rule(f, ctll::term<'x'>) -> ctll::push<ctll::anything, l, range>;
 	static constexpr auto rule(f, ctll::term<'A'>) -> ctll::push<ctll::anything, push_assert_subject_begin>;
 	static constexpr auto rule(f, ctll::term<'z'>) -> ctll::push<ctll::anything, push_assert_subject_end>;
-	static constexpr auto rule(f, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_possible_line>;
+	static constexpr auto rule(f, ctll::term<'Z'>) -> ctll::push<ctll::anything, push_assert_subject_end_with_lineend>;
 	static constexpr auto rule(f, ctll::set<'$','\x28','\x29','*','+','.','?','[','\\',']','^','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character>;
 	static constexpr auto rule(f, ctll::term<'a'>) -> ctll::push<ctll::anything, push_character_alarm, range>;
 	static constexpr auto rule(f, ctll::term<'e'>) -> ctll::push<ctll::anything, push_character_escape, range>;
@@ -1407,8 +1407,11 @@ struct atomic_start { };
 
 template <typename... Content> struct atomic_group { };
 
-struct assert_begin { };
-struct assert_end { };
+struct assert_subject_begin { };
+struct assert_subject_end { };
+struct assert_subject_end_line{ };
+struct assert_line_begin { };
+struct assert_line_end { };
 
 }
 
@@ -1875,12 +1878,27 @@ template <auto V, typename... Atomic, typename... Ts, size_t Counter> static con
 
 // push_assert_begin
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_assert_begin, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(assert_begin(), subject.stack), subject.parameters};
+	return pcre_context{ctll::push_front(assert_line_begin(), subject.stack), subject.parameters};
 }
 
 // push_assert_end
 template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_assert_end, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(assert_end(), subject.stack), subject.parameters};
+	return pcre_context{ctll::push_front(assert_line_end(), subject.stack), subject.parameters};
+}
+
+// push_assert_begin
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_assert_subject_begin, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(assert_subject_begin(), subject.stack), subject.parameters};
+}
+
+// push_assert_subject_end
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_assert_subject_end, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(assert_subject_end(), subject.stack), subject.parameters};
+}
+
+// push_assert_subject_end_with_lineend
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::push_assert_subject_end_with_lineend, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(assert_subject_end_line(), subject.stack), subject.parameters};
 }
 
 #endif
@@ -2572,8 +2590,15 @@ constexpr bool starts_with_anchor(ctll::list<Content...>) noexcept {
 }
 
 template <typename... Content> 
-constexpr bool starts_with_anchor(ctll::list<assert_begin, Content...>) noexcept {
+constexpr bool starts_with_anchor(ctll::list<assert_subject_begin, Content...>) noexcept {
 	// yes! start anchor is here
+	return true;
+}
+
+template <typename... Content> 
+constexpr bool starts_with_anchor(ctll::list<assert_line_begin, Content...>) noexcept {
+	// yes! start anchor is here
+	// TODO in multiline mode it's a bit different, will need flags here
 	return true;
 }
 
@@ -3198,11 +3223,11 @@ template <typename... Tail, typename Output> constexpr auto find_captures(ctll::
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
-template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_begin, Tail...>, Output output) noexcept {
+template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_begin, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
-template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_end, Tail...>, Output output) noexcept {
+template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_end, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
@@ -3313,12 +3338,30 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<empty, Tail...>) noexc
 
 // asserts
 template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_begin, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_begin, Tail...>) noexcept {
 	return first(l, ctll::list<Tail...>{});
 }
 
 template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_end, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end, Tail...>) noexcept {
+	return l;
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end_line, Tail...>) noexcept {
+	// FIXME allow endline here
+	return l;
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_begin, Tail...>) noexcept {
+	// FIXME line begin is a bit different than subject begin
+	return first(l, ctll::list<Tail...>{});
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_end, Tail...>) noexcept {
+	// FIXME line end is a bit different than subject begin
 	return l;
 }
 
@@ -3809,7 +3852,7 @@ template <typename ResultIterator, typename Pattern> using return_type = decltyp
 // calling with pattern prepare stack and triplet of iterators
 template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
 constexpr CTRE_FORCE_INLINE auto match_re(const Iterator begin, const EndIterator end, Pattern, const flags & f = {}) noexcept {
-	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
+	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, assert_subject_end, end_mark, accept>());
 }
 
 template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
@@ -3945,7 +3988,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // matching asserts
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_begin, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_begin, Tail...>) noexcept {
 	if (begin != current) {
 		return not_matched;
 	}
@@ -3953,7 +3996,34 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_end, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_end, Tail...>) noexcept {
+	if (end != current) {
+		return not_matched;
+	}
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_end_line, Tail...>) noexcept {
+	// TODO properly match the line end
+	if (end != current) {
+		return not_matched;
+	}
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_begin, Tail...>) noexcept {
+	// TODO properly match line begin
+	if (begin != current) {
+		return not_matched;
+	}
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_end, Tail...>) noexcept {
+	// TODO properly match line end
 	if (end != current) {
 		return not_matched;
 	}
