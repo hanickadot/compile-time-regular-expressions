@@ -27,6 +27,11 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		return current_match;
 	}
 	constexpr CTRE_FORCE_INLINE regex_iterator & operator++() noexcept {
+		if (current == end) {
+			current_match = decltype(current_match){};
+			return *this;
+		}
+		
 		current_match = RE::template exec_with_result_iterator<ResultIterator>(orig_begin, current, end);
 		
 		if (current_match) {
@@ -36,10 +41,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	}
 	constexpr CTRE_FORCE_INLINE regex_iterator operator++(int) noexcept {
 		auto previous = *this;
-		current_match = RE::template exec_with_result_iterator<ResultIterator>(orig_begin, current, end);
-		if (current_match) {
-			current = current_match.template get<0>().end();
-		}
+		this->operator++();
 		return previous;
 	}
 	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
