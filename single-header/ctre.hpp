@@ -1498,6 +1498,7 @@ struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
 struct end_lookahead_mark { };
+struct fail_if_empty { };
 template <size_t Id> struct numeric_mark { };
 
 struct any { };
@@ -3956,9 +3957,14 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
 constexpr bool is_bidirectional(...) { return false; };
 
+template <typename> static constexpr bool always_false = false; 
+
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ...) noexcept = delete;
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ...) noexcept {
+	static_assert(always_false<R>, "unknown atom to evaluate!");
+	return not_matched;
+}
 
 // if we found "accept" object on stack => ACCEPT
 template <typename R, typename Iterator, typename EndIterator> 
@@ -3985,13 +3991,22 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // mark end of cycle
-template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+template <typename R, typename Iterator, typename EndIterator> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] const flags & f, R captures, ctll::list<end_cycle_mark>) noexcept {
 	if (cannot_be_empty_match(f)) {
 		return not_matched;
 	}
 	
 	return captures.set_end_mark(current).matched();
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<fail_if_empty, Tail...>) noexcept {
+	if (cannot_be_empty_match(f)) {
+		return not_matched;
+	}
+	
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
 // matching everything which behave as a one character matcher
@@ -4201,50 +4216,30 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
-
-	if constexpr (B != 0 && A > B) {
+constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) {
+	if constexpr ((B != 0) && (A > B)) {
 		return not_matched;
 	}
 	
-	const Iterator backup_current = current;
+	[[maybe_unused]] constexpr size_t next_max_level = B ? B - 1 : 0;
+	[[maybe_unused]] constexpr bool max_limited = B > 0;
 	
-	size_t i{0};
+	[[maybe_unused]] constexpr size_t next_min_level = A ? A - 1 : 0;
+	[[maybe_unused]] constexpr bool min_unlimited = A == 0;
 	
-	while (less_than<A>(i)) {
-		auto outer_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
-		
-		if (!outer_result) return not_matched;
-		
-		captures = outer_result.unmatch();
-		current = outer_result.get_end_position();
-		
-		++i;
+	// first try tail...
+	if constexpr (min_unlimited) {
+		auto result = evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		if (result) return result;
 	}
 	
-	if (auto outer_result = evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>())) {
-		return outer_result;
+	// and then try internal content...
+	if constexpr (max_limited && B == 1) {
+		// maximum limit reached
+		return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, Tail...>());
+	} else {
+		return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, lazy_repeat<next_min_level, next_max_level, Content...>, Tail...>());
 	}
-	
-	while (less_than_or_infinite<B>(i)) {
-		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
-		
-		if (!inner_result) return not_matched;
-		
-		auto outer_result = evaluate(begin, inner_result.get_end_position(), end, consumed_something(f), inner_result.unmatch(), ctll::list<Tail...>());
-		
-		if (outer_result) {
-			return outer_result;
-		}
-		
-		captures = inner_result.unmatch();
-		current = inner_result.get_end_position();
-		
-		++i;
-	}
-	
-	// rest of regex
-	return evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 
 // possessive repeat
@@ -4273,79 +4268,34 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>());
 }
 
-// (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-#ifdef CTRE_MSVC_GREEDY_WORKAROUND
-constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
-#else
-constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
-#endif
-	if (less_than_or_infinite<B>(i)) {
-		 
-		// a*ab
-		// aab
-		
-		if (auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>())) {
-			// TODO MSVC issue:
-			// if I uncomment this return it will not fail in constexpr (but the matching result will not be correct)
-			//  return inner_result
-			// I tried to add all constructors to R but without any success
-			auto tmp_current = current;
-			tmp_current = inner_result.get_end_position();
-			#ifdef CTRE_MSVC_GREEDY_WORKAROUND
-			evaluate_recursive(result, i+1, begin, tmp_current, end, f, inner_result.unmatch(), stack);
-			if (result) {
-				return;
-			}
-			#else
-			if (auto rec_result = evaluate_recursive(i+1, begin, tmp_current, end, f, inner_result.unmatch(), stack)) {
-				return rec_result;
-			}
-			#endif
-		}
-	}
-	#ifdef CTRE_MSVC_GREEDY_WORKAROUND
-	result = evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>());
-	#else
-	return evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>());
-	#endif
-}	
-
-// (greedy) repeat 
-template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, [[maybe_unused]] ctll::list<repeat<A,B,Content...>, Tail...> stack) {
-
+constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...>) {
 	if constexpr ((B != 0) && (A > B)) {
 		return not_matched;
 	}
-
-#ifndef CTRE_DISABLE_GREEDY_OPT
-	if constexpr (!collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
-		return evaluate(begin, current, end, f, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
-	}
-#endif
 	
-	// A..B
-	size_t i{0};
-	while (less_than<A>(i)) {
-		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
-		
-		if (!inner_result) return not_matched;
-		
-		captures = inner_result.unmatch();
-		current = inner_result.get_end_position();
-		
-		++i;
-	}
+	[[maybe_unused]] constexpr size_t next_max_level = B ? B - 1 : 0;
+	[[maybe_unused]] constexpr bool max_limited = B > 0;
 	
-#ifdef CTRE_MSVC_GREEDY_WORKAROUND
-	R result;
-	evaluate_recursive(result, i, begin, current, end, f, captures, stack);
-	return result;
-#else
-	return evaluate_recursive(i, begin, current, end, f, captures, stack);
-#endif
+	[[maybe_unused]] constexpr size_t next_min_level = A ? A - 1 : 0;
+	[[maybe_unused]] constexpr bool min_limited = A > 0;
+	
+	// first I try internal content...
+	if constexpr (max_limited && B == 1) {
+		// maximum limit reached
+		auto result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, Tail...>());
+		if (result) return result;
+	} else {
+		auto result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, repeat<next_min_level, next_max_level, Content...>, Tail...>());
+		if (result) return result;
+	}
 
+	// if I fail and I past minimum limit => I try tail...
+	if constexpr (!min_limited) {
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	} else {
+		return not_matched;
+	}
 }
 
 // capture (numeric ID)

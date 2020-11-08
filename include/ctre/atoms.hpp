@@ -13,6 +13,7 @@ struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
 struct end_lookahead_mark { };
+struct fail_if_empty { };
 template <size_t Id> struct numeric_mark { };
 
 struct any { };
