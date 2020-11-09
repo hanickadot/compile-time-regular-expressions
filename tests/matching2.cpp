@@ -288,3 +288,16 @@ static_assert(CTRE_CREATE("[\\--\\-]").match("-"sv));
 
 // issue #131
 static_assert(CTRE_CREATE("(|a)+").match("aaaaaa"sv));
+
+// atomic groups
+static_assert(!CTRE_CREATE("a(?>bc|b)c").match("abc"sv));
+static_assert(CTRE_CREATE("a(?>b|bc)c").match("abc"sv));
+
+static_assert(!CTRE_CREATE("a(?>a*(?:bc|b))c").match("abc"sv));
+static_assert(CTRE_CREATE("a(?>a*(?:bc|b))c").match("abcc"sv));
+static_assert(!CTRE_CREATE("a(?>a*(?:bc|b))c").match("aabc"sv));
+static_assert(CTRE_CREATE("a(?>a*(?:bc|b))c").match("aabcc"sv));
+
+static_assert(!CTRE_CREATE(R"(\b(integer|insert|in)\b)").search(" int "sv));
+static_assert(CTRE_CREATE(R"(\b(integer|insert|in)\b)").search(" insert "sv));
+
