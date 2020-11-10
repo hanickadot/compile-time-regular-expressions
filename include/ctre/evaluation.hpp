@@ -39,7 +39,7 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 }
 
 constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
-constexpr bool is_bidirectional(...) { return false; };
+constexpr bool is_bidirectional(...) { return false; }
 
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 

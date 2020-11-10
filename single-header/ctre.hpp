@@ -2918,7 +2918,7 @@ struct utf8_range {
 namespace ctre {
 
 constexpr bool is_random_accessible(const std::random_access_iterator_tag &) { return true; }
-constexpr bool is_random_accessible(...) { return false; };
+constexpr bool is_random_accessible(...) { return false; }
 
 struct not_matched_tag_t { };
 
@@ -3954,7 +3954,7 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 }
 
 constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
-constexpr bool is_bidirectional(...) { return false; };
+constexpr bool is_bidirectional(...) { return false; }
 
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 

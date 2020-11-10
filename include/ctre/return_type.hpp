@@ -12,7 +12,7 @@
 namespace ctre {
 
 constexpr bool is_random_accessible(const std::random_access_iterator_tag &) { return true; }
-constexpr bool is_random_accessible(...) { return false; };
+constexpr bool is_random_accessible(...) { return false; }
 
 
 struct not_matched_tag_t { };
