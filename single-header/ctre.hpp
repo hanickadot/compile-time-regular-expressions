@@ -3692,6 +3692,10 @@ template <typename... Content> constexpr auto build_first_match_set(ctll::list<C
 	return ctll::list<ctre::set<Content...>, accept>{};
 }
 
+template <typename... Content> constexpr auto matchable_first_set(ctll::list<Content...>) noexcept {
+	return ctre::set<Content...>{};
+}
+
 // calculate mutual exclusivity
 template <typename... Content> constexpr size_t calculate_size_of_first(ctre::negative_set<Content...>) {
 	return 1 + 1 * sizeof...(Content);
@@ -3967,10 +3971,10 @@ constexpr bool is_bidirectional(...) { return false; }
 
 template <typename> static constexpr bool always_false = false; 
 
-// helper
-template <typename R, typename Iterator, typename EndIterator, typename... Content> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R captures, ctll::list<Content...>) noexcept {
-	return evaluate(begin, current, end, f, captures, ctll::list<Content...>{});
+// helper to make Captures reference
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R captures, Tail...) noexcept {
+	return evaluate(begin, current, end, f, captures, Tail{}...);
 }
 
 // sink for making the errors shorter
@@ -4052,9 +4056,10 @@ template <typename Iterator> struct string_match_result {
 };
 
 template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & end) {
-	bool same = ((it != end) && (*it == c));
-	++it;
-	return same;
+	if (it != end) {
+		return *it++ == c;
+	}
+	return false;
 }
 
 template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, [[maybe_unused]] const EndIterator end, std::index_sequence<Idx...>) noexcept {
@@ -4310,20 +4315,20 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 		}
 	};
 	
-	using f_content = decltype(calculate_first(Content{}...));
-	using f_tail = decltype(calculate_first(Tail{}...));
+	//using f_content = decltype(calculate_first(Content{}...));
+	//using f_tail = decltype(calculate_first(Tail{}...));
 	
 	//identify<decltype(first_content)> i;
 	//identify<decltype(first_tail)> i;
 	
 	// TODO
-	if constexpr (collides(f_content{}, f_tail{})) {
-		if (evaluate(begin, current, end, f, captures, build_first_match_set(f_content{}))) {
-			return try_content();
-		} else {
-			return try_tail();
-		}
-	}
+	//if constexpr (!collides(f_content{}, f_tail{})) {
+	//	if (evaluate(begin, current, end, f, captures, build_first_match_set(f_content{}))) {
+	//		return try_content();
+	//	} else {
+	//		return try_tail();
+	//	}
+	//}
 	
 	// first I try internal content... and if that fail then tail
 	auto result = try_content();
