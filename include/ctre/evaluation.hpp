@@ -140,7 +140,8 @@ template <typename Iterator> struct string_match_result {
 
 template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & end) {
 	bool same = ((it != end) && (*it == c));
-	++it;
+	if (same)
+		++it;
 	return same;
 }
 
