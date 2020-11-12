@@ -65,6 +65,12 @@ struct utf8_iterator {
 		return *this;
 	}
 	
+	constexpr utf8_iterator operator++(int) noexcept {
+		auto previous = *this;
+		this->operator++();
+		return previous;
+	}
+	
 	constexpr utf8_iterator operator+(unsigned step) const noexcept {
 		utf8_iterator result = *this;
 		while (step > 0) {
