@@ -1,14 +1,15 @@
 #ifndef CTRE__EVALUATION__HPP
 #define CTRE__EVALUATION__HPP
 
+#include "flags_and_modes.hpp"
 #include "atoms.hpp"
-#include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
 #include "starts_with_anchor.hpp"
 #include "utility.hpp"
 #include "return_type.hpp"
 #include "find_captures.hpp"
 #include "first.hpp"
+#include <iterator>
 
 // remove me when MSVC fix the constexpr bug
 #ifdef _MSC_VER
@@ -18,24 +19,6 @@
 #endif
 
 namespace ctre {
-
-struct flags {
-	bool block_empty_match = false;
-};
-
-constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
-	f.block_empty_match = true;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE auto consumed_something(flags f, bool condition = true) {
-	if (condition) f.block_empty_match = false;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(flags f) {
-	return f.block_empty_match;
-}
 
 template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) {
 	if constexpr (Limit == 0) {
@@ -55,33 +38,8 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
 	}
 }
 
-template <typename ResultIterator, typename Pattern> using return_type = decltype(regex_results(std::declval<ResultIterator>(), find_captures(Pattern{})));
-
-// calling with pattern prepare stack and triplet of iterators
-template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr CTRE_FORCE_INLINE auto match_re(const Iterator begin, const EndIterator end, Pattern, const flags & f = {}) noexcept {
-	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, assert_end, end_mark, accept>());
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr CTRE_FORCE_INLINE auto starts_with_re(const Iterator begin, const EndIterator end, Pattern, const flags & f = {}) noexcept {
-	return evaluate(begin, begin, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern, typename ResultIterator = Iterator> 
-constexpr CTRE_FORCE_INLINE auto search_re(const Iterator begin, const EndIterator end, Pattern, const flags & f = {}) noexcept {
-	constexpr bool fixed = starts_with_anchor(ctll::list<Pattern>{});
-	
-	auto it = begin;
-	for (; end != it && !fixed; ++it) {
-		if (auto out = evaluate(begin, it, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>())) {
-			return out;
-		}
-	}
-	
-	// in case the RE is empty or fixed
-	return evaluate(begin, it, end, f, return_type<ResultIterator, Pattern>{}, ctll::list<start_mark, Pattern, end_mark, accept>());
-}
+constexpr bool is_bidirectional(const std::bidirectional_iterator_tag &) { return true; }
+constexpr bool is_bidirectional(...) { return false; }
 
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 
@@ -128,6 +86,17 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	if (current == end) return not_matched;
 	if (!CharacterLike::match_char(*current)) return not_matched;
 	
+	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<any, Tail...>) noexcept {
+	if (current == end) return not_matched;
+	
+	if (multiline_mode(f)) {
+		// TODO add support for different line ending and unicode (in a future unicode mode)
+		if (*current == '\n') return not_matched;
+	}
 	return evaluate(begin, ++current, end, consumed_something(f), captures, ctll::list<Tail...>());
 }
 
@@ -197,7 +166,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // matching asserts
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_begin, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_begin, Tail...>) noexcept {
 	if (begin != current) {
 		return not_matched;
 	}
@@ -205,10 +174,114 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_end, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_end, Tail...>) noexcept {
 	if (end != current) {
 		return not_matched;
 	}
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_subject_end_line, Tail...>) noexcept {
+	if (multiline_mode(f)) {
+		if (end == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*current == '\n' && std::next(current) == end) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (end != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	}
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_begin, Tail...>) noexcept {
+	if (multiline_mode(f)) {
+		if (begin == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*std::prev(current) == '\n') {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (begin != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	}
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<assert_line_end, Tail...>) noexcept {
+	if (multiline_mode(f)) {
+		if (end == current) {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else if (*current == '\n') {
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		} else {
+			return not_matched;
+		}
+	} else {
+		if (end != current) {
+			return not_matched;
+		}
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	}
+	
+	// TODO properly match line end
+	if (end != current) {
+		return not_matched;
+	}
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+// matching boundary
+template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<boundary<CharacterLike>, Tail...>) noexcept {
+	
+	// reason why I need bidirectional iterators or some clever hack
+	bool before = false;
+	bool after = false;
+	
+	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
+	
+	if (end != current) {
+		after = CharacterLike::match_char(*current);
+	}
+	if (begin != current) {
+		before = CharacterLike::match_char(*std::prev(current));
+	}
+	
+	if (before == after) return not_matched;
+	
+	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+}
+
+// matching not_boundary
+template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<not_boundary<CharacterLike>, Tail...>) noexcept {
+	
+	// reason why I need bidirectional iterators or some clever hack
+	bool before = false;
+	bool after = false;
+	
+	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
+	
+	if (end != current) {
+		after = CharacterLike::match_char(*current);
+	}
+	if (begin != current) {
+		before = CharacterLike::match_char(*std::prev(current));
+	}
+	
+	if (before != after) return not_matched;
+	
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
@@ -400,11 +473,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
-			if (ref.begin() != ref.end()) {
-				return evaluate(begin, result.position, end, consumed_something(f), captures, ctll::list<Tail...>());
-			} else {
-				return evaluate(begin, result.position, end, f, captures, ctll::list<Tail...>());
-			}
+			return evaluate(begin, result.position, end, consumed_something(f, ref.begin() != ref.end()), captures, ctll::list<Tail...>());
 		}
 	}
 	return not_matched;
@@ -416,11 +485,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
-			if (ref.begin() != ref.end()) {
-				return evaluate(begin, result.position, end, consumed_something(f), captures, ctll::list<Tail...>());
-			} else {
-				return evaluate(begin, result.position, end, f, captures, ctll::list<Tail...>());
-			}
+			return evaluate(begin, result.position, end, consumed_something(f, ref.begin() != ref.end()), captures, ctll::list<Tail...>());
 		}
 	}
 	return not_matched;

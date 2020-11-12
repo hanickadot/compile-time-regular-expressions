@@ -19,11 +19,12 @@ ctre::match<"REGEX">(subject); // C++20
 * Searching (`search` or `starts_with`)
 * Capturing content (named captures are supported too)
 * Back-Reference (\g{N} syntax, and \1...\9 syntax too)
+* Multiline support (with `multi_`) functions
+* Unicode properties and UTF-8 support
 
 The library is implementing most of the PCRE syntax with a few exceptions:
 
 * atomic groups
-* boundaries other than `^$`
 * callouts
 * comments
 * conditional patterns

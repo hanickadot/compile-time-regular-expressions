@@ -1,6 +1,7 @@
 #ifndef CTRE__ATOMS__HPP
 #define CTRE__ATOMS__HPP
 
+#include "atoms_characters.hpp"
 #include <cstdint>
 
 namespace ctre {
@@ -13,6 +14,8 @@ struct end_mark { };
 struct end_cycle_mark { };
 struct end_lookahead_mark { };
 template <size_t Id> struct numeric_mark { };
+
+struct any { };
 
 // actual AST of regexp
 template <auto... Str> struct string { };
@@ -51,9 +54,17 @@ struct atomic_start { };
 
 template <typename... Content> struct atomic_group { };
 
-struct assert_begin { };
-struct assert_end { };
+template <typename... Content> struct boundary { };
+template <typename... Content> struct not_boundary { };
 
+using word_boundary = boundary<word_chars>;
+using not_word_boundary = not_boundary<word_chars>;
+
+struct assert_subject_begin { };
+struct assert_subject_end { };
+struct assert_subject_end_line{ };
+struct assert_line_begin { };
+struct assert_line_end { };
 
 }
 

@@ -23,18 +23,14 @@ template <auto V> struct character {
 	}
 };
 
-struct any {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT) noexcept { return true; }
-};
-
 template <typename... Content> struct negative_set {
-	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return !(Content::match_char(value) || ... || false);
 	}
 };
 
 template <typename... Content> struct set {
-	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return (Content::match_char(value) || ... || false);
 	}
 };
@@ -42,7 +38,7 @@ template <typename... Content> struct set {
 template <auto... Cs> struct enumeration : set<character<Cs>...> { };
 
 template <typename... Content> struct negate {
-	template <typename CharT> inline static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
 		return !(Content::match_char(value) || ... || false);
 	}
 };

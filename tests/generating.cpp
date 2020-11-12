@@ -215,14 +215,17 @@ static_assert(same_f(CTRE_GEN("(?<ab>a)\\g{ab}"), ctre::sequence<ctre::capture_w
 static_assert(same_f(CTRE_GEN("((a)\\g{2})"), ctre::capture<1, ctre::capture<2,ctre::character<'a'>>, ctre::back_reference<2>>()));
 
 // asserts
-static_assert(same_f(CTRE_GEN("^"), ctre::assert_begin()));
-static_assert(same_f(CTRE_GEN("$"), ctre::assert_end()));
-static_assert(same_f(CTRE_GEN("^$"), ctre::sequence<ctre::assert_begin, ctre::assert_end>()));
+static_assert(same_f(CTRE_GEN("^"), ctre::assert_line_begin()));
+static_assert(same_f(CTRE_GEN("$"), ctre::assert_line_end()));
+static_assert(same_f(CTRE_GEN("^$"), ctre::sequence<ctre::assert_line_begin, ctre::assert_line_end>()));
+static_assert(same_f(CTRE_GEN("\\A"), ctre::assert_subject_begin()));
+static_assert(same_f(CTRE_GEN("\\Z"), ctre::assert_subject_end_line()));
+static_assert(same_f(CTRE_GEN("\\z"), ctre::assert_subject_end()));
 
 // TODO change this to string
-static_assert(same_f(CTRE_GEN("^abc$"), ctre::sequence<ctre::assert_begin, ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>, ctre::assert_end>()));
+static_assert(same_f(CTRE_GEN("^abc$"), ctre::sequence<ctre::assert_line_begin, ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>, ctre::assert_line_end>()));
 
-static_assert(same_f(CTRE_GEN("^a|b$"), ctre::select<ctre::sequence<ctre::assert_begin, ctre::character<'a'>>, ctre::sequence<ctre::character<'b'>, ctre::assert_end>>()));
+static_assert(same_f(CTRE_GEN("^a|b$"), ctre::select<ctre::sequence<ctre::assert_line_begin, ctre::character<'a'>>, ctre::sequence<ctre::character<'b'>, ctre::assert_line_end>>()));
 
 // atomic group
 static_assert(same_f(CTRE_GEN("(?>a)"), ctre::atomic_group<ctre::character<'a'>>())); 
@@ -238,14 +241,14 @@ static_assert(same_f(CTRE_GEN("(?!a)"), ctre::lookahead_negative<ctre::character
 static_assert(same_f(CTRE_GEN("(?!ax)"), ctre::lookahead_negative<ctre::string<'a','x'>>()));
 static_assert(same_f(CTRE_GEN("(?![a]x)"), ctre::lookahead_negative<ctre::set<ctre::character<'a'>>,ctre::character<'x'>>()));
 
-static_assert(same_f(CTRE_GEN("^(?=(a))$"), ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::capture<1,ctre::character<'a'>>>, ctre::assert_end>()));
+static_assert(same_f(CTRE_GEN("^(?=(a))$"), ctre::sequence<ctre::assert_line_begin, ctre::lookahead_positive<ctre::capture<1,ctre::character<'a'>>>, ctre::assert_line_end>()));
 
-static_assert(same_f(CTRE_GEN("^(?=.*(a))$"), ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>>, ctre::assert_end>()));
+static_assert(same_f(CTRE_GEN("^(?=.*(a))$"), ctre::sequence<ctre::assert_line_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>>, ctre::assert_line_end>()));
 
-static_assert(same_f(CTRE_GEN("^(?=.*(a).*)$"), ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::star<ctre::any>>, ctre::assert_end>()));
+static_assert(same_f(CTRE_GEN("^(?=.*(a).*)$"), ctre::sequence<ctre::assert_line_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::star<ctre::any>>, ctre::assert_line_end>()));
 
-static_assert(same_f(CTRE_GEN("^(?=.*(a)\\g{1}.*)$"), ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>, ctre::star<ctre::any>>, ctre::assert_end>()));
+static_assert(same_f(CTRE_GEN("^(?=.*(a)\\g{1}.*)$"), ctre::sequence<ctre::assert_line_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>, ctre::star<ctre::any>>, ctre::assert_line_end>()));
 
-static_assert(same_f(CTRE_GEN("^(?=.*(a)\\g{1}.*)[a-z]$"), ctre::sequence<ctre::assert_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>, ctre::star<ctre::any>>, ctre::set<ctre::char_range<'a','z'>>, ctre::assert_end>()));
+static_assert(same_f(CTRE_GEN("^(?=.*(a)\\g{1}.*)[a-z]$"), ctre::sequence<ctre::assert_line_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>, ctre::star<ctre::any>>, ctre::set<ctre::char_range<'a','z'>>, ctre::assert_line_end>()));
 
 
