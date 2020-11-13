@@ -19,6 +19,7 @@ struct any { };
 
 // actual AST of regexp
 template <auto... Str> struct string { };
+template <auto... Str> struct string_search { };
 template <typename... Opts> struct select { };
 template <typename... Content> struct sequence { };
 struct empty { };
