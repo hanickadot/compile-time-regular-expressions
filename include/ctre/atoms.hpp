@@ -55,8 +55,8 @@ struct atomic_start { };
 
 template <typename... Content> struct atomic_group { };
 
-template <typename... Content> struct boundary { };
-template <typename... Content> struct not_boundary { };
+template <typename Content> struct boundary { };
+template <typename Content> struct not_boundary { };
 
 using word_boundary = boundary<word_chars>;
 using not_word_boundary = not_boundary<word_chars>;
