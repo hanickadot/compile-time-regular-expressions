@@ -370,43 +370,43 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 	[[maybe_unused]] constexpr size_t next_min_level = A ? A - 1 : 0;
 	[[maybe_unused]] constexpr bool min_limited = A > 0;
 	
-	auto try_content = [&](auto && captures){
+	constexpr auto inner = []() noexcept {
 		if constexpr (max_limited && B == 1) {
 			// maximum limit reached
-			return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, Tail...>());
+			return ctll::list<Content..., fail_if_empty, Tail...>();
 		} else {
-			return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, repeat<next_min_level, next_max_level, Content...>, Tail...>());
+			return ctll::list<Content..., fail_if_empty, repeat<next_min_level, next_max_level, Content...>, Tail...>();
 		}
-	};
+	}();
+	
 	
 	constexpr auto fcontent = calculate_first(Content{}...);
 	constexpr auto ftail = calculate_first(Tail{}...);
 	
 	// first I try internal content... and if that fail then tail
 	if constexpr (collides(fcontent, ftail)) {
-		//auto result = try_content(R{captures});
-		//if (result) return result;
-		auto can_be_content = lookahead_first(begin, current, end, f, fcontent);
-		auto can_be_tail = lookahead_first(begin, current, end, f, ftail);
+		const bool can_be_content = lookahead_first(begin, current, end, f, fcontent);
+		const bool can_be_tail = lookahead_first(begin, current, end, f, ftail);
 		
-		if (can_be_content && !can_be_tail) {
-			return try_content(captures);
-		} else if (!can_be_content && can_be_tail) {
-			if constexpr (!min_limited) {
+		if (can_be_content ^ can_be_tail) {
+			if (can_be_content) {
+				return evaluate(begin, current, end, not_empty_match(f), captures, inner);
+			} else if constexpr (!min_limited) {
 				return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 			} else {
 				return not_matched;
 			}
-		} else if (!can_be_content && !can_be_tail) {
+		} else if (!can_be_content) {
 			return not_matched;
 		} else {
-			auto result = try_content(R{captures});
+			auto result = evaluate_split(begin, current, end, not_empty_match(f), captures, inner);
 			if (result) return result;
-			// otherwise it will jump to Tail...
 		}
+		
 	} else if (lookahead_first(begin, current, end, f, fcontent)) {
 		// look ahead success, no need to try tail
-		return try_content(captures);
+		
+		return evaluate(begin, current, end, not_empty_match(f), captures, inner);
 	}
 	
 	
