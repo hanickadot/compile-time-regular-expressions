@@ -1543,8 +1543,8 @@ struct atomic_start { };
 
 template <typename... Content> struct atomic_group { };
 
-template <typename... Content> struct boundary { };
-template <typename... Content> struct not_boundary { };
+template <typename Content> struct boundary { };
+template <typename Content> struct not_boundary { };
 
 using word_boundary = boundary<word_chars>;
 using not_word_boundary = not_boundary<word_chars>;
@@ -3415,525 +3415,727 @@ template <size_t Id, typename Name, typename... Content, typename... Tail, typen
 #ifndef CTRE__FIRST__HPP
 #define CTRE__FIRST__HPP
 
+#ifndef CTRE__ATOMS_CHARACTERS__HPP
+#define CTRE__ATOMS_CHARACTERS__HPP
+
+#ifndef CTRE__UTILITY__HPP
+#define CTRE__UTILITY__HPP
+
+#if __GNUC__ > 9
+#if __has_cpp_attribute(likely)
+#define CTRE_LIKELY [[likely]]
+#else
+#define CTRE_LIKELY
+#endif
+
+#if __has_cpp_attribute(unlikely)
+#define CTRE_UNLIKELY [[unlikely]]
+#else
+#define CTRE_UNLIKELY
+#endif
+#else
+#define CTRE_LIKELY
+#define CTRE_UNLIKELY
+#endif
+
+#ifdef _MSC_VER
+#define CTRE_FORCE_INLINE __forceinline
+#define CTRE_FLATTEN
+#else
+#define CTRE_FORCE_INLINE inline __attribute__((always_inline))
+#define CTRE_FLATTEN __attribute__((flatten))
+#endif
+
+#endif
+
+#include <cstdint>
+
 namespace ctre {
 	
-struct can_be_anything {};
-	
-
-template <typename... Content> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<>) noexcept {
-	return l;
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<accept, Tail...>) noexcept {
-	return l;
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<end_mark, Tail...>) noexcept {
-	return l;
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<end_cycle_mark, Tail...>) noexcept {
-	return l;
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<end_lookahead_mark, Tail...>) noexcept {
-	return l;
-}
-
-template <typename... Content, size_t Id, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<numeric_mark<Id>, Tail...>) noexcept {
-	return first(l, ctll::list<Tail...>{});
-}
-
-// empty
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<empty, Tail...>) noexcept {
-	return first(l, ctll::list<Tail...>{});
-}
-
-// boundary
-template <typename... Content, typename CharLike, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<boundary<CharLike>, Tail...>) noexcept {
-	return first(l, ctll::list<Tail...>{});
-}
-
-// asserts
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_begin, Tail...>) noexcept {
-	return first(l, ctll::list<Tail...>{});
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end, Tail...>) noexcept {
-	return l;
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end_line, Tail...>) noexcept {
-	// FIXME allow endline here
-	return l;
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_begin, Tail...>) noexcept {
-	// FIXME line begin is a bit different than subject begin
-	return first(l, ctll::list<Tail...>{});
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_end, Tail...>) noexcept {
-	// FIXME line end is a bit different than subject begin
-	return l;
-}
-
-// sequence
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<sequence<Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-// plus
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<plus<Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-// lazy_plus
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lazy_plus<Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-// possessive_plus
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<possessive_plus<Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-// star
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<star<Seq...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Tail...>{}), ctll::list<Seq..., Tail...>{});
-}
-
-// lazy_star
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lazy_star<Seq...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Tail...>{}), ctll::list<Seq..., Tail...>{});
-}
-
-// possessive_star
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<possessive_star<Seq...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Tail...>{}), ctll::list<Seq..., Tail...>{});
-}
-
-// lazy_repeat
-template <typename... Content, size_t A, size_t B, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lazy_repeat<A, B, Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-template <typename... Content, size_t B, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lazy_repeat<0, B, Seq...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Tail...>{}), ctll::list<Seq..., Tail...>{});
-}
-
-// possessive_repeat
-template <typename... Content, size_t A, size_t B, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<possessive_repeat<A, B, Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-template <typename... Content, size_t B, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<possessive_repeat<0, B, Seq...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Tail...>{}), ctll::list<Seq..., Tail...>{});
-}
-
-// repeat
-template <typename... Content, size_t A, size_t B, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<repeat<A, B, Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-template <typename... Content, size_t B, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<repeat<0, B, Seq...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Tail...>{}), ctll::list<Seq..., Tail...>{});
-}
-
-// lookahead_positive
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_positive<Seq...>, Tail...>) noexcept {
-	return ctll::list<can_be_anything>{};
-}
-
-// lookahead_negative TODO fixme
-template <typename... Content, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_negative<Seq...>, Tail...>) noexcept {
-	return ctll::list<can_be_anything>{};
-}
-
-// capture
-template <typename... Content, size_t Id, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<capture<Id, Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-template <typename... Content, size_t Id, typename Name, typename... Seq, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<capture_with_name<Id, Name, Seq...>, Tail...>) noexcept {
-	return first(l, ctll::list<Seq..., Tail...>{});
-}
-
-// backreference
-template <typename... Content, size_t Id, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<back_reference<Id>, Tail...>) noexcept {
-	return ctll::list<can_be_anything>{};
-}
-
-template <typename... Content, typename Name, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<back_reference_with_name<Name>, Tail...>) noexcept {
-	return ctll::list<can_be_anything>{};
-}
-
-// string First extraction
-template <typename... Content, auto First, auto... String, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<string<First, String...>, Tail...>) noexcept {
-	return ctll::list<Content..., character<First>>{};
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<string<>, Tail...>) noexcept {
-	return first(l, ctll::list<Tail...>{});
-}
-
-// optional
-template <typename... Content, typename... Opt, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<optional<Opt...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Opt..., Tail...>{}), ctll::list<Tail...>{});
-}
-
-template <typename... Content, typename... Opt, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<lazy_optional<Opt...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<Opt..., Tail...>{}), ctll::list<Tail...>{});
-}
-
-// select (alternation)
-template <typename... Content, typename SHead, typename... STail, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<select<SHead, STail...>, Tail...>) noexcept {
-	return first(first(l, ctll::list<SHead, Tail...>{}), ctll::list<select<STail...>, Tail...>{});
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<select<>, Tail...>) noexcept {
-	return l;
-}
-
-// unicode property => anything
-template <typename... Content, auto Property, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<Property>, Tail...>) noexcept {
-	return ctll::list<can_be_anything>{};
-}
-
-template <typename... Content, auto Property, auto Value, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<Property, Value>, Tail...>) noexcept {
-	return ctll::list<can_be_anything>{};
-}
-
-// characters / sets
-
-template <typename... Content, auto V, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<character<V>, Tail...>) noexcept {
-	return ctll::list<Content..., character<V>>{};
-}
-
-template <typename... Content, auto... Values, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<enumeration<Values...>, Tail...>) noexcept {
-	return ctll::list<Content..., character<Values>...>{};
-}
-
-template <typename... Content, typename... SetContent, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<set<SetContent...>, Tail...>) noexcept {
-	return ctll::list<Content..., SetContent...>{};
-}
-
-template <typename... Content, auto A, auto B, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<char_range<A,B>, Tail...>) noexcept {
-	return ctll::list<Content..., char_range<A,B>>{};
-}
-
-template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<any, Tail...>) noexcept {
-	return ctll::list<can_be_anything>{};
-}
-
-// negative
-template <typename... Content, typename... SetContent, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<negate<SetContent...>, Tail...>) noexcept {
-	return ctll::list<Content..., negative_set<SetContent...>>{};
-}
-
-template <typename... Content, typename... SetContent, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<negative_set<SetContent...>, Tail...>) noexcept {
-	return ctll::list<Content..., negative_set<SetContent...>>{};
-}
-
-// user facing interface
-template <typename... Content> constexpr auto calculate_first(Content...) noexcept {
-	return first(ctll::list<>{}, ctll::list<Content...>{});
-}
-
-template <typename... Content> constexpr size_t item_count(ctll::list<Content...>) noexcept {
-	return sizeof...(Content);
-}
-
-template <typename... Content> constexpr auto build_first_match_set(ctll::list<Content...>) noexcept {
-	return ctll::list<ctre::set<Content...>, accept>{};
-}
-
-template <typename... Content> constexpr auto matchable_first_set(ctll::list<Content...>) noexcept {
-	return ctre::set<Content...>{};
-}
-
-// calculate mutual exclusivity
-template <typename... Content> constexpr size_t calculate_size_of_first(ctre::negative_set<Content...>) {
-	return 1 + 1 * sizeof...(Content);
-}
-
-template <auto... V> constexpr size_t calculate_size_of_first(ctre::enumeration<V...>) {
-	return sizeof...(V);
-}
-
-constexpr size_t calculate_size_of_first(...) {
-	return 1;
-}
-
-template <typename... Content> constexpr size_t calculate_size_of_first(ctll::list<Content...>) {
-	return (calculate_size_of_first(Content{}) + ... + 0);
-}
-
-template <typename... Content> constexpr size_t calculate_size_of_first(ctre::set<Content...>) {
-	return (calculate_size_of_first(Content{}) + ... + 0);
-}
-
-template <auto A, typename CB> constexpr int64_t negative_helper(ctre::character<A>, CB & cb, int64_t start) {
-	if (A != std::numeric_limits<int64_t>::min()) {
-		if (start < A) {
-			cb(start, A-1);
-		}
-	}
-	if (A != std::numeric_limits<int64_t>::max()) {
-		return A+1;
-	} else {
-		return A;
-	}
-}  
-
-template <auto A, auto B, typename CB> constexpr int64_t negative_helper(ctre::char_range<A,B>, CB & cb, int64_t start) {
-	if (A != std::numeric_limits<int64_t>::min()) {
-		if (start < A) {
-			cb(start, A-1);
-		}
-	}
-	if (B != std::numeric_limits<int64_t>::max()) {
-		return B+1;
-	} else {
-		return B;
-	}
-}  
-
-template <auto Head, auto... Tail, typename CB> constexpr int64_t negative_helper(ctre::enumeration<Head, Tail...>, CB & cb, int64_t start) {
-	int64_t nstart = negative_helper(ctre::character<Head>{}, cb, start);
-	return negative_helper(ctre::enumeration<Tail...>{}, cb, nstart);
-}
-
-template <typename CB> constexpr int64_t negative_helper(ctre::enumeration<>, CB &, int64_t start) {
-	return start;
-}
-
-template <typename CB> constexpr int64_t negative_helper(ctre::set<>, CB &, int64_t start) {
-	return start;
-}
-
-template <auto Property, typename CB> 
-constexpr auto negative_helper(ctre::binary_property<Property>, CB &&, int64_t start) {
-	return start;
-}
-
-template <auto Property, auto Value, typename CB> 
-constexpr auto negative_helper(ctre::property<Property, Value>, CB &&, int64_t start) {
-	return start;
-}
-
-template <typename Head, typename... Rest, typename CB> constexpr int64_t negative_helper(ctre::set<Head, Rest...>, CB & cb, int64_t start) {
-	start = negative_helper(Head{}, cb, start);
-	return negative_helper(ctre::set<Rest...>{}, cb, start);
-}
-
-template <typename Head, typename... Rest, typename CB> constexpr void negative_helper(ctre::negative_set<Head, Rest...>, CB && cb, int64_t start = std::numeric_limits<int64_t>::min()) {
-	start = negative_helper(Head{}, cb, start);
-	negative_helper(ctre::negative_set<Rest...>{}, std::forward<CB>(cb), start);
-}
-
-template <typename CB> constexpr void negative_helper(ctre::negative_set<>, CB && cb, int64_t start = std::numeric_limits<int64_t>::min()) {
-	if (start < std::numeric_limits<int64_t>::max()) {
-		cb(start, std::numeric_limits<int64_t>::max());
-	}
-}
-
-// simple fixed set
-// TODO: this needs some optimizations
-template <size_t Capacity> class point_set {
-	struct point {
-		int64_t low{};
-		int64_t high{};
-		constexpr bool operator<(const point & rhs) const {
-			return low < rhs.low;
-		}
-		constexpr point() { }
-		constexpr point(int64_t l, int64_t h): low{l}, high{h} { }
-	};
-	point points[Capacity+1]{};
-	size_t used{0};
-	constexpr point * begin() {
-		return points;
-	}
-	constexpr point * begin() const {
-		return points;
-	}
-	constexpr point * end() {
-		return points + used;
-	}
-	constexpr point * end() const {
-		return points + used;
-	}
-	constexpr point * lower_bound(point obj) {
-		auto first = begin();
-		auto last = end();
-		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
-			it = first;
-			size_t step = count / 2;
-			std::advance(it, step);
-			if (*it < obj) {
-				first = ++it;
-				count -= step + 1;
-			} else {
-				count = step;
-			}
-		}
-		return it;
-	}
-	constexpr point * insert_point(int64_t position, int64_t other) {
-		point obj{position, other};
-		auto it = lower_bound(obj);
-		if (it == end()) {
-			*it = obj;
-			used++;
-			return it;
-		} else {
-			auto out = it;
-			auto e = end();
-			while (it != e) {
-				auto tmp = *it;
-				*it = obj;
-				obj = tmp;
-				//std::swap(*it, obj);
-				it++;
-			}
-			auto tmp = *it;
-			*it = obj;
-			obj = tmp;
-			//std::swap(*it, obj);
-			
-			used++;
-			return out;
-		}
-	}
+// sfinae check for types here
+
+template <typename T> class MatchesCharacter {
+	template <typename Y, typename CharT> static auto test(CharT c) -> decltype(Y::match_char(c), std::true_type());
+	template <typename> static auto test(...) -> std::false_type;
 public:
-	constexpr point_set() { }
-	constexpr void insert(int64_t low, int64_t high) {
-		insert_point(low, high);
-		//insert_point(high, low);
-	}
-	constexpr bool check(int64_t low, int64_t high) {
-		for (auto r: *this) {
-			if (r.low <= low && low <= r.high) {
-				return true;
-			} else if (r.low <= high && high <= r.high) {
-				return true;
-			} else if (low <= r.low && r.low <= high) {
-				return true;
-			} else if (low <= r.high && r.high <= high) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	
-	template <auto V> constexpr bool check(ctre::character<V>) {
-		return check(V,V);
-	}
-	template <auto A, auto B> constexpr bool check(ctre::char_range<A,B>) {
-		return check(A,B);
-	}
-	constexpr bool check(can_be_anything) {
-		return used > 0;
-	}
-	template <typename... Content> constexpr bool check(ctre::negative_set<Content...> nset) {
-		bool collision = false;
-		negative_helper(nset, [&](int64_t low, int64_t high){
-			collision |= this->check(low, high);
-		});
-		return collision;
-	}
-	template <auto... V> constexpr bool check(ctre::enumeration<V...>) {
-		
-		return (check(V,V) || ... || false);
-	}
-	template <typename... Content> constexpr bool check(ctll::list<Content...>) {
-		return (check(Content{}) || ... || false);
-	}
-	template <typename... Content> constexpr bool check(ctre::set<Content...>) {
-		return (check(Content{}) || ... || false);
-	}
-	
-	
-	template <auto V> constexpr void populate(ctre::character<V>) {
-		insert(V,V);
-	}
-	template <auto A, auto B> constexpr void populate(ctre::char_range<A,B>) {
-		insert(A,B);
-	}
-	constexpr void populate(can_be_anything) {
-		insert(std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max());
-	}
-	template <typename... Content> constexpr void populate(ctre::negative_set<Content...> nset) {
-		negative_helper(nset, [&](int64_t low, int64_t high){
-			this->insert(low, high);
-		});
-	}
-	template <typename... Content> constexpr void populate(ctre::set<Content...>) {
-		(populate(Content{}), ...);
-	}
-	template <typename... Content> constexpr void populate(ctll::list<Content...>) {
-		(populate(Content{}), ...);
+	template <typename CharT> static inline constexpr bool value = decltype(test<T>(std::declval<CharT>()))();
+};
+
+template <auto V> struct character {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+		return value == V;
 	}
 };
 
-template <typename... A, typename... B> constexpr bool collides(ctll::list<A...> rhs, ctll::list<B...> lhs) {
-	constexpr size_t capacity = calculate_size_of_first(rhs);
+template <typename... Content> struct negative_set {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+		return !(Content::match_char(value) || ... || false);
+	}
+};
+
+template <typename... Content> struct set {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+		return (Content::match_char(value) || ... || false);
+	}
+};
+
+template <auto... Cs> struct enumeration : set<character<Cs>...> { };
+
+template <typename... Content> struct negate {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+		return !(Content::match_char(value) || ... || false);
+	}
+};
+
+template <auto A, auto B> struct char_range {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+		return (value >= A) && (value <= B);
+	}
+};
+
+using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> >;
+
+using space_chars = enumeration<' ', '\t', '\n', '\v', '\f', '\r'>;
+
+using vertical_space_chars = enumeration<
+	(char)0x000A, // Linefeed (LF)
+	(char)0x000B, // Vertical tab (VT)
+	(char)0x000C, // Form feed (FF)
+	(char)0x000D, // Carriage return (CR)
+	(char32_t)0x0085, // Next line (NEL)
+	(char32_t)0x2028, // Line separator
+	(char32_t)0x2029 // Paragraph separator
+>;
+
+using horizontal_space_chars = enumeration<
+    (char)0x0009, // Horizontal tab (HT)
+    (char)0x0020, // Space
+    (char32_t)0x00A0, // Non-break space
+    (char32_t)0x1680, // Ogham space mark
+    (char32_t)0x180E, // Mongolian vowel separator
+    (char32_t)0x2000, // En quad
+    (char32_t)0x2001, // Em quad
+    (char32_t)0x2002, // En space
+    (char32_t)0x2003, // Em space
+    (char32_t)0x2004, // Three-per-em space
+    (char32_t)0x2005, // Four-per-em space
+    (char32_t)0x2006, // Six-per-em space
+    (char32_t)0x2007, // Figure space
+    (char32_t)0x2008, // Punctuation space
+    (char32_t)0x2009, // Thin space
+    (char32_t)0x200A, // Hair space
+    (char32_t)0x202F, // Narrow no-break space
+    (char32_t)0x205F, // Medium mathematical space
+    (char32_t)0x3000 // Ideographic space
+>;
+
+using alphanum_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> >;
+
+using alpha_chars = set<char_range<'A','Z'>, char_range<'a','z'> >;
+
+using xdigit_chars = set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> >;
+
+using punct_chars
+    = enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
+		  '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']',
+		  '^', '_', '`', '{', '|', '}', '~'>;
+
+using digit_chars = char_range<'0','9'>;
+
+using ascii_chars = char_range<'\x00','\x7F'>;
+
+}
+
+#endif
+
+#ifndef CTRE__ATOMS_UNICODE__HPP
+#define CTRE__ATOMS_UNICODE__HPP
+
+// master branch is not including unicode db (for now)
+#ifndef H_COR3NTIN_UNICODE_SYNOPSYS
+#define H_COR3NTIN_UNICODE_SYNOPSYS
+
+#include <string_view>
+
+namespace uni
+{
+    enum class category;
+    enum class property;
+    enum class version : unsigned char;
+    enum class script ;
+    enum class block;
+
+    struct script_extensions_view {
+        constexpr script_extensions_view(char32_t c);
+
+        struct sentinel {};
+        struct iterator {
+
+            constexpr iterator(char32_t c);
+            constexpr script operator*() const;
+
+            constexpr iterator& operator++(int);
+
+            constexpr iterator operator++();
+
+            constexpr bool operator==(sentinel) const;
+            constexpr bool operator!=(sentinel) const;
+
+        private:
+            char32_t m_c;
+            script m_script;
+            int idx = 1;
+        };
+
+        constexpr iterator begin() const;
+        constexpr sentinel end() const;
+
+        private:
+            char32_t c;
+    };
+
+    struct numeric_value {
+
+        constexpr double value() const;
+        constexpr long long numerator() const;
+        constexpr int denominator() const;
+        constexpr bool is_valid() const;
+
+    protected:
+        constexpr numeric_value() = default;
+        constexpr numeric_value(long long n, int16_t d);
+
+        long long _n = 0;
+        int16_t _d = 0;
+        friend constexpr numeric_value cp_numeric_value(char32_t cp);
+    };
+
+    constexpr category cp_category(char32_t cp);
+    constexpr script cp_script(char32_t cp);
+    constexpr script_extensions_view cp_script_extensions(char32_t cp);
+    constexpr version cp_age(char32_t cp);
+    constexpr block cp_block(char32_t cp);
+    constexpr bool cp_is_valid(char32_t cp);
+    constexpr bool cp_is_assigned(char32_t cp);
+    constexpr bool cp_is_ascii(char32_t cp);
+    constexpr numeric_value cp_numeric_value(char32_t cp);
+
+    template<script>
+    constexpr bool cp_is(char32_t);
+    template<property>
+    constexpr bool cp_is(char32_t);
+    template<category>
+    constexpr bool cp_is(char32_t);
+
+    namespace detail
+    {
+        enum class binary_prop;
+        constexpr int propnamecomp(std::string_view sa, std::string_view sb);
+        constexpr binary_prop binary_prop_from_string(std::string_view s);
+
+        template<binary_prop p>
+        constexpr bool get_binary_prop(char32_t) = delete;
+
+        constexpr script   script_from_string(std::string_view s);
+        constexpr block    block_from_string(std::string_view s);
+        constexpr version  age_from_string(std::string_view a);
+        constexpr category category_from_string(std::string_view a);
+
+        constexpr bool is_unassigned(category cat);
+        constexpr bool is_unknown(script s);
+        constexpr bool is_unknown(block b);
+        constexpr bool is_unassigned(version v);
+        constexpr bool is_unknown(binary_prop s);
+    }
+}
+
+#endif
+
+namespace ctre {
+
+// properties name & value
+
+template <auto... Str> struct property_name { };
+template <auto... Str> struct property_value { };
+
+template <size_t Sz> constexpr std::string_view get_string_view(const char (& arr)[Sz]) noexcept {
+	return std::string_view(arr, Sz);
+}
+
+// basic support for binary and type-value properties
+
+template <auto Name> struct binary_property;
+template <auto Name, auto Value> struct property;
+
+// unicode TS#18 level 1.2 general_category
+template <uni::detail::binary_prop Property> struct binary_property<Property> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::detail::get_binary_prop<Property>(c);
+	}
+};
+
+// unicode TS#18 level 1.2.2
+
+enum class property_type {
+	script, script_extension, age, block, unknown
+};
+
+// unicode TS#18 level 1.2.2
+
+template <uni::script Script> struct binary_property<Script> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_script(c) == Script;
+	}
+};
+
+template <uni::script Script> struct property<property_type::script_extension, Script> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		for (uni::script sc: uni::cp_script_extensions(c)) {
+			if (sc == Script) return true;
+		}
+		return false;
+	}
+};
+
+template <uni::version Age> struct binary_property<Age> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_age(c) <= Age;
+	}
+};
+
+template <uni::block Block> struct binary_property<Block> {
+	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+		return uni::cp_block(c) == Block;
+	}
+};
+
+// nonbinary properties
+
+template <typename = void> // Make it always a template as propnamecomp isn't defined yet
+constexpr property_type property_type_from_name(std::string_view str) noexcept {
+	using namespace std::string_view_literals;
+	if (uni::detail::propnamecomp(str, "script"sv) == 0 || uni::detail::propnamecomp(str, "sc"sv) == 0) {
+		return property_type::script;
+	} else if (uni::detail::propnamecomp(str, "script_extension"sv) == 0 || uni::detail::propnamecomp(str, "scx"sv) == 0) {
+		return property_type::script_extension;
+	} else if (uni::detail::propnamecomp(str, "age"sv) == 0) {
+		return property_type::age;
+	} else if (uni::detail::propnamecomp(str, "block"sv) == 0) {
+		return property_type::block;
+	} else {
+		return property_type::unknown;
+	}
+}
+
+template <property_type Property> struct property_type_builder {
+	template <auto... Value> static constexpr auto get() {
+		return ctll::reject{};
+	}
+};
+
+template <auto... Name> struct property_builder {
+	static constexpr char name[sizeof...(Name)]{static_cast<char>(Name)...};
+	static constexpr property_type type = property_type_from_name(get_string_view(name));
+
+	using helper = property_type_builder<type>;
+
+	template <auto... Value> static constexpr auto get() {
+		return helper::template get<Value...>();
+	}
+};
+
+// unicode TS#18 level 1.2.2 script support
+
+template <> struct property_type_builder<property_type::script> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
+		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(sc)) {
+			return ctll::reject{};
+		} else {
+			return binary_property<sc>();
+		}
+	}
+};
+
+template <> struct property_type_builder<property_type::script_extension> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
+		constexpr auto sc = uni::detail::script_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(sc)) {
+			return ctll::reject{};
+		} else {
+			return property<property_type::script_extension, sc>();
+		}
+	}
+};
+
+template <> struct property_type_builder<property_type::age> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
+		constexpr auto age = uni::detail::age_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unassigned(age)) {
+			return ctll::reject{};
+		} else {
+			return binary_property<age>();
+		}
+	}
+};
+
+template <> struct property_type_builder<property_type::block> {
+	template <auto... Value> static constexpr auto get() {
+		constexpr char value[sizeof...(Value)]{static_cast<char>(Value)...};
+		constexpr auto block = uni::detail::block_from_string(get_string_view(value));
+		if constexpr (uni::detail::is_unknown(block)) {
+			return ctll::reject{};
+		} else {
+			return binary_property<block>();
+		}
+	}
+};
+
+}
+
+#endif
+
+#ifndef CTRE__ATOMS__HPP
+#define CTRE__ATOMS__HPP
+
+#include <cstdint>
+
+namespace ctre {
 	
-	point_set<capacity> set;
-	set.populate(rhs);
+// special helpers for matching
+struct accept { };
+struct reject { };
+struct start_mark { };
+struct end_mark { };
+struct end_cycle_mark { };
+struct end_lookahead_mark { };
+struct fail_if_empty { };
+template <size_t Id> struct numeric_mark { };
+
+struct any { };
+
+// actual AST of regexp
+template <auto... Str> struct string { };
+template <typename... Opts> struct select { };
+template <typename... Content> struct sequence { };
+struct empty { };
+
+template <size_t a, size_t b, typename... Content> struct repeat { };
+template <typename... Content> using plus = repeat<1,0,Content...>;
+template <typename... Content> using star = repeat<0,0,Content...>;
+
+template <size_t a, size_t b, typename... Content> struct lazy_repeat { };
+template <typename... Content> using lazy_plus = lazy_repeat<1,0,Content...>;
+template <typename... Content> using lazy_star = lazy_repeat<0,0,Content...>;
+
+template <size_t a, size_t b, typename... Content> struct possessive_repeat { };
+template <typename... Content> using possessive_plus = possessive_repeat<1,0,Content...>;
+template <typename... Content> using possessive_star = possessive_repeat<0,0,Content...>;
+
+template <typename... Content> using optional = repeat<0,1,Content...>;
+template <typename... Content> using lazy_optional = lazy_repeat<0,1,Content...>;
+
+template <size_t Index, typename... Content> struct capture { };
+
+template <size_t Index, typename Name, typename... Content> struct capture_with_name { };
+
+template <size_t Index> struct back_reference { };
+template <typename Name> struct back_reference_with_name { };
+
+template <typename Type> struct look_start { };
+
+template <typename... Content> struct lookahead_positive { };
+template <typename... Content> struct lookahead_negative { };
+
+struct atomic_start { };
+
+template <typename... Content> struct atomic_group { };
+
+template <typename Content> struct boundary { };
+template <typename Content> struct not_boundary { };
+
+using word_boundary = boundary<word_chars>;
+using not_word_boundary = not_boundary<word_chars>;
+
+struct assert_subject_begin { };
+struct assert_subject_end { };
+struct assert_subject_end_line{ };
+struct assert_line_begin { };
+struct assert_line_end { };
+
+}
+
+#endif
+
+namespace ctre {
+
+struct first_lookahead_result {
+	bool matches{false};
 	
-	return set.check(lhs);
+	constexpr CTRE_FORCE_INLINE first_lookahead_result() noexcept { }
+	constexpr CTRE_FORCE_INLINE first_lookahead_result(not_matched_tag_t) noexcept { }
+	
+	constexpr CTRE_FORCE_INLINE auto matched() {
+		matches = true;
+		return *this;
+	}
+	template <typename It> constexpr CTRE_FORCE_INLINE auto & set_end_mark(const It &) noexcept {
+		return *this;
+	}
+	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
+		return matches;
+	}
+};
+
+template <typename... Items> constexpr auto first_set_of(Items...);
+
+struct opaque {
+	static constexpr bool we_can_calculate_intersect = false;
+};
+
+template <typename...> struct first {
+	unsigned count = 1;
+	static constexpr bool we_can_calculate_intersect = true;
+};
+
+template <typename...> struct complex_first {
+	static constexpr bool we_can_calculate_intersect = false;
+};
+
+template <typename... Lhs, typename... Rhs> constexpr auto operator+(first<Lhs...> l, first<Rhs...> r) -> first<Lhs..., Rhs...> {
+	return {l.count + r.count};
+}
+
+template <typename... Lhs, typename... Rhs> constexpr auto operator+(first<Lhs...>, complex_first<Rhs...>) -> complex_first<Lhs..., Rhs...> {
+	return {};
+}
+
+template <typename... Lhs, typename... Rhs> constexpr auto operator+(complex_first<Lhs...>, first<Rhs...>) -> complex_first<Lhs..., Rhs...> {
+	return {};
+}
+
+template <typename... Lhs, typename... Rhs> constexpr auto operator+(complex_first<Lhs...>, complex_first<Rhs...>) -> complex_first<Lhs..., Rhs...> {
+	return {};
+}
+
+template <typename T> constexpr auto operator+(opaque, T) -> opaque {
+	return {};
+}
+
+template <typename T> constexpr auto operator+(T, opaque) -> opaque {
+	return {};
+}
+
+constexpr auto operator+(opaque, opaque) -> opaque {
+	return {};
+}
+
+template <typename Head, typename... Content> constexpr auto calculate_first(Head, Content...) = delete;
+constexpr auto calculate_first() {
+	return first<>{0};
+}
+
+// IMPLEMENTATION
+
+// fall-through
+template <typename... Rest> constexpr auto calculate_first(accept, Rest...) { return first<accept>{0}; }
+template <typename... Rest> constexpr auto calculate_first(reject, Rest...) { return first<reject>{0}; }
+template <typename... Rest> constexpr auto calculate_first(start_mark, Rest... rest) { return calculate_first(rest...); }
+template <typename... Rest> constexpr auto calculate_first(end_mark, Rest... rest) { return calculate_first(rest...); }
+template <typename... Rest> constexpr auto calculate_first(end_cycle_mark, Rest...) { return first<end_cycle_mark>{0}; }
+template <typename... Rest> constexpr auto calculate_first(end_lookahead_mark, Rest... rest) { return calculate_first(rest...); }
+template <typename... Rest> constexpr auto calculate_first(fail_if_empty, Rest...) { return first<fail_if_empty>{0}; }
+template <size_t Id, typename... Rest> constexpr auto calculate_first(numeric_mark<Id>, Rest... rest) { return calculate_first(rest...); }
+
+// any
+// TODO what to do with any in multiline?
+template <typename... Rest> constexpr auto calculate_first(any, Rest...) { return first<any>{1}; }
+
+// string
+template <auto Head, auto... Tail, typename... Rest> constexpr auto calculate_first(string<Head, Tail...>, Rest...) { return first<character<Head>>{1}; }
+
+template <typename... Rest> constexpr auto calculate_first(string<>, Rest... rest) {
+	return calculate_first(rest...);
+}
+
+// select
+template <typename... Options, typename... Rest> constexpr auto calculate_first(select<Options...>, Rest... rest) {
+	return (first<>{0} + ... + calculate_first(Options{}, rest...));
+}
+
+// sequence
+template <typename... Items, typename... Rest> constexpr auto calculate_first(sequence<Items...>, Rest... rest) {
+	return calculate_first(Items{}..., rest...);
+}
+
+template <typename... Rest> constexpr auto calculate_first(empty, Rest... rest) {
+	return calculate_first(rest...);
+}
+
+// cycles
+template <size_t A, size_t B, typename... Items, typename... Rest> constexpr auto calculate_first(lazy_repeat<A,B,Items...>, Rest... rest) {
+	if constexpr (A == 0) {
+		return calculate_first(Items{}..., rest...) + calculate_first(rest...);
+	} else {
+		return calculate_first(Items{}..., rest...);
+	}
+}
+
+template <size_t A, size_t B, typename... Items, typename... Rest> constexpr auto calculate_first(repeat<A,B,Items...>, Rest... rest) {
+	if constexpr (A == 0) {
+		return calculate_first(Items{}..., rest...) + calculate_first(rest...);
+	} else {
+		return calculate_first(Items{}..., rest...);
+	}
+}
+
+template <size_t A, size_t B, typename... Items, typename... Rest> constexpr auto calculate_first(possessive_repeat<A,B,Items...>, Rest... rest) {
+	if constexpr (A == 0) {
+		return calculate_first(Items{}..., rest...) + calculate_first(rest...);
+	} else {
+		return calculate_first(Items{}..., rest...);
+	}
+}
+
+// capture
+template <size_t Id, typename... Items, typename... Rest> constexpr auto calculate_first(capture<Id, Items...>, Rest... rest) {
+	return calculate_first(Items{}..., rest...);
+}
+
+template <size_t Id, typename Name, typename... Items, typename... Rest> constexpr auto calculate_first(capture_with_name<Id, Name, Items...>, Rest... rest) {
+	return calculate_first(Items{}..., rest...);
+}
+
+// back-reference
+template <size_t Id, typename... Rest> constexpr auto calculate_first(back_reference<Id>, Rest...) {
+	return opaque{};
+}
+template <typename Id, typename... Rest> constexpr auto calculate_first(back_reference_with_name<Id>, Rest...) {
+	return opaque{};
+}
+
+// lookahead
+template <typename T, typename... Rest> constexpr auto calculate_first(look_start<T>, Rest... rest) {
+	return calculate_first(rest...);
+}
+
+template <typename... Items, typename... Rest> constexpr auto calculate_first(lookahead_positive<Items...>, Rest... rest) {
+	return calculate_first(Items{}...) + calculate_first(rest...);
+}
+
+template <typename... Items, typename... Rest> constexpr auto calculate_first(lookahead_negative<Items...>, Rest...) {
+	return opaque{};
+}
+
+// atomic
+template <typename... Rest> constexpr auto calculate_first(atomic_start, Rest... rest) {
+	return calculate_first(rest...);
+}
+
+template <typename... Items, typename... Rest> constexpr auto calculate_first(atomic_group<Items...>, Rest... rest) {
+	return calculate_first(Items{}..., rest...);
+}
+
+// boundaries
+template <typename T, typename... Rest> constexpr auto calculate_first(boundary<T>, Rest... rest) {
+	return first<boundary<T>>{} + calculate_first(rest...);
+}
+template <typename T, typename... Rest> constexpr auto calculate_first(not_boundary<T>, Rest... rest) {
+	return first<not_boundary<T>>{} + calculate_first(rest...);
+}
+
+// assert
+// TODO what to do with asserts?
+template <typename... Rest> constexpr auto calculate_first(assert_subject_begin, Rest...) {
+	return first<assert_subject_begin>{0};
+}
+template <typename... Rest> constexpr auto calculate_first(assert_subject_end, Rest...) {
+	return first<assert_subject_end>{0};
+}
+template <typename... Rest> constexpr auto calculate_first(assert_subject_end_line, Rest...) {
+	return first<assert_subject_end_line>{1};
+}
+template <typename... Rest> constexpr auto calculate_first(assert_line_begin, Rest...) {
+	return first<assert_line_begin>{0};
+}
+template <typename... Rest> constexpr auto calculate_first(assert_line_end, Rest...) {
+	return first<assert_line_end>{1};
+}
+
+// character
+
+template <auto C, typename... Rest> constexpr auto calculate_first(character<C>, Rest...) {
+	return first<character<C>>{1};
+}
+
+template <auto A, auto B, typename... Rest> constexpr auto calculate_first(char_range<A,B>, Rest...) {
+	return first<char_range<A,B>>{1};
+}
+
+template <auto... Cs, typename... Rest> constexpr auto calculate_first(enumeration<Cs...>, Rest...) {
+	return first<character<Cs>...>{sizeof...(Cs)};
+}
+
+template <auto C> constexpr auto set_item_first(character<C>) { return first<character<C>>{1}; }
+template <auto A, auto B> constexpr auto set_item_first(char_range<A,B>) { return first<char_range<A,B>>{1}; }
+template <auto... Cs> constexpr auto set_item_first(enumeration<Cs...>) { return first<character<Cs>...>{sizeof...(Cs)}; }
+
+template <typename... Set, typename... Rest> constexpr auto calculate_first(set<Set...>, Rest...) {
+	return (first<>{0} + ... + set_item_first(Set{}));
+}
+
+// negative ranges are with +1, because it's always two ranges around
+template <auto C> constexpr auto nset_item_first(character<C>) { return first<character<C>>{2}; }
+template <auto A, auto B> constexpr auto nset_item_first(char_range<A,B>) { return first<char_range<A,B>>{2}; }
+template <auto... Cs> constexpr auto nset_item_first(enumeration<Cs...>) { return first<character<Cs>...>{sizeof...(Cs)+1}; }
+
+template <typename... Set, typename... Rest> constexpr auto calculate_first(negative_set<Set...>, Rest...) {
+	// TODO look at negative things
+	return first<negative_set<Set...>>{(nset_item_first(Set{}).count + ... + 1)};
+}
+
+// unicode
+
+template <auto V, typename... Rest> constexpr auto calculate_first(binary_property<V>, Rest...) {
+	return complex_first<binary_property<V>>{};
+}
+
+template <auto T, auto V, typename... Rest> constexpr auto calculate_first(property<T, V>, Rest...) {
+	return complex_first<property<T,V>>{};
+}
+
+template <auto V, typename... Rest> constexpr auto calculate_first(negate<binary_property<V>>, Rest...) {
+	return complex_first<negate<binary_property<V>>>{};
+}
+
+template <auto T, auto V, typename... Rest> constexpr auto calculate_first(negate<property<T, V>>, Rest...) {
+	return complex_first<negate<property<T,V>>>{};
+}
+
+// USER API
+
+template <typename Lhs, typename Rhs> constexpr auto collides(Lhs, Rhs) {
+	if constexpr (Lhs::we_can_calculate_intersect && Rhs::we_can_calculate_intersect) {
+		// TODO calculate intersect
+	}
+	return true;
+}
+
+// lookahead
+
+template <typename Iterator, typename EndIterator, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator begin, Iterator current, const EndIterator end, const flags & f, first<Content...>) noexcept {
+	return (evaluate_split(begin, current, end, f, first_lookahead_result{}, ctll::list<Content, accept>{}) || ... || false);
+}
+
+template <typename Iterator, typename EndIterator, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator begin, Iterator current, const EndIterator end, const flags & f, complex_first<Content...>) noexcept {
+	return (evaluate_split(begin, current, end, f, first_lookahead_result{}, ctll::list<Content, accept>{}) || ... || false);
+}
+
+template <typename Iterator, typename EndIterator, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator, Iterator, const EndIterator, const flags &, opaque) noexcept {
+	return true;
 }
 
 }
@@ -3976,7 +4178,7 @@ template <typename> static constexpr bool always_false = false;
 
 // helper to make Captures reference
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R captures, Tail...) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate_split(const Iterator begin, Iterator current, const EndIterator end, flags f, R captures, Tail...) noexcept {
 	return evaluate(begin, current, end, f, captures, Tail{}...);
 }
 
@@ -3988,8 +4190,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 }
 
 // if we found "accept" object on stack => ACCEPT
-template <typename R, typename Iterator, typename EndIterator> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R & captures, ctll::list<accept>) noexcept {
+template <typename R, typename Iterator, typename EndIterator, typename... Rest> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R & captures, ctll::list<accept, Rest...>) noexcept {
 	return captures.matched();
 }
 
@@ -4001,19 +4203,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 
 // mark start of outer capture
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<start_mark, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<start_mark, Tail...>) noexcept {
 	return evaluate(begin, current, end, f, captures.set_start_mark(current), ctll::list<Tail...>());
 }
 
 // mark end of outer capture
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<end_mark, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<end_mark, Tail...>) noexcept {
 	return evaluate(begin, current, end, f, captures.set_end_mark(current), ctll::list<Tail...>());
 }
 
 // mark end of cycle
-template <typename R, typename Iterator, typename EndIterator> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] const flags & f, R & captures, ctll::list<end_cycle_mark>) noexcept {
+template <typename R, typename Iterator, typename EndIterator, typename... Rest> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] flags f, R & captures, ctll::list<end_cycle_mark, Rest...>) noexcept {
 	if (cannot_be_empty_match(f)) {
 		return not_matched;
 	}
@@ -4022,7 +4224,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const E
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R & captures, ctll::list<fail_if_empty, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<fail_if_empty, Tail...>) noexcept {
 	if (cannot_be_empty_match(f)) {
 		return not_matched;
 	}
@@ -4033,7 +4235,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // matching everything which behave as a one character matcher
 
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<CharacterLike, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<CharacterLike, Tail...>) noexcept {
 	if (current == end) return not_matched;
 	if (!CharacterLike::match_char(*current)) return not_matched;
 	
@@ -4041,7 +4243,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<any, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<any, Tail...>) noexcept {
 	if (current == end) return not_matched;
 	
 	if (multiline_mode(f)) {
@@ -4073,7 +4275,7 @@ template <auto... String, size_t... Idx, typename Iterator, typename EndIterator
 }
 
 template <typename R, typename Iterator, typename EndIterator, auto... String, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R & captures, ctll::list<string<String...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<string<String...>, Tail...>) noexcept {
 	auto result = evaluate_match_string<String...>(current, end, std::make_index_sequence<sizeof...(String)>());
 	
 	if (!result.match) {
@@ -4085,7 +4287,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // matching select in patterns
 template <typename R, typename Iterator, typename EndIterator, typename HeadOptions, typename... TailOptions, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<select<HeadOptions, TailOptions...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<select<HeadOptions, TailOptions...>, Tail...>) noexcept {
 	if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
 		return r;
 	} else {
@@ -4101,19 +4303,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 
 // matching sequence in patterns
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<sequence<Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<sequence<Content...>, Tail...>) noexcept {
 	return evaluate(begin, current, end, f, captures, ctll::list<Content..., Tail...>());
 }
 
 // matching empty in patterns
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<empty, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<empty, Tail...>) noexcept {
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
 // matching asserts
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<assert_subject_begin, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<assert_subject_begin, Tail...>) noexcept {
 	if (begin != current) {
 		return not_matched;
 	}
@@ -4121,7 +4323,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<assert_subject_end, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<assert_subject_end, Tail...>) noexcept {
 	if (end != current) {
 		return not_matched;
 	}
@@ -4129,7 +4331,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<assert_subject_end_line, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<assert_subject_end_line, Tail...>) noexcept {
 	if (multiline_mode(f)) {
 		if (end == current) {
 			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
@@ -4147,7 +4349,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<assert_line_begin, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<assert_line_begin, Tail...>) noexcept {
 	if (multiline_mode(f)) {
 		if (begin == current) {
 			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
@@ -4165,7 +4367,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<assert_line_end, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<assert_line_end, Tail...>) noexcept {
 	if (multiline_mode(f)) {
 		if (end == current) {
 			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
@@ -4190,7 +4392,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // matching boundary
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<boundary<CharacterLike>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<boundary<CharacterLike>, Tail...>) noexcept {
 	
 	// reason why I need bidirectional iterators or some clever hack
 	bool before = false;
@@ -4212,7 +4414,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // matching not_boundary
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<not_boundary<CharacterLike>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<not_boundary<CharacterLike>, Tail...>) noexcept {
 	
 	// reason why I need bidirectional iterators or some clever hack
 	bool before = false;
@@ -4234,7 +4436,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R & captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
+constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
 	if constexpr ((B != 0) && (A > B)) {
 		return not_matched;
 	}
@@ -4247,7 +4449,7 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 	
 	// first try tail...
 	if constexpr (min_unlimited) {
-		auto result = evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		auto result = evaluate_split(begin, current, end, f, captures, ctll::list<Tail...>());
 		if (result) return result;
 	}
 	
@@ -4262,7 +4464,7 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 
 // possessive repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R & captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
 
 	if constexpr ((B != 0) && (A > B)) {
 		return not_matched;
@@ -4290,7 +4492,7 @@ template <typename T> struct identify;
 
 // greedy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R & captures, ctll::list<repeat<A,B,Content...>, Tail...>) noexcept {
+constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<repeat<A,B,Content...>, Tail...>) noexcept {
 	if constexpr ((B != 0) && (A > B)) {
 		return not_matched;
 	}
@@ -4301,47 +4503,56 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 	[[maybe_unused]] constexpr size_t next_min_level = A ? A - 1 : 0;
 	[[maybe_unused]] constexpr bool min_limited = A > 0;
 	
-	auto try_content = [&]{
+	auto try_content = [&](auto && captures){
 		if constexpr (max_limited && B == 1) {
 			// maximum limit reached
-			return evaluate(begin, current, end, not_empty_match(f), R{captures}, ctll::list<Content..., fail_if_empty, Tail...>());
+			return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, Tail...>());
 		} else {
-			return evaluate(begin, current, end, not_empty_match(f), R{captures}, ctll::list<Content..., fail_if_empty, repeat<next_min_level, next_max_level, Content...>, Tail...>());
+			return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, repeat<next_min_level, next_max_level, Content...>, Tail...>());
 		}
 	};
 	
-	auto try_tail = [&]{
-		if constexpr (!min_limited) {
-			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
-		} else {
-			return not_matched;
-		}
-	};
-	
-	//using f_content = decltype(calculate_first(Content{}...));
-	//using f_tail = decltype(calculate_first(Tail{}...));
-	
-	//identify<decltype(first_content)> i;
-	//identify<decltype(first_tail)> i;
-	
-	// TODO
-	//if constexpr (!collides(f_content{}, f_tail{})) {
-	//	if (evaluate(begin, current, end, f, captures, build_first_match_set(f_content{}))) {
-	//		return try_content();
-	//	} else {
-	//		return try_tail();
-	//	}
-	//}
+	constexpr auto fcontent = calculate_first(Content{}...);
+	constexpr auto ftail = calculate_first(Tail{}...);
 	
 	// first I try internal content... and if that fail then tail
-	auto result = try_content();
-	if (result) return result;
-	else return try_tail();
+	if constexpr (collides(fcontent, ftail)) {
+		//auto result = try_content(R{captures});
+		//if (result) return result;
+		auto can_be_content = lookahead_first(begin, current, end, f, fcontent);
+		auto can_be_tail = lookahead_first(begin, current, end, f, ftail);
+		
+		if (can_be_content && !can_be_tail) {
+			return try_content(captures);
+		} else if (!can_be_content && can_be_tail) {
+			if constexpr (!min_limited) {
+				return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+			} else {
+				return not_matched;
+			}
+		} else if (!can_be_content && !can_be_tail) {
+			return not_matched;
+		} else {
+			auto result = try_content(R{captures});
+			if (result) return result;
+			// otherwise it will jump to Tail...
+		}
+	} else if (lookahead_first(begin, current, end, f, fcontent)) {
+		// look ahead success, no need to try tail
+		return try_content(captures);
+	}
+	
+	
+	if constexpr (!min_limited) {
+		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+	} else {
+		return not_matched;
+	}
 }
 
 // atomic group
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R & captures, ctll::list<atomic_group<Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<atomic_group<Content...>, Tail...>) noexcept {
 
 	auto inner_result = evaluate(begin, current, end, f, captures, ctll::list<Content..., end_mark, accept>());
 	
@@ -4355,19 +4566,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // capture (numeric ID)
 template <typename R, typename Iterator, typename EndIterator, size_t Id, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<capture<Id, Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<capture<Id, Content...>, Tail...>) noexcept {
 	return evaluate(begin, current, end, f, captures.template start_capture<Id>(current), ctll::list<sequence<Content...>, numeric_mark<Id>, Tail...>());
 }
 
 // capture end mark (numeric and string ID)
 template <typename R, typename Iterator, typename EndIterator, size_t Id, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<numeric_mark<Id>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<numeric_mark<Id>, Tail...>) noexcept {
 	return evaluate(begin, current, end, f, captures.template end_capture<Id>(current), ctll::list<Tail...>());
 }
 
 // capture (string ID)
 template <typename R, typename Iterator, typename EndIterator, size_t Id, typename Name, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<capture_with_name<Id, Name, Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<capture_with_name<Id, Name, Content...>, Tail...>) noexcept {
 	return evaluate(begin, current, end, f, captures.template start_capture<Id>(current), ctll::list<sequence<Content...>, numeric_mark<Id>, Tail...>());
 }
 
@@ -4386,7 +4597,7 @@ template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE s
 
 // backreference with name
 template <typename R, typename Id, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<back_reference_with_name<Id>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<back_reference_with_name<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
@@ -4398,7 +4609,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // backreference
 template <typename R, size_t Id, typename Iterator, typename EndIterator, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<back_reference<Id>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<back_reference<Id>, Tail...>) noexcept {
 	
 	if (const auto ref = captures.template get<Id>()) {
 		if (auto result = match_against_range(current, end, ref.begin(), ref.end(), f); result.match) {
@@ -4417,7 +4628,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 
 // lookahead positive
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<lookahead_positive<Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<lookahead_positive<Content...>, Tail...>) noexcept {
 	
 	if (auto lookahead_result = evaluate(begin, current, end, f, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
 		captures = lookahead_result.unmatch();
@@ -4429,7 +4640,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 // lookahead negative
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R & captures, ctll::list<lookahead_negative<Content...>, Tail...>) noexcept {
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<lookahead_negative<Content...>, Tail...>) noexcept {
 	
 	if (auto lookahead_result = evaluate(begin, current, end, f, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
 		return not_matched;
@@ -4567,7 +4778,7 @@ struct match_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		
-		return evaluate(orig_begin, begin, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, assert_subject_end, end_mark, accept>());
+		return evaluate_split(orig_begin, begin, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, assert_subject_end, end_mark, accept>());
 	}
 	
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
@@ -4584,13 +4795,13 @@ struct search_method {
 		auto it = begin;
 	
 		for (; end != it && !fixed; ++it) {
-			if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>())) {
+			if (auto out = evaluate_split(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>())) {
 				return out;
 			}
 		}
 	
 		// in case the RE is empty or fixed
-		return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+		return evaluate_split(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
 	}
 	
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
@@ -4601,7 +4812,7 @@ struct search_method {
 struct starts_with_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
-		return evaluate(orig_begin, begin, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+		return evaluate_split(orig_begin, begin, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
 	}
 	
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {

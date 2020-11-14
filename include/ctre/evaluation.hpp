@@ -57,8 +57,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 }
 
 // if we found "accept" object on stack => ACCEPT
-template <typename R, typename Iterator, typename EndIterator> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R & captures, ctll::list<accept>) noexcept {
+template <typename R, typename Iterator, typename EndIterator, typename... Rest> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R & captures, ctll::list<accept, Rest...>) noexcept {
 	return captures.matched();
 }
 
@@ -81,8 +81,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // mark end of cycle
-template <typename R, typename Iterator, typename EndIterator> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] flags f, R & captures, ctll::list<end_cycle_mark>) noexcept {
+template <typename R, typename Iterator, typename EndIterator, typename... Rest> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const EndIterator, [[maybe_unused]] flags f, R & captures, ctll::list<end_cycle_mark, Rest...>) noexcept {
 	if (cannot_be_empty_match(f)) {
 		return not_matched;
 	}
@@ -384,6 +384,8 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 	
 	// first I try internal content... and if that fail then tail
 	if constexpr (collides(fcontent, ftail)) {
+		//auto result = try_content(R{captures});
+		//if (result) return result;
 		auto can_be_content = lookahead_first(begin, current, end, f, fcontent);
 		auto can_be_tail = lookahead_first(begin, current, end, f, ftail);
 		

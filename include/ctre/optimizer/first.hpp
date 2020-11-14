@@ -17,6 +17,9 @@ struct first_lookahead_result {
 		matches = true;
 		return *this;
 	}
+	template <typename It> constexpr CTRE_FORCE_INLINE auto & set_end_mark(const It &) noexcept {
+		return *this;
+	}
 	constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
 		return matches;
 	}
@@ -73,13 +76,13 @@ constexpr auto calculate_first() {
 // IMPLEMENTATION
 
 // fall-through
-template <typename... Rest> constexpr auto calculate_first(accept, Rest... rest) { return calculate_first(rest...); }
-template <typename... Rest> constexpr auto calculate_first(reject, Rest... rest) { return calculate_first(rest...); }
+template <typename... Rest> constexpr auto calculate_first(accept, Rest...) { return first<accept>{0}; }
+template <typename... Rest> constexpr auto calculate_first(reject, Rest...) { return first<reject>{0}; }
 template <typename... Rest> constexpr auto calculate_first(start_mark, Rest... rest) { return calculate_first(rest...); }
 template <typename... Rest> constexpr auto calculate_first(end_mark, Rest... rest) { return calculate_first(rest...); }
-template <typename... Rest> constexpr auto calculate_first(end_cycle_mark, Rest... rest) { return calculate_first(rest...); }
+template <typename... Rest> constexpr auto calculate_first(end_cycle_mark, Rest...) { return first<end_cycle_mark>{0}; }
 template <typename... Rest> constexpr auto calculate_first(end_lookahead_mark, Rest... rest) { return calculate_first(rest...); }
-template <typename... Rest> constexpr auto calculate_first(fail_if_empty, Rest... rest) { return calculate_first(rest...); }
+template <typename... Rest> constexpr auto calculate_first(fail_if_empty, Rest...) { return first<fail_if_empty>{0}; }
 template <size_t Id, typename... Rest> constexpr auto calculate_first(numeric_mark<Id>, Rest... rest) { return calculate_first(rest...); }
 
 // any
