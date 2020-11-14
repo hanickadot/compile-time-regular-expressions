@@ -288,6 +288,7 @@ static_assert(CTRE_CREATE("[\\--\\-]").match("-"sv));
 
 // issue #131
 static_assert(CTRE_CREATE("(|a)+").match("aaaaaa"sv));
+static_assert(CTRE_CREATE(R"(^([\-dlsDLS][\-rwxstlRWXSTL]{9}[+]?)\s*(\d+)?\s+(\S+)?\s+(.*?)?\s+(\d+|\d+\.\d+\S)\s+([A-Za-z][a-z][a-z])\s+(\d{1,2})\s+((\d{4,4})|(\d{1,2})[:\.](\d{2,2}))\s)").search("drwxrwxrwx   1 owner    group               0 May 26  2019 test"sv));
 
 // atomic groups
 static_assert(!CTRE_CREATE("a(?>bc|b)c").match("abc"sv));
