@@ -155,8 +155,32 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // matching select in patterns
 template <typename R, typename Iterator, typename EndIterator, typename HeadOptions, typename... TailOptions, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, flags f, R & captures, ctll::list<select<HeadOptions, TailOptions...>, Tail...>) noexcept {
-	if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
-		return r;
+	
+	constexpr auto fheadopt = calculate_first(HeadOptions{}, Tail{}...);
+	constexpr auto ftailopt = calculate_first(select<TailOptions...>{}, Tail{}...);
+	
+	// first I try internal content... and if that fail then tail
+	if constexpr (collides(fheadopt, ftailopt)) {
+		const bool can_be_head = lookahead_first(begin, current, end, f, fheadopt);
+		const bool can_be_tail = lookahead_first(begin, current, end, f, ftailopt);
+	
+		if (can_be_head ^ can_be_tail) {
+			if (can_be_head) {
+				return evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>());
+			} else {
+				return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+			}
+		} else if (!can_be_head) {
+			return not_matched;
+		} else {
+			if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
+				return r;
+			} else {
+				return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+			}
+		}
+	} else if (lookahead_first(begin, current, end, f, fheadopt)) {
+		return evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>());
 	} else {
 		return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
 	}
