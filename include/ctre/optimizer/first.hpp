@@ -261,15 +261,15 @@ template <typename... Lhs, typename... Rhs> constexpr auto collides(first<Lhs...
 
 // lookahead
 
-template <typename Iterator, typename EndIterator, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator begin, Iterator current, const EndIterator end, const flags & f, first<Content...>) noexcept {
+template <typename Iterator, typename EndIterator, typename Flags, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator begin, Iterator current, const EndIterator end, Flags f, first<Content...>) noexcept {
 	return (evaluate_split(begin, current, end, f, first_lookahead_result{}, ctll::list<Content, accept>{}) || ... || false);
 }
 
-template <typename Iterator, typename EndIterator, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator begin, Iterator current, const EndIterator end, const flags & f, complex_first<Content...>) noexcept {
+template <typename Iterator, typename EndIterator, typename Flags, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator begin, Iterator current, const EndIterator end, Flags f, complex_first<Content...>) noexcept {
 	return (evaluate_split(begin, current, end, f, first_lookahead_result{}, ctll::list<Content, accept>{}) || ... || false);
 }
 
-template <typename Iterator, typename EndIterator, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator, Iterator, const EndIterator, const flags &, opaque) noexcept {
+template <typename Iterator, typename EndIterator, typename Flags, typename... Content> constexpr CTRE_FORCE_INLINE bool lookahead_first(const Iterator, Iterator, const EndIterator, Flags, opaque) noexcept {
 	return true;
 }
 
