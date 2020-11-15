@@ -222,8 +222,11 @@ static_assert(same_f(CTRE_GEN("\\A"), ctre::assert_subject_begin()));
 static_assert(same_f(CTRE_GEN("\\Z"), ctre::assert_subject_end_line()));
 static_assert(same_f(CTRE_GEN("\\z"), ctre::assert_subject_end()));
 
-// TODO change this to string
-static_assert(same_f(CTRE_GEN("^abc$"), ctre::sequence<ctre::assert_line_begin, ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>, ctre::assert_line_end>()));
+static_assert(same_f(CTRE_GEN("^abc$"), ctre::sequence<ctre::assert_line_begin, ctre::string<'a','b','c'>, ctre::assert_line_end>()));
+static_assert(same_f(CTRE_GEN("abc?"), ctre::sequence<ctre::string<'a','b'>, ctre::optional<ctre::character<'c'>>>()));
+static_assert(same_f(CTRE_GEN("abc."), ctre::sequence<ctre::string<'a','b','c'>, ctre::any>()));
+static_assert(same_f(CTRE_GEN("abc.?"), ctre::sequence<ctre::string<'a','b','c'>, ctre::optional<ctre::any>>()));
+static_assert(same_f(CTRE_GEN("abc.def"), ctre::sequence<ctre::string<'a','b','c'>, ctre::any, ctre::string<'d','e','f'>>()));
 
 static_assert(same_f(CTRE_GEN("^a|b$"), ctre::select<ctre::sequence<ctre::assert_line_begin, ctre::character<'a'>>, ctre::sequence<ctre::character<'b'>, ctre::assert_line_end>>()));
 
