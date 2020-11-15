@@ -62,19 +62,37 @@ struct match_method {
 struct search_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
-		
+		using front_re = decltype(pop_and_get_front(extract_leading_string(ctll::list<RE>{})));
 		constexpr bool fixed = starts_with_anchor(Modifier{}, ctll::list<RE>{});
 	
 		auto it = begin;
-	
-		for (; end != it && !fixed; ++it) {
-			if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>())) {
-				return out;
+		if constexpr (is_string(front_re{}.front) && size(front_re{}.list)) {
+			it = search_for_string(it, end, front_re{}.front).position;
+			for (; end != it;) {
+				if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, sequence<decltype(front_re{}.front), decltype(make_into_sequence(front_re{}.list))>, end_mark, accept>())) {
+					return out;
+				}
+				it = search_for_string(++it, end, front_re{}.front).position;
 			}
+			return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, sequence<decltype(front_re{}.front), decltype(make_into_sequence(front_re{}.list))>, end_mark, accept>());
+		} else if (is_string(front_re{}.front)) {
+			it = search_for_string(it, end, front_re{}.front).position;
+			for (; end != it;) {
+				if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, decltype(front_re{}.front), end_mark, accept>())) {
+					return out;
+				}
+				it = search_for_string(++it, end, front_re{}.front).position;
+			}
+			return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, decltype(front_re{}.front), end_mark, accept>());
+		} else {
+			for (; end != it && !fixed; ++it) {
+				if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>())) {
+					return out;
+				}
+			}
+			// in case the RE is empty or fixed
+			return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
 		}
-	
-		// in case the RE is empty or fixed
-		return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
 	}
 	
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
