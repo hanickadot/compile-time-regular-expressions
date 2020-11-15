@@ -3902,18 +3902,13 @@ struct first_lookahead_result {
 
 template <typename... Items> constexpr auto first_set_of(Items...);
 
-struct opaque {
-	static constexpr bool we_can_calculate_intersect = false;
-};
+struct opaque { };
 
 template <typename...> struct first {
 	unsigned count = 1;
-	static constexpr bool we_can_calculate_intersect = true;
 };
 
-template <typename...> struct complex_first {
-	static constexpr bool we_can_calculate_intersect = false;
-};
+template <typename...> struct complex_first { };
 
 template <typename... Lhs, typename... Rhs> constexpr auto operator+(first<Lhs...> l, first<Rhs...> r) -> first<Lhs..., Rhs...> {
 	return {l.count + r.count};
@@ -4089,25 +4084,23 @@ template <auto... Cs, typename... Rest> constexpr auto calculate_first(enumerati
 	return first<character<Cs>...>{sizeof...(Cs)};
 }
 
-template <auto C> constexpr auto set_item_first(character<C>) { return first<character<C>>{1}; }
-template <auto A, auto B> constexpr auto set_item_first(char_range<A,B>) { return first<char_range<A,B>>{1}; }
-template <auto... Cs> constexpr auto set_item_first(enumeration<Cs...>) { return first<character<Cs>...>{sizeof...(Cs)}; }
-template <typename... Set> constexpr auto set_item_first(set<Set...>) {
-	return (first<>{0} + ... + set_item_first(Set{}));
-}
-
-template <typename... Set, typename... Rest> constexpr auto calculate_first(set<Set...>, Rest...) {
-	return (first<>{0} + ... + set_item_first(Set{}));
-}
-
 // negative ranges are with +1, because it's always two ranges around
-template <auto C> constexpr auto nset_item_first(character<C>) { return first<character<C>>{2}; }
-template <auto A, auto B> constexpr auto nset_item_first(char_range<A,B>) { return first<char_range<A,B>>{2}; }
-template <auto... Cs> constexpr auto nset_item_first(enumeration<Cs...>) { return first<character<Cs>...>{sizeof...(Cs)+1}; }
+template <auto C> constexpr auto set_size(character<C>) { return 2; }
+template <auto A, auto B> constexpr auto set_size(char_range<A,B>) { return 2; }
+template <auto... Cs> constexpr auto set_size(enumeration<Cs...>) { return sizeof...(Cs)+1; }
+template <typename... Set> constexpr auto set_size(set<Set...>) {
+	return (0 + ... + set_size(Set{}));
+}
+template <typename... Set> constexpr auto set_size(negative_set<Set...>) {
+	return (0 + ... + set_size(Set{}));
+}
 
-template <typename... Set, typename... Rest> constexpr auto calculate_first(negative_set<Set...>, Rest...) {
-	// TODO look at negative things
-	return first<negative_set<Set...>>{(nset_item_first(Set{}).count + ... + 1)};
+template <typename... Set, typename... Rest> constexpr auto calculate_first(negative_set<Set...> n, Rest...) {
+	return first<negative_set<Set...>>{set_size(n)};
+}
+
+template <typename... Set, typename... Rest> constexpr auto calculate_first(set<Set...> s, Rest...) {
+	return first<set<Set...>>{set_size(s)};
 }
 
 // unicode
@@ -4131,9 +4124,10 @@ template <auto T, auto V, typename... Rest> constexpr auto calculate_first(negat
 // USER API
 
 template <typename Lhs, typename Rhs> constexpr auto collides(Lhs, Rhs) {
-	if constexpr (Lhs::we_can_calculate_intersect && Rhs::we_can_calculate_intersect) {
-		// TODO calculate intersect
-	}
+	return true;
+}
+
+template <typename... Lhs, typename... Rhs> constexpr auto collides(first<Lhs...>, first<Rhs...>) {
 	return true;
 }
 
@@ -4156,13 +4150,6 @@ template <typename Iterator, typename EndIterator, typename... Content> constexp
 #endif
 
 #include <iterator>
-
-// remove me when MSVC fix the constexpr bug
-#ifdef _MSC_VER
-#ifndef CTRE_MSVC_GREEDY_WORKAROUND
-#define CTRE_MSVC_GREEDY_WORKAROUND
-#endif
-#endif
 
 namespace ctre {
 
@@ -4308,6 +4295,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	// first I try internal content... and if that fail then tail
 	if constexpr (collides(fheadopt, ftailopt)) {
+		#ifdef CTRE_ENABLE_SELECT_OPT
 		const bool can_be_head = lookahead_first(begin, current, end, f, fheadopt);
 		const bool can_be_tail = lookahead_first(begin, current, end, f, ftailopt);
 	
@@ -4320,12 +4308,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		} else if (!can_be_head) {
 			return not_matched;
 		} else {
-			if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
+			if (auto r = evaluate_split(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
 				return r;
 			} else {
 				return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
 			}
 		}
+		#else
+		if (auto r = evaluate_split(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
+			return r;
+		} else {
+			return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+		}
+		#endif
 	} else if (lookahead_first(begin, current, end, f, fheadopt)) {
 		return evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>());
 	} else {

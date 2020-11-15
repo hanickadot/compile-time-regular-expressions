@@ -11,13 +11,6 @@
 #include "optimizer/first.hpp"
 #include <iterator>
 
-// remove me when MSVC fix the constexpr bug
-#ifdef _MSC_VER
-#ifndef CTRE_MSVC_GREEDY_WORKAROUND
-#define CTRE_MSVC_GREEDY_WORKAROUND
-#endif
-#endif
-
 namespace ctre {
 
 template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) {
@@ -162,6 +155,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	
 	// first I try internal content... and if that fail then tail
 	if constexpr (collides(fheadopt, ftailopt)) {
+		#ifdef CTRE_ENABLE_SELECT_OPT
 		const bool can_be_head = lookahead_first(begin, current, end, f, fheadopt);
 		const bool can_be_tail = lookahead_first(begin, current, end, f, ftailopt);
 	
@@ -174,12 +168,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 		} else if (!can_be_head) {
 			return not_matched;
 		} else {
-			if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
+			if (auto r = evaluate_split(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
 				return r;
 			} else {
 				return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
 			}
 		}
+		#else
+		if (auto r = evaluate_split(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
+			return r;
+		} else {
+			return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+		}
+		#endif
 	} else if (lookahead_first(begin, current, end, f, fheadopt)) {
 		return evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>());
 	} else {
