@@ -325,34 +325,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
-// lazy repeat
-template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
-constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
-	if constexpr ((B != 0) && (A > B)) {
-		return not_matched;
-	}
-	
-	[[maybe_unused]] constexpr size_t next_max_level = B ? B - 1 : 0;
-	[[maybe_unused]] constexpr bool max_limited = B > 0;
-	
-	[[maybe_unused]] constexpr size_t next_min_level = A ? A - 1 : 0;
-	[[maybe_unused]] constexpr bool min_unlimited = A == 0;
-	
-	// first try tail...
-	if constexpr (min_unlimited) {
-		auto result = evaluate_split(begin, current, end, f, captures, ctll::list<Tail...>());
-		if (result) return result;
-	}
-	
-	// and then try internal content...
-	if constexpr (max_limited && B == 1) {
-		// maximum limit reached
-		return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, Tail...>());
-	} else {
-		return evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., fail_if_empty, lazy_repeat<next_min_level, next_max_level, Content...>, Tail...>());
-	}
-}
-
 // possessive repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>) noexcept {
@@ -379,7 +351,61 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>());
 }
 
-template <typename T> struct identify;
+// lazy repeat
+template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
+constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] flags f, R & captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
+	if constexpr ((B != 0) && (A > B)) {
+		return not_matched;
+	}
+	
+	[[maybe_unused]] constexpr size_t next_max_level = B ? B - 1 : 0;
+	[[maybe_unused]] constexpr bool max_limited = B > 0;
+	
+	[[maybe_unused]] constexpr size_t next_min_level = A ? A - 1 : 0;
+	[[maybe_unused]] constexpr bool min_unlimited = A == 0;
+	
+	constexpr auto inner = []() noexcept {
+		if constexpr (max_limited && B == 1) {
+			// maximum limit reached
+			return ctll::list<Content..., fail_if_empty, Tail...>();
+		} else {
+			return ctll::list<Content..., fail_if_empty, lazy_repeat<next_min_level, next_max_level, Content...>, Tail...>();
+		}
+	}();
+	
+	
+	constexpr auto fcontent = calculate_first(Content{}...);
+	constexpr auto ftail = calculate_first(Tail{}...);
+	
+	// first I try internal content... and if that fail then tail
+	if constexpr (min_unlimited) {
+		if constexpr (collides(fcontent, ftail)) {
+			const bool can_be_tail = lookahead_first(begin, current, end, f, ftail);
+			const bool can_be_content = lookahead_first(begin, current, end, f, fcontent);
+		
+			if (can_be_content ^ can_be_tail) {
+				if (can_be_tail) {
+					return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+				} else {
+					return evaluate(begin, current, end, not_empty_match(f), captures, inner);
+				}
+			} else if (!can_be_content) {
+				return not_matched;
+			} else {
+				auto result = evaluate_split(begin, current, end, f, captures, ctll::list<Tail...>());
+				if (result) {
+					return result;
+				}
+			}
+		
+		} else if (lookahead_first(begin, current, end, f, ftail)) {
+			// look ahead success, no need to try tail
+			return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
+		}
+	}
+	
+	return evaluate(begin, current, end, not_empty_match(f), captures, inner);
+}
 
 // greedy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
@@ -432,7 +458,6 @@ constexpr inline R evaluate(const Iterator begin, Iterator current, const EndIte
 		
 		return evaluate(begin, current, end, not_empty_match(f), captures, inner);
 	}
-	
 	
 	if constexpr (!min_limited) {
 		return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());

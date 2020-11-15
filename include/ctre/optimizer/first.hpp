@@ -218,6 +218,9 @@ template <auto... Cs, typename... Rest> constexpr auto calculate_first(enumerati
 template <auto C> constexpr auto set_item_first(character<C>) { return first<character<C>>{1}; }
 template <auto A, auto B> constexpr auto set_item_first(char_range<A,B>) { return first<char_range<A,B>>{1}; }
 template <auto... Cs> constexpr auto set_item_first(enumeration<Cs...>) { return first<character<Cs>...>{sizeof...(Cs)}; }
+template <typename... Set> constexpr auto set_item_first(set<Set...>) {
+	return (first<>{0} + ... + set_item_first(Set{}));
+}
 
 template <typename... Set, typename... Rest> constexpr auto calculate_first(set<Set...>, Rest...) {
 	return (first<>{0} + ... + set_item_first(Set{}));
