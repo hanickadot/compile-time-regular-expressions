@@ -67,23 +67,27 @@ struct search_method {
 	
 		auto it = begin;
 		if constexpr (is_string(front_re{}.front) && size(front_re{}.list)) {
-			it = search_for_string(it, end, front_re{}.front).position;
-			for (; end != it;) {
-				if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, sequence<decltype(front_re{}.front), decltype(make_into_sequence(front_re{}.list))>, end_mark, accept>())) {
-					return out;
+			auto it2 = search_for_string(it, end, front_re{}.front);
+			return_type<result_iterator, RE> result{};
+			for (; end != it2.position;) {
+				result.set_start_mark(it2.position);
+				if (result = evaluate(orig_begin, it2.end_position, end, Modifier{}, result, ctll::list<start_mark, decltype(make_into_sequence(front_re{}.list)), end_mark, accept>())) {
+					return result;
 				}
-				it = search_for_string(++it, end, front_re{}.front).position;
+				result.unmatch();
+				std::advance(it2.position, 1);
+				it2 = search_for_string(it2.position, end, front_re{}.front);
 			}
-			return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, sequence<decltype(front_re{}.front), decltype(make_into_sequence(front_re{}.list))>, end_mark, accept>());
+			result.set_start_mark(it2.position);
+			return result = evaluate(orig_begin, it2.end_position, end, Modifier{}, result, ctll::list<start_mark, decltype(make_into_sequence(front_re{}.list)), end_mark, accept>());
 		} else if (is_string(front_re{}.front)) {
-			it = search_for_string(it, end, front_re{}.front).position;
-			for (; end != it;) {
-				if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, decltype(front_re{}.front), end_mark, accept>())) {
-					return out;
-				}
-				it = search_for_string(++it, end, front_re{}.front).position;
-			}
-			return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, decltype(front_re{}.front), end_mark, accept>());
+			auto it2 = search_for_string(it, end, front_re{}.front);
+			return_type<result_iterator, RE> result{};
+			result.set_start_mark(it2.position);
+			result.set_end_mark(it2.end_position);
+			if (it2.match)
+				result.matched();
+			return result;
 		} else {
 			for (; end != it && !fixed; ++it) {
 				if (auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>())) {
