@@ -115,13 +115,19 @@ template <typename CharT, typename Iterator, typename EndIterator> constexpr CTR
 	return false;
 }
 
+struct zero_terminated_string_end_iterator;
 template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, [[maybe_unused]] const EndIterator end, std::index_sequence<Idx...>) noexcept {
-	if constexpr (!std::is_same_v<Iterator, utf8_iterator> && is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{})) {
-		bool same = (::std::distance(current, end) >= sizeof...(String)) && ((String == *(current + Idx)) & ...);
+#if __cpp_char8_t >= 201811
+	if constexpr (sizeof...(String) && !std::is_same_v<Iterator, utf8_iterator> && is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{}) && !std::is_same_v<EndIterator, ctre::zero_terminated_string_end_iterator>) {
+#else
+	if constexpr (sizeof...(String) && is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{}) && !std::is_same_v<EndIterator, ctre::zero_terminated_string_end_iterator>) {
+#endif
+		using char_type = decltype(*current);
+		bool same = ((size_t)std::distance(current, end) >= sizeof...(String)) && ((static_cast<char_type>(String) == *(current + Idx)) && ...);
 		if (same) {
-			return {current+=sizeof...(String), same};
+			return { current += sizeof...(String), same };
 		} else {
-			return {current, same};
+			return { current, same };
 		}
 	} else {
 		bool same = (compare_character(String, current, end) && ... && true);
@@ -530,63 +536,63 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 template <typename T>
-constexpr bool is_string(T) {
+constexpr bool is_string(T) noexcept {
 	return false;
 }
 template <auto... String>
-constexpr bool is_string(string<String...>) {
+constexpr bool is_string(string<String...>)noexcept {
 	return true;
 }
 
 template <typename T>
-constexpr bool is_string_like(T) {
+constexpr bool is_string_like(T) noexcept {
 	return false;
 }
 template <auto... String>
-constexpr bool is_string_like(string<String...>) {
+constexpr bool is_string_like(string<String...>) noexcept {
 	return true;
 }
 template <typename CharacterLike, typename = std::enable_if_t<MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<std::string_view::iterator>())>>>
-constexpr bool is_string_like(CharacterLike) {
+constexpr bool is_string_like(CharacterLike) noexcept {
 	return true;
 }
 
 template <typename... Content>
-constexpr auto extract_leading_string(ctll::list<Content...>) -> ctll::list<Content...> {
+constexpr auto extract_leading_string(ctll::list<Content...>) noexcept -> ctll::list<Content...> {
 	return {};
-};
+}
 template <typename... Content>
-constexpr auto extract_leading_string(sequence<Content...>) -> sequence<Content...> {
+constexpr auto extract_leading_string(sequence<Content...>) noexcept -> sequence<Content...> {
 	return {};
-};
+}
 
 //concatenation
 template <auto C, auto... String, typename... Content>
-constexpr auto extract_leading_string(ctll::list<string<String...>, character<C>, Content...>) {
+constexpr auto extract_leading_string(ctll::list<string<String...>, character<C>, Content...>) noexcept {
 	return extract_leading_string(ctll::list<string<String..., C>, Content...>());
 }
 
 template <auto... StringA, auto... StringB, typename... Content>
-constexpr auto extract_leading_string(ctll::list<string<StringA...>, string<StringB...>, Content...>) {
-	return extract_leading_string(ctll::list<string<StringA..., StringB>, Content...>());
+constexpr auto extract_leading_string(ctll::list<string<StringA...>, string<StringB...>, Content...>) noexcept {
+	return extract_leading_string(ctll::list<string<StringA..., StringB...>, Content...>());
 }
 //move things up out of sequences
 template <typename... Content, typename... Tail>
-constexpr auto extract_leading_string(ctll::list<sequence<Content...>, Tail...>) {
+constexpr auto extract_leading_string(ctll::list<sequence<Content...>, Tail...>) noexcept {
 	return extract_leading_string(ctll::list<Content..., Tail...>());
 }
 
 template <typename T, typename... Content, typename... Tail>
-constexpr auto extract_leading_string(ctll::list<T, sequence<Content...>, Tail...>) {
+constexpr auto extract_leading_string(ctll::list<T, sequence<Content...>, Tail...>) noexcept {
 	return extract_leading_string(ctll::list<T, Content..., Tail...>());
 }
 
 template <typename... Content>
-constexpr auto make_into_sequence(ctll::list<Content...>) -> sequence<Content...> {
+constexpr auto make_into_sequence(ctll::list<Content...>) noexcept -> sequence<Content...> {
 	return{};
 }
 template <typename... Content>
-constexpr auto make_into_sequence(sequence<Content...>) -> sequence<Content...> {
+constexpr auto make_into_sequence(sequence<Content...>) noexcept -> sequence<Content...> {
 	return{};
 }
 
@@ -642,8 +648,12 @@ template <typename Iterator> struct string_search_result {
 };
 
 template <typename Iterator, typename EndIterator, auto... String>
-constexpr CTRE_FORCE_INLINE string_search_result<Iterator> search_for_string(Iterator current, const EndIterator end, string<String...>) {
+constexpr CTRE_FORCE_INLINE string_search_result<Iterator> search_for_string(Iterator current, const EndIterator end, string<String...>) noexcept {
+#if __cpp_char8_t >= 201811
 	if constexpr (sizeof...(String) > 2 && !std::is_same_v<Iterator, utf8_iterator> && is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{})) {
+#else
+	if constexpr (sizeof...(String) > 2 && is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{})) {
+#endif
 		constexpr std::array<typename ::std::iterator_traits<Iterator>::value_type, sizeof...(String)> chars{ String... };
 		constexpr std::array<ptrdiff_t, sizeof...(String)> delta_2 = make_delta_2<typename ::std::iterator_traits<Iterator>::value_type>(string<String...>());
 
@@ -666,7 +676,7 @@ constexpr CTRE_FORCE_INLINE string_search_result<Iterator> search_for_string(Ite
 		}
 
 		return { current + str_size, current + str_size, false };
-	} else if (sizeof...(String)) {
+	} else if constexpr (sizeof...(String)) {
 		//fallback to plain string matching
 		constexpr std::array<typename ::std::iterator_traits<Iterator>::value_type, sizeof...(String)> chars{ String... };
 		constexpr typename ::std::iterator_traits<Iterator>::value_type first_char = chars.data()[0];
