@@ -99,8 +99,8 @@ static_assert(same_f(CTRE_GEN("[\\x30-\\x39]"), ctre::set<ctre::char_range<'\x30
 // alternation
 static_assert(same_f(CTRE_GEN("(?:abc|def)"), ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>>()));
 static_assert(same_f(CTRE_GEN("(?:abc|def|ghi)"), ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>,ctre::string<'g','h','i'>>()));
-static_assert(same_f(CTRE_GEN("(?:a|b|c|d)"), ctre::select<ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>,ctre::character<'d'>>()));
-static_assert(same_f(CTRE_GEN("(?:a|b|c|)"), ctre::select<ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>,ctre::empty>()));
+static_assert(same_f(CTRE_GEN("(?:a|b|c|d)"), ctre::set<ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>,ctre::character<'d'>>()));
+static_assert(same_f(CTRE_GEN("(?:a|b|c|)"), ctre::select<ctre::set<ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>>,ctre::empty>()));
 
 // optional
 static_assert(same_f(CTRE_GEN("xx?"), ctre::sequence<ctre::character<'x'>,ctre::optional<ctre::character<'x'>>>()));
@@ -197,7 +197,7 @@ static_assert(same_f(CTRE_GEN("(x[cd])(ab)+"), ctre::sequence<ctre::capture<1,ct
 static_assert(same_f(CTRE_GEN("(?<n>x)"), ctre::capture_with_name<1,ctre::id<'n'>,ctre::character<'x'>>())); 
 static_assert(same_f(CTRE_GEN("(?<name>x)"), ctre::capture_with_name<1,ctre::id<'n','a','m','e'>,ctre::character<'x'>>())); 
 static_assert(same_f(CTRE_GEN("(?<name>xy)"), ctre::capture_with_name<1,ctre::id<'n','a','m','e'>,ctre::string<'x','y'>>())); 
-static_assert(same_f(CTRE_GEN("(?<name>x|y)"), ctre::capture_with_name<1,ctre::id<'n','a','m','e'>,ctre::select<ctre::character<'x'>,ctre::character<'y'>>>())); 
+static_assert(same_f(CTRE_GEN("(?<name>x|y)"), ctre::capture_with_name<1,ctre::id<'n','a','m','e'>,ctre::set<ctre::character<'x'>,ctre::character<'y'>>>())); 
 static_assert(same_f(CTRE_GEN("(?<xy>[x]y)"), ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>())); 
 static_assert(same_f(CTRE_GEN("(?<xy>[x]y)(a)"), ctre::sequence<ctre::capture_with_name<1,ctre::id<'x','y'>,ctre::set<ctre::character<'x'>>,ctre::character<'y'>>, ctre::capture<2,ctre::character<'a'>>>())); 
 
