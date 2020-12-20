@@ -290,17 +290,14 @@ constexpr inline auto & search_translate_dfa(Pattern) noexcept {
 	else return ctfa::block::empty;
 }
 
-
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto fast_match_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	constexpr auto & dfa = translate_dfa(pattern);
-	return ctfa::dispatcher<dfa>::run(begin, end);
-}
-
-template <typename Iterator, typename EndIterator, typename Pattern> 
-constexpr inline auto fast_search_re(const Iterator begin, const EndIterator end, Pattern pattern) noexcept {
-	constexpr auto & dfa = search_translate_dfa(pattern);
-	return ctfa::dispatcher<dfa>::run(begin, end);
+template <typename Pattern> 
+constexpr inline auto & starts_with_translate_dfa(Pattern) noexcept {
+	const auto & result = translate_nfa<ctfa::block::empty>(ctll::list<Pattern>());
+	using return_type = decltype(result);
+	constexpr bool supported_pattern = !std::is_same_v<return_type, unsupported_pattern_tag>;
+	static_assert(supported_pattern);
+	if constexpr (supported_pattern) return ctfa::minimize<ctfa::determinize<ctfa::minimize<ctfa::determinize<result>>, ctfa::any_star>>;
+	else return ctfa::block::empty;
 }
 	
 	

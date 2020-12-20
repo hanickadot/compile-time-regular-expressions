@@ -1,27 +1,9 @@
-sudo: true
 language: cpp
-dist: trusty
+dist: focal
+os: linux
 
-matrix:
+jobs:
   include:
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-8
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-8']
-
-  - os: linux
-    compiler: clang
-    env:
-      - COMPILER=clang++-6.0
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
-        packages: ['g++-8', 'clang-6.0']
-
   - os: linux
     language: python
     python: "3.6"
@@ -36,12 +18,86 @@ matrix:
     script:
       - python .conan/build.py
 
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-8
+      - CXX_STANDARD=17
+    addons:
+      apt:
+        packages: ['g++-8']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-8
+      - CXX_STANDARD=2a
+    addons:
+      apt:
+        packages: ['g++-8']
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-6.0
+      - CXX_STANDARD=17
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: ['g++-8', 'clang-6.0']
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-6.0
+      - CXX_STANDARD=2a
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: ['g++-8', 'clang-6.0']
+
+# FIXME: don't use GCC10 in 17 mode for tests as they are depending on operator""
+#  - os: linux
+#    compiler: gcc
+#    env:
+#      - COMPILER=g++-10
+#      - CXX_STANDARD=17
+#    addons:
+#      apt:
+#        packages: ['g++-10']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-10
+      - CXX_STANDARD=20
+    addons:
+      apt:
+        packages: ['g++-10']
+
   - os: osx
     osx_image: xcode10
+    env:
+      - CXX_STANDARD=17
+
+  - os: osx
+    osx_image: xcode10
+    env:
+      - CXX_STANDARD=2a
+
+  - os: osx
+    osx_image: xcode11
+    env:
+      - CXX_STANDARD=17
+
+  - os: osx
+    osx_image: xcode11
+    env:
+      - CXX_STANDARD=2a
 
 install:
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
   - uname -a
   - $CXX --version
 script:
-  - make
+  - make CXX_STANDARD=$CXX_STANDARD

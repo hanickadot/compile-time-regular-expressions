@@ -3,7 +3,7 @@
 
 void empty_symbol() { }
 
-#if !__cpp_nontype_template_parameter_class
+#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 #define CTRE_CREATE(pattern) (pattern ## _ctre)
 #define CTRE_SYNTAX(pattern) (pattern ## _ctre_syntax)
 #else
@@ -206,6 +206,17 @@ static_assert(CTRE_CREATE(R"(\[([A-Z]*?)\])").match("[URL]"sv));
 
 static_assert(CTRE_CREATE(R"(\[([\s\S]*?)\]\(([\s\S]*?)\))").match("[URL](https://cpp.fail/ctre)"));
 
+static_assert(CTRE_CREATE("\\s").match(" "));
+static_assert(CTRE_CREATE("[[:space:]]").match(" "));
+static_assert(CTRE_CREATE("\\h").match(" "));
+static_assert(CTRE_CREATE("\\h").match(L"\x2009"));
+static_assert(CTRE_CREATE("\\v").match("\n"));
+
+static_assert(CTRE_CREATE("\\S").match("A"));
+static_assert(CTRE_CREATE("\\H").match("A"));
+static_assert(CTRE_CREATE("\\V").match("A"));
+
+
 static_assert(CTRE_CREATE("abc").match("abc"));
 static_assert(CTRE_CREATE("[_]").match("_"));
 static_assert(CTRE_CREATE("[()]").match("("));
@@ -274,3 +285,6 @@ static_assert(CTRE_CREATE("[^^]").match("a"sv));
 static_assert(CTRE_CREATE("[\\-]").match("-"sv));
 //static_assert(CTRE_CREATE("[-]").match("-"sv));
 static_assert(CTRE_CREATE("[\\--\\-]").match("-"sv));
+
+// issue #131
+static_assert(CTRE_CREATE("(|a)+").match("aaaaaa"sv));

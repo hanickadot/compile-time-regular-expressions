@@ -188,7 +188,7 @@ namespace ctfa {
 				
 				// the final mark can't be matched anyway
 				//std::cout << jump.low << " <= it ( " << unsigned(*it) << ") <= " << jump.high << "\n";
-				if ((jump.low <= *it) && (*it <= jump.high)) {
+				if ((jump.low <= static_cast<decltype(jump.low)>(*it)) && (static_cast<decltype(jump.high)>(*it) <= jump.high)) {
 					//std::cout << " match char " << *it << "\n";
 					current = state = jump.target;
 					it++;

@@ -3,10 +3,13 @@
 
 #include "evaluation.hpp"
 #include "utility.hpp"
+<<<<<<< HEAD
+#include "translate_dfa.hpp"
+=======
 #include "utf8.hpp"
 #include "return_type.hpp"
-#include "translate_dfa.hpp"
 #include "range.hpp"
+>>>>>>> main
 #include <string_view>
 
 namespace ctre {
@@ -125,40 +128,6 @@ struct iterator_method {
 	}
 };
 
-// DFA methods
-struct fast_match_method {
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin, IteratorBegin begin, IteratorEnd end, RE pattern) noexcept {
-		constexpr auto & dfa = translate_dfa(pattern);
-		return ctfa::dispatcher<dfa>::run(begin, end);
-	}
-	
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
-		return exec<Modifier, ResultIterator>(begin, begin, end, RE{});
-	}
-};
-
-struct fast_search_method {
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin, IteratorBegin begin, IteratorEnd end, RE pattern) noexcept {
-		constexpr auto & dfa = search_translate_dfa(pattern);
-		return ctfa::dispatcher<dfa>::run(begin, end);
-	}
-	
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
-		return exec<Modifier, ResultIterator>(begin, begin, end, RE{});
-	}
-};
-
-struct fast_starts_with_method {
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin, IteratorBegin begin, IteratorEnd end, RE pattern) noexcept {
-		constexpr auto & dfa = starts_with_translate_dfa(pattern);
-		return ctfa::dispatcher<dfa>::run(begin, end);
-	}
-	
-	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
-		return exec<Modifier, ResultIterator>(begin, begin, end, RE{});
-	}
-};
-
 template <typename RE, typename Method, typename Modifier> struct regular_expression {
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
@@ -198,8 +167,13 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	static constexpr CTRE_FORCE_INLINE auto exec(std::u32string_view sv) noexcept {
 		return exec(sv.begin(), sv.end());
 	}
+<<<<<<< HEAD
+	static constexpr CTRE_FORCE_INLINE auto search(const char * s) noexcept {
+		return search_2(s, zero_terminated_string_end_iterator());
+=======
 	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto exec(Range && range) noexcept {
 		return exec(std::begin(range), std::end(range));
+>>>>>>> main
 	}
 	
 	// another api
@@ -211,7 +185,6 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	}
 	
 	// for compatibility with _ctre literal
-	// NFA single line
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto match(Args && ... args) noexcept {
 		return regular_expression<RE, match_method, singleline>::exec(std::forward<Args>(args)...);
 	}
@@ -227,22 +200,158 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto tokenize(Args && ... args) noexcept {
 		return regular_expression<RE, tokenize_method, singleline>::exec(std::forward<Args>(args)...);
 	}
+<<<<<<< HEAD
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto search(Range && range) noexcept {
+		return search(std::begin(range), std::end(range));
+	}
+	
+	
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_match_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_match_re(begin, end, RE());
+	}
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_search_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_search_re(begin, end, RE());
+	}
+	
+	
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_match(Iterator begin, Iterator end) noexcept {
+		return fast_match_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(const char * s) noexcept {
+		return fast_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(const wchar_t * s) noexcept {
+		return fast_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(const std::string & s) noexcept {
+		return fast_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(const std::wstring & s) noexcept {
+		return fast_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(std::string_view sv) noexcept {
+		return fast_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(std::wstring_view sv) noexcept {
+		return fast_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(std::u16string_view sv) noexcept {
+		return fast_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_match(std::u32string_view sv) noexcept {
+		return fast_match(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_match(Range && range) noexcept {
+		return fast_match(std::begin(range), std::end(range));
+	}
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_search(Iterator begin, Iterator end) noexcept {
+		return fast_search_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(const char * s) noexcept {
+		return fast_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(const wchar_t * s) noexcept {
+		return fast_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(const std::string & s) noexcept {
+		return fast_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(const std::wstring & s) noexcept {
+		return fast_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(std::string_view sv) noexcept {
+		return fast_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(std::wstring_view sv) noexcept {
+		return fast_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(std::u16string_view sv) noexcept {
+		return fast_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_search(std::u32string_view sv) noexcept {
+		return fast_search(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_search(Range && range) noexcept {
+		return fast_search(std::begin(range), std::end(range));
+	}
+	
+	
+	
+	
+	
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_match_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_table_match_re(begin, end, RE());
+	}
+	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto fast_table_search_2(IteratorBegin begin, IteratorEnd end) noexcept {
+		return fast_table_search_re(begin, end, RE());
+	}
+
+
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_match(Iterator begin, Iterator end) noexcept {
+		return fast_table_match_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const char * s) noexcept {
+		return fast_table_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const wchar_t * s) noexcept {
+		return fast_table_match_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::string & s) noexcept {
+		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(const std::wstring & s) noexcept {
+		return fast_table_match_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::wstring_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u16string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_match(std::u32string_view sv) noexcept {
+		return fast_table_match(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_match(Range && range) noexcept {
+		return fast_table_match(std::begin(range), std::end(range));
+	}
+	template <typename Iterator> constexpr CTRE_FORCE_INLINE static auto fast_table_search(Iterator begin, Iterator end) noexcept {
+		return fast_table_search_re(begin, end, RE());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const char * s) noexcept {
+		return fast_table_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const wchar_t * s) noexcept {
+		return fast_table_search_2(s, zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::string & s) noexcept {
+		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(const std::wstring & s) noexcept {
+		return fast_table_search_2(s.c_str(), zero_terminated_string_end_iterator());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::wstring_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u16string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	static constexpr CTRE_FORCE_INLINE auto fast_table_search(std::u32string_view sv) noexcept {
+		return fast_table_search(sv.begin(), sv.end());
+	}
+	template <typename Range, typename = typename std::enable_if<RangeLikeType<Range>::value>::type> static constexpr CTRE_FORCE_INLINE auto fast_table_search(Range && range) noexcept {
+		return fast_table_search(std::begin(range), std::end(range));
+	}
+=======
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto iterator(Args && ... args) noexcept {
 		return regular_expression<RE, iterator_method, singleline>::exec(std::forward<Args>(args)...);
 	}
 	
-	// DFA single line
-	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto fast_match(Args && ... args) noexcept {
-		return regular_expression<RE, fast_match_method, singleline>::exec(std::forward<Args>(args)...);
-	}
-	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto fast_search(Args && ... args) noexcept {
-		return regular_expression<RE, fast_search_method, singleline>::exec(std::forward<Args>(args)...);
-	}
-	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto fast_starts_with(Args && ... args) noexcept {
-		return regular_expression<RE, fast_starts_with_method, singleline>::exec(std::forward<Args>(args)...);
-	}
-	
-	// NFA multi-line (no support for DFA yet)
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_match(Args && ... args) noexcept {
 		return regular_expression<RE, match_method, multiline>::exec(std::forward<Args>(args)...);
 	}
@@ -278,6 +387,7 @@ template <const auto & input> struct regex_builder {
 	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
 	static_assert(_tmp(), "Regular Expression contains syntax error.");
 	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
+>>>>>>> main
 };
 #endif
 
@@ -310,13 +420,6 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_it
 
 static constexpr inline auto multiline_sentinel = regex_end_iterator();
 
-// DFA is still not with multiline support
-
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto fast_match = regular_expression<typename regex_builder<input>::type, fast_match_method, singleline>();
-
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto fast_search = regular_expression<typename regex_builder<input>::type, fast_search_method, singleline>();
-
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto fast_starts_with = regular_expression<typename regex_builder<input>::type, fast_starts_with_method, singleline>();
 
 }
 

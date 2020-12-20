@@ -3,7 +3,6 @@
 
 #include "pcre.hpp"
 #include "atoms.hpp"
-#include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
 #include "id.hpp"
 #include <cstdint>
@@ -33,18 +32,21 @@ template <size_t Id> struct capture_id { };
 struct pcre_actions {
 // i know it's ugly, but it's more readable
 #include "actions/asserts.inc.hpp"
+#include "actions/atomic_group.inc.hpp"
 #include "actions/backreference.inc.hpp"
+#include "actions/boundaries.inc.hpp"
 #include "actions/capture.inc.hpp"
 #include "actions/characters.inc.hpp"
 #include "actions/class.inc.hpp"
+#include "actions/fusion.inc.hpp"
 #include "actions/hexdec.inc.hpp"
 #include "actions/look.inc.hpp"
 #include "actions/named_class.inc.hpp"
 #include "actions/options.inc.hpp"
+#include "actions/properties.inc.hpp"
 #include "actions/repeat.inc.hpp"
 #include "actions/sequence.inc.hpp"
 #include "actions/set.inc.hpp"
-#include "actions/properties.inc.hpp"
 
 };
 

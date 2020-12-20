@@ -7,7 +7,7 @@ using namespace ctre::literals;
 using namespace ctre::test_literals;
 using namespace std::string_view_literals;
 
-#if __cpp_nontype_template_parameter_class
+#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 
 #define TEST_MATCH(id, pattern, subject) static_assert(ctre::match<pattern>(subject))
 
@@ -194,6 +194,8 @@ TEST_MATCH(113, "a+(?!b)", "aaaaaa");
 TEST_MATCH(114, "a+(?!b).", "aaaaaac");
 TEST_MATCH(115, "a+(?=b).", "aaaaaab");
 
+TEST_NOT_MATCH(116, "a++a", "aaa"sv);
+TEST_MATCH(117, "a++a*+", "aaa"sv);
 
 
 

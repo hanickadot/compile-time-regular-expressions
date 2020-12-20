@@ -2,7 +2,6 @@
 #define CTRE__FIRST__HPP
 
 #include "atoms.hpp"
-#include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
 
 namespace ctre {
@@ -46,14 +45,38 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<empty, Tail...>) noexc
 	return first(l, ctll::list<Tail...>{});
 }
 
+// boundary
+template <typename... Content, typename CharLike, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<boundary<CharLike>, Tail...>) noexcept {
+	return first(l, ctll::list<Tail...>{});
+}
+
 // asserts
 template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_begin, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_begin, Tail...>) noexcept {
 	return first(l, ctll::list<Tail...>{});
 }
 
 template <typename... Content, typename... Tail> 
-constexpr auto first(ctll::list<Content...> l, ctll::list<assert_end, Tail...>) noexcept {
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end, Tail...>) noexcept {
+	return l;
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_subject_end_line, Tail...>) noexcept {
+	// FIXME allow endline here
+	return l;
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_begin, Tail...>) noexcept {
+	// FIXME line begin is a bit different than subject begin
+	return first(l, ctll::list<Tail...>{});
+}
+
+template <typename... Content, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<assert_line_end, Tail...>) noexcept {
+	// FIXME line end is a bit different than subject begin
 	return l;
 }
 
@@ -201,6 +224,17 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<select<>, Tail...>) no
 }
 
 
+// unicode property => anything
+template <typename... Content, auto Property, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<Property>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
+}
+
+template <typename... Content, auto Property, auto Value, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<Property, Value>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
+}
+
 // characters / sets
 
 template <typename... Content, auto V, typename... Tail> 
@@ -305,6 +339,16 @@ template <typename CB> constexpr int64_t negative_helper(ctre::enumeration<>, CB
 }
 
 template <typename CB> constexpr int64_t negative_helper(ctre::set<>, CB &, int64_t start) {
+	return start;
+}
+
+template <auto Property, typename CB> 
+constexpr auto negative_helper(ctre::binary_property<Property>, CB &&, int64_t start) {
+	return start;
+}
+
+template <auto Property, auto Value, typename CB> 
+constexpr auto negative_helper(ctre::property<Property, Value>, CB &&, int64_t start) {
 	return start;
 }
 

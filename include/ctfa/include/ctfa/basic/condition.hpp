@@ -12,7 +12,7 @@ struct range {
 	char32_t low{};
 	char32_t high{};
 	template <typename T> CTFA_FORCE_INLINE constexpr bool match(T v) const noexcept {
-		return (low <= v) && (v <= high);
+		return (low <= static_cast<decltype(low)>(v)) && (static_cast<decltype(high)>(v) <= high);
 	}
 	constexpr bool operator<(const range & rhs) const noexcept {
 		if (low == rhs.low) {

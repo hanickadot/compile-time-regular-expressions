@@ -10,8 +10,10 @@ using namespace ctre::literals;
 
 struct date { std::string_view year; std::string_view month; std::string_view day; };
 
+static constexpr ctll::fixed_string pattern = "^([0-9]{4})/([0-9]{1,2}+)/([0-9]{1,2}+)$";
+
 constexpr std::optional<date> extract_date(std::string_view s) noexcept {
-    if (auto [whole, year, month, day] = "^([0-9]{4})/([0-9]{1,2}+)/([0-9]{1,2}+)$"_ctre.match(s); whole
+    if (auto [whole, year, month, day] = ctre::match<pattern>(s); whole
     ) {
         return date{year.to_view(), month.to_view(), day.to_view()};
     } else {
