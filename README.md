@@ -4,7 +4,7 @@
 
 Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.
 
-You can use the single header version from directory `single-header`. This header can be regenerated with `make single-header`.
+You can use the single header version from directory `single-header`. This header can be regenerated with `make single-header`. If you are using cmake, you can add this directory as subdirectory and link to target `ctre`.
 
 More info at [compile-time.re](https://compile-time.re/)
 
@@ -188,3 +188,7 @@ for (auto match: ctre::range<"([0-9]+),?">(input)) {
     std::cout << std::string_view{match.get<0>()} << "\n";
 }
 ```
+
+## Running tests (for developers)
+
+Just run `make` in root of this project.
