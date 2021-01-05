@@ -159,6 +159,16 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 }
 
+template <typename R, typename Iterator, typename EndIterator, size_t Id, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<reset_group<Id, Content...>, Tail...>) noexcept {
+	return evaluate(begin, current, end, f, captures, ctll::list<sequence<Content...>, Tail...>{});
+}
+
+template <typename R, typename Iterator, typename EndIterator, size_t Id, typename Name, typename... Content, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags& f, R captures, ctll::list<reset_group_with_name<Id, Name, Content...>, Tail...>) noexcept {
+	return evaluate(begin, current, end, f, captures, ctll::list<sequence<Content...>, Tail...>{});
+}
+
 // matching empty in patterns
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<empty, Tail...>) noexcept {

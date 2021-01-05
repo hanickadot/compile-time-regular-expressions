@@ -93,6 +93,7 @@ struct pcre {
 	struct make_property: ctll::action {};
 	struct make_property_negative: ctll::action {};
 	struct make_range: ctll::action {};
+	struct make_reset_group: ctll::action {};
 	struct make_relative_back_reference: ctll::action {};
 	struct make_sequence: ctll::action {};
 	struct negate_class_named: ctll::action {};
@@ -132,6 +133,7 @@ struct pcre {
 	struct start_atomic: ctll::action {};
 	struct start_lookahead_negative: ctll::action {};
 	struct start_lookahead_positive: ctll::action {};
+	struct start_reset_group: ctll::action {};
 
 // (q)LL1 function:
 	using _others = ctll::neg_set<'!','$','\x28','\x29','*','+',',','-','.',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','0','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','|','\x7D','1','2','3','4','5','6','7','8','9'>;
@@ -272,6 +274,7 @@ struct pcre {
 	static constexpr auto rule(d, ctll::term<'>'>) -> ctll::push<reset_capture, ctll::anything, start_atomic, content_in_capture, make_atomic, ctll::term<'\x29'>>;
 	static constexpr auto rule(d, ctll::term<'!'>) -> ctll::push<reset_capture, ctll::anything, start_lookahead_negative, content_in_capture, look_finish, ctll::term<'\x29'>>;
 	static constexpr auto rule(d, ctll::term<'='>) -> ctll::push<reset_capture, ctll::anything, start_lookahead_positive, content_in_capture, look_finish, ctll::term<'\x29'>>;
+	static constexpr auto rule(d, ctll::term<'|'>) -> ctll::push<reset_capture, ctll::anything, start_reset_group, content_in_capture, make_reset_group, ctll::term<'\x29'>>;
 
 	static constexpr auto rule(e, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
 	static constexpr auto rule(e, ctll::term<'h'>) -> ctll::push<ctll::anything, class_horizontal_space>;

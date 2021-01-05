@@ -178,6 +178,17 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<capture_with_name<Id, 
 	return first(l, ctll::list<Seq..., Tail...>{});
 }
 
+// reset groups
+template <typename... Content, size_t Id, typename... Seq, typename... Tail>
+constexpr auto first(ctll::list<Content...> l, ctll::list<reset_group<Id, Seq...>, Tail...>) noexcept {
+	return first(l, ctll::list<Seq..., Tail...>{});
+}
+
+template <typename... Content, size_t Id, typename Name, typename... Seq, typename... Tail>
+constexpr auto first(ctll::list<Content...> l, ctll::list<reset_group_with_name<Id, Name, Seq...>, Tail...>) noexcept {
+	return first(l, ctll::list<Seq..., Tail...>{});
+}
+
 // backreference
 template <typename... Content, size_t Id, typename... Tail> 
 constexpr auto first(ctll::list<Content...>, ctll::list<back_reference<Id>, Tail...>) noexcept {
