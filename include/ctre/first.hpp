@@ -382,18 +382,6 @@ template <size_t Capacity> class point_set {
 	};
 	point points[Capacity+1]{};
 	size_t used{0};
-	constexpr point * begin() {
-		return points;
-	}
-	constexpr point * begin() const {
-		return points;
-	}
-	constexpr point * end() {
-		return points + used;
-	}
-	constexpr point * end() const {
-		return points + used;
-	}
 	constexpr point * lower_bound(point obj) {
 		auto first = begin();
 		auto last = end();
@@ -443,6 +431,24 @@ public:
 	constexpr void insert(int64_t low, int64_t high) {
 		insert_point(low, high);
 		//insert_point(high, low);
+	}
+	constexpr point* begin() {
+		return points;
+	}
+	constexpr point* begin() const {
+		return points;
+	}
+	constexpr point* end() {
+		return points + used;
+	}
+	constexpr point* end() const {
+		return points + used;
+	}
+	constexpr size_t size() {
+		return used;
+	}
+	constexpr size_t size() const {
+		return used;
 	}
 	constexpr bool check(int64_t low, int64_t high) {
 		for (auto r: *this) {

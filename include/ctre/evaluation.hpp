@@ -9,6 +9,7 @@
 #include "return_type.hpp"
 #include "find_captures.hpp"
 #include "first.hpp"
+#include "pattern_length.hpp"
 #include <iterator>
 
 // remove me when MSVC fix the constexpr bug
@@ -286,6 +287,37 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, current, end, f, captures, ctll::list<Tail...>());
 }
 
+//check if unrollable
+template<typename Iterator, typename R, typename... Content, typename... Tail>
+constexpr auto may_unroll(ctll::list<sequence<Content...>, Tail...>, R) {
+	return may_unroll<Iterator>(ctll::list<Content..., Tail...>{}, R{});
+}
+
+template<typename Iterator, typename R, typename A, typename... Content, typename... Tail>
+constexpr auto may_unroll(ctll::list<select<A, Content...>, Tail...>, R) {
+	constexpr auto length = ctre::pattern_length<Iterator>(sequence<select<Content...>, Tail...>{}, R{});
+	if constexpr (atomic_pattern_length(length) && !collides(calculate_first(sequence<A,Tail...>{}), calculate_first(sequence<select<Content...>, Tail...>{}))) {
+		if constexpr (sizeof...(Content) == 1) {
+			if constexpr (sizeof...(Tail))
+				return ctll::list_pop_triple<star<sequence<A,Tail...>>, sequence<Content..., Tail...>, ::std::true_type>{};
+			else
+				return ctll::list_pop_triple<star<A>, sequence<Content...>, ::std::true_type>{};
+		} else {
+			if constexpr (sizeof...(Tail))
+				return ctll::list_pop_triple<star<sequence<A,Tail...>>, sequence<select<Content...>, Tail...>, ::std::true_type>{};
+			else
+				return ctll::list_pop_triple<star<A>, select<Content...>, ::std::true_type>{};
+		}
+	} else {
+		return ctll::list_pop_triple<ctll::_nothing, ctll::_nothing, ::std::false_type>{};
+	}
+}
+
+template<typename Iterator, typename R, typename T>
+constexpr auto may_unroll(T, R) {
+	return ctll::list_pop_triple<ctll::_nothing, ctll::_nothing, ::std::false_type>{};
+}
+
 // lazy repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<lazy_repeat<A,B,Content...>, Tail...>) noexcept {
@@ -409,30 +441,40 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 
 #ifndef CTRE_DISABLE_GREEDY_OPT
-	if constexpr (!collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
+	using unroll_t = decltype(may_unroll<Iterator>(ctll::list<Content...>{}, R{}));
+	if constexpr (B == 0 && unroll_t{}.other) {
+		if constexpr (A > 0) {
+			return evaluate(begin, current, end, f, captures, ctll::list<repeat<A,A,Content...>,star<decltype(unroll_t{}.front)>, star<decltype(unroll_t{}.tail), star<decltype(unroll_t{}.front)>>, Tail...>{});
+		} else {
+			return evaluate(begin, current, end, f, captures, ctll::list<star<decltype(unroll_t{}.front)>, star<decltype(unroll_t{}.tail), star<decltype(unroll_t{}.front)>>, Tail...>{});
+		}
+	} else if constexpr (!collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
 		return evaluate(begin, current, end, f, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
-	}
+	} else {
 #endif
-	
-	// A..B
-	size_t i{0};
-	while (less_than<A>(i)) {
-		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
-		
-		if (!inner_result) return not_matched;
-		
-		captures = inner_result.unmatch();
-		current = inner_result.get_end_position();
-		
-		++i;
-	}
-	
+
+		// A..B
+		size_t i{ 0 };
+		while (less_than<A>(i)) {
+			auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+
+			if (!inner_result) return not_matched;
+
+			captures = inner_result.unmatch();
+			current = inner_result.get_end_position();
+
+			++i;
+		}
+
 #ifdef CTRE_MSVC_GREEDY_WORKAROUND
-	R result;
-	evaluate_recursive(result, i, begin, current, end, f, captures, stack);
-	return result;
+		R result;
+		evaluate_recursive(result, i, begin, current, end, f, captures, stack);
+		return result;
 #else
-	return evaluate_recursive(i, begin, current, end, f, captures, stack);
+		return evaluate_recursive(i, begin, current, end, f, captures, stack);
+#endif
+#ifndef CTRE_DISABLE_GREEDY_OPT
+	}
 #endif
 
 }
