@@ -146,6 +146,30 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	static constexpr CTRE_FORCE_INLINE auto exec(const wchar_t * s) noexcept {
 		return Method::template exec<Modifier>(s, zero_terminated_string_end_iterator(), RE{});
 	}
+#ifndef CTRE_ALLOW_UNSAFE_POINTER_DECAY
+	template<size_t N>
+	static constexpr CTRE_FORCE_INLINE auto exec(const char(&arr)[N]) noexcept {
+		return exec(std::string_view(arr, (N > 0) ? (N-1) : 0));
+	}
+	template<size_t N>
+	static constexpr CTRE_FORCE_INLINE auto exec(const char16_t(&arr)[N]) noexcept {
+		return exec(std::u16string_view(arr, (N > 0) ? (N - 1) : 0));
+	}
+	template<size_t N>
+	static constexpr CTRE_FORCE_INLINE auto exec(const char32_t(&arr)[N]) noexcept {
+		return exec(std::u32string_view(arr, (N > 0) ? (N - 1) : 0));
+	}
+	template<size_t N>
+	static constexpr CTRE_FORCE_INLINE auto exec(const wchar_t(&arr)[N]) noexcept {
+		return exec(std::wstring_view(arr, (N > 0) ? (N - 1) : 0));
+	}
+#if __cpp_char8_t >= 201811
+	template<size_t N>
+	static constexpr CTRE_FORCE_INLINE auto exec(const char8_t(&arr)[N]) noexcept {
+		return exec(std::u8string_view(arr, (N > 0) ? (N - 1) : 0));
+	}
+#endif
+#endif
 	static constexpr CTRE_FORCE_INLINE auto exec(std::string_view sv) noexcept {
 		return exec(sv.begin(), sv.end());
 	}
