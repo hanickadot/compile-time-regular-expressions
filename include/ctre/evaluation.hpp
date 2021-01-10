@@ -136,11 +136,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // matching select in patterns
 template <typename R, typename Iterator, typename EndIterator, typename HeadOptions, typename... TailOptions, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<select<HeadOptions, TailOptions...>, Tail...>) noexcept {
-	if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
-		return r;
-	} else {
-		return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
-	}
+	R inner_result = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>()); //first branch
+	((!inner_result && (inner_result = evaluate(begin, current, end, f, captures, ctll::list<TailOptions, Tail...>()))), ...); //all others
+	return inner_result;
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
