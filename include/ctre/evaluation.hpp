@@ -12,7 +12,7 @@
 #include <iterator>
 
 // remove me when MSVC fix the constexpr bug
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__) && !defined(__GNUC__)
 #ifndef CTRE_MSVC_GREEDY_WORKAROUND
 #define CTRE_MSVC_GREEDY_WORKAROUND
 #endif
