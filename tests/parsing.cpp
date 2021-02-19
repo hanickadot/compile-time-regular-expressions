@@ -118,6 +118,13 @@ static_assert(CTRE_TEST("\\d[\\W]k"));
 static_assert(CTRE_TEST("^[a-f]$"));
 static_assert(CTRE_TEST("^[a]$"));
 static_assert(CTRE_TEST("^[ab]$"));
+static_assert(CTRE_TEST("/"));
+static_assert(CTRE_TEST("[/]"));
+static_assert(CTRE_TEST("[\\[]"));
+static_assert(CTRE_TEST("[\\[-a]"));
+static_assert(CTRE_TEST("[\\[-\\[]"));
+static_assert(CTRE_TEST("[/-/]"));
+static_assert(CTRE_TEST("[!-/]"));
 static_assert(CTRE_TEST("[|]"));
 static_assert(CTRE_TEST("^abc"));
 static_assert(CTRE_TEST("a"));
@@ -156,7 +163,7 @@ static_assert(CTRE_TEST("^(?=.*(a)\\g{1}.*)$"));
 
 static_assert(CTRE_TEST("\\b"));
 static_assert(CTRE_TEST("\\A"));
-static_assert(CTRE_TEST("[\\A]"));
+static_assert(!CTRE_TEST("[\\A]"));
 static_assert(!CTRE_TEST("\\i")); // this is not existing backslash
 static_assert(CTRE_TEST("(.*)\\1"));
 
