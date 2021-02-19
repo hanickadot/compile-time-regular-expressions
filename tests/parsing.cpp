@@ -118,6 +118,7 @@ static_assert(CTRE_TEST("\\d[\\W]k"));
 static_assert(CTRE_TEST("^[a-f]$"));
 static_assert(CTRE_TEST("^[a]$"));
 static_assert(CTRE_TEST("^[ab]$"));
+static_assert(CTRE_TEST("[|]"));
 static_assert(CTRE_TEST("^abc"));
 static_assert(CTRE_TEST("a"));
 static_assert(CTRE_TEST("a(?=^)b")); // positive lookahead
