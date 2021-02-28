@@ -54,11 +54,9 @@ atom-><character>|<asserts>|<preblock>|<character_class>
 atom_in_capture-><character_in_capture>|<asserts>|<preblock>|<character_class>
 
 repeat->epsilon | plus,[repeat_plus],<mod>|star,[repeat_star],<mod>|questionmark,[make_optional],<mod_opt>
-repeat->copen,<number>,[repeat_exactly],cclose,<meamingless_mod>
+repeat->copen,<number>,[repeat_exactly],cclose
 repeat->copen,<number>,comma,[repeat_at_least],cclose,<mod>
 repeat->copen,<number>,comma,<number>,[repeat_ab],cclose,<mod>
-
-meamingless_mod->epsilon | questionmark | plus
 
 mod->epsilon | questionmark,[make_lazy] | plus,[make_possessive]
 mod_opt->epsilon | questionmark,[make_lazy]
