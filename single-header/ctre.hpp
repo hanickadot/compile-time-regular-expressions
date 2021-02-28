@@ -918,6 +918,7 @@ struct pcre {
 	struct k {};
 	struct l {};
 	struct m {};
+	struct meamingless_mod {};
 	struct mod {};
 	struct mod_opt {};
 	struct n {};
@@ -1043,7 +1044,7 @@ struct pcre {
 	static constexpr auto rule(a, ctll::set<'*','+','?','\x7B','|','\x7D'>) -> ctll::reject;
 
 	static constexpr auto rule(b, ctll::term<','>) -> ctll::push<ctll::anything, n>;
-	static constexpr auto rule(b, ctll::term<'\x7D'>) -> ctll::push<repeat_exactly, ctll::anything>;
+	static constexpr auto rule(b, ctll::term<'\x7D'>) -> ctll::push<repeat_exactly, ctll::anything, meamingless_mod>;
 
 	static constexpr auto rule(backslash, ctll::term<'d'>) -> ctll::push<ctll::anything, class_digit>;
 	static constexpr auto rule(backslash, ctll::term<'h'>) -> ctll::push<ctll::anything, class_horizontal_space>;
@@ -1240,6 +1241,12 @@ struct pcre {
 	static constexpr auto rule(m, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, ctll::term<'\x7D'>, make_back_reference>;
 	static constexpr auto rule(m, ctll::term<'-'>) -> ctll::push<ctll::anything, number, ctll::term<'\x7D'>, make_relative_back_reference>;
 	static constexpr auto rule(m, ctll::set<'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'>) -> ctll::push<ctll::anything, push_name, block_name2, ctll::term<'\x7D'>, make_back_reference>;
+
+	static constexpr auto rule(meamingless_mod, ctll::set<'!','$','\x28','\x29',',','-','.','/',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
+	static constexpr auto rule(meamingless_mod, ctll::epsilon) -> ctll::epsilon;
+	static constexpr auto rule(meamingless_mod, _others) -> ctll::epsilon;
+	static constexpr auto rule(meamingless_mod, ctll::set<'+','?'>) -> ctll::push<ctll::anything>;
+	static constexpr auto rule(meamingless_mod, ctll::set<'*','\x7B','\x7D'>) -> ctll::reject;
 
 	static constexpr auto rule(mod, ctll::set<'!','$','\x28','\x29',',','-','.','/',':','<','=','>','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','0','1','2','3','4','5','6','7','8','9'>) -> ctll::epsilon;
 	static constexpr auto rule(mod, ctll::epsilon) -> ctll::epsilon;
