@@ -4443,6 +4443,8 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 #ifndef CTRE_V2__CTRE__ITERATOR__HPP
 #define CTRE_V2__CTRE__ITERATOR__HPP
 
+#include <cstddef>
+
 namespace ctre {
 
 // TODO make proper iterator traits here
@@ -4456,7 +4458,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	using iterator_category = std::forward_iterator_tag;
 	using pointer = void;
 	using reference = const value_type &;
-	using difference_type = ssize_t;
+	using difference_type = int;
 	
 	BeginIterator orig_begin{};
 	BeginIterator current{};
@@ -4534,7 +4536,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	using iterator_category = std::forward_iterator_tag;
 	using pointer = void;
 	using reference = const value_type &;
-	using difference_type = ssize_t;
+	using difference_type = int;
 
 	BeginIterator orig_begin{};
 	BeginIterator current{};
@@ -4678,7 +4680,7 @@ template <typename Range, typename RE> struct multi_subject_range {
 		using iterator_category = std::forward_iterator_tag;
 		using pointer = void;
 		using reference = const value_type &;
-		using difference_type = ssize_t;
+		using difference_type = int;
 		
 		first_type first{};
 		last_type last{};

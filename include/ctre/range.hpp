@@ -50,7 +50,7 @@ template <typename Range, typename RE> struct multi_subject_range {
 		using iterator_category = std::forward_iterator_tag;
 		using pointer = void;
 		using reference = const value_type &;
-		using difference_type = ssize_t;
+		using difference_type = int;
 		
 		first_type first{};
 		last_type last{};

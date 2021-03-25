@@ -3,6 +3,7 @@
 
 #include "literals.hpp"
 #include "wrapper.hpp"
+#include <cstddef>
 
 namespace ctre {
 
@@ -17,7 +18,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	using iterator_category = std::forward_iterator_tag;
 	using pointer = void;
 	using reference = const value_type &;
-	using difference_type = ssize_t;
+	using difference_type = int;
 	
 	BeginIterator orig_begin{};
 	BeginIterator current{};
@@ -95,7 +96,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	using iterator_category = std::forward_iterator_tag;
 	using pointer = void;
 	using reference = const value_type &;
-	using difference_type = ssize_t;
+	using difference_type = int;
 
 	BeginIterator orig_begin{};
 	BeginIterator current{};
