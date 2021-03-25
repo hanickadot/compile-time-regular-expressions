@@ -4683,9 +4683,7 @@ template <typename First, typename Last, typename RE> struct multi_subject_range
 		Last last{};
 		value_type current_result{};
 		
-		constexpr CTRE_FORCE_INLINE iterator(First f, Last l) noexcept: first{f}, last{l}, current_result{find_first()} {
-			
-		}
+		constexpr CTRE_FORCE_INLINE iterator(First f, Last l) noexcept: first{f}, last{l}, current_result{find_first()} { }
 		
 		constexpr CTRE_FORCE_INLINE value_type find_first() noexcept {
 			while (first != last) {
