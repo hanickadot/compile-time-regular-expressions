@@ -4511,10 +4511,16 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	friend constexpr CTRE_FORCE_INLINE bool operator>=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
 		return left.current >= right.current;
 	}
-	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
+	friend constexpr CTRE_FORCE_INLINE bool operator==(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) noexcept {
+		return !bool(left.current_match);
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator==(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return !bool(right.current_match);
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) noexcept {
 		return bool(left.current_match);
 	}
-	friend constexpr CTRE_FORCE_INLINE bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(regex_end_iterator, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
 		return bool(right.current_match);
 	}
 };
@@ -4603,10 +4609,16 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	friend constexpr CTRE_FORCE_INLINE bool operator>=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
 		return left.current >= right.current;
 	}
-	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
+	friend constexpr CTRE_FORCE_INLINE bool operator==(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) noexcept {
+		return !bool(left.current_match);
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator==(regex_end_iterator, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return !bool(right.current_match);
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) noexcept {
 		return bool(left.current_match);
 	}
-	friend constexpr CTRE_FORCE_INLINE bool operator!=(regex_end_iterator, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(regex_end_iterator, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
 		return bool(right.current_match);
 	}
 };
