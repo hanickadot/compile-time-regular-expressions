@@ -262,8 +262,7 @@ template <typename Range, typename RE, typename Method, typename Modifier> const
 }
 #endif
 
-
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 #define CTRE_REGEX_INPUT_TYPE ctll::fixed_string
 template <auto input> struct regex_builder {
 	static constexpr auto _input = input;

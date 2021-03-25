@@ -444,7 +444,7 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 }
 
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTLL_CNTTP_COMPILER_CHECK
 	#define CTLL_FIXED_STRING ctll::fixed_string
 #else
 	#define CTLL_FIXED_STRING const auto &
@@ -459,6 +459,8 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 #define CTLL__UTILITIES__HPP
 
 #include <type_traits>
+
+#define CTLL_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || (__cpp_nontype_template_args >= 201411L && __clang_major__ >= 12))
 
 #ifdef _MSC_VER
 #define CTLL_FORCE_INLINE __forceinline
@@ -721,14 +723,14 @@ struct placeholder { };
 
 template <size_t> using index_placeholder = placeholder;
 
-#if ((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) || (__cpp_nontype_template_args >= 201911L))
+#if CTLL_CNTTP_COMPILER_CHECK
 template <typename Grammar, ctll::fixed_string input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser { // in c++20
 #else
 template <typename Grammar, const auto & input, typename ActionSelector = empty_actions, bool IgnoreUnknownActions = false> struct parser {
 #endif
 	
 	#ifdef __GNUC__ // workaround to GCC bug
-		#if ((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) || (__cpp_nontype_template_args >= 201911L))
+		#if CTLL_CNTTP_COMPILER_CHECK
 		static constexpr auto _input = input;  // c++20 mode
 		#else
 		static constexpr auto & _input = input; // c++17 mode
@@ -746,7 +748,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 		}
 		
 		#ifdef __GNUC__ // workaround to GCC bug
-			#if ((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) || (__cpp_nontype_template_args >= 201911L))
+			#if CTLL_CNTTP_COMPILER_CHECK
 			static constexpr auto _input = input;  // c++20 mode
 			#else
 			static constexpr auto & _input = input; // c++17 mode
@@ -1333,6 +1335,8 @@ struct pcre {
 
 #ifndef CTRE__UTILITY__HPP
 #define CTRE__UTILITY__HPP
+
+#define CTRE_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || (__cpp_nontype_template_args >= 201411L && __clang_major__ >= 12))
 
 #if __GNUC__ > 9
 #if __has_cpp_attribute(likely)
@@ -3064,7 +3068,7 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template exists<Name>();
 		}
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 #else
 	template <const auto & Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
@@ -3107,7 +3111,7 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template select<Name>();
 		}
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 #else
 	template <const auto & Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
@@ -3132,7 +3136,7 @@ template <> struct captures<> {
 	template <typename> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		return false;
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 #else
 	template <const auto &> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
@@ -3145,7 +3149,7 @@ template <> struct captures<> {
 	template <typename> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 #else
 	template <const auto &> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
@@ -3171,7 +3175,7 @@ public:
 	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 		return _captures.template select<Name>();
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 #else
 	template <const auto & Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
@@ -4932,7 +4936,7 @@ template <typename Range, typename RE, typename Method, typename Modifier> const
 }
 #endif
 
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 #define CTRE_REGEX_INPUT_TYPE ctll::fixed_string
 template <auto input> struct regex_builder {
 	static constexpr auto _input = input;
@@ -4992,7 +4996,7 @@ namespace ctre {
 // in C++17 (clang & gcc with gnu extension) we need translate character pack into ctll::fixed_string
 // in C++20 we have `class nontype template parameters`
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 template <typename CharT, CharT... input> static inline constexpr auto _fixed_string_reference = ctll::fixed_string< sizeof...(input)>({input...});
 #endif	
 
@@ -5012,7 +5016,7 @@ namespace literals {
 #if __GNUC__ < 9
 #define CTRE_ENABLE_LITERALS
 #elif __GNUC__ >= 10
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)) 
+#if !CTRE_CNTTP_COMPILER_CHECK 
 // newer versions of GCC will give error when trying to use GNU extension
 #else
 #define CTRE_ENABLE_LITERALS
@@ -5025,7 +5029,7 @@ namespace literals {
 // add this when we will have concepts
 // requires ctll::parser<ctre::pcre, _fixed_string_reference<CharT, charpack...>, ctre::pcre_actions>::template correct_with<pcre_context<>>
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -5043,7 +5047,7 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 }
 
 // this will need to be fixed with C++20
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_id() noexcept {
 	return id<charpack...>();
 }
@@ -5057,7 +5061,7 @@ namespace test_literals {
 	
 #ifdef CTRE_ENABLE_LITERALS
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_test() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -5067,7 +5071,7 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr inline auto operator"
 	return ctll::parser<ctre::pcre, _input>::template correct_with<>;
 }
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr inline auto operator""_ctre_gen() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -5079,7 +5083,7 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr inline auto operator"
 	return typename tmp::output_type::stack_type();
 }
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 template <typename CharT, CharT... charpack> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto operator""_ctre_syntax() noexcept {
 	constexpr auto & _input = _fixed_string_reference<CharT, charpack...>;
 #else
@@ -5108,7 +5112,7 @@ template <ctll::fixed_string input> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE aut
 
 namespace ctre {
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 // avoiding CTAD limitation in C++17
 template <typename CharT, size_t N> class pattern: public ctll::fixed_string<N> {
 	using parent = ctll::fixed_string<N>;
@@ -5128,7 +5132,7 @@ public:
 template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<CharT, N>;
 #endif
 
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 template <ctll::fixed_string input, typename Modifier = void> CTRE_FLATTEN constexpr CTRE_FORCE_INLINE auto re() noexcept {
 constexpr auto _input = input; // workaround for GCC 9 bug 88092
 #else
