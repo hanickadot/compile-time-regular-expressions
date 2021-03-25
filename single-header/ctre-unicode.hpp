@@ -2898,6 +2898,7 @@ struct utf8_range {
 #include <string_view>
 #include <string>
 #include <iterator>
+#include <iosfwd>
 
 namespace ctre {
 
@@ -3033,6 +3034,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const storage & rhs) noexcept {
 			return bool(rhs) ? lhs != rhs.view() : false;
+		}
+		friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const storage & rhs) {
+			return str << rhs.view();
 		}
 	};
 };
@@ -3251,6 +3255,9 @@ public:
 	}
 	friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const regex_results & rhs) noexcept {
 		return bool(rhs) ? lhs != rhs.view() : true;
+	}
+	friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const regex_results & rhs) {
+		return str << rhs.view();
 	}
 };
 
@@ -4480,15 +4487,78 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	}
 };
 
+template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_split_iterator {
+	BeginIterator orig_begin;
+	BeginIterator current;
+	const EndIterator end;
+	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
+	bool last_match{false};
+
+	constexpr CTRE_FORCE_INLINE void modify_match() {
+		auto tmp = current_match.template get<0>().end();
+		current_match.set_end_mark(current_match.template get<0>().begin());
+		current_match.set_start_mark(current);
+		current = tmp;
+	}
+	
+	constexpr CTRE_FORCE_INLINE void match_rest() {
+		// the end is there set by search_method
+		current_match.set_start_mark(current);
+		current_match.matched();
+		current = current_match.template get<0>().end();
+		last_match = true;
+	}
+
+	constexpr CTRE_FORCE_INLINE regex_split_iterator(BeginIterator begin, EndIterator end) noexcept: orig_begin{begin}, current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
+		if (current_match) {
+			modify_match();
+		} else {
+			match_rest();
+		}
+	}
+	constexpr CTRE_FORCE_INLINE const auto & operator*() const noexcept {
+		return current_match;
+	}
+	constexpr CTRE_FORCE_INLINE regex_split_iterator & operator++() noexcept {
+		if (current == end && last_match) {
+			current_match = decltype(current_match){};
+			return *this;
+		}
+	
+		current_match = RE::template exec_with_result_iterator<ResultIterator>(orig_begin, current, end);
+	
+		if (current_match) {
+			modify_match();
+		} else {
+			match_rest();
+		}
+		return *this;
+	}
+	constexpr CTRE_FORCE_INLINE regex_split_iterator operator++(int) noexcept {
+		auto previous = *this;
+		this->operator++();
+		return previous;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
+		return bool(left.current_match);
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(regex_end_iterator, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) {
+		return bool(right.current_match);
+	}
+};
+
 } // ctre
 
 #endif
 
 namespace ctre {
 
+template <typename> constexpr bool is_range = false;
+
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_range {
 	BeginIterator _begin;
 	const EndIterator _end;
+	
 	constexpr CTRE_FORCE_INLINE regex_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
 	
 	constexpr CTRE_FORCE_INLINE auto begin() const noexcept {
@@ -4498,6 +4568,24 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		return regex_end_iterator{};
 	}
 };
+
+template <typename... Ts> constexpr bool is_range<regex_range<Ts...>> = true;
+
+template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_split_range {
+	BeginIterator _begin;
+	const EndIterator _end;
+	
+	constexpr CTRE_FORCE_INLINE regex_split_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
+	
+	constexpr CTRE_FORCE_INLINE auto begin() const noexcept {
+		return regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator>(_begin, _end);
+	}
+	constexpr CTRE_FORCE_INLINE auto end() const noexcept {
+		return regex_end_iterator{};
+	}
+};
+
+template <typename... Ts> constexpr bool is_range<regex_split_range<Ts...>> = true;
 
 }
 
@@ -4571,7 +4659,12 @@ struct search_method {
 		}
 	
 		// in case the RE is empty or fixed
-		return evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+		auto out = evaluate(orig_begin, it, end, Modifier{}, return_type<result_iterator, RE>{}, ctll::list<start_mark, RE, end_mark, accept>());
+		
+		// ALERT: ugly hack
+		// propagate end even if it didn't match (this is needed for split function)
+		if (!out) out.set_end_mark(it);
+		return out;
 	}
 	
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
@@ -4606,6 +4699,15 @@ struct tokenize_method {
 		using wrapped_regex = regular_expression<RE, starts_with_method, Modifier>;
 	
 		return regex_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+	}
+};
+
+struct split_method {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
+		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
+	
+		return regex_split_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
 	}
 };
 
@@ -4668,6 +4770,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename... Args> CTRE_FORCE_INLINE constexpr auto operator()(Args && ... args) const noexcept {
 		return exec(std::forward<Args>(args)...);
 	}
+	// api for pattern matching
 	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args && ... args) const noexcept {
 		return exec(std::forward<Args>(args)...);
 	}
@@ -4684,6 +4787,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, singleline>::exec(std::forward<Args>(args)...);
+	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto split(Args && ... args) noexcept {
+		return regular_expression<RE, split_method, singleline>::exec(std::forward<Args>(args)...);
 	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto tokenize(Args && ... args) noexcept {
 		return regular_expression<RE, tokenize_method, singleline>::exec(std::forward<Args>(args)...);
@@ -4704,6 +4810,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_range(Args && ... args) noexcept {
 		return regular_expression<RE, range_method, multiline>::exec(std::forward<Args>(args)...);
 	}
+	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_split(Args && ... args) noexcept {
+		return regular_expression<RE, split_method, multiline>::exec(std::forward<Args>(args)...);
+	}
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto multiline_tokenize(Args && ... args) noexcept {
 		return regular_expression<RE, tokenize_method, multiline>::exec(std::forward<Args>(args)...);
 	}
@@ -4711,6 +4820,14 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 		return regular_expression<RE, iterator_method, multiline>::exec(std::forward<Args>(args)...);
 	}
 };
+
+// range style API support for tokenize/range/split operations
+template <typename Range, typename... Ts, typename = std::enable_if_t<ctre::is_range<decltype(regular_expression<Ts...>{}.exec(std::declval<Range>()))>>> constexpr auto operator|(Range && range, regular_expression<Ts...> re) noexcept {
+	// TODO sfinae
+	using re_exec_result = std::remove_reference_t<decltype(re.exec(std::forward<Range>(range)))>;
+	static_assert(ctre::is_range<re_exec_result>, "operator pipe is only for tokenize/split/range");
+	return re.exec(std::forward<Range>(range));
+}
 
 #if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
 #define CTRE_REGEX_INPUT_TYPE ctll::fixed_string
@@ -4737,6 +4854,8 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto starts_with 
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, singleline>();
 
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto split = regular_expression<typename regex_builder<input>::type, split_method, singleline>();
+
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, singleline>();
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, singleline>();
@@ -4750,6 +4869,8 @@ template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_se
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, multiline>();
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, multiline>();
+
+template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_split = regular_expression<typename regex_builder<input>::type, split_method, multiline>();
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, multiline>();
 
