@@ -7,9 +7,6 @@
 #include "return_type.hpp"
 #include "range.hpp"
 #include <string_view>
-#if __cpp_lib_ranges >= 201911
-#include <ranges>
-#endif
 
 namespace ctre {
 
@@ -150,6 +147,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename ResultIterator, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec_with_result_iterator(IteratorBegin begin, IteratorEnd end) noexcept {
 		return Method::template exec<Modifier, ResultIterator>(begin, end, RE{});
 	}
+	template <typename Range> constexpr CTRE_FORCE_INLINE static auto multi_exec(Range && range) noexcept {
+		return multi_subject_range<decltype(range.begin()), decltype(range.end()), regular_expression>{range.begin(), range.end()};
+	}
 	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
 		return Method::template exec();
 	}
@@ -253,14 +253,9 @@ template <typename Range, typename RE, typename Modifier> constexpr auto operato
 
 template <typename Range, typename RE, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, iterator_method, Modifier> re) noexcept = delete;
 
-// range filter style API support for tokenize/range/split operations
-#if __cpp_lib_ranges >= 201911
 template <typename Range, typename RE, typename Method, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, Method, Modifier> re) noexcept {
-	return std::forward<Range>(range) | std::ranges::views::filter([](const decltype(*range.begin()) & item) -> bool{
-		return regular_expression<RE, Method, Modifier>{}.exec(item);
-	});
+	return re.multi_exec(std::forward<Range>(range));
 }
-#endif
 
 #if CTRE_CNTTP_COMPILER_CHECK
 #define CTRE_REGEX_INPUT_TYPE ctll::fixed_string

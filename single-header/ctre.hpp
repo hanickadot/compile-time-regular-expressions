@@ -4634,7 +4634,7 @@ template <typename> constexpr bool is_range = false;
 
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_range {
 	BeginIterator _begin;
-	const EndIterator _end;
+	EndIterator _end;
 	
 	constexpr CTRE_FORCE_INLINE regex_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
 	
@@ -4650,7 +4650,7 @@ template <typename... Ts> constexpr bool is_range<regex_range<Ts...>> = true;
 
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_split_range {
 	BeginIterator _begin;
-	const EndIterator _end;
+	EndIterator _end;
 	
 	constexpr CTRE_FORCE_INLINE regex_split_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
 	
@@ -4663,6 +4663,96 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 };
 
 template <typename... Ts> constexpr bool is_range<regex_split_range<Ts...>> = true;
+
+template <typename First, typename Last, typename RE> struct multi_subject_range {
+	static constexpr bool is_input = std::is_same_v<std::iterator_traits<First>::iterator_category, std::input_iterator_tag>;
+	
+	struct end_iterator { };
+	
+	struct iterator {
+		using value_type = decltype(RE::exec(std::declval<typename std::iterator_traits<First>::value_type>()));
+		using iterator_category = std::forward_iterator_tag;
+		using pointer = void;
+		using reference = const value_type &;
+		using difference_type = ssize_t;
+		
+		First first{};
+		Last last{};
+		value_type current_result{};
+		
+		constexpr CTRE_FORCE_INLINE iterator(First f, Last l) noexcept: first{f}, last{l}, current_result{find_first()} {
+			
+		}
+		
+		constexpr CTRE_FORCE_INLINE value_type find_first() noexcept {
+			while (first != last) {
+				if (auto res = RE::exec(*first)) return res;
+				else ++first;
+			}
+			return {};
+		}
+		
+		constexpr CTRE_FORCE_INLINE const value_type & operator*() const noexcept {
+			return current_result;
+		}
+		
+		constexpr CTRE_FORCE_INLINE iterator & operator++() noexcept {
+			++first;
+			current_result = find_first();
+			return *this;
+		}
+		constexpr CTRE_FORCE_INLINE iterator operator++(int) noexcept {
+			auto previous = *this;
+			this->operator++();
+			return previous;
+		}
+		
+		friend constexpr CTRE_FORCE_INLINE bool operator==(const iterator & left, const iterator & right) noexcept {
+			return left.first == right.first;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator!=(const iterator & left, const iterator & right) noexcept {
+			return !(left.first == right.first);
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator<(const iterator & left, const iterator & right) noexcept {
+			return left.first < right.first;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator>(const iterator & left, const iterator & right) noexcept {
+			return left.first > right.first;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator<=(const iterator & left, const iterator & right) noexcept {
+			return left.first <= right.first;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator>=(const iterator & left, const iterator & right) noexcept {
+			return left.first >= right.first;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator==(const iterator & left, end_iterator) noexcept {
+			return left.first == left.last;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator==(end_iterator, const iterator & right) noexcept {
+			return right.first == right.last;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator!=(const iterator & left, end_iterator) noexcept {
+			return left.first != left.last;
+		}
+		friend constexpr CTRE_FORCE_INLINE bool operator!=(end_iterator, const iterator & right) noexcept {
+			return right.first == right.last;
+		}
+	};
+	
+	iterator everything;
+	
+	constexpr CTRE_FORCE_INLINE multi_subject_range(First f, Last l) noexcept:  everything{f,l} { }
+	
+	constexpr CTRE_FORCE_INLINE auto begin() const noexcept {
+		return everything;
+	}
+	constexpr CTRE_FORCE_INLINE auto end() const noexcept {
+		return end_iterator{};
+	}
+};
+
+// this is not regex range!
+template <typename... Ts> constexpr bool is_range<multi_subject_range<Ts...>> = true;
 
 }
 
@@ -4678,9 +4768,6 @@ namespace std::ranges {
 #endif
 
 #include <string_view>
-#if __cpp_lib_ranges >= 201911
-#include <ranges>
-#endif
 
 namespace ctre {
 
@@ -4821,6 +4908,9 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename ResultIterator, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec_with_result_iterator(IteratorBegin begin, IteratorEnd end) noexcept {
 		return Method::template exec<Modifier, ResultIterator>(begin, end, RE{});
 	}
+	template <typename Range> constexpr CTRE_FORCE_INLINE static auto multi_exec(Range && range) noexcept {
+		return multi_subject_range<decltype(range.begin()), decltype(range.end()), regular_expression>{range.begin(), range.end()};
+	}
 	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
 		return Method::template exec();
 	}
@@ -4924,14 +5014,9 @@ template <typename Range, typename RE, typename Modifier> constexpr auto operato
 
 template <typename Range, typename RE, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, iterator_method, Modifier> re) noexcept = delete;
 
-// range filter style API support for tokenize/range/split operations
-#if __cpp_lib_ranges >= 201911
 template <typename Range, typename RE, typename Method, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, Method, Modifier> re) noexcept {
-	return std::forward<Range>(range) | std::ranges::views::filter([](const decltype(*range.begin()) & item) -> bool{
-		return regular_expression<RE, Method, Modifier>{}.exec(item);
-	});
+	return re.multi_exec(std::forward<Range>(range));
 }
-#endif
 
 #if CTRE_CNTTP_COMPILER_CHECK
 #define CTRE_REGEX_INPUT_TYPE ctll::fixed_string
