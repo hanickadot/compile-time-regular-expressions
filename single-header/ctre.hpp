@@ -4664,23 +4664,24 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 
 template <typename... Ts> constexpr bool is_range<regex_split_range<Ts...>> = true;
 
-template <typename First, typename Last, typename RE> struct multi_subject_range {
-	static constexpr bool is_input = std::is_same_v<std::iterator_traits<First>::iterator_category, std::input_iterator_tag>;
-	
+template <typename Range, typename RE> struct multi_subject_range {
 	struct end_iterator { };
 	
+	using first_type = decltype(std::declval<Range>().begin());
+	using last_type = decltype(std::declval<Range>().end());
+	
 	struct iterator {
-		using value_type = decltype(RE::exec(std::declval<typename std::iterator_traits<First>::value_type>()));
+		using value_type = decltype(RE::exec(std::declval<typename std::iterator_traits<first_type>::value_type>()));
 		using iterator_category = std::forward_iterator_tag;
 		using pointer = void;
 		using reference = const value_type &;
 		using difference_type = ssize_t;
 		
-		First first{};
-		Last last{};
+		first_type first{};
+		last_type last{};
 		value_type current_result{};
 		
-		constexpr CTRE_FORCE_INLINE iterator(First f, Last l) noexcept: first{f}, last{l}, current_result{find_first()} { }
+		constexpr CTRE_FORCE_INLINE iterator(first_type f, last_type l) noexcept: first{f}, last{l}, current_result{find_first()} { }
 		
 		constexpr CTRE_FORCE_INLINE value_type find_first() noexcept {
 			while (first != last) {
@@ -4737,12 +4738,12 @@ template <typename First, typename Last, typename RE> struct multi_subject_range
 		}
 	};
 	
-	iterator everything;
+	Range range;
 	
-	constexpr CTRE_FORCE_INLINE multi_subject_range(First f, Last l) noexcept:  everything{f,l} { }
+	constexpr CTRE_FORCE_INLINE multi_subject_range(Range r) noexcept:  range{r} { }
 	
 	constexpr CTRE_FORCE_INLINE auto begin() const noexcept {
-		return everything;
+		return iterator{range.begin(), range.end()};
 	}
 	constexpr CTRE_FORCE_INLINE auto end() const noexcept {
 		return end_iterator{};
@@ -4759,6 +4760,7 @@ namespace std::ranges {
 
 	template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_range<Ts...>> = true;
 	template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_split_range<Ts...>> = true;
+	template <typename Range, typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::multi_subject_range<Range, Ts...>> = enable_borrowed_range<Range>;
 
 }
 #endif 
@@ -4907,7 +4909,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 		return Method::template exec<Modifier, ResultIterator>(begin, end, RE{});
 	}
 	template <typename Range> constexpr CTRE_FORCE_INLINE static auto multi_exec(Range && range) noexcept {
-		return multi_subject_range<decltype(range.begin()), decltype(range.end()), regular_expression>{range.begin(), range.end()};
+		return multi_subject_range<Range, regular_expression>{std::forward<Range>(range)};
 	}
 	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
 		return Method::template exec();
