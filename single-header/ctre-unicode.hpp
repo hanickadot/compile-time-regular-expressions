@@ -4668,15 +4668,13 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 template <typename... Ts> constexpr bool is_range<regex_split_range<Ts...>> = true;
 
 template <typename Range, typename RE> struct multi_subject_range {
-	static constexpr bool is_input = std::is_same_v<std::iterator_traits<First>::iterator_category, std::input_iterator_tag>;
-	
 	struct end_iterator { };
 	
 	using first_type = decltype(std::declval<Range>().begin());
 	using last_type = decltype(std::declval<Range>().end());
 	
 	struct iterator {
-		using value_type = decltype(RE::exec(std::declval<typename std::iterator_traits<First>::value_type>()));
+		using value_type = decltype(RE::exec(std::declval<typename std::iterator_traits<first_type>::value_type>()));
 		using iterator_category = std::forward_iterator_tag;
 		using pointer = void;
 		using reference = const value_type &;
@@ -4914,7 +4912,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 		return Method::template exec<Modifier, ResultIterator>(begin, end, RE{});
 	}
 	template <typename Range> constexpr CTRE_FORCE_INLINE static auto multi_exec(Range && range) noexcept {
-		return multi_subject_range<decltype(range.begin()), decltype(range.end()), regular_expression>{range.begin(), range.end()};
+		return multi_subject_range<Range, regular_expression>{std::forward<Range>(range)};
 	}
 	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
 		return Method::template exec();
