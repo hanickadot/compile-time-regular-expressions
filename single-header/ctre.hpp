@@ -4923,7 +4923,7 @@ template <typename Range, typename RE, typename Modifier> constexpr auto operato
 // range filter style API support for tokenize/range/split operations
 #if __cpp_lib_ranges >= 201911
 template <typename Range, typename RE, typename Method, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, Method, Modifier> re) noexcept {
-	return std::ranges::views::filter([](auto && item){
+	return std::forward<Range>(range) | std::ranges::views::filter([](const decltype(*range.begin()) & item) -> bool{
 		return regular_expression<RE, Method, Modifier>{}.exec(item);
 	});
 }
