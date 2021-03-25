@@ -59,14 +59,14 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
 	bool last_match{false};
 
-	constexpr void modify_match() {
+	constexpr CTRE_FORCE_INLINE void modify_match() {
 		auto tmp = current_match.template get<0>().end();
 		current_match.set_end_mark(current_match.template get<0>().begin());
 		current_match.set_start_mark(current);
 		current = tmp;
 	}
 	
-	constexpr void match_rest() {
+	constexpr CTRE_FORCE_INLINE void match_rest() {
 		// the end is there set by search_method
 		current_match.set_start_mark(current);
 		current_match.matched();

@@ -189,11 +189,6 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	template <typename... Args> CTRE_FORCE_INLINE constexpr auto try_extract(Args && ... args) const noexcept {
 		return exec(std::forward<Args>(args)...);
 	}
-	// api for ranges (there is ugly sfinae)
-	template <typename Range> constexpr friend auto operator|(Range && range, regular_expression re) noexcept -> decltype(typename decltype(re.exec(std::forward<Range>(range)))::is_range{}, re.exec(std::forward<Range>(range))) {
-		// TODO enable this only for search/tokenize/split
-		return re.exec(std::forward<Range>(range));
-	}
 	
 	// for compatibility with _ctre literal
 	template <typename... Args> static constexpr CTRE_FORCE_INLINE auto match(Args && ... args) noexcept {
@@ -240,6 +235,14 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 		return regular_expression<RE, iterator_method, multiline>::exec(std::forward<Args>(args)...);
 	}
 };
+
+// range style API support for tokenize/range/split operations
+template <typename Range, typename... Ts, typename = std::enable_if_t<ctre::is_range<decltype(regular_expression<Ts...>{}.exec(std::declval<Range>()))>>> constexpr auto operator|(Range && range, regular_expression<Ts...> re) noexcept {
+	// TODO sfinae
+	using re_exec_result = std::remove_reference_t<decltype(re.exec(std::forward<Range>(range)))>;
+	static_assert(ctre::is_range<re_exec_result>, "operator pipe is only for tokenize/split/range");
+	return re.exec(std::forward<Range>(range));
+}
 
 
 #if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
