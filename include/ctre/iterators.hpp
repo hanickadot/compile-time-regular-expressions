@@ -58,6 +58,24 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		this->operator++();
 		return previous;
 	}
+	friend constexpr CTRE_FORCE_INLINE bool operator==(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current == right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return !(left.current == right.current);
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator<(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current < right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator>(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current > right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator<=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current <= right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator>=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current >= right.current;
+	}
 	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
 		return bool(left.current_match);
 	}
@@ -131,6 +149,24 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		auto previous = *this;
 		this->operator++();
 		return previous;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator==(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current == right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return !(left.current == right.current);
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator<(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current < right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator>(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current > right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator<=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current <= right.current;
+	}
+	friend constexpr CTRE_FORCE_INLINE bool operator>=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & right) noexcept {
+		return left.current >= right.current;
 	}
 	friend constexpr CTRE_FORCE_INLINE bool operator!=(const regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator> & left, regex_end_iterator) {
 		return bool(left.current_match);
