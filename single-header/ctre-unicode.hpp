@@ -4448,10 +4448,16 @@ struct regex_end_iterator {
 };
 
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_iterator {
+using value_type = decltype(RE::template exec_with_result_iterator<ResultIterator>(std::declval<BeginIterator>(), std::declval<EndIterator>()));
+	using iterator_category = std::forward_iterator_tag;
+	using pointer = void;
+	using reference = void;
+	using difference_type = void;
+	
 	BeginIterator orig_begin;
 	BeginIterator current;
 	const EndIterator end;
-	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
+	value_type current_match;
 
 	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: orig_begin{begin}, current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
@@ -4488,10 +4494,16 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 };
 
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_split_iterator {
+	using value_type = decltype(RE::template exec_with_result_iterator<ResultIterator>(std::declval<BeginIterator>(), std::declval<EndIterator>()));
+	using iterator_category = std::forward_iterator_tag;
+	using pointer = void;
+	using reference = void;
+	using difference_type = void;
+
 	BeginIterator orig_begin;
 	BeginIterator current;
 	const EndIterator end;
-	decltype(RE::template exec_with_result_iterator<ResultIterator>(current, end)) current_match;
+	value_type current_match;
 	bool last_match{false};
 
 	constexpr CTRE_FORCE_INLINE void modify_match() {
