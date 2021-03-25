@@ -7,6 +7,9 @@
 #include "return_type.hpp"
 #include "range.hpp"
 #include <string_view>
+#if __cpp_lib_ranges >= 201911
+#include <ranges>
+#endif
 
 namespace ctre {
 
@@ -236,12 +239,28 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 };
 
 // range style API support for tokenize/range/split operations
-template <typename Range, typename... Ts, typename = std::enable_if_t<ctre::is_range<decltype(regular_expression<Ts...>{}.exec(std::declval<Range>()))>>> constexpr auto operator|(Range && range, regular_expression<Ts...> re) noexcept {
-	// TODO sfinae
-	using re_exec_result = std::remove_reference_t<decltype(re.exec(std::forward<Range>(range)))>;
-	static_assert(ctre::is_range<re_exec_result>, "operator pipe is only for tokenize/split/range");
+template <typename Range, typename RE, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, range_method, Modifier> re) noexcept {
 	return re.exec(std::forward<Range>(range));
 }
+
+template <typename Range, typename RE, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, tokenize_method, Modifier> re) noexcept {
+	return re.exec(std::forward<Range>(range));
+}
+
+template <typename Range, typename RE, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, split_method, Modifier> re) noexcept {
+	return re.exec(std::forward<Range>(range));
+}
+
+template <typename Range, typename RE, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, iterator_method, Modifier> re) noexcept = delete;
+
+// range filter style API support for tokenize/range/split operations
+#if __cpp_lib_ranges >= 201911
+template <typename Range, typename RE, typename Method, typename Modifier> constexpr auto operator|(Range && range, regular_expression<RE, Method, Modifier> re) noexcept {
+	return std::ranges::views::filter([](auto && item){
+		return regular_expression<RE, Method, Modifier>{}.exec(item);
+	});
+}
+#endif
 
 
 #if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
