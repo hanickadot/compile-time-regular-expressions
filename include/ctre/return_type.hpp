@@ -8,6 +8,7 @@
 #include <string_view>
 #include <string>
 #include <iterator>
+#include <iosfwd>
 
 namespace ctre {
 
@@ -144,6 +145,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const storage & rhs) noexcept {
 			return bool(rhs) ? lhs != rhs.view() : false;
+		}
+		friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const storage & rhs) {
+			return str << rhs.view();
 		}
 	};
 };
@@ -362,6 +366,9 @@ public:
 	}
 	friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const regex_results & rhs) noexcept {
 		return bool(rhs) ? lhs != rhs.view() : true;
+	}
+	friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const regex_results & rhs) {
+		return str << rhs.view();
 	}
 };
 
