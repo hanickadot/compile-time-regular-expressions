@@ -13,23 +13,31 @@ struct regex_end_iterator {
 };
 
 template <typename BeginIterator, typename EndIterator, typename RE, typename ResultIterator = BeginIterator> struct regex_iterator {
-using value_type = decltype(RE::template exec_with_result_iterator<ResultIterator>(std::declval<BeginIterator>(), std::declval<EndIterator>()));
+	using value_type = decltype(RE::template exec_with_result_iterator<ResultIterator>(std::declval<BeginIterator>(), std::declval<EndIterator>()));
 	using iterator_category = std::forward_iterator_tag;
 	using pointer = void;
-	using reference = void;
-	using difference_type = void;
+	using reference = const value_type &;
+	using difference_type = ssize_t;
 	
-	BeginIterator orig_begin;
-	BeginIterator current;
-	const EndIterator end;
-	value_type current_match;
+	BeginIterator orig_begin{};
+	BeginIterator current{};
+	EndIterator end{};
+	value_type current_match{};
+	
+	constexpr CTRE_FORCE_INLINE regex_iterator() noexcept = default;
+	constexpr CTRE_FORCE_INLINE regex_iterator(const regex_iterator &) noexcept = default;
+	constexpr CTRE_FORCE_INLINE regex_iterator(regex_iterator &&) noexcept = default;
 
 	constexpr CTRE_FORCE_INLINE regex_iterator(BeginIterator begin, EndIterator end) noexcept: orig_begin{begin}, current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
 			current = current_match.template get<0>().end();
 		}
 	}
-	constexpr CTRE_FORCE_INLINE const auto & operator*() const noexcept {
+	
+	constexpr CTRE_FORCE_INLINE regex_iterator & operator=(const regex_iterator &) noexcept = default;
+	constexpr CTRE_FORCE_INLINE regex_iterator & operator=(regex_iterator &&) noexcept = default;
+	
+	constexpr CTRE_FORCE_INLINE const value_type & operator*() const noexcept {
 		return current_match;
 	}
 	constexpr CTRE_FORCE_INLINE regex_iterator & operator++() noexcept {
@@ -62,13 +70,13 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	using value_type = decltype(RE::template exec_with_result_iterator<ResultIterator>(std::declval<BeginIterator>(), std::declval<EndIterator>()));
 	using iterator_category = std::forward_iterator_tag;
 	using pointer = void;
-	using reference = void;
-	using difference_type = void;
+	using reference = const value_type &;
+	using difference_type = ssize_t;
 
-	BeginIterator orig_begin;
-	BeginIterator current;
-	const EndIterator end;
-	value_type current_match;
+	BeginIterator orig_begin{};
+	BeginIterator current{};
+	EndIterator end{};
+	value_type current_match{};
 	bool last_match{false};
 
 	constexpr CTRE_FORCE_INLINE void modify_match() {
@@ -86,6 +94,10 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 		last_match = true;
 	}
 
+	constexpr CTRE_FORCE_INLINE regex_split_iterator() noexcept = default;
+	constexpr CTRE_FORCE_INLINE regex_split_iterator(const regex_split_iterator &) noexcept = default;
+	constexpr CTRE_FORCE_INLINE regex_split_iterator(regex_split_iterator &&) noexcept = default;
+
 	constexpr CTRE_FORCE_INLINE regex_split_iterator(BeginIterator begin, EndIterator end) noexcept: orig_begin{begin}, current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
 		if (current_match) {
 			modify_match();
@@ -93,7 +105,11 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 			match_rest();
 		}
 	}
-	constexpr CTRE_FORCE_INLINE const auto & operator*() const noexcept {
+	
+	constexpr CTRE_FORCE_INLINE regex_split_iterator & operator=(const regex_split_iterator &) noexcept = default;
+	constexpr CTRE_FORCE_INLINE regex_split_iterator & operator=(regex_split_iterator &&) noexcept = default;
+	
+	constexpr CTRE_FORCE_INLINE const value_type & operator*() const noexcept {
 		return current_match;
 	}
 	constexpr CTRE_FORCE_INLINE regex_split_iterator & operator++() noexcept {
