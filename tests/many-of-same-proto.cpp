@@ -3,7 +3,7 @@ using namespace ctre::test_literals;
 
 void empty_symbol() { }
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 #define CTRE_TEST(pattern) static_assert(pattern ## _ctre_test)
 #else
 

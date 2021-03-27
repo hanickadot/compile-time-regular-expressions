@@ -209,7 +209,7 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 }
 
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTLL_CNTTP_COMPILER_CHECK
 	#define CTLL_FIXED_STRING ctll::fixed_string
 #else
 	#define CTLL_FIXED_STRING const auto &

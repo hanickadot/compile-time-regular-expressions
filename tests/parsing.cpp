@@ -4,7 +4,7 @@ void empty_symbol() { }
 
 using namespace ctre::test_literals;
 
-#if !(__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if !CTRE_CNTTP_COMPILER_CHECK
 #define CTRE_TEST(pattern) (pattern ## _ctre_test)
 #else
 
@@ -118,6 +118,14 @@ static_assert(CTRE_TEST("\\d[\\W]k"));
 static_assert(CTRE_TEST("^[a-f]$"));
 static_assert(CTRE_TEST("^[a]$"));
 static_assert(CTRE_TEST("^[ab]$"));
+static_assert(CTRE_TEST("/"));
+static_assert(CTRE_TEST("[/]"));
+static_assert(CTRE_TEST("[\\[]"));
+static_assert(CTRE_TEST("[\\[-a]"));
+static_assert(CTRE_TEST("[\\[-\\[]"));
+static_assert(CTRE_TEST("[/-/]"));
+static_assert(CTRE_TEST("[!-/]"));
+static_assert(CTRE_TEST("[|]"));
 static_assert(CTRE_TEST("^abc"));
 static_assert(CTRE_TEST("a"));
 static_assert(CTRE_TEST("a(?=^)b")); // positive lookahead
@@ -155,7 +163,7 @@ static_assert(CTRE_TEST("^(?=.*(a)\\g{1}.*)$"));
 
 static_assert(CTRE_TEST("\\b"));
 static_assert(CTRE_TEST("\\A"));
-static_assert(CTRE_TEST("[\\A]"));
+static_assert(!CTRE_TEST("[\\A]"));
 static_assert(!CTRE_TEST("\\i")); // this is not existing backslash
 static_assert(CTRE_TEST("(.*)\\1"));
 
