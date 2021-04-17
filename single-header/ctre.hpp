@@ -2900,6 +2900,7 @@ struct utf8_range {
 #include <string>
 #include <iterator>
 #include <iosfwd>
+#include <charconv>
 
 namespace ctre {
 
@@ -2984,6 +2985,13 @@ template <size_t Id, typename Name = void> struct captured_content {
 			}
 			#endif
 			return static_cast<size_t>(std::distance(begin(), end()));
+		}
+		
+		template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
+			R result{0};
+			const auto view = to_view();
+			std::from_chars(view.data(), view.data() + view.size(), result, base);
+			return result;
 		}
 
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
@@ -3200,6 +3208,10 @@ public:
 	
 	constexpr CTRE_FORCE_INLINE explicit operator std::basic_string<char_type>() const noexcept {
 		return to_string();
+	}
+	
+	template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
+		return _captures.template select<0>().template to_number<R>(base);
 	}
 	
 	constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
