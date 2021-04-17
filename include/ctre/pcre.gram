@@ -1,4 +1,5 @@
 backslash={\\}
+slash={/}
 dot={.}
 dolar={$}
 open={(}
@@ -25,8 +26,8 @@ escape_alphanum={b,c,h,i,j,k,l,m,o,q,v,y,z,A,B,C,E,F,G,H,I,J,K,L,M,O,Q,U,V,X,Y,Z
 escape_backreference={1,2,3,4,5,6,7,8,9}
 hexdec={0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,A,B,C,D,E,F}
 octal={0,1,2,3,4,5,6,7}
-nonspecial_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,,:,!,=,_}
-nonspecial_characters_in_class={_,+,*,(,),.,$,\{,\},?,!,=,<,>}
+nonspecial_characters={/,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,,:,!,=,_}
+nonspecial_characters_in_class={/,_,+,*,(,),.,$,\{,\},?,!,=,<,>,|}
 alpha_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,_}
 alphanum_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,_}
 set_control_chars={:,],-}
@@ -56,6 +57,7 @@ repeat->epsilon | plus,[repeat_plus],<mod>|star,[repeat_star],<mod>|questionmark
 repeat->copen,<number>,[repeat_exactly],cclose
 repeat->copen,<number>,comma,[repeat_at_least],cclose,<mod>
 repeat->copen,<number>,comma,<number>,[repeat_ab],cclose,<mod>
+
 mod->epsilon | questionmark,[make_lazy] | plus,[make_possessive]
 mod_opt->epsilon | questionmark,[make_lazy]
 
@@ -110,11 +112,11 @@ setitem2->backslash,<backslash_range>,<range> | backslash,<backslash_set>
 range->epsilon
 range->minus,other,[push_character],[make_range]|minus,nonspecial_characters,[push_character],[make_range]
 range->minus,backslash,<backslash_range>,[make_range]|minus,nonspecial_characters_in_class,[push_character],[make_range]
+range->minus,caret,[push_character],[make_range]
 
-
-backslash_set-><special>,[push_character]
-special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar|minus
-backslash_set->escape_backreference,[create_number],[make_back_reference]
+# backslash range can be used in range match
+backslash_range-><special>,[push_character]
+special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar|minus|slash
 
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 
@@ -131,6 +133,7 @@ backslash_range->e,[push_character_escape]
 backslash_range->f,[push_character_formfeed]
 backslash_range->minus,[push_character]
 
+# sets generates a set of matches and can't be used in range
 backslash_set->d,[class_digit]|D,[class_nondigit]
 backslash_set->w,[class_word]|W,[class_nonword]
 backslash_set->N,[class_nonnewline]
@@ -140,11 +143,12 @@ backslash_set->h,[class_horizontal_space]|H,[class_non_horizontal_space]
 backslash_set->p,copen,<property_name>,cclose,[make_property]
 backslash_set->P,copen,<property_name>,cclose,[make_property_negative]
 
-backslash_set->A,[push_assert_subject_begin]
-backslash_set->z,[push_assert_subject_end]
-backslash_set->Z,[push_assert_subject_end_with_lineend]
-backslash_set->b,[push_word_boundary]
-backslash_set->B,[push_not_word_boundary]
+# plain backslash can be used only outside of character set
+backslash->A,[push_assert_subject_begin]
+backslash->z,[push_assert_subject_end]
+backslash->Z,[push_assert_subject_end_with_lineend]
+backslash->b,[push_word_boundary]
+backslash->B,[push_not_word_boundary]
 
 property_name->alphanum_characters,[push_property_name],<property_name2>
 property_name->dot,[push_property_name],<property_name2>
@@ -161,6 +165,7 @@ backslash-><backslash_range>|<backslash_set>
 backslash->g,copen,minus,<number>,cclose,[make_relative_back_reference]
 backslash->g,copen,<number>,cclose,[make_back_reference]
 backslash->g,copen,<block_name>,cclose,[make_back_reference]
+backslash->escape_backreference,[create_number],[make_back_reference]
 
 character->other,[push_character] | nonspecial_characters,[push_character] | set_control_chars,[push_character] | dot,[push_character_anything] | backslash,<backslash>|capture_control_chars,[push_character] | \>,[push_character]
 

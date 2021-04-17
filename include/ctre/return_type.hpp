@@ -8,6 +8,7 @@
 #include <string_view>
 #include <string>
 #include <iterator>
+#include <iosfwd>
 
 namespace ctre {
 
@@ -145,6 +146,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 		friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const storage & rhs) noexcept {
 			return bool(rhs) ? lhs != rhs.view() : false;
 		}
+		friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const storage & rhs) {
+			return str << rhs.view();
+		}
 	};
 };
 
@@ -171,7 +175,7 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template exists<Name>();
 		}
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 #else
 	template <const auto & Name> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
@@ -214,7 +218,7 @@ template <typename Head, typename... Tail> struct captures<Head, Tail...>: captu
 			return captures<Tail...>::template select<Name>();
 		}
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 #else
 	template <const auto & Name> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
@@ -239,7 +243,7 @@ template <> struct captures<> {
 	template <typename> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 		return false;
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
 #else
 	template <const auto &> CTRE_FORCE_INLINE static constexpr bool exists() noexcept {
@@ -252,7 +256,7 @@ template <> struct captures<> {
 	template <typename> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 		return capture_not_exists;
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
 #else
 	template <const auto &> CTRE_FORCE_INLINE constexpr auto & select() const noexcept {
@@ -278,7 +282,7 @@ public:
 	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 		return _captures.template select<Name>();
 	}
-#if (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L))
+#if CTRE_CNTTP_COMPILER_CHECK
 	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 #else
 	template <const auto & Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
@@ -362,6 +366,9 @@ public:
 	}
 	friend CTRE_FORCE_INLINE constexpr bool operator!=(std::basic_string_view<char_type> lhs, const regex_results & rhs) noexcept {
 		return bool(rhs) ? lhs != rhs.view() : true;
+	}
+	friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const regex_results & rhs) {
+		return str << rhs.view();
 	}
 };
 

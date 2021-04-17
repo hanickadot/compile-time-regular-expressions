@@ -4,7 +4,7 @@
 
 Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.
 
-You can use the single header version from directory `single-header`. This header can be regenerated with `make single-header`.
+You can use the single header version from directory `single-header`. This header can be regenerated with `make single-header`. If you are using cmake, you can add this directory as subdirectory and link to target `ctre`.
 
 More info at [compile-time.re](https://compile-time.re/)
 
@@ -37,6 +37,62 @@ The library is implementing most of the PCRE syntax with a few exceptions:
 * unicode grapheme cluster (`\X`)
 
 More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2syntax.html).
+
+## Basic API
+
+This is approximated API specification from a user perspective (omitting `constexpr` and `noexcept` which are everywhere, and using C++20 syntax even the API is C++17 compatible):
+```c++
+// look if whole input matches the regex:
+template <fixed_string regex> auto ctre::match(auto Range &&) -> regex_results;
+template <fixed_string regex> auto ctre::match(auto First &&, auto Last &&) -> regex_results;
+
+// look if input contains match somewhere inside of itself:
+template <fixed_string regex> auto ctre::search(auto Range &&) -> regex_results;
+template <fixed_string regex> auto ctre::search(auto First &&, auto Last &&) -> regex_results;
+
+// check if input starts with match (but doesn't need to match everything):
+template <fixed_string regex> auto ctre::starts_with(auto Range &&) -> regex_results;
+template <fixed_string regex> auto ctre::starts_with(auto First &&, auto Last &&) -> regex_results;
+
+// result type is deconstructible into a structured bindings
+template <...> struct regex_results {
+	operator bool() const; // if it's a match
+	auto to_view() const -> std::string_view; // also view()
+	auto to_string() const -> std::string; // also str()
+	operator std::string_view() const; // also supports all char variants
+	explicit operator std::string() const;
+	
+	// also size(), begin(), end(), data()
+	
+	size_t count() const; // number of captures 
+	template <size_t Id> const captured_content & get() const; // provide specific capture, whole regex_results is implicit capture 0
+};
+```
+
+### Range outputing API
+
+```c++
+// search for regex in input and return each occurence, ignoring rest:
+template <fixed_string regex> auto ctre::range(auto Range &&) -> range of regex_result;
+template <fixed_string regex> auto ctre::range(auto First &&, auto Last &&) -> range of regex_result;
+
+// return range of each match, stopping at something which can't be matched
+template <fixed_string regex> auto ctre::tokenize(auto Range &&) -> range of regex_result;
+template <fixed_string regex> auto ctre::tokenize(auto First &&, auto Last &&) -> range of regex_result;
+
+// return parts of the input splited by the regex, returning it as part of content of the implicit zero capture (other captures are not changed, you can use it to access how the values were splitted):
+template <fixed_string regex> auto ctre::split(auto Range &&) -> regex_result;
+template <fixed_string regex> auto ctre::split(auto First &&, auto Last &&) -> range of regex_result;
+```
+
+### Functors
+
+All the functions (`ctre::match`, `ctre::search`, `ctre::starts_with`, `ctre::range`, `ctre::tokenize`, `ctre::split`) are functors and can be used without parenthesis:
+
+```c++
+auto matcher = ctre::match<"regex">;
+if (matcher(input)) ...
+```
 
 ### Possible subjects (inputs)
 
@@ -188,3 +244,7 @@ for (auto match: ctre::range<"([0-9]+),?">(input)) {
     std::cout << std::string_view{match.get<0>()} << "\n";
 }
 ```
+
+## Running tests (for developers)
+
+Just run `make` in root of this project.
