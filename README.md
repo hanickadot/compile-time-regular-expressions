@@ -43,19 +43,19 @@ More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2synt
 This is approximated API specification from a user perspective (omitting `constexpr` and `noexcept` which are everywhere, and using C++20 syntax even the API is C++17 compatible):
 ```c++
 // look if whole input matches the regex:
-template <fixed_string regex> auto ctre::match(auto Range &&) -> regex_result;
-template <fixed_string regex> auto ctre::match(auto First &&, auto Last &&) -> regex_result;
+template <fixed_string regex> auto ctre::match(auto Range &&) -> regex_results;
+template <fixed_string regex> auto ctre::match(auto First &&, auto Last &&) -> regex_results;
 
 // look if input contains match somewhere inside of itself:
-template <fixed_string regex> auto ctre::search(auto Range &&) -> regex_result;
-template <fixed_string regex> auto ctre::search(auto First &&, auto Last &&) -> regex_result;
+template <fixed_string regex> auto ctre::search(auto Range &&) -> regex_results;
+template <fixed_string regex> auto ctre::search(auto First &&, auto Last &&) -> regex_results;
 
 // check if input starts with match (but doesn't need to match everything):
-template <fixed_string regex> auto ctre::starts_with(auto Range &&) -> regex_result;
-template <fixed_string regex> auto ctre::starts_with(auto First &&, auto Last &&) -> regex_result;
+template <fixed_string regex> auto ctre::starts_with(auto Range &&) -> regex_results;
+template <fixed_string regex> auto ctre::starts_with(auto First &&, auto Last &&) -> regex_results;
 
 // result type is deconstructible into a structured bindings
-template <...> struct regex_result {
+template <...> struct regex_results {
 	operator bool() const; // if it's a match
 	auto to_view() const -> std::string_view; // also view()
 	auto to_string() const -> std::string; // also str()
@@ -65,7 +65,7 @@ template <...> struct regex_result {
 	// also size(), begin(), end(), data()
 	
 	size_t count() const; // number of captures 
-	template <size_t Id> const regex_result & get() const; // provide specific capture, whole regex_result is implicit capture 0
+	template <size_t Id> const captured_content & get() const; // provide specific capture, whole regex_results is implicit capture 0
 };
 ```
 
