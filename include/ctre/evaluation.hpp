@@ -20,7 +20,7 @@
 
 namespace ctre {
 
-template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) {
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) noexcept {
 	if constexpr (Limit == 0) {
 		// infinite
 		return true;
@@ -29,7 +29,7 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(s
 	}
 }
 
-template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) {
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) noexcept {
 	if constexpr (Limit == 0) {
 		// infinite
 		return false;
@@ -107,7 +107,7 @@ template <typename Iterator> struct string_match_result {
 	bool match;
 };
 
-template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & end) {
+template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & end) noexcept {
 	if (it != end) {
 		using char_type = decltype(*it);
 		return *it++ == static_cast<char_type>(c);
@@ -363,9 +363,9 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // (gready) repeat
 template <typename R, typename Iterator, typename EndIterator, size_t A, size_t B, typename... Content, typename... Tail> 
 #ifdef CTRE_MSVC_GREEDY_WORKAROUND
-constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr inline void evaluate_recursive(R & result, size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) noexcept {
 #else
-constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) {
+constexpr inline R evaluate_recursive(size_t i, const Iterator begin, Iterator current, const EndIterator end, [[maybe_unused]] const flags & f, R captures, ctll::list<repeat<A,B,Content...>, Tail...> stack) noexcept {
 #endif
 	if (less_than_or_infinite<B>(i)) {
 		 
