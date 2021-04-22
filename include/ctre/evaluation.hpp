@@ -136,11 +136,32 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 // matching select in patterns
 template <typename R, typename Iterator, typename EndIterator, typename HeadOptions, typename... TailOptions, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator end, const flags & f, R captures, ctll::list<select<HeadOptions, TailOptions...>, Tail...>) noexcept {
-	if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
-		return r;
+#ifndef CTRE_DISABLE_GREEDY_OPT
+	if constexpr (sizeof...(TailOptions) > 0 && !collides(calculate_first(sequence<HeadOptions, Tail...>{}), calculate_first(sequence<select<TailOptions...>, Tail...>{}))) {
+		using set_type = decltype(transform_into_set(calculate_first(sequence<HeadOptions, Tail...>{})));
+		if constexpr (::std::is_same_v<set<>, set_type>) {
+			if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
+				return r;
+			} else {
+				return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+			}
+		} else {
+			if (auto r = evaluate(begin, current, end, f, captures, ctll::list<set_type, end_cycle_mark>{})) {
+				return evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>{});
+			} else {
+				return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+			}
+		}
 	} else {
-		return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+#endif
+		if (auto r = evaluate(begin, current, end, f, captures, ctll::list<HeadOptions, Tail...>())) {
+			return r;
+		} else {
+			return evaluate(begin, current, end, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+		}
+#ifndef CTRE_DISABLE_GREEDY_OPT
 	}
+#endif
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 

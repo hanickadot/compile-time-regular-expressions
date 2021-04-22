@@ -368,6 +368,21 @@ template <typename CB> constexpr void negative_helper(ctre::negative_set<>, CB &
 	}
 }
 
+template <typename... Content>
+constexpr auto transform_into_set(ctll::list<Content...>) {
+	return ctre::set<decltype(transform_into_set(Content{}))...>{};
+}
+
+template <typename T>
+constexpr auto transform_into_set(T) {
+	return T{};
+}
+
+template<>
+constexpr auto transform_into_set(can_be_anything) {
+	return ctre::char_range<std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max()>{};
+}
+
 // simple fixed set
 // TODO: this needs some optimizations
 template <size_t Capacity> class point_set {
@@ -469,6 +484,9 @@ public:
 	constexpr bool check(can_be_anything) {
 		return used > 0;
 	}
+	constexpr bool check(empty) {
+		return used == 0;
+	}
 	template <typename... Content> constexpr bool check(ctre::negative_set<Content...> nset) {
 		bool collision = false;
 		negative_helper(nset, [&](int64_t low, int64_t high){
@@ -496,6 +514,9 @@ public:
 	}
 	constexpr void populate(can_be_anything) {
 		insert(std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max());
+	}
+	constexpr void populate(empty) {
+		//do nothing
 	}
 	template <typename... Content> constexpr void populate(ctre::negative_set<Content...> nset) {
 		negative_helper(nset, [&](int64_t low, int64_t high){
