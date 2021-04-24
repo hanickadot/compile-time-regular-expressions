@@ -38,6 +38,14 @@ The library is implementing most of the PCRE syntax with a few exceptions:
 
 More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2syntax.html).
 
+### Unknown character escape behaviour
+
+Not all escaped characters are automatically inserted as self, behaviour of the library is escaped characters are with special meaning, unknown escaped character is a syntax error.
+
+Explicitly allowed character escapes which insert only the character are:
+
+```\-\"\<\>```
+
 ## Basic API
 
 This is approximated API specification from a user perspective (omitting `constexpr` and `noexcept` which are everywhere, and using C++20 syntax even the API is C++17 compatible):

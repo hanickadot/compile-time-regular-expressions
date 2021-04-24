@@ -21,13 +21,14 @@ angle_open={<}
 angle_close={>}
 equal_sign={=}
 exclamation_mark={!}
+doublequote={\"}
 
 escape_alphanum={b,c,h,i,j,k,l,m,o,q,v,y,z,A,B,C,E,F,G,H,I,J,K,L,M,O,Q,U,V,X,Y,Z,1,2,3,4,5,6,7,8,9}
 escape_backreference={1,2,3,4,5,6,7,8,9}
 hexdec={0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,A,B,C,D,E,F}
 octal={0,1,2,3,4,5,6,7}
-nonspecial_characters={/,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,,:,!,=,_}
-nonspecial_characters_in_class={/,_,+,*,(,),.,$,\{,\},?,!,=,<,>,|}
+nonspecial_characters={/,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,\,,:,!,=,_,\"}
+nonspecial_characters_in_class={/,_,+,*,(,),.,$,\{,\},?,!,=,<,>,|,\"}
 alpha_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,_}
 alphanum_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,_}
 set_control_chars={:,],-}
@@ -132,6 +133,9 @@ backslash_range->a,[push_character_alarm]
 backslash_range->e,[push_character_escape]
 backslash_range->f,[push_character_formfeed]
 backslash_range->minus,[push_character]
+backslash_range->doublequote,[push_character]
+backslash_range->angle_open,[push_character]
+backslash_range->angle_close,[push_character]
 
 # sets generates a set of matches and can't be used in range
 backslash_set->d,[class_digit]|D,[class_nondigit]

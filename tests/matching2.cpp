@@ -288,3 +288,13 @@ static_assert(CTRE_CREATE("[\\--\\-]").match("-"sv));
 
 // issue #131
 static_assert(CTRE_CREATE("(|a)+").match("aaaaaa"sv));
+
+// issue # 187
+static_assert(CTRE_CREATE("\"").match("\""sv));
+static_assert(CTRE_CREATE("[\"]").match("\""sv));
+static_assert(CTRE_CREATE("[^\"]").match("a"sv));
+static_assert(CTRE_CREATE("<").match("<"sv));
+static_assert(CTRE_CREATE("[<]").match("<"sv));
+static_assert(CTRE_CREATE("\\<").match("<"sv));
+static_assert(CTRE_CREATE("[\\<]").match("<"sv));
+static_assert(CTRE_CREATE("[^<]").match("a"sv));
