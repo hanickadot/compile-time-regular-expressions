@@ -9,7 +9,9 @@
 #include <string>
 #include <iterator>
 #include <iosfwd>
+#if __has_include(<charconv>)
 #include <charconv>
+#endif
 
 namespace ctre {
 
@@ -97,12 +99,14 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return static_cast<size_t>(std::distance(begin(), end()));
 		}
 		
+#if __has_include(<charconv>)
 		template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
 			R result{0};
 			const auto view = to_view();
 			std::from_chars(view.data(), view.data() + view.size(), result, base);
 			return result;
 		}
+#endif
 
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			// random access, because C++ (waving hands around)
@@ -320,9 +324,11 @@ public:
 		return to_string();
 	}
 	
+#if __has_include(<charconv>)
 	template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
 		return _captures.template select<0>().template to_number<R>(base);
 	}
+#endif
 	
 	constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 		return _captures.template select<0>().to_view();
