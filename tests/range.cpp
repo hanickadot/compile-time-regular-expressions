@@ -1,9 +1,9 @@
 #include <ctre.hpp>
 #include <iostream>
 
-static constexpr auto pattern = ctll::fixed_string("(?<first>[0-9])[0-9]++");
+[[maybe_unused]] static constexpr auto pattern = ctll::fixed_string("(?<first>[0-9])[0-9]++");
 
-static constexpr auto name = ctll::fixed_string("first");
+[[maybe_unused]] static constexpr auto name = ctll::fixed_string("first");
 
 int main() {
 	using namespace std::string_view_literals;

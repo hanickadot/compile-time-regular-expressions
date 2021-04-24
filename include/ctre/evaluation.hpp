@@ -43,7 +43,9 @@ constexpr bool is_bidirectional(...) { return false; }
 
 // sink for making the errors shorter
 template <typename R, typename Iterator, typename EndIterator> 
-constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ...) noexcept = delete;
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ...) noexcept {
+	return not_matched;
+}
 
 // if we found "accept" object on stack => ACCEPT
 template <typename R, typename Iterator, typename EndIterator> 

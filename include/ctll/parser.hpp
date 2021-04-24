@@ -41,8 +41,11 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 	using grammar = augment_grammar<Grammar>;
 	
 	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct results {
+	
+		static constexpr bool is_correct = Decision == decision::accept;
+	
 		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
-			return Decision == decision::accept;
+			return is_correct;
 		}
 		
 		#ifdef __GNUC__ // workaround to GCC bug
@@ -56,6 +59,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 		#endif
 	
 		using output_type = Subject;
+		static constexpr size_t position = Pos;
     
 		constexpr auto operator+(placeholder) const noexcept {
 			if constexpr (Decision == decision::undecided) {

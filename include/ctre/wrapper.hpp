@@ -257,22 +257,33 @@ template <typename Range, typename RE, typename Method, typename Modifier> const
 	return re.multi_exec(std::forward<Range>(range));
 }
 
+// error reporting of problematic position in a regex
+template <size_t> struct problem_at_position; // do not define!
+
+template <> struct problem_at_position<~static_cast<size_t>(0)> {
+	constexpr operator bool() const noexcept {
+		return true;
+	}
+};
+
 #if CTRE_CNTTP_COMPILER_CHECK
 #define CTRE_REGEX_INPUT_TYPE ctll::fixed_string
-template <auto input> struct regex_builder {
-	static constexpr auto _input = input;
-	using _tmp = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
-};
+#define CTRE_REGEX_TEMPLATE_COPY_TYPE auto
 #else
 #define CTRE_REGEX_INPUT_TYPE const auto &
-template <const auto & input> struct regex_builder {
-	using _tmp = typename ctll::parser<ctre::pcre, input, ctre::pcre_actions>::template output<pcre_context<>>;
-	static_assert(_tmp(), "Regular Expression contains syntax error.");
-	using type = ctll::conditional<(bool)(_tmp()), decltype(ctll::front(typename _tmp::output_type::stack_type())), ctll::list<reject>>;
-};
+#define CTRE_REGEX_TEMPLATE_COPY_TYPE const auto &
 #endif
+
+template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct regex_builder {
+	static constexpr auto _input = input;
+	using result = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
+	
+	static constexpr auto n = result::is_correct ? ~static_cast<size_t>(0) : result::position;
+	
+	static_assert(result::is_correct && problem_at_position<n>{}, "Regular Expression contains syntax error.");
+	
+	using type = ctll::conditional<result::is_correct, decltype(ctll::front(typename result::output_type::stack_type())), ctll::list<reject>>;
+};
 
 template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto match = regular_expression<typename regex_builder<input>::type, match_method, singleline>();
 
