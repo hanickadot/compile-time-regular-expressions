@@ -1,7 +1,7 @@
 #ifndef CTRE__UTILITY__HPP
 #define CTRE__UTILITY__HPP
 
-#define CTRE_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || (__cpp_nontype_template_args >= 201411L && __clang_major__ >= 12))
+#define CTRE_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || ((__cpp_nontype_template_args >= 201411L) && (__clang_major__ >= 12) && !__apple_build_version__))
 
 #if __GNUC__ > 9
 #if __has_cpp_attribute(likely)

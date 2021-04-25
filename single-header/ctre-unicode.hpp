@@ -460,7 +460,7 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 #include <type_traits>
 
-#define CTLL_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || (__cpp_nontype_template_args >= 201411L && __clang_major__ >= 12))
+#define CTLL_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || ((__cpp_nontype_template_args >= 201411L) && (__clang_major__ >= 12) && !__apple_build_version__))
 
 #ifdef _MSC_VER
 #define CTLL_FORCE_INLINE __forceinline
@@ -1340,7 +1340,7 @@ struct pcre {
 #ifndef CTRE__UTILITY__HPP
 #define CTRE__UTILITY__HPP
 
-#define CTRE_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || (__cpp_nontype_template_args >= 201411L && __clang_major__ >= 12))
+#define CTRE_CNTTP_COMPILER_CHECK (__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L) || ((__cpp_nontype_template_args >= 201411L) && (__clang_major__ >= 12) && !__apple_build_version__))
 
 #if __GNUC__ > 9
 #if __has_cpp_attribute(likely)
