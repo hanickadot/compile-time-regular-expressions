@@ -95,6 +95,16 @@ jobs:
     env:
       - CXX_STANDARD=2a
 
+  - os: osx
+    osx_image: xcode12
+    env:
+      - CXX_STANDARD=17
+
+  - os: osx
+    osx_image: xcode12
+    env:
+      - CXX_STANDARD=2a
+
 install:
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
   - uname -a
