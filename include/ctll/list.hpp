@@ -39,6 +39,13 @@ template <typename Front, typename List> struct list_pop_pair {
 	constexpr list_pop_pair() = default;
 };
 
+template <typename A, typename B, typename C> struct list_pop_triple {
+	A front{};
+	B tail{};
+	C other{};
+	constexpr list_pop_triple() = default;
+};
+
 template <typename Head, typename... As, typename T = _nothing> constexpr auto pop_and_get_front(list<Head, As...>, T = T()) noexcept -> list_pop_pair<Head, list<As...>> { return {}; }
 template <typename T = _nothing> constexpr auto pop_and_get_front(empty_list, T = T()) noexcept -> list_pop_pair<T, empty_list> { return {}; }
 
