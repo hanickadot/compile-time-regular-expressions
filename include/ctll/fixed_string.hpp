@@ -42,7 +42,7 @@ template <size_t N> struct fixed_string {
 	bool correct_flag{true};
 	template <typename T> constexpr fixed_string(const T (&input)[N+1]) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
-			#if CTRE_STRING_IS_UTF8
+			#ifdef CTRE_STRING_IS_UTF8
 				size_t out{0};
 				for (size_t i{0}; i < N; ++i) {
 					if ((i == (N-1)) && (input[i] == 0)) break;
@@ -208,11 +208,5 @@ template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_st
 template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 }
-
-#if CTLL_CNTTP_COMPILER_CHECK
-	#define CTLL_FIXED_STRING ctll::fixed_string
-#else
-	#define CTLL_FIXED_STRING const auto &
-#endif
 
 #endif
