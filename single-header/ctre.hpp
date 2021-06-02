@@ -274,7 +274,7 @@ template <size_t N> struct fixed_string {
 	bool correct_flag{true};
 	template <typename T> constexpr fixed_string(const T (&input)[N+1]) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
-			#if CTRE_STRING_IS_UTF8
+			#ifdef CTRE_STRING_IS_UTF8
 				size_t out{0};
 				for (size_t i{0}; i < N; ++i) {
 					if ((i == (N-1)) && (input[i] == 0)) break;
