@@ -209,10 +209,4 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 }
 
-#if CTLL_CNTTP_COMPILER_CHECK
-	#define CTLL_FIXED_STRING ctll::fixed_string
-#else
-	#define CTLL_FIXED_STRING const auto &
-#endif
-
 #endif
