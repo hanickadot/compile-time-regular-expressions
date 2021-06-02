@@ -4800,7 +4800,7 @@ template <typename... Ts> constexpr bool is_range<multi_subject_range<Ts...>> = 
 
 }
 
-#if __cpp_lib_ranges >= 201911
+#if defined __cpp_lib_ranges && __cpp_lib_ranges >= 201911
 namespace std::ranges {
 
 	template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_range<Ts...>> = true;
