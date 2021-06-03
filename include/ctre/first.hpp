@@ -398,10 +398,10 @@ template <size_t Capacity> class point_set {
 		auto first = begin();
 		auto last = end();
 		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
+		auto count = std::distance(first, last);
+                while (count != 0) {
 			it = first;
-			size_t step = count / 2;
+			auto step = count / 2;
 			std::advance(it, step);
 			if (*it < obj) {
 				first = ++it;
