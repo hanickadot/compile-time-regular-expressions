@@ -4355,31 +4355,32 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	}
 
 #ifndef CTRE_DISABLE_GREEDY_OPT
-	if constexpr (!collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
+	else if constexpr (!collides(calculate_first(Content{}...), calculate_first(Tail{}...))) {
 		return evaluate(begin, current, end, f, captures, ctll::list<possessive_repeat<A,B,Content...>, Tail...>());
 	}
 #endif
-	
-	// A..B
-	size_t i{0};
-	while (less_than<A>(i)) {
-		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+	else {
+		// A..B
+		size_t i{0};
+		while (less_than<A>(i)) {
+			auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
 		
-		if (!inner_result) return not_matched;
+			if (!inner_result) return not_matched;
 		
-		captures = inner_result.unmatch();
-		current = inner_result.get_end_position();
+			captures = inner_result.unmatch();
+			current = inner_result.get_end_position();
 		
-		++i;
-	}
+			++i;
+		}
 	
 #ifdef CTRE_MSVC_GREEDY_WORKAROUND
-	R result;
-	evaluate_recursive(result, i, begin, current, end, f, captures, stack);
-	return result;
+		R result;
+		evaluate_recursive(result, i, begin, current, end, f, captures, stack);
+		return result;
 #else
-	return evaluate_recursive(i, begin, current, end, f, captures, stack);
+		return evaluate_recursive(i, begin, current, end, f, captures, stack);
 #endif
+	}
 
 }
 
