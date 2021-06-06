@@ -294,46 +294,46 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 	if constexpr (B != 0 && A > B) {
 		return not_matched;
-	}
+	} else {
+		const Iterator backup_current = current;
 	
-	const Iterator backup_current = current;
+		size_t i{0};
 	
-	size_t i{0};
+		while (less_than<A>(i)) {
+			auto outer_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+		
+			if (!outer_result) return not_matched;
+		
+			captures = outer_result.unmatch();
+			current = outer_result.get_end_position();
+		
+			++i;
+		}
 	
-	while (less_than<A>(i)) {
-		auto outer_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
-		
-		if (!outer_result) return not_matched;
-		
-		captures = outer_result.unmatch();
-		current = outer_result.get_end_position();
-		
-		++i;
-	}
-	
-	if (auto outer_result = evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>())) {
-		return outer_result;
-	}
-	
-	while (less_than_or_infinite<B>(i)) {
-		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
-		
-		if (!inner_result) return not_matched;
-		
-		auto outer_result = evaluate(begin, inner_result.get_end_position(), end, consumed_something(f), inner_result.unmatch(), ctll::list<Tail...>());
-		
-		if (outer_result) {
+		if (auto outer_result = evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>())) {
 			return outer_result;
 		}
-		
-		captures = inner_result.unmatch();
-		current = inner_result.get_end_position();
-		
-		++i;
-	}
 	
-	// rest of regex
-	return evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>());
+		while (less_than_or_infinite<B>(i)) {
+			auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+		
+			if (!inner_result) return not_matched;
+		
+			auto outer_result = evaluate(begin, inner_result.get_end_position(), end, consumed_something(f), inner_result.unmatch(), ctll::list<Tail...>());
+		
+			if (outer_result) {
+				return outer_result;
+			}
+		
+			captures = inner_result.unmatch();
+			current = inner_result.get_end_position();
+		
+			++i;
+		}
+	
+		// rest of regex
+		return evaluate(begin, current, end, consumed_something(f), captures, ctll::list<Tail...>());
+	}
 }
 
 // possessive repeat
@@ -342,24 +342,24 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 
 	if constexpr ((B != 0) && (A > B)) {
 		return not_matched;
-	}
-	
-	const auto backup_current = current;
+	} else {
+		const auto backup_current = current;
 
-	for (size_t i{0}; less_than_or_infinite<B>(i); ++i) {
-		// try as many of inner as possible and then try outer once
-		auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
+		for (size_t i{0}; less_than_or_infinite<B>(i); ++i) {
+			// try as many of inner as possible and then try outer once
+			auto inner_result = evaluate(begin, current, end, not_empty_match(f), captures, ctll::list<Content..., end_cycle_mark>());
 		
-		if (!inner_result) {
-			if (!less_than<A>(i)) break;
-			return not_matched;
+			if (!inner_result) {
+				if (!less_than<A>(i)) break;
+				return not_matched;
+			}
+		
+			captures = inner_result.unmatch();
+			current = inner_result.get_end_position();
 		}
-		
-		captures = inner_result.unmatch();
-		current = inner_result.get_end_position();
-	}
 	
-	return evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>());
+		return evaluate(begin, current, end, consumed_something(f, backup_current != current), captures, ctll::list<Tail...>());
+	}
 }
 
 // (gready) repeat
