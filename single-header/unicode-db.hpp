@@ -293,10 +293,10 @@ struct flat_array {
                 if(it == std::end(data))
                     return false;
             }
+            return false;
         } else {
             return detail::binary_search(std::begin(data), std::end(data), u);
         }
-        return false;
     }
 };
 

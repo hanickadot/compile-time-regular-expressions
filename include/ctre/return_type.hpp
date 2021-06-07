@@ -94,6 +94,8 @@ template <size_t Id, typename Name = void> struct captured_content {
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return static_cast<size_t>(std::distance(_begin.ptr, _end.ptr));
+			} else {
+				return static_cast<size_t>(std::distance(begin(), end()));
 			}
 			#endif
 			return static_cast<size_t>(std::distance(begin(), end()));
@@ -121,6 +123,8 @@ template <size_t Id, typename Name = void> struct captured_content {
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return std::basic_string<char_type>(data_unsafe(), static_cast<size_t>(unit_size()));
+			} else {
+				return std::basic_string<char_type>(begin(), end());
 			}
 			#endif
 			return std::basic_string<char_type>(begin(), end());
