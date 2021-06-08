@@ -97,8 +97,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 			} else {
 				return static_cast<size_t>(std::distance(begin(), end()));
 			}
+                        #else
+                        return static_cast<size_t>(std::distance(begin(), end()));
 			#endif
-			return static_cast<size_t>(std::distance(begin(), end()));
 		}
 		
 #if __has_include(<charconv>)
