@@ -97,8 +97,8 @@ template <size_t Id, typename Name = void> struct captured_content {
 			} else {
 				return static_cast<size_t>(std::distance(begin(), end()));
 			}
-                        #else
-                        return static_cast<size_t>(std::distance(begin(), end()));
+			#else
+			return static_cast<size_t>(std::distance(begin(), end()));
 			#endif
 		}
 		
@@ -128,8 +128,8 @@ template <size_t Id, typename Name = void> struct captured_content {
 				return std::basic_string<char_type>(begin(), end());
 			}
 			#else
-                        return std::basic_string<char_type>(begin(), end());
-                        #endif
+			return std::basic_string<char_type>(begin(), end());
+			#endif
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
