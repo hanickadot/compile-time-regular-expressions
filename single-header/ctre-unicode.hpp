@@ -3933,7 +3933,9 @@ public:
 		insert(A,B);
 	}
 	constexpr void populate(can_be_anything) {
-		insert(std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max());
+		points[0].low = std::numeric_limits<int64_t>::min();
+		points[0].high = std::numeric_limits<int64_t>::max();
+		used = 1;
 	}
 	template <typename... Content> constexpr void populate(ctre::negative_set<Content...> nset) {
 		negative_helper(nset, [&](int64_t low, int64_t high){
