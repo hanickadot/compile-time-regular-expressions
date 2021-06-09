@@ -8,6 +8,44 @@
 #include <iterator>
 
 namespace ctre {
+constexpr char8_t* utf32_codepoint_to_utf8_codepoint(uint32_t code, char8_t *ptr) {
+	if (code < 0x80) {
+		ptr[0] = code;
+		return ptr + 1;
+	} else if (code < 0x800) {   // 00000yyy yyxxxxxx
+		ptr[0] = (0b11000000 | (code >> 6));
+		ptr[1] = (0b10000000 | (code & 0x3f));
+		return ptr + 2;
+	} else if (code < 0x10000) {  // zzzzyyyy yyxxxxxx
+		ptr[0] = (0b11100000 | (code >> 12));         // 1110zzz
+		ptr[1] = (0b10000000 | ((code >> 6) & 0x3f)); // 10yyyyy
+		ptr[2] = (0b10000000 | (code & 0x3f));        // 10xxxxx
+		return ptr + 3;
+	} else if (code < 0x200000) { // 000uuuuu zzzzyyyy yyxxxxxx
+		ptr[0] = (0b11110000 | (code >> 18));          // 11110uuu
+		ptr[1] = (0b10000000 | ((code >> 12) & 0x3f)); // 10uuzzzz
+		ptr[2] = (0b10000000 | ((code >> 6)  & 0x3f)); // 10yyyyyy
+		ptr[3] = (0b10000000 | (code & 0x3f));         // 10xxxxxx
+		return ptr + 4;
+	} else {
+		ptr[0] = 0xff; //invalid start byte
+		return ptr + 1;
+	}
+}
+
+constexpr uint32_t utf8_codepoint_length(uint32_t code) {
+	if (code < 0x80) {
+		return 1;
+	} else if (code < 0x800) {   // 00000yyy yyxxxxxx
+		return 2;
+	} else if (code < 0x10000) {  // zzzzyyyy yyxxxxxx
+		return 3;
+	} else if (code < 0x200000) { // 000uuuuu zzzzyyyy yyxxxxxx
+		return 4;
+	} else {
+		return 1;
+	}
+}
 
 struct utf8_iterator {
 	using self_type = utf8_iterator;

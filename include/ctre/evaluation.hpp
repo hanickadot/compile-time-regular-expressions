@@ -117,11 +117,73 @@ template <typename CharT, typename Iterator, typename EndIterator> constexpr CTR
 	return false;
 }
 
+#if __cpp_char8_t >= 201811
+template <size_t N, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_utf8_string(Iterator current, [[maybe_unused]] const EndIterator end, char8_t (&buffer)[N], std::index_sequence<Idx...>) noexcept {
+	//abuse inside knowledge of how utf8_iterator works
+	if constexpr (!std::is_same_v<::std::remove_const_t<EndIterator>, utf8_iterator::sentinel>) {
+		size_t count = end.ptr - current.ptr; //size_t count = std::distance(current.ptr, end.ptr);
+		size_t bump = ((count < N) ? count : N);
+		//using ^ operator vs != because gcc complains about parens
+#if defined(__GNUC__) && !defined(__clang__)
+		return { Iterator{current.ptr + bump, current.end}, (count >= N) && !(bool)(((current.ptr[Idx] != buffer[Idx])) + ... + size_t{0}) };
+#else
+		return { Iterator{current.ptr + bump, current.end}, (count >= N) && !(bool)(((current.ptr[Idx] ^ buffer[Idx])) | ... | char8_t{0}) };
+#endif
+	} else {
+		size_t count = current.end - current.ptr; //size_t count = std::distance(current.ptr, current.end);
+		size_t bump = ((count < N) ? count : N);
+#if defined(__GNUC__) && !defined(__clang__)
+		return { Iterator{current.ptr + bump, current.end}, (count >= N) && !(bool)(((current.ptr[Idx] != buffer[Idx])) + ... + size_t{0}) };
+#else
+		return { Iterator{current.ptr + bump, current.end}, (count >= N) && !(bool)(((current.ptr[Idx] ^ buffer[Idx])) | ... | char8_t{0}) };
+#endif
+	}
+}
+#endif
+
 template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, [[maybe_unused]] const EndIterator end, std::index_sequence<Idx...>) noexcept {
-
-	bool same = (compare_character(String, current, end) && ... && true);
-
-	return {current, same};
+#if __cpp_char8_t >= 201811
+	if constexpr (sizeof...(String) && std::is_same_v<::std::remove_const_t<Iterator>, utf8_iterator> && (std::is_same_v<std::remove_const_t<Iterator>, std::remove_const_t<EndIterator>> || std::is_same_v<::std::remove_const_t<EndIterator>, utf8_iterator::sentinel>)) {
+		constexpr size_t str_length = (utf8_codepoint_length(String) + ... + 0ULL);
+		//encode our String... into it's utf8 representation
+		char8_t utf8_sequence[str_length]{};
+		char8_t* ptr = utf8_sequence;
+		((ptr = utf32_codepoint_to_utf8_codepoint(String, ptr)), ...);
+		//run the comparison
+		return evaluate_match_utf8_string(current, end, utf8_sequence, std::make_index_sequence<str_length>());
+	} else if constexpr (sizeof...(String) && is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{}) && std::is_same_v<std::remove_const_t<Iterator>, std::remove_const_t<EndIterator>>) {
+		using char_type = ::std::remove_reference_t<::std::remove_cv_t<decltype(*current)>>;
+		//check the remaining bytes*
+		size_t count = end - current;
+		//make sure we only "bump" the iterator a safe distance
+		size_t bump = ((count < sizeof...(String)) ? count : sizeof...(String));
+		//do math against how many characters we match, avoid as many branches as possible
+#if defined(__GNUC__) && !defined(__clang__)
+		//because gcc's pedantic about binary operators and parens
+		return { current + bump, (count >= sizeof...(String)) && !(bool)(((current[Idx] != static_cast<char_type>(String))) + ... + size_t{0}) };
+#else
+		return { current + bump, (count >= sizeof...(String)) && !(bool)(((current[Idx] ^ static_cast<char_type>(String))) | ... | char_type{0}) };
+#endif
+	} else {
+		bool same = (compare_character(String, current, end) && ... && true);
+		return { current, same };
+	}
+#else
+	if constexpr (sizeof...(String) && is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{}) && std::is_same_v<std::remove_const_t<Iterator>, std::remove_const_t<EndIterator>>) {
+		using char_type = ::std::remove_reference_t<::std::remove_cv_t<decltype(*current)>>;
+		size_t count = end - current;
+		size_t bump = ((count < sizeof...(String)) ? count : sizeof...(String));
+#if defined(__GNUC__) && !defined(__clang__)
+		//because gcc's pedantic about binary operators and parens
+		return { current + bump, (count >= sizeof...(String)) && !(bool)(((current[Idx] != static_cast<char_type>(String))) + ... + size_t{0}) };
+#else
+		return { current + bump, (count >= sizeof...(String)) && !(bool)(((current[Idx] ^ static_cast<char_type>(String))) | ... | char_type{0}) };
+#endif
+	} else {
+		bool same = (compare_character(String, current, end) && ... && true);
+		return { current, same };
+	}
+#endif
 }
 
 template <typename R, typename Iterator, typename EndIterator, auto... String, typename... Tail> 
