@@ -3001,8 +3001,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 			} else {
 				return static_cast<size_t>(std::distance(begin(), end()));
 			}
-			#endif
+			#else
 			return static_cast<size_t>(std::distance(begin(), end()));
+			#endif
 		}
 		
 #if __has_include(<charconv>)
@@ -3030,8 +3031,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 			} else {
 				return std::basic_string<char_type>(begin(), end());
 			}
-			#endif
+			#else
 			return std::basic_string<char_type>(begin(), end());
+			#endif
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
@@ -3831,10 +3833,10 @@ template <size_t Capacity> class point_set {
 		auto first = begin();
 		auto last = end();
 		auto it = first;
-		size_t count = std::distance(first, last);
-		while (count > 0) {
+		auto count = std::distance(first, last);
+                while (count != 0) {
 			it = first;
-			size_t step = count / 2;
+			auto step = count / 2;
 			std::advance(it, step);
 			if (*it < obj) {
 				first = ++it;
