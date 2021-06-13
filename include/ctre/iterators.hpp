@@ -123,7 +123,7 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 	constexpr CTRE_FORCE_INLINE regex_split_iterator(const regex_split_iterator &) noexcept = default;
 	constexpr CTRE_FORCE_INLINE regex_split_iterator(regex_split_iterator &&) noexcept = default;
 
-	constexpr CTRE_FORCE_INLINE regex_split_iterator(BeginIterator begin, EndIterator end) noexcept: orig_begin{begin}, current{begin}, end{end}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, end)} {
+	constexpr CTRE_FORCE_INLINE regex_split_iterator(BeginIterator begin, EndIterator last) noexcept: orig_begin{begin}, current{begin}, end{last}, current_match{RE::template exec_with_result_iterator<ResultIterator>(current, last)} {
 		if (current_match) {
 			modify_match();
 		} else {
