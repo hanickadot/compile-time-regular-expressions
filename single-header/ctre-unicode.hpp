@@ -1429,35 +1429,35 @@ using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0',
 using space_chars = enumeration<' ', '\t', '\n', '\v', '\f', '\r'>;
 
 using vertical_space_chars = enumeration<
-	(char)0x000A, // Linefeed (LF)
-	(char)0x000B, // Vertical tab (VT)
-	(char)0x000C, // Form feed (FF)
-	(char)0x000D, // Carriage return (CR)
-	(char32_t)0x0085, // Next line (NEL)
-	(char32_t)0x2028, // Line separator
-	(char32_t)0x2029 // Paragraph separator
+	char{0x000A}, // Linefeed (LF)
+	char{0x000B}, // Vertical tab (VT)
+	char{0x000C}, // Form feed (FF)
+	char{0x000D}, // Carriage return (CR)
+	char32_t{0x0085}, // Next line (NEL)
+	char32_t{0x2028}, // Line separator
+	char32_t{0x2029} // Paragraph separator
 >;
 
 using horizontal_space_chars = enumeration<
-    (char)0x0009, // Horizontal tab (HT)
-    (char)0x0020, // Space
-    (char32_t)0x00A0, // Non-break space
-    (char32_t)0x1680, // Ogham space mark
-    (char32_t)0x180E, // Mongolian vowel separator
-    (char32_t)0x2000, // En quad
-    (char32_t)0x2001, // Em quad
-    (char32_t)0x2002, // En space
-    (char32_t)0x2003, // Em space
-    (char32_t)0x2004, // Three-per-em space
-    (char32_t)0x2005, // Four-per-em space
-    (char32_t)0x2006, // Six-per-em space
-    (char32_t)0x2007, // Figure space
-    (char32_t)0x2008, // Punctuation space
-    (char32_t)0x2009, // Thin space
-    (char32_t)0x200A, // Hair space
-    (char32_t)0x202F, // Narrow no-break space
-    (char32_t)0x205F, // Medium mathematical space
-    (char32_t)0x3000 // Ideographic space
+    char{0x0009}, // Horizontal tab (HT)
+    char{0x0020}, // Space
+    char32_t{0x00A0}, // Non-break space
+    char32_t{0x1680}, // Ogham space mark
+    char32_t{0x180E}, // Mongolian vowel separator
+    char32_t{0x2000}, // En quad
+    char32_t{0x2001}, // Em quad
+    char32_t{0x2002}, // En space
+    char32_t{0x2003}, // Em space
+    char32_t{0x2004}, // Three-per-em space
+    char32_t{0x2005}, // Four-per-em space
+    char32_t{0x2006}, // Six-per-em space
+    char32_t{0x2007}, // Figure space
+    char32_t{0x2008}, // Punctuation space
+    char32_t{0x2009}, // Thin space
+    char32_t{0x200A}, // Hair space
+    char32_t{0x202F}, // Narrow no-break space
+    char32_t{0x205F}, // Medium mathematical space
+    char32_t{0x3000} // Ideographic space
 >;
 
 using alphanum_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'> >;
@@ -2169,9 +2169,9 @@ template <auto V, size_t N, typename... Ts, typename Parameters> static constexp
 template <auto V, size_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::finish_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
 	constexpr size_t max_char = std::numeric_limits<char>::max();
 	if constexpr (N <= max_char) {
-		return pcre_context{ctll::push_front(character<(char)N>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(character<char{N}>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
-		return pcre_context{ctll::push_front(character<(char32_t)N>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(character<char32_t{N}>(), ctll::list<Ts...>()), subject.parameters};
 	} 
 }	
 
