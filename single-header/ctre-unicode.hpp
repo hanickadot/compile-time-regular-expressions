@@ -3876,10 +3876,60 @@ template <size_t Capacity> class point_set {
 			return out;
 		}
 	}
+	constexpr bool can_merge(point lhs, point rhs) noexcept {
+		point expanded_lhs = lhs;
+		//expand ranges by 1 in each direction
+		expanded_lhs.low -= (expanded_lhs.low > std::numeric_limits<int64_t>::min()) ? 1 : 0;
+		expanded_lhs.high += (expanded_lhs.high < std::numeric_limits<int64_t>::max()) ? 1 : 0;
+
+		point expanded_rhs = rhs;
+		expanded_rhs.low -= (expanded_rhs.low > std::numeric_limits<int64_t>::min()) ? 1 : 0;
+		expanded_rhs.high += (expanded_rhs.high < std::numeric_limits<int64_t>::max()) ? 1 : 0;
+		//for example [1,5] and [6,9] can merge into [1,9] 
+		return (expanded_lhs.low <= rhs.high && rhs.low <= expanded_lhs.high) ||
+			(expanded_rhs.low <= lhs.high && lhs.low <= expanded_rhs.high);
+	}
+	constexpr point* insert_or_merge_point(int64_t position, int64_t other) {
+		point obj{ position, other };
+		auto it = lower_bound(obj);
+		if (it == end()) {
+			if (used && can_merge(*(it-1), obj)) {
+				auto back = it - 1;
+				back->low = back->low < obj.low ? back->low : obj.low;
+				back->high = back->high > obj.high ? back->high : obj.high;
+			} else {
+				*it = obj;
+				used++;
+			}
+			return it;
+		} else {
+			auto out = it;
+			//good chance we can merge here
+			if (can_merge(*it, obj)) {
+				//merge the points together vs inserting
+				it->low = it->low < obj.low ? it->low : obj.low;
+				it->high = it->high > obj.high ? it->high : obj.high;
+				return out;
+			}
+			auto e = end();
+			while (it != e) {
+				auto tmp = *it;
+				*it = obj;
+				obj = tmp;
+				it++;
+			}
+			auto tmp = *it;
+			*it = obj;
+			obj = tmp;
+
+			used++;
+			return out;
+		}
+	}
 public:
 	constexpr point_set() { }
 	constexpr void insert(int64_t low, int64_t high) {
-		insert_point(low, high);
+		insert_or_merge_point(low, high);
 		//insert_point(high, low);
 	}
 	constexpr bool check(int64_t low, int64_t high) {
