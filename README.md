@@ -183,7 +183,7 @@ struct date { std::string_view year; std::string_view month; std::string_view da
 
 std::optional<date> extract_date(std::string_view s) noexcept {
     using namespace ctre::literals;
-    if (auto [whole, year, month, day] = ctre::match<"(\\d{4})/(\\d{1,2})/(\\d{1,2})">(s); whole) {
+    if (auto [whole, year, month, day] = ctre::match<R"((\d{4})/(\d{1,2})/(\d{1,2}))">(s); whole) {
         return date{year, month, day};
     } else {
         return std::nullopt;
@@ -201,7 +201,7 @@ std::optional<date> extract_date(std::string_view s) noexcept {
 ### Using captures
 
 ```c++
-auto result = ctre::match<"(?<year>\\d{4})/(?<month>\\d{1,2})/(?<day>\\d{1,2})">(s);
+auto result = ctre::match<R"((?<year>\d{4})/(?<month>\d{1,2})/(?<day>\d{1,2}))">(s);
 return date{result.get<"year">(), result.get<"month">, result.get<"day">};
 
 // or in C++ emulation, but the object must have a linkage
