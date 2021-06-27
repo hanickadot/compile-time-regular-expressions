@@ -298,3 +298,34 @@ static_assert(CTRE_CREATE("[<]").match("<"sv));
 static_assert(CTRE_CREATE("\\<").match("<"sv));
 static_assert(CTRE_CREATE("[\\<]").match("<"sv));
 static_assert(CTRE_CREATE("[^<]").match("a"sv));
+
+// issue #199
+static_assert(CTRE_CREATE(R"(\w)").match("a"sv));
+static_assert(CTRE_CREATE(R"(\W)").match("!"sv));
+static_assert(CTRE_CREATE(R"([^\W])").match("a"sv));
+static_assert(CTRE_CREATE(R"([^\w])").match("!"sv));
+
+static_assert(CTRE_CREATE(R"(\s)").match(" "sv));
+static_assert(CTRE_CREATE(R"(\S)").match("!"sv));
+static_assert(CTRE_CREATE(R"([^\S])").match(" "sv));
+static_assert(CTRE_CREATE(R"([^\s])").match("!"sv));
+
+static_assert(CTRE_CREATE(R"(\d)").match("0"sv));
+static_assert(CTRE_CREATE(R"(\D)").match("!"sv));
+static_assert(CTRE_CREATE(R"([^\D])").match("0"sv));
+static_assert(CTRE_CREATE(R"([^\d])").match("!"sv));
+
+static_assert(CTRE_CREATE(R"(\w+)").match("word"sv));
+static_assert(CTRE_CREATE(R"(\W+)").match("@!#$"sv));
+static_assert(CTRE_CREATE(R"([^\W]+)").match("word"sv));
+static_assert(CTRE_CREATE(R"([^\w]+)").match("@!#$"sv));
+
+static_assert(CTRE_CREATE(R"(\s+)").match(" \t"sv));
+static_assert(CTRE_CREATE(R"(\S+)").match("word_!@#$%^&*()"sv));
+static_assert(CTRE_CREATE(R"([^\S]+)").match(" \t"sv));
+static_assert(CTRE_CREATE(R"([^\s]+)").match("word_!@#$%^&*()"sv));
+
+static_assert(CTRE_CREATE(R"(\d+)").match("012345678"sv));
+static_assert(CTRE_CREATE(R"(\D+)").match("word_!@#$%^&*()"sv));
+static_assert(CTRE_CREATE(R"([^\D]+)").match("0123456789"sv));
+static_assert(CTRE_CREATE(R"([^\d]+)").match("word_!@#$%^&*()"sv));
