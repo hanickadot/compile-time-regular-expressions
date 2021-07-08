@@ -5,6 +5,8 @@
 #include "atoms.hpp"
 #include "atoms_unicode.hpp"
 #include "id.hpp"
+#include "first.hpp"
+#include "return_type.hpp"
 #include <cstdint>
 #include <limits>
 

@@ -120,6 +120,13 @@ template <size_t Id, typename Name, typename... Content, typename... Tail, typen
 	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., captured_content<Id, Name>>());
 }
 
+template <size_t Id, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<reset_group<Id, Content...>, Tail...>, ctll::list<Output...>) noexcept {
+	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., captured_content<Id>>());
+}
+
+template <size_t Id, typename Name, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<reset_group_with_name<Id, Name, Content...>, Tail...>, ctll::list<Output...>) noexcept {
+	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., captured_content<Id, Name>>());
+}
 
 
 }
