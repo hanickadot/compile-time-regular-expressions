@@ -5,6 +5,7 @@
 #include "atoms.hpp"
 #include "atoms_unicode.hpp"
 #include "starts_with_anchor.hpp"
+#include "has_implicit_anchor.hpp"
 #include "utility.hpp"
 #include "return_type.hpp"
 #include "find_captures.hpp"

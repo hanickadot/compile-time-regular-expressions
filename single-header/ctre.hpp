@@ -2717,6 +2717,72 @@ constexpr bool starts_with_anchor(const flags & f, ctll::list<capture_with_name<
 
 #endif
 
+#ifndef CTRE__HAS_IMPLICIT_ANCHOR__HPP
+#define CTRE__HAS_IMPLICIT_ANCHOR__HPP
+
+namespace ctre {
+
+	template<typename... Content>
+	constexpr bool has_implicit_anchor(ctll::list<repeat<0, 0, any>, Content...>) noexcept {
+		return true;
+	}
+	template<typename... Content>
+	constexpr bool has_implicit_anchor(ctll::list<repeat<1, 0, any>, Content...>) noexcept {
+		return true;
+	}
+
+	template<typename... Content>
+	constexpr bool has_implicit_anchor(ctll::list<possessive_repeat<0, 0, any>, Content...>) noexcept {
+		return true;
+	}
+
+	template<typename... Content>
+	constexpr bool has_implicit_anchor(ctll::list<possessive_repeat<1, 0, any>, Content...>) noexcept {
+		return true;
+	}
+
+	template<typename... Content>
+	constexpr bool has_implicit_anchor(ctll::list<lazy_repeat<0, 0, any>, Content...>) noexcept {
+		return true;
+	}
+
+	template<typename... Content>
+	constexpr bool has_implicit_anchor(ctll::list<lazy_repeat<1, 0, any>, Content...>) noexcept {
+		return true;
+	}
+
+	template<typename... Content, typename... Tail>
+	constexpr bool has_implicit_anchor(ctll::list<sequence<Content...>, Tail...>) noexcept {
+		return has_implicit_anchor(ctll::list<Content..., Tail...>{});
+	}
+
+	//TODO: we may check captures as implicit anchors*, but they must not be backreferenced because for example "(.+)X\1" will not work properly with "1234X2345"
+	/*
+	template<size_t Id, typename... Content, typename... Tail>
+	constexpr bool has_implicit_anchor(ctll::list<capture<Id, Content...>, Tail...>) noexcept {
+		//Id must not be backreferenced
+		return !id_backreference(Id) && has_implicit_anchor(ctll::list<Content..., Tail...>{});
+	}
+
+	template<size_t Id, typename Name, typename... Content, typename... Tail>
+	constexpr bool has_implicit_anchor(ctll::list<capture_with_name<Id, Name, Content...>, Tail...>) noexcept {
+		//Id must not be backreferenced
+		return !id_backreference(Id) && has_implicit_anchor(ctll::list<Content..., Tail...>{});
+	}
+	*/
+
+	template<typename... Opts, typename... Tail>
+	constexpr bool has_implicit_anchor(ctll::list<select<Opts...>, Tail...>) noexcept {
+		return (has_implicit_anchor(ctll::list<Opts, Tail...>{}) && ...);
+	}
+
+	constexpr bool has_implicit_anchor(...) noexcept {
+		return false;
+	}
+}
+
+#endif
+
 #ifndef CTRE__RETURN_TYPE__HPP
 #define CTRE__RETURN_TYPE__HPP
 
@@ -4875,7 +4941,7 @@ struct search_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		
-		constexpr bool fixed = starts_with_anchor(Modifier{}, ctll::list<RE>{});
+		constexpr bool fixed = starts_with_anchor(Modifier{}, ctll::list<RE>{}) || has_implicit_anchor(ctll::list<RE>{});
 	
 		auto it = begin;
 	
