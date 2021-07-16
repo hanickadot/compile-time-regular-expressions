@@ -282,7 +282,7 @@ template <typename... Content> constexpr auto calculate_first(Content...) noexce
 
 // calculate mutual exclusivity
 template <typename... Content> constexpr size_t calculate_size_of_first(ctre::negative_set<Content...>) {
-	return 1 + 1 * sizeof...(Content);
+	return 1 + calculate_size_of_first(ctre::set<Content...>{});
 }
 
 template <auto... V> constexpr size_t calculate_size_of_first(ctre::enumeration<V...>) {
