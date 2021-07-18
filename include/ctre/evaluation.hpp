@@ -135,18 +135,137 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	return evaluate(begin, result.position, last, consumed_something(f, sizeof...(String) > 0), captures, ctll::list<Tail...>());
 }
 
+template <typename T, typename... Ts> constexpr auto collides_with(T, ctll::list<Ts...>) noexcept {
+	return decltype((ctll::list<>{} + ... + ctll::item_matcher<Ts>::pick(
+		typename std::conditional<collides(calculate_first(sequence<T>{}), calculate_first(sequence<Ts>{})), std::true_type, std::false_type>::type{}
+	))){};
+}
+
+template <typename T, typename... Ts> constexpr auto collides_with_negated(T, ctll::list<Ts...>) noexcept {
+	return decltype((ctll::list<>{} + ... + ctll::item_matcher<Ts>::pick(
+		typename std::conditional<collides(ctre::negative_set<decltype(calculate_first(sequence<T>{}))>{}, calculate_first(sequence<Ts>{})), std::true_type, std::false_type>::type{}
+	))){};
+}
+
+template <typename T, typename... Ts> constexpr auto mutually_exclusive_with(T, ctll::list<Ts...>) noexcept {
+	return decltype((ctll::list<>{} + ... + ctll::item_matcher<Ts>::pick(
+		typename std::conditional<!collides(calculate_first(sequence<T>{}), calculate_first(sequence<Ts>{})), std::true_type, std::false_type>::type{}
+	))){};
+}
+
+namespace detail {
+	template <typename... Content>
+	constexpr auto transform_into_set(ctll::list<Content...>) {
+		return ctre::set<decltype(Content{})...>{};
+		//return ctre::set<decltype(transform_into_set(Content{}))... > {};
+	}
+
+	template <typename T>
+	constexpr auto transform_into_set(T) {
+		return T{};
+	}
+
+	template<>
+	constexpr auto transform_into_set(can_be_anything) {
+		return ctre::char_range<std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max()>{};
+	}
+
+	template <typename... Content>
+	constexpr auto transform_into_select(ctll::list<Content...>) {
+		return ctre::select<decltype(Content{})...>{};
+	}
+}
+
 // matching select in patterns
 template <typename R, typename Iterator, typename EndIterator, typename HeadOptions, typename... TailOptions, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<select<HeadOptions, TailOptions...>, Tail...>) noexcept {
-	if (auto r = evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>())) {
-		return r;
+	if constexpr (sizeof...(TailOptions) > 1) {
+		constexpr auto collision_list = collides_with(sequence<HeadOptions, Tail...>{}, ctll::list<
+			decltype(sequence<TailOptions, Tail...>{})...
+		>{});
+
+		if constexpr (ctll::empty(collision_list)) {
+			using set_type = decltype(detail::transform_into_set(calculate_first(sequence<HeadOptions, Tail...>{})));
+			if constexpr (::std::is_same_v<set<>, set_type>) {
+				//fail handle as normal
+				if (auto r = evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>())) {
+					return r;
+				} else {
+					return evaluate(begin, current, last, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+				}
+			} else {
+				//ok optimize into exclusive select
+				if (auto r = evaluate(begin, current, last, f, captures, ctll::list<set_type, end_cycle_mark>{})) {
+					return evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>{});
+				} else {
+					return evaluate(begin, current, last, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+				}
+			}
+
+			return evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>());
+		} else if constexpr (ctll::size(collision_list) == sizeof...(TailOptions)) {
+			//continue as normal...we collided with everything
+			if (auto r = evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>())) {
+				return r;
+			} else {
+				return evaluate(begin, current, last, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+			}
+		} else {
+			//we collided with some things, but not others, bifricate on the first character we see
+			//may be less computationally expensive to do a set subtraction from the complete list with the collision list, because we're evaluating collisions again
+			constexpr auto negated_collision_list = collides_with_negated(sequence<HeadOptions, Tail...>{}, ctll::list<
+				decltype(sequence<TailOptions, Tail...>{})...
+			>{});
+
+			using set_type = decltype(detail::transform_into_set(calculate_first(sequence<HeadOptions, Tail...>{})));
+			if constexpr (::std::is_same_v<set<>, set_type>) {
+				//fail
+				if (auto r = evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>())) {
+					return r;
+				} else {
+					return evaluate(begin, current, last, f, captures, ctll::list<non_exclusive_select<TailOptions...>, Tail...>());
+				}
+			} else {
+				//ok optimize into a split
+				if (auto r = evaluate(begin, current, last, f, captures, ctll::list<set_type, end_cycle_mark>{})) {
+					if (auto r2 = evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>{})) {
+						return r2;
+					} else {
+						return evaluate(begin, current, last, f, captures, detail::transform_into_select(collision_list));
+					}
+				} else {
+					return evaluate(begin, current, last, f, captures, detail::transform_into_select(negated_collision_list));
+				}
+			}
+		}
 	} else {
-		return evaluate(begin, current, last, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+		//simple case, too few branches to pick handle as normal
+		if (auto r = evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>())) {
+			return r;
+		} else {
+			return evaluate(begin, current, last, f, captures, ctll::list<select<TailOptions...>, Tail...>());
+		}
 	}
 }
 
 template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ctll::list<select<>, Tail...>) noexcept {
+	// no previous option was matched => REJECT
+	return not_matched;
+}
+
+// non exclusive select (assume collisions)
+template <typename R, typename Iterator, typename EndIterator, typename HeadOptions, typename... TailOptions, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<non_exclusive_select<HeadOptions, TailOptions...>, Tail...>) noexcept {
+	if (auto r = evaluate(begin, current, last, f, captures, ctll::list<HeadOptions, Tail...>())) {
+		return r;
+	} else {
+		return evaluate(begin, current, last, f, captures, ctll::list<non_exclusive_select<TailOptions...>, Tail...>());
+	}
+}
+
+template <typename R, typename Iterator, typename EndIterator, typename... Tail>
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R, ctll::list<non_exclusive_select<>, Tail...>) noexcept {
 	// no previous option was matched => REJECT
 	return not_matched;
 }

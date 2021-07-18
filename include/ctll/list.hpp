@@ -61,6 +61,8 @@ template <typename T> struct item_matcher {
 	static constexpr auto check(...) { return std::false_type{}; }
 	static constexpr auto select(T) { return not_selected{}; }
 	template <typename Y> static constexpr auto select(Y) { return wrapper<Y>{}; }
+	static constexpr auto pick(std::true_type) { return wrapper<Y>{}; };
+	static constexpr auto pick(std::false_type) { return not_selected{}; };
 };
 
 template <typename T, typename... Ts> constexpr bool exists_in(T, list<Ts...>) noexcept {
