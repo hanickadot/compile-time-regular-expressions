@@ -4,6 +4,7 @@ project(ctre
   HOMEPAGE_URL "https://compile-time.re"
   VERSION 3.0
   LANGUAGES CXX)
+set(PROJECT_DESCRIPTION "Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.")
 
 include(CMakePackageConfigHelpers)
 include(CMakeDependentOption)
@@ -88,6 +89,7 @@ set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Hanicka Dusíková")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${PROJECT_DESCRIPTION}")
 set(CPACK_DEBIAN_PACKAGE_NAME "lib${PROJECT_NAME}-dev")
 
 set(CPACK_RPM_PACKAGE_NAME "lib${PROJECT_NAME}-devel")
