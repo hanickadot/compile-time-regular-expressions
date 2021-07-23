@@ -94,6 +94,12 @@ set(CPACK_DEBIAN_PACKAGE_NAME "lib${PROJECT_NAME}-dev")
 
 set(CPACK_RPM_PACKAGE_NAME "lib${PROJECT_NAME}-devel")
 
+set(PKG_CONFIG_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/packaging/pkgconfig.pc.in" "${PKG_CONFIG_FILE_NAME}" @ONLY)
+install(FILES "${PKG_CONFIG_FILE_NAME}"
+	DESTINATION "${CMAKE_INSTALL_DATADIR}/pkgconfig"
+)
+
 list(APPEND CPACK_SOURCE_IGNORE_FILES /.git/ /build/ .gitignore .DS_Store)
 
 include(CPack)
