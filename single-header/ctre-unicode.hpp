@@ -1565,7 +1565,7 @@ namespace uni
     enum class block;
 
     struct script_extensions_view {
-        constexpr script_extensions_view(char32_t c);
+        constexpr script_extensions_view(char32_t);
 
         struct sentinel {};
         struct iterator {
@@ -5331,7 +5331,7 @@ namespace uni
     enum class block;
 
     struct script_extensions_view {
-        constexpr script_extensions_view(char32_t c);
+        constexpr script_extensions_view(char32_t);
 
         struct sentinel {};
         struct iterator {
@@ -5488,9 +5488,9 @@ struct compact_range {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t cp, uint32_t v) {
+        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
             char32_t c = (v >> 8);
-            return cp < c;
+            return local_cp < c;
         });
         if(it == end)
             return default_value;
@@ -5506,9 +5506,9 @@ struct compact_list {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::lower_bound(std::begin(_data), end, cp, [](uint32_t v, char32_t cp) {
+        auto it = detail::lower_bound(std::begin(_data), end, cp, [](uint32_t v, char32_t local_cp) {
             char32_t c = (v >> 8);
-            return c < cp;
+            return c < local_cp;
         });
         if(it == end || ((*it) >> 8) != cp)
             return default_value;
@@ -5618,9 +5618,9 @@ struct range_array {
     std::uint32_t _data[N];
     constexpr bool lookup(char32_t cp) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t cp, uint32_t v) {
+        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
             char32_t c = (v >> 8);
-            return cp < c;
+            return local_cp < c;
         });
         if(it == end)
             return false;
@@ -12448,7 +12448,7 @@ constexpr script cp_script(char32_t cp) {
     return detail::tables::cp_script<0>(cp);
 }
 
-constexpr script_extensions_view::script_extensions_view(char32_t c) : c(c){}
+constexpr script_extensions_view::script_extensions_view(char32_t local_c) : c(local_c){}
 
 constexpr script_extensions_view::iterator::iterator(char32_t c) : m_c(c), m_script(detail::tables::get_cp_script(m_c, 1)) {
     if(m_script == script::unknown)
@@ -12504,9 +12504,9 @@ constexpr version cp_age(char32_t cp) {
 
 constexpr block cp_block(char32_t cp) {
     const auto end = std::end(detail::tables::block_data._data);
-    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp, [](char32_t cp, uint32_t v) {
+    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp, [](char32_t local_cp, uint32_t v) {
         char32_t c = (v >> 8);
-        return cp < c;
+        return local_cp < c;
     });
     if(it == end)
         return block::no_block;
@@ -12620,7 +12620,7 @@ namespace detail {
 template<typename Array, typename Res = long long>
 constexpr bool get_numeric_value(char32_t cp, const Array& array, Res& res) {
     auto it = detail::lower_bound(std::begin(array), std::end(array), cp,
-                               [](const auto& d, char32_t cp) { return d.first < cp; });
+								  [](const auto& d, char32_t local_cp) { return d.first < local_cp; });
     if(it == std::end(array) || it->first != cp)
         return false;
     res = it->second;
