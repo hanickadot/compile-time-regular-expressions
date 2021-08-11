@@ -1562,7 +1562,7 @@ namespace uni
     enum class block;
 
     struct script_extensions_view {
-        constexpr script_extensions_view(char32_t c);
+        constexpr script_extensions_view(char32_t);
 
         struct sentinel {};
         struct iterator {
