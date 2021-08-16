@@ -784,7 +784,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
 			constexpr auto value = input[Pos];
-			if constexpr (value <= static_cast<decltype(value)>(std::numeric_limits<char>::max())) {
+			if constexpr (value <= static_cast<decltype(value)>((std::numeric_limits<char>::max)())) {
 				return term<static_cast<char>(value)>{};
 			} else {
 				return term<value>{};
@@ -801,7 +801,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 			return epsilon{};
 		} else if constexpr ((Pos-1) < input.size()) {
 			constexpr auto value = input[Pos-1];
-			if constexpr (value <= static_cast<decltype(value)>(std::numeric_limits<char>::max())) {
+			if constexpr (value <= static_cast<decltype(value)>((std::numeric_limits<char>::max)())) {
 				return term<static_cast<char>(value)>{};
 			} else {
 				return term<value>{};
@@ -2164,7 +2164,7 @@ template <auto V, size_t N, typename... Ts, typename Parameters> static constexp
 }
 // hexdec character support (convert to character)
 template <auto V, size_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::finish_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
-	constexpr size_t max_char = std::numeric_limits<char>::max();
+	constexpr size_t max_char = (std::numeric_limits<char>::max)();
 	if constexpr (N <= max_char) {
 		return pcre_context{ctll::push_front(character<char{N}>(), ctll::list<Ts...>()), subject.parameters};
 	} else {
@@ -3739,12 +3739,12 @@ template <typename... Content> constexpr size_t calculate_size_of_first(ctre::se
 }
 
 template <auto A, typename CB> constexpr int64_t negative_helper(ctre::character<A>, CB & cb, int64_t start) {
-	if (A != std::numeric_limits<int64_t>::min()) {
+	if (A != (std::numeric_limits<int64_t>::min)()) {
 		if (start < A) {
 			cb(start, A-1);
 		}
 	}
-	if (A != std::numeric_limits<int64_t>::max()) {
+	if (A != (std::numeric_limits<int64_t>::max)()) {
 		return A+1;
 	} else {
 		return A;
@@ -3752,12 +3752,12 @@ template <auto A, typename CB> constexpr int64_t negative_helper(ctre::character
 }  
 
 template <auto A, auto B, typename CB> constexpr int64_t negative_helper(ctre::char_range<A,B>, CB & cb, int64_t start) {
-	if (A != std::numeric_limits<int64_t>::min()) {
+	if (A != (std::numeric_limits<int64_t>::min)()) {
 		if (start < A) {
 			cb(start, A-1);
 		}
 	}
-	if (B != std::numeric_limits<int64_t>::max()) {
+	if (B != (std::numeric_limits<int64_t>::max)()) {
 		return B+1;
 	} else {
 		return B;
@@ -3792,14 +3792,14 @@ template <typename Head, typename... Rest, typename CB> constexpr int64_t negati
 	return negative_helper(ctre::set<Rest...>{}, cb, start);
 }
 
-template <typename Head, typename... Rest, typename CB> constexpr void negative_helper(ctre::negative_set<Head, Rest...>, CB && cb, int64_t start = std::numeric_limits<int64_t>::min()) {
+template <typename Head, typename... Rest, typename CB> constexpr void negative_helper(ctre::negative_set<Head, Rest...>, CB && cb, int64_t start = (std::numeric_limits<int64_t>::min)()) {
 	start = negative_helper(Head{}, cb, start);
 	negative_helper(ctre::negative_set<Rest...>{}, std::forward<CB>(cb), start);
 }
 
-template <typename CB> constexpr void negative_helper(ctre::negative_set<>, CB && cb, int64_t start = std::numeric_limits<int64_t>::min()) {
-	if (start < std::numeric_limits<int64_t>::max()) {
-		cb(start, std::numeric_limits<int64_t>::max());
+template <typename CB> constexpr void negative_helper(ctre::negative_set<>, CB && cb, int64_t start = (std::numeric_limits<int64_t>::min)()) {
+	if (start < (std::numeric_limits<int64_t>::max)()) {
+		cb(start, (std::numeric_limits<int64_t>::max)());
 	}
 }
 
@@ -3930,8 +3930,8 @@ public:
 		insert(A,B);
 	}
 	constexpr void populate(can_be_anything) {
-		points[0].low = std::numeric_limits<int64_t>::min();
-		points[0].high = std::numeric_limits<int64_t>::max();
+		points[0].low = (std::numeric_limits<int64_t>::min)();
+		points[0].high = (std::numeric_limits<int64_t>::max)();
 		used = 1;
 	}
 	template <typename... Content> constexpr void populate(ctre::negative_set<Content...> nset) {
