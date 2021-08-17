@@ -1616,11 +1616,7 @@ namespace uni
     constexpr bool cp_is_ascii(char32_t cp);
     constexpr numeric_value cp_numeric_value(char32_t cp);
 
-    template<script>
-    constexpr bool cp_is(char32_t);
-    template<property>
-    constexpr bool cp_is(char32_t);
-    template<category>
+    template<auto>
     constexpr bool cp_is(char32_t);
 
     namespace detail
@@ -1647,6 +1643,8 @@ namespace uni
 
 #endif
 
+#include <type_traits>
+
 namespace ctre {
 
 // properties name & value
@@ -1660,11 +1658,11 @@ template <size_t Sz> constexpr std::string_view get_string_view(const char (& ar
 
 // basic support for binary and type-value properties
 
-template <auto Name> struct binary_property;
+template <typename Name, Name> struct binary_property_;
 template <auto Name, auto Value> struct property;
 
 // unicode TS#18 level 1.2 general_category
-template <uni::detail::binary_prop Property> struct binary_property<Property> {
+template <uni::detail::binary_prop Property> struct binary_property_<uni::detail::binary_prop, Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::detail::get_binary_prop<Property>(c);
 	}
@@ -1678,7 +1676,7 @@ enum class property_type {
 
 // unicode TS#18 level 1.2.2
 
-template <uni::script Script> struct binary_property<Script> {
+template <uni::script Script> struct binary_property_<uni::script, Script> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_script(c) == Script;
 	}
@@ -1693,17 +1691,20 @@ template <uni::script Script> struct property<property_type::script_extension, S
 	}
 };
 
-template <uni::version Age> struct binary_property<Age> {
+template <uni::version Age> struct binary_property_<uni::version, Age> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_age(c) <= Age;
 	}
 };
 
-template <uni::block Block> struct binary_property<Block> {
+template <uni::block Block> struct binary_property_<uni::block, Block> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_block(c) == Block;
 	}
 };
+
+template <auto Name>
+using binary_property = binary_property_<std::remove_cv_t<decltype(Name)>, Name>;
 
 // nonbinary properties
 

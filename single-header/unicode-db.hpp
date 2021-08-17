@@ -68,11 +68,7 @@ namespace uni
     constexpr bool cp_is_ascii(char32_t cp);
     constexpr numeric_value cp_numeric_value(char32_t cp);
 
-    template<script>
-    constexpr bool cp_is(char32_t);
-    template<property>
-    constexpr bool cp_is(char32_t);
-    template<category>
+    template<auto>
     constexpr bool cp_is(char32_t);
 
     namespace detail
@@ -341,11 +337,11 @@ constexpr int propcharcomp(char a, char b) {
 
 constexpr int propnamecomp(std::string_view sa, std::string_view sb) {
     // workaround, iterators in std::string_view are not constexpr in libc++ (for now)
-    const char* a = sa.begin();
-    const char* b = sb.begin();
+    const char* a = sa.data();
+    const char* b = sb.data();
 
-    const char* ae = sa.end();
-    const char* be = sb.end();
+    const char* ae = sa.data() + sa.size();
+    const char* be = sb.data() + sb.size();
 
     for(; a != ae && b != be; a++, b++) {
         auto res = propcharcomp(*a, *b);
