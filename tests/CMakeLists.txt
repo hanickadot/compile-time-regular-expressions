@@ -7,4 +7,8 @@ foreach (source IN LISTS test-sources)
   add_library(ctre-test-${test} STATIC EXCLUDE_FROM_ALL ${source})
   target_link_libraries(ctre-test-${test} PRIVATE ctre)
   add_dependencies(ctre-test ctre-test-${test})
+
+  if (MSVC)
+    target_compile_options(ctre-test-${test} PRIVATE /utf-8)
+  endif()
 endforeach()
