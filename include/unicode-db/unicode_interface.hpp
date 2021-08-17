@@ -66,11 +66,7 @@ namespace uni
     constexpr bool cp_is_ascii(char32_t cp);
     constexpr numeric_value cp_numeric_value(char32_t cp);
 
-    template<script>
-    constexpr bool cp_is(char32_t);
-    template<property>
-    constexpr bool cp_is(char32_t);
-    template<category>
+    template<auto>
     constexpr bool cp_is(char32_t);
 
     namespace detail
