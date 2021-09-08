@@ -9,7 +9,6 @@
 #include <string>
 #include <iterator>
 #include <iosfwd>
-#include <memory>
 #if __has_include(<charconv>)
 #include <charconv>
 #endif
@@ -72,18 +71,10 @@ template <size_t Id, typename Name = void> struct captured_content {
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return _begin.ptr;
 			} else {
-				#if __cpp_lib_to_address >= 201711L
-				return std::to_address(_begin);
-				#else
 				return &*_begin;
-				#endif
 			}
 			#else
-			#if __cpp_lib_to_address >= 201711L
-			return std::to_address(_begin);
-			#else
 			return &*_begin;
-			#endif
 			#endif
 		}
 		
