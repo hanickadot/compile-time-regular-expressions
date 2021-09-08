@@ -266,7 +266,7 @@ struct bool_trie {
                 }
             }
 
-            std::size_t i5 = (child << 6) + ((c >> 6) & 0x3f);
+            std::size_t i5 = static_cast<std::size_t>(child << 6) + ((c >> 6) & 0x3f);
             auto leaf = 0;
             if constexpr(r5_s > 0) {
                 if(i5 >= r5_t_f && i5 < r5_t_f + r5_s) {
@@ -377,7 +377,7 @@ struct string_with_idx { const char* name; uint32_t value; };
 namespace uni {
 
 constexpr double numeric_value::value() const {
-    return numerator() / double(_d);
+    return static_cast<double>(numerator()) / static_cast<double>(_d);
 }
 
 constexpr long long numeric_value::numerator() const {
@@ -7332,7 +7332,7 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
        }())) {
         return {};
     }
-    uint16_t d = 1;
+    int16_t d = 1;
     detail::get_numeric_value(cp, detail::tables::numeric_data_d, d);
     return numeric_value(res, d);
 }

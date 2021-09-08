@@ -240,7 +240,6 @@ Software.
 #include <cstddef>
 #include <string_view>
 #include <cstdint>
-#include <memory>
 
 namespace ctll {
 
@@ -368,7 +367,7 @@ template <size_t N> struct fixed_string {
 			real_size = out;
 		} else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
 			for (size_t i{0}; i < N; ++i) {
-				content[i] = input[i];
+				content[i] = static_cast<char32_t>(input[i]);
 				if ((i == (N-1)) && (input[i] == 0)) break;
 				real_size++;
 			}
@@ -1670,7 +1669,7 @@ template <auto Name, auto Value> struct property;
 // unicode TS#18 level 1.2 general_category
 template <uni::detail::binary_prop Property> struct binary_property<Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::detail::get_binary_prop<Property>(c);
+		return uni::detail::get_binary_prop<Property>(static_cast<char32_t>(c));
 	}
 };
 
@@ -2870,7 +2869,7 @@ struct utf8_iterator {
 		// remove utf8 front bits, get only significant part
 		// and add first trailing unit
 
-		char32_t result = ((ptr[0] & mask) << 6) | (ptr[1] & 0b0011'1111u);
+		char32_t result = static_cast<char32_t>((ptr[0] & mask) << 6u) | (ptr[1] & 0b0011'1111u);
 
 		// add rest of trailing units
 		if (length == 1) CTRE_LIKELY {
@@ -2979,18 +2978,10 @@ template <size_t Id, typename Name = void> struct captured_content {
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return _begin.ptr;
 			} else {
-				#if __cpp_lib_to_address >= 201711L
-				return std::to_address(_begin);
-				#else
 				return &*_begin;
-				#endif
 			}
 			#else
-			#if __cpp_lib_to_address >= 201711L
-			return std::to_address(_begin);
-			#else
 			return &*_begin;
-			#endif
 			#endif
 		}
 		
@@ -5588,7 +5579,7 @@ struct bool_trie {
                 }
             }
 
-            std::size_t i5 = (child << 6) + ((c >> 6) & 0x3f);
+            std::size_t i5 = static_cast<std::size_t>(child << 6) + ((c >> 6) & 0x3f);
             auto leaf = 0;
             if constexpr(r5_s > 0) {
                 if(i5 >= r5_t_f && i5 < r5_t_f + r5_s) {
@@ -5696,7 +5687,7 @@ struct string_with_idx { const char* name; uint32_t value; };
 namespace uni {
 
 constexpr double numeric_value::value() const {
-    return numerator() / double(_d);
+    return static_cast<double>(numerator()) / static_cast<double>(_d);
 }
 
 constexpr long long numeric_value::numerator() const {
@@ -12648,7 +12639,7 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
        }())) {
         return {};
     }
-    uint16_t d = 1;
+    int16_t d = 1;
     detail::get_numeric_value(cp, detail::tables::numeric_data_d, d);
     return numeric_value(res, d);
 }

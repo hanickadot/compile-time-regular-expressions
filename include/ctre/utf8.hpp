@@ -145,7 +145,7 @@ struct utf8_iterator {
 		// remove utf8 front bits, get only significant part
 		// and add first trailing unit
 
-		char32_t result = ((ptr[0] & mask) << 6) | (ptr[1] & 0b0011'1111u);
+		char32_t result = static_cast<char32_t>((ptr[0] & mask) << 6u) | (ptr[1] & 0b0011'1111u);
 
 		// add rest of trailing units
 		if (length == 1) CTRE_LIKELY {

@@ -9,7 +9,7 @@ DESATOMAT := /bin/false
 
 CXX_STANDARD := 20
 
-override CXXFLAGS := $(CXXFLAGS) -std=c++$(CXX_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra -Werror
+override CXXFLAGS := $(CXXFLAGS) -std=c++$(CXX_STANDARD) -Iinclude -O3 -pedantic -Wall -Wextra -Werror -Wconversion
 LDFLAGS := 
 
 TESTS := $(wildcard tests/*.cpp) $(wildcard tests/benchmark/*.cpp)
