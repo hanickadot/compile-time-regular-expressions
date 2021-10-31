@@ -254,6 +254,28 @@ for (auto match: ctre::range<"([0-9]+),?">(input)) {
 }
 ```
 
+### Unicode
+
+```c++
+#include <ctre-unicode.hpp>
+#include <iostream>
+// needed if you want to output to the terminal
+std::string_view cast_from_unicode(std::u8string_view input) noexcept {
+    return std::string_view(reinterpret_cast<const char *>(input.data()), input.size());
+}
+int main()
+{
+    using namespace std::literals;
+    std::u8string_view original = u8"Tu es un génie"sv;
+
+    for (auto match : ctre::range<"\\p{Letter}+">(original))
+        std::cout << cast_from_unicode(match) << std::endl;
+    return 0;
+}
+```
+
+[link to compiler explorer](https://godbolt.org/z/erTshe6sz)
+
 ## Running tests (for developers)
 
 Just run `make` in root of this project.
