@@ -87,7 +87,9 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
     DESTINATION "${ctre_INSTALL_CMAKEDIR}"
     NAMESPACE ctre::)
 
-  option(ctre_ENABLE_PKGCONFIG "Install a .pc file for the project" ON)
+  option(ctre_ENABLE_PKGCONFIG "Install a .pc file for the project" OFF)
+  mark_as_advanced(ctre_ENABLE_PKGCONFIG)
+
   if(ctre_ENABLE_PKGCONFIG)
     # This can only detect issues on first configure, but it's still better
     # than nothing
