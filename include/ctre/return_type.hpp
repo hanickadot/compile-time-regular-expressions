@@ -23,7 +23,7 @@ constexpr bool is_reverse_iterator(...) { return false; }
 
 struct not_matched_tag_t { };
 
-static constexpr inline auto not_matched = not_matched_tag_t{};
+constexpr inline auto not_matched = not_matched_tag_t{};
 	
 template <size_t Id, typename Name = void> struct captured_content {
 	template <typename Iterator> class storage {
