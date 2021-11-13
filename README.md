@@ -4,10 +4,27 @@
 
 Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.
 
-You can use the single header version from directory `single-header`. This header can be regenerated with `make single-header`. If you are using cmake, you can add this directory as subdirectory and link to target `ctre`.
-
 More info at [compile-time.re](https://compile-time.re/)
 
+ - [What this library can do](#What-this-library-can-do)
+   - [Unicode support](#Unicode-support)
+   - [Unknown character escape behaviour](#Unknown-character-escape-behaviour)
+ - [Supported compilers](#Supported-compilers)
+ - [API Overview](#API-Overview)
+   - [Range outputing API](#Range-outputing-API)
+   - [Functors](#Functors)
+   - [Possible subjects (inputs)](#Possible-subjects-\(inputs\))
+   - [Template UDL syntax](#Template-UDL-syntax)
+   - [C++17 syntax](#C++17-syntax)
+   - [C++20 syntax](#C++20-syntax)
+ - [Examples](#Examples)
+   - [Extracting number from input](#Extracting-number-from-input)
+   - [Extracting-values-from-date](#Extracting-values-from-date)
+   - [Using captures](#Using-captures)
+   - [Lexer](#Lexer)
+   - [Range over input](#Range-over-input)
+   - [Unicode](#Unicode)
+ - [Integration](#Integration)
 ## What this library can do
 
 ```c++
@@ -38,6 +55,12 @@ The library is implementing most of the PCRE syntax with a few exceptions:
 
 More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2syntax.html).
 
+### Unicode support
+
+To enable you need to include:
+* `<ctre-unicode.hpp>`
+* or `<ctre.hpp>` and `<unicode-db.hpp>`
+
 ### Unknown character escape behaviour
 
 Not all escaped characters are automatically inserted as self, behaviour of the library is escaped characters are with special meaning, unknown escaped character is a syntax error.
@@ -46,7 +69,16 @@ Explicitly allowed character escapes which insert only the character are:
 
 ```\-\"\<\>```
 
-## Basic API
+## Supported compilers
+
+* clang 6.0+ (template UDL, C++17 syntax)
+* xcode clang 10.0+ (template UDL, C++17 syntax)
+* clang 12.0+ (C++17 syntax, C++20 cNTTP syntax)
+* gcc 8.0+ (template UDL, C++17 syntax)
+* gcc 9.0+ (C++17 & C++20 cNTTP syntax)
+* MSVC 15.8.8+ (C++17 syntax only) (semi-supported, I don't have windows machine)
+
+## API Overview
 
 This is approximated API specification from a user perspective (omitting `constexpr` and `noexcept` which are everywhere, and using C++20 syntax even the API is C++17 compatible):
 ```c++
@@ -107,22 +139,7 @@ if (matcher(input)) ...
 * `std::string`-like objects (`std::string_view` or your own string if it's providing `begin`/`end` functions with forward iterators)
 * pairs of forward iterators
 
-### Unicode support
-
-To enable you need to include:
-* `<ctre-unicode.hpp>`
-* or `<ctre.hpp>` and `<unicode-db.hpp>`
-
 Otherwise you will get missing symbols if you try to use the unicode support without enabling it.
-
-## Supported compilers
-
-* clang 6.0+ (template UDL, C++17 syntax)
-* xcode clang 10.0+ (template UDL, C++17 syntax)
-* clang 12.0+ (C++17 syntax, C++20 cNTTP syntax)
-* gcc 8.0+ (template UDL, C++17 syntax)
-* gcc 9.0+ (C++17 & C++20 cNTTP syntax)
-* MSVC 15.8.8+ (C++17 syntax only) (semi-supported, I don't have windows machine)
 
 ### Template UDL syntax
 
@@ -151,21 +168,28 @@ constexpr auto match(std::string_view sv) noexcept {
 
 (this is tested in MSVC 15.8.8)
 
+[link to compiler explorer](https://gcc.godbolt.org/z/hc4x9f3s1)
+
 ### C++20 syntax
 
-Currently, the only compiler which supports cNTTP syntax `ctre::match<PATTERN>(subject)` is GCC 9+.
+The only compilers which support cNTTP syntax `ctre::match<PATTERN>(subject)` are GCC 9+ and Clang 12+.
 
 ```c++
 constexpr auto match(std::string_view sv) noexcept {
     return ctre::match<"h.*">(sv);
 }
 ```
+[link to compiler explorer](https://gcc.godbolt.org/z/Yv3PjK7Pd)
 
 ## Examples
 
 ### Extracting number from input
 
 ```c++
+#include <ctre.hpp>
+#include <optional>
+#include <string_view>
+
 std::optional<std::string_view> extract_number(std::string_view s) noexcept {
     if (auto m = ctre::match<"[a-z]+([0-9]+)">(s)) {
         return m.get<1>().to_view();
@@ -175,26 +199,33 @@ std::optional<std::string_view> extract_number(std::string_view s) noexcept {
 }
 ```
 
-[link to compiler explorer](https://gcc.godbolt.org/z/5U67_e)
+[link to compiler explorer](https://gcc.godbolt.org/z/MqfWaYPMG)
 
 ### Extracting values from date
 
 ```c++
-struct date { std::string_view year; std::string_view month; std::string_view day; };
+#include <ctre.hpp>
+#include <optional>
+#include <string_view>
+
+struct date {
+  std::string_view year;
+  std::string_view month;
+  std::string_view day;
+};
 
 std::optional<date> extract_date(std::string_view s) noexcept {
-    using namespace ctre::literals;
-    if (auto [whole, year, month, day] = ctre::match<"(\\d{4})/(\\d{1,2})/(\\d{1,2})">(s); whole) {
-        return date{year, month, day};
-    } else {
-        return std::nullopt;
-    }
+  if (auto [whole, year, month, day] = ctre::match<"^(\\d{4})/(\\d{1,2})/(\\d{1,2})">(s); whole) {
+    return date{year, month, day};
+  } else {
+    return std::nullopt;
+  }
 }
-
-//static_assert(extract_date("2018/08/27"sv).has_value());
-//static_assert((*extract_date("2018/08/27"sv)).year == "2018"sv);
-//static_assert((*extract_date("2018/08/27"sv)).month == "08"sv);
-//static_assert((*extract_date("2018/08/27"sv)).day == "27"sv);
+// using namespace std::literals;
+// static_assert(extract_date("2018/08/27"sv).has_value());
+// static_assert((*extract_date("2018/08/27"sv)).year == "2018"sv);
+// static_assert((*extract_date("2018/08/27"sv)).month == "08"sv);
+// static_assert((*extract_date("2018/08/27"sv)).day == "27"sv);
 ```
 
 [link to compiler explorer](https://gcc.godbolt.org/z/x64CVp)
@@ -202,41 +233,58 @@ std::optional<date> extract_date(std::string_view s) noexcept {
 ### Using captures
 
 ```c++
-auto result = ctre::match<"(?<year>\\d{4})/(?<month>\\d{1,2})/(?<day>\\d{1,2})">(s);
-return date{result.get<"year">(), result.get<"month">, result.get<"day">};
+#include <ctre.hpp>
+#include <optional>
+#include <string_view>
 
-// or in C++ emulation, but the object must have a linkage
-static constexpr ctll::fixed_string year = "year";
-static constexpr ctll::fixed_string month = "month";
-static constexpr ctll::fixed_string day = "day";
-return date{result.get<year>(), result.get<month>, result.get<day>};
+struct date {
+  std::string_view year;
+  std::string_view month;
+  std::string_view day;
+};
 
-// or use numbered access
-// capture 0 is the whole match
-return date{result.get<1>(), result.get<2>, result.get<3>};
+// const char * s = "2021/01/01";
+extern std::string_view s;
+
+std::optional<date> extract_date() noexcept {
+  auto result =
+      ctre::match<"(?<year>\\d{4})/(?<month>\\d{1,2})/(?<day>\\d{1,2})">(s);
+
+  // or in C++ emulation, but the object must have a linkage
+  static constexpr ctll::fixed_string year = "year";
+  static constexpr ctll::fixed_string month = "month";
+  static constexpr ctll::fixed_string day = "day";
+  return date{result.get<year>(), result.get<month>(), result.get<day>()};
+
+  // or use numbered access
+  // capture 0 is the whole match
+  return date{result.get<1>(), result.get<2>(), result.get<3>()};
+}
 ```
 
 ### Lexer
 
 ```c++
-enum class type {
-    unknown, identifier, number
-};
+#include <ctre.hpp>
+#include <optional>
+#include <string_veiw>
+
+enum class type { unknown, identifier, number };
 
 struct lex_item {
-    type t;
-    std::string_view c;
+  type t;
+  std::string_view c;
 };
 
 std::optional<lex_item> lexer(std::string_view v) noexcept {
-    if (auto [m,id,num] = ctre::match<"([a-z]+)|([0-9]+)">(v); m) {
-        if (id) {
-            return lex_item{type::identifier, id};
-        } else if (num) {
-            return lex_item{type::number, num};
-        }
+  if (auto [m, id, num] = ctre::match<"^([a-z]++)|([0-9]++)$">(v); m) {
+    if (id) {
+      return lex_item{type::identifier, id};
+    } else if (num) {
+      return lex_item{type::number, num};
     }
-    return std::nullopt;
+  }
+  return std::nullopt;
 }
 ```
 
@@ -247,34 +295,79 @@ std::optional<lex_item> lexer(std::string_view v) noexcept {
 This support is preliminary, probably the API will be changed.
 
 ```c++
-auto input = "123,456,768"sv;
+#include <ctre.hpp>
+#include <iostream>
+#include <string_veiw>
 
-for (auto match: ctre::range<"([0-9]+),?">(input)) {
+// auto input = "123,456,768";
+extern const char *input;
+
+int main(void) {
+  auto matches = ctre::range<"([0-9]+),?">(input);
+  for (auto match : matches) {
     std::cout << std::string_view{match.get<0>()} << "\n";
+  }
+  return 0;
 }
 ```
+[link to compiler explorer](https://gcc.godbolt.org/z/s4zedb68n)
 
 ### Unicode
 
 ```c++
 #include <ctre-unicode.hpp>
 #include <iostream>
+
 // needed if you want to output to the terminal
 std::string_view cast_from_unicode(std::u8string_view input) noexcept {
-    return std::string_view(reinterpret_cast<const char *>(input.data()), input.size());
+  return std::string_view(reinterpret_cast<const char *>(input.data()), input.size());
 }
-int main()
-{
-    using namespace std::literals;
-    std::u8string_view original = u8"Tu es un génie"sv;
 
-    for (auto match : ctre::range<"\\p{Letter}+">(original))
-        std::cout << cast_from_unicode(match) << std::endl;
-    return 0;
+int main() {
+  using namespace std::literals;
+  std::u8string_view original = u8"Tu es un génie"sv;
+
+  for (auto match : ctre::range<"\\p{Letter}+">(original))
+    std::cout << cast_from_unicode(match) << std::endl;
+  return 0;
 }
 ```
 
 [link to compiler explorer](https://godbolt.org/z/erTshe6sz)
+
+## Integration
+You can get [ctre.hpp](https://github.com/hanickadot/compile-time-regular-expressions/blob/main/single-header/ctre.hpp) from the directory `single-header`.
+You need to add:
+
+```C++
+#include "ctre.hpp"
+
+//using namespace ctre;
+```
+This header can be regenerated with `make single-header`.
+### CMake
+If you are using cmake, you can add this directory as subdirectory and link to target `ctre`.
+
+```CMake
+cmake_minimum_required(VERSION 3.8.0)
+
+project(MyProject VERSION 1.0)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+FetchContent_Declare(
+        ctre
+        GIT_REPOSITORY https://github.com/hanickadot/compile-time-regular-expressions.git
+        GIT_TAG 95c63867bf0f6497825ef6cf44a7d0791bd25883 # v3.4.1
+)
+
+FetchContent_MakeAvailable(ctre)
+include_directories("${ctre_SOURCE_DIR}/single-header")
+
+# Add an executable with the above sources
+add_executable(${PROJECT_NAME} main.cpp)
+target_link_libraries(${PROJECT_NAME})
+```
 
 ## Running tests (for developers)
 
