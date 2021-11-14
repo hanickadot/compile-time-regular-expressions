@@ -350,7 +350,7 @@ If you are using cmake, you can add this directory as subdirectory and link to t
 
 ```CMake
 cmake_minimum_required(VERSION 3.8.0)
-
+include(FetchContent)
 project(MyProject VERSION 1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
