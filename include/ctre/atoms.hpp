@@ -37,6 +37,7 @@ template <typename... Content> using possessive_star = possessive_repeat<0,0,Con
 
 template <typename... Content> using optional = repeat<0,1,Content...>;
 template <typename... Content> using lazy_optional = lazy_repeat<0,1,Content...>;
+template <typename... Content> using possessive_optional = possessive_repeat<0,1,Content...>;
 
 template <size_t Index, typename... Content> struct capture { };
 

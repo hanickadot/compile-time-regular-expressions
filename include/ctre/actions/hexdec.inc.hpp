@@ -18,7 +18,7 @@ template <auto V, size_t N, typename... Ts, typename Parameters> static constexp
 }
 // hexdec character support (convert to character)
 template <auto V, size_t N, typename... Ts, typename Parameters> static constexpr auto apply(pcre::finish_hexdec, ctll::term<V>, pcre_context<ctll::list<number<N>, Ts...>, Parameters> subject) {
-	constexpr size_t max_char = std::numeric_limits<char>::max();
+	constexpr size_t max_char = (std::numeric_limits<char>::max)();
 	if constexpr (N <= max_char) {
 		return pcre_context{ctll::push_front(character<char{N}>(), ctll::list<Ts...>()), subject.parameters};
 	} else {

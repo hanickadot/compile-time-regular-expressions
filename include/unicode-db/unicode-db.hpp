@@ -14,7 +14,7 @@ namespace uni
     enum class block;
 
     struct script_extensions_view {
-        constexpr script_extensions_view(char32_t c);
+        constexpr script_extensions_view(char32_t);
 
         struct sentinel {};
         struct iterator {
@@ -171,9 +171,9 @@ struct compact_range {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t cp, uint32_t v) {
+        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
             char32_t c = (v >> 8);
-            return cp < c;
+            return local_cp < c;
         });
         if(it == end)
             return default_value;
@@ -190,9 +190,9 @@ struct compact_list {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::lower_bound(std::begin(_data), end, cp, [](uint32_t v, char32_t cp) {
+        auto it = detail::lower_bound(std::begin(_data), end, cp, [](uint32_t v, char32_t local_cp) {
             char32_t c = (v >> 8);
-            return c < cp;
+            return c < local_cp;
         });
         if(it == end || ((*it) >> 8) != cp)
             return default_value;
@@ -266,7 +266,7 @@ struct bool_trie {
                 }
             }
 
-            std::size_t i5 = (child << 6) + ((c >> 6) & 0x3f);
+            std::size_t i5 = static_cast<std::size_t>(child << 6) + ((c >> 6) & 0x3f);
             auto leaf = 0;
             if constexpr(r5_s > 0) {
                 if(i5 >= r5_t_f && i5 < r5_t_f + r5_s) {
@@ -306,9 +306,9 @@ struct range_array {
     std::uint32_t _data[N];
     constexpr bool lookup(char32_t cp) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t cp, uint32_t v) {
+        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
             char32_t c = (v >> 8);
-            return cp < c;
+            return local_cp < c;
         });
         if(it == end)
             return false;
@@ -377,7 +377,7 @@ struct string_with_idx { const char* name; uint32_t value; };
 namespace uni {
 
 constexpr double numeric_value::value() const {
-    return numerator() / double(_d);
+    return static_cast<double>(numerator()) / static_cast<double>(_d);
 }
 
 constexpr long long numeric_value::numerator() const {
@@ -7139,7 +7139,7 @@ constexpr script cp_script(char32_t cp) {
     return detail::tables::cp_script<0>(cp);
 }
 
-constexpr script_extensions_view::script_extensions_view(char32_t c) : c(c){}
+constexpr script_extensions_view::script_extensions_view(char32_t local_c) : c(local_c){}
 
 constexpr script_extensions_view::iterator::iterator(char32_t c) : m_c(c), m_script(detail::tables::get_cp_script(m_c, 1)) {
     if(m_script == script::unknown)
@@ -7196,9 +7196,9 @@ constexpr version cp_age(char32_t cp) {
 
 constexpr block cp_block(char32_t cp) {
     const auto end = std::end(detail::tables::block_data._data);
-    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp, [](char32_t cp, uint32_t v) {
+    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp, [](char32_t local_cp, uint32_t v) {
         char32_t c = (v >> 8);
-        return cp < c;
+        return local_cp < c;
     });
     if(it == end)
         return block::no_block;
@@ -7313,7 +7313,7 @@ namespace detail {
 template<typename Array, typename Res = long long>
 constexpr bool get_numeric_value(char32_t cp, const Array& array, Res& res) {
     auto it = detail::lower_bound(std::begin(array), std::end(array), cp,
-                               [](const auto& d, char32_t cp) { return d.first < cp; });
+								  [](const auto& d, char32_t local_cp) { return d.first < local_cp; });
     if(it == std::end(array) || it->first != cp)
         return false;
     res = it->second;
@@ -7332,7 +7332,7 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
        }())) {
         return {};
     }
-    uint16_t d = 1;
+    int16_t d = 1;
     detail::get_numeric_value(cp, detail::tables::numeric_data_d, d);
     return numeric_value(res, d);
 }

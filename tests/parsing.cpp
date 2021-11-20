@@ -28,6 +28,7 @@ static_assert(CTRE_TEST("n"));
 // repetation
 static_assert(CTRE_TEST("x?")); // optional
 static_assert(CTRE_TEST("x??")); // optional lazy
+static_assert(CTRE_TEST("x?+")); // optional possessive
 static_assert(CTRE_TEST("x*")); 
 static_assert(CTRE_TEST("x*+"));
 static_assert(CTRE_TEST("x*?"));

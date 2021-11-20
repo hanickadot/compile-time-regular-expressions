@@ -24,7 +24,7 @@ template <auto Name, auto Value> struct property;
 // unicode TS#18 level 1.2 general_category
 template <uni::detail::binary_prop Property> struct binary_property<Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::detail::get_binary_prop<Property>(c);
+		return uni::detail::get_binary_prop<Property>(static_cast<char32_t>(c));
 	}
 };
 
