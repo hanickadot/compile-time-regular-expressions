@@ -8,12 +8,6 @@
 #elif defined __cpp_nontype_template_args
     #if __cpp_nontype_template_args >= 201911L
         #define CTLL_CNTTP_COMPILER_CHECK 1
-    #elif __cpp_nontype_template_args >= 201411L
-        #if defined __clang_major__ && __clang_major__ >= 12
-            #if !defined __apple_build_version__ || !__apple_build_version__
-                #define CTLL_CNTTP_COMPILER_CHECK 1
-            #endif
-        #endif
     #endif
 #endif
 
