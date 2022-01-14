@@ -26,6 +26,7 @@ static_assert(ctll::fixed_string(u8"😍")[0] == L'😍');
 // u"" is utf-16
 static_assert(ctll::fixed_string(u"ěšč").size() == 3);
 static_assert(ctll::fixed_string(u"😍").size() == 1);
+static_assert(ctll::fixed_string(u"😍").is_same_as(ctll::fixed_string(U"😍")));
 
 // U"" is utf-32
 static_assert(ctll::fixed_string(U"ěšč").size() == 3);

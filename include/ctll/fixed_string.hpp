@@ -118,7 +118,7 @@ template <size_t N> struct fixed_string {
 				if (info.length == 2) {
 					if (++i < N) {
 						if ((input[i] & 0b1111'1100'0000'0000) == 0b1101'1100'0000'0000) {
-							content[out++] = (info.value << 10) | (input[i] & 0b0000'0011'1111'1111);
+							content[out++] = ((info.value << 10) | (input[i] & 0b0000'0011'1111'1111)) + 0x10000;
 						} else {
 							correct_flag = false;
 							break;
