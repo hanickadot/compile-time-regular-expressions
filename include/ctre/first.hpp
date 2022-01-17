@@ -499,6 +499,16 @@ public:
 		points[0].high = (std::numeric_limits<int64_t>::max)();
 		used = 1;
 	}
+	template <auto Property> constexpr void populate(ctre::binary_property<Property>) {
+		points[0].low = (std::numeric_limits<int64_t>::min)();
+		points[0].high = (std::numeric_limits<int64_t>::max)();
+		used = 1;
+	}
+	template <auto Property, auto Value> constexpr void populate(ctre::property<Property, Value>) {
+		points[0].low = (std::numeric_limits<int64_t>::min)();
+		points[0].high = (std::numeric_limits<int64_t>::max)();
+		used = 1;
+	}
 	template <typename... Content> constexpr void populate(ctre::negative_set<Content...> nset) {
 		negative_helper(nset, [&](int64_t low, int64_t high){
 			this->insert(low, high);

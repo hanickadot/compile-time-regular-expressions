@@ -59,6 +59,8 @@ static_assert(CTRE_CREATE(U"\\u20AC").match(U"€"));
 // UTS #18 Level 1: RL1.2: Properties
 // TODO only \p and \P is not supported
 static_assert(CTRE_SYNTAX(U"\\p{L}"));
+static_assert(CTRE_CREATE(U"[\\p{L}]").match("A"));
+static_assert(CTRE_CREATE(U"[\\p{L}]+").match("ABC"));
 static_assert(CTRE_SYNTAX(U"\\p{Letter}"));
 static_assert(CTRE_CREATE(U"\\P{Letter}").match(U"1"));
 static_assert(CTRE_CREATE(U"\\P{latin}").match(U"Є"));
