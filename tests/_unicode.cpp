@@ -61,6 +61,8 @@ static_assert(CTRE_CREATE(U"\\u20AC").match(U"€"));
 static_assert(CTRE_SYNTAX(U"\\p{L}"));
 static_assert(CTRE_CREATE(U"[\\p{L}]").match("A"));
 static_assert(CTRE_CREATE(U"[\\p{L}]+").match("ABC"));
+static_assert(CTRE_CREATE(U"[\\P{L}]").match("1"));
+static_assert(CTRE_CREATE(U"[\\P{L}]+").match("123"));
 static_assert(CTRE_SYNTAX(U"\\p{Letter}"));
 static_assert(CTRE_CREATE(U"\\P{Letter}").match(U"1"));
 static_assert(CTRE_CREATE(U"\\P{latin}").match(U"Є"));

@@ -3941,17 +3941,7 @@ public:
 	template <auto A, auto B> constexpr void populate(ctre::char_range<A,B>) {
 		insert(A,B);
 	}
-	constexpr void populate(can_be_anything) {
-		points[0].low = (std::numeric_limits<int64_t>::min)();
-		points[0].high = (std::numeric_limits<int64_t>::max)();
-		used = 1;
-	}
-	template <auto Property> constexpr void populate(ctre::binary_property<Property>) {
-		points[0].low = (std::numeric_limits<int64_t>::min)();
-		points[0].high = (std::numeric_limits<int64_t>::max)();
-		used = 1;
-	}
-	template <auto Property, auto Value> constexpr void populate(ctre::property<Property, Value>) {
+	constexpr void populate(...) {
 		points[0].low = (std::numeric_limits<int64_t>::min)();
 		points[0].high = (std::numeric_limits<int64_t>::max)();
 		used = 1;
