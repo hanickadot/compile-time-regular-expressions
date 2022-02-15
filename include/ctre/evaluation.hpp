@@ -20,7 +20,7 @@
 
 namespace ctre {
 
-template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(size_t i) noexcept {
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite([[maybe_unused]] size_t i) noexcept {
 	if constexpr (Limit == 0) {
 		// infinite
 		return true;
@@ -29,7 +29,7 @@ template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite(s
 	}
 }
 
-template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than(size_t i) noexcept {
+template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than([[maybe_unused]] size_t i) noexcept {
 	if constexpr (Limit == 0) {
 		// infinite
 		return false;
