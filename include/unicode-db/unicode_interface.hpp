@@ -67,11 +67,11 @@ namespace uni
     constexpr numeric_value cp_numeric_value(char32_t cp);
 
     template<script>
-    constexpr bool cp_is(char32_t);
+    constexpr bool cp_script_is(char32_t);
     template<property>
-    constexpr bool cp_is(char32_t);
+    constexpr bool cp_property_is(char32_t);
     template<category>
-    constexpr bool cp_is(char32_t);
+    constexpr bool cp_category_is(char32_t);
 
     namespace detail
     {
