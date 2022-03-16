@@ -225,13 +225,13 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<select<>, Tail...>) no
 
 
 // unicode property => anything
-template <typename... Content, auto Property, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<Property>, Tail...>) noexcept {
+template <typename... Content, typename PropertyType, PropertyType Property, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<PropertyType, Property>, Tail...>) noexcept {
 	return ctll::list<can_be_anything>{};
 }
 
-template <typename... Content, auto Property, auto Value, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<Property, Value>, Tail...>) noexcept {
+template <typename... Content, typename PropertyType, PropertyType Property, auto Value, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<PropertyType, Property, Value>, Tail...>) noexcept {
 	return ctll::list<can_be_anything>{};
 }
 
@@ -342,13 +342,13 @@ template <typename CB> constexpr int64_t negative_helper(ctre::set<>, CB &, int6
 	return start;
 }
 
-template <auto Property, typename CB> 
-constexpr auto negative_helper(ctre::binary_property<Property>, CB &&, int64_t start) {
+template <typename PropertyType, PropertyType Property, typename CB> 
+constexpr auto negative_helper(ctre::binary_property<PropertyType, Property>, CB &&, int64_t start) {
 	return start;
 }
 
-template <auto Property, auto Value, typename CB> 
-constexpr auto negative_helper(ctre::property<Property, Value>, CB &&, int64_t start) {
+template <typename PropertyType, PropertyType Property, auto Value, typename CB> 
+constexpr auto negative_helper(ctre::property<PropertyType, Property, Value>, CB &&, int64_t start) {
 	return start;
 }
 

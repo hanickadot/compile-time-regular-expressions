@@ -28,7 +28,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 	if constexpr (uni::detail::is_unknown(p)) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(make_binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
@@ -54,7 +54,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 	if constexpr (uni::detail::is_unknown(p)) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(negate<make_binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
