@@ -298,3 +298,13 @@ static_assert(CTRE_CREATE("[<]").match("<"sv));
 static_assert(CTRE_CREATE("\\<").match("<"sv));
 static_assert(CTRE_CREATE("[\\<]").match("<"sv));
 static_assert(CTRE_CREATE("[^<]").match("a"sv));
+
+// issue #245
+static_assert(CTRE_CREATE("[\\+\\-]").match("+"sv));
+static_assert(CTRE_CREATE("[\\+\\-]").match("-"sv));
+static_assert(CTRE_CREATE("[[:punct:]]").match("-"));
+static_assert(CTRE_CREATE("[[:punct:]]").match("+"));
+static_assert(CTRE_CREATE("[\\+\\-]").search("a+c"sv));
+static_assert(CTRE_CREATE("^(?=.*?[\\+\\-])[a-z [:punct:]]{8,}$").match("abcdefg-"sv));
+static_assert(CTRE_CREATE("^(?=.*?[\\+\\-])[a-z [:punct:]]{8,}$").match("abcdefg+"sv));
+

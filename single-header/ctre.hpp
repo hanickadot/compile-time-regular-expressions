@@ -1459,7 +1459,7 @@ using alpha_chars = set<char_range<'A','Z'>, char_range<'a','z'> >;
 using xdigit_chars = set<char_range<'A','F'>, char_range<'a','f'>, char_range<'0','9'> >;
 
 using punct_chars
-    = enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', ',', '-',
+    = enumeration<'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-',
 		  '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']',
 		  '^', '_', '`', '{', '|', '}', '~'>;
 
