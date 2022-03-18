@@ -1613,11 +1613,11 @@ namespace uni
     constexpr numeric_value cp_numeric_value(char32_t cp);
 
     template<script>
-    constexpr bool cp_is(char32_t);
+    constexpr bool cp_script_is(char32_t);
     template<property>
-    constexpr bool cp_is(char32_t);
+    constexpr bool cp_property_is(char32_t);
     template<category>
-    constexpr bool cp_is(char32_t);
+    constexpr bool cp_category_is(char32_t);
 
     namespace detail
     {
@@ -1656,11 +1656,14 @@ template <size_t Sz> constexpr std::string_view get_string_view(const char (& ar
 
 // basic support for binary and type-value properties
 
-template <auto Name> struct binary_property;
-template <auto Name, auto Value> struct property;
+template <typename T, T Type> struct binary_property;
+template <typename T, T Type, auto Value> struct property;
+
+template <auto Type> using make_binary_property = binary_property<std::remove_const_t<decltype(Type)>, Type>;
+template <auto Type, auto Value> using make_property = property<std::remove_const_t<decltype(Type)>, Type, Value>;
 
 // unicode TS#18 level 1.2 general_category
-template <uni::detail::binary_prop Property> struct binary_property<Property> {
+template <uni::detail::binary_prop Property> struct binary_property<uni::detail::binary_prop, Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::detail::get_binary_prop<Property>(static_cast<char32_t>(c));
 	}
@@ -1674,13 +1677,13 @@ enum class property_type {
 
 // unicode TS#18 level 1.2.2
 
-template <uni::script Script> struct binary_property<Script> {
+template <uni::script Script> struct binary_property<uni::script, Script> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_script(c) == Script;
 	}
 };
 
-template <uni::script Script> struct property<property_type::script_extension, Script> {
+template <uni::script Script> struct property<property_type, property_type::script_extension, Script> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		for (uni::script sc: uni::cp_script_extensions(c)) {
 			if (sc == Script) return true;
@@ -1689,13 +1692,13 @@ template <uni::script Script> struct property<property_type::script_extension, S
 	}
 };
 
-template <uni::version Age> struct binary_property<Age> {
+template <uni::version Age> struct binary_property<uni::version, Age> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_age(c) <= Age;
 	}
 };
 
-template <uni::block Block> struct binary_property<Block> {
+template <uni::block Block> struct binary_property<uni::block, Block> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_block(c) == Block;
 	}
@@ -1745,7 +1748,7 @@ template <> struct property_type_builder<property_type::script> {
 		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
 		} else {
-			return binary_property<sc>();
+			return make_binary_property<sc>();
 		}
 	}
 };
@@ -1757,7 +1760,7 @@ template <> struct property_type_builder<property_type::script_extension> {
 		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
 		} else {
-			return property<property_type::script_extension, sc>();
+			return make_property<property_type::script_extension, sc>();
 		}
 	}
 };
@@ -1769,7 +1772,7 @@ template <> struct property_type_builder<property_type::age> {
 		if constexpr (uni::detail::is_unassigned(age)) {
 			return ctll::reject{};
 		} else {
-			return binary_property<age>();
+			return make_binary_property<age>();
 		}
 	}
 };
@@ -1781,7 +1784,7 @@ template <> struct property_type_builder<property_type::block> {
 		if constexpr (uni::detail::is_unknown(block)) {
 			return ctll::reject{};
 		} else {
-			return binary_property<block>();
+			return make_binary_property<block>();
 		}
 	}
 };
@@ -2350,7 +2353,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 	if constexpr (uni::detail::is_unknown(p)) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(make_binary_property<p>(), ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
@@ -2375,7 +2378,7 @@ template <auto V, auto... Name, typename... Ts, typename Parameters> static cons
 	if constexpr (uni::detail::is_unknown(p)) {
 		return ctll::reject{};
 	} else {
-		return pcre_context{ctll::push_front(negate<binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
+		return pcre_context{ctll::push_front(negate<make_binary_property<p>>(), ctll::list<Ts...>()), subject.parameters};
 	}
 }
 
@@ -3673,13 +3676,13 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<select<>, Tail...>) no
 }
 
 // unicode property => anything
-template <typename... Content, auto Property, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<Property>, Tail...>) noexcept {
+template <typename... Content, typename PropertyType, PropertyType Property, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::binary_property<PropertyType, Property>, Tail...>) noexcept {
 	return ctll::list<can_be_anything>{};
 }
 
-template <typename... Content, auto Property, auto Value, typename... Tail> 
-constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<Property, Value>, Tail...>) noexcept {
+template <typename... Content, typename PropertyType, PropertyType Property, auto Value, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<ctre::property<PropertyType, Property, Value>, Tail...>) noexcept {
 	return ctll::list<can_be_anything>{};
 }
 
@@ -3786,13 +3789,13 @@ template <typename CB> constexpr int64_t negative_helper(ctre::set<>, CB &, int6
 	return start;
 }
 
-template <auto Property, typename CB> 
-constexpr auto negative_helper(ctre::binary_property<Property>, CB &&, int64_t start) {
+template <typename PropertyType, PropertyType Property, typename CB> 
+constexpr auto negative_helper(ctre::binary_property<PropertyType, Property>, CB &&, int64_t start) {
 	return start;
 }
 
-template <auto Property, auto Value, typename CB> 
-constexpr auto negative_helper(ctre::property<Property, Value>, CB &&, int64_t start) {
+template <typename PropertyType, PropertyType Property, auto Value, typename CB> 
+constexpr auto negative_helper(ctre::property<PropertyType, Property, Value>, CB &&, int64_t start) {
 	return start;
 }
 
