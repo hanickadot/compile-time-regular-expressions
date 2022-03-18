@@ -1,0 +1,15 @@
+# This file is configured to the root binary directory and should be included
+# with the --config flag of cpack
+
+include(CPack@cpack_type@.cmake)
+
+set(CPACK_PACKAGE_FILE_NAME "ctre-@PROJECT_VERSION@")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
+
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Hanicka Dusíková")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "@PROJECT_DESCRIPTION@")
+set(CPACK_DEBIAN_PACKAGE_NAME libctre-dev)
+
+set(CPACK_RPM_PACKAGE_NAME libctre-devel)
+
+set(CPACK_IGNORE_FILES "/\\.git/;/build/;\\.gitignore;\\.DS_Store")

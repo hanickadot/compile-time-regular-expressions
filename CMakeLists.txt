@@ -1,105 +1,129 @@
-cmake_minimum_required(VERSION 3.8.0)
-# When updating to a newer version of CMake, see if we can use the following
-project(ctre
-  HOMEPAGE_URL "https://compile-time.re"
-  VERSION 3.0
-  LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.8)
+
+project(ctre VERSION 3.0 LANGUAGES NONE)
+
+# ---- project() variable shims ----
+
+# Added in CMake 3.9
 set(PROJECT_DESCRIPTION "Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.")
 
-include(CMakePackageConfigHelpers)
-include(CMakeDependentOption)
-include(GNUInstallDirs)
-include(CTest)
+# Added in CMake 3.12
+set(PROJECT_HOMEPAGE_URL "https://compile-time.re")
 
-find_program(CTRE_DPKG_BUILDPACKAGE_FOUND dpkg-buildpackage)
-find_program(CTRE_RPMBUILD_FOUND rpmbuild)
-
-cmake_dependent_option(CTRE_BUILD_TESTS "Build ctre Tests" ON
-  "BUILD_TESTING;CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF)
-cmake_dependent_option(CTRE_BUILD_PACKAGE "Build ctre Packages" ON
-  "CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF)
-cmake_dependent_option(CTRE_BUILD_PACKAGE_DEB
-  "Create DEB Package (${PROJECT_NAME})" ON
-  "CTRE_BUILD_PACKAGE;CTRE_DPKG_BUILDPACKAGE_FOUND" OFF)
-cmake_dependent_option(CTRE_BUILD_PACKAGE_RPM
-  "Create RPM Package (${PROJECT_NAME})" ON
-  "CTRE_BUILD_PACKAGE;CTRE_RPMBUILD_FOUND" OFF)
-
-add_library(${PROJECT_NAME} INTERFACE)
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-
-target_include_directories(${PROJECT_NAME} INTERFACE
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(ctre INTERFACE cxx_std_17)
-
-install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
-
-if (NOT EXISTS "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in")
-  file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in [[
-    @PACKAGE_INIT@
-    include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
-  ]])
+# Added in CMake 3.21
+set(PROJECT_IS_TOP_LEVEL NO)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(PROJECT_IS_TOP_LEVEL YES)
 endif()
 
-configure_package_config_file(
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in"
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  INSTALL_DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}"
-  NO_SET_AND_CHECK_MACRO
-  NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+# ---- Warning guard for vendoring projects ----
 
-write_basic_package_version_file(ctre-config-version.cmake
-  VERSION ${PROJECT_VERSION}
-  COMPATIBILITY SameMajorVersion)
+set(warning_guard "")
+if(NOT PROJECT_IS_TOP_LEVEL)
+  option(ctre_INCLUDES_WITH_SYSTEM
+    "Use SYSTEM modifier for ctre's includes, disabling warnings" ON)
+  mark_as_advanced(ctre_INCLUDES_WITH_SYSTEM)
+  if(ctre_INCLUDES_WITH_SYSTEM)
+    set(warning_guard SYSTEM)
+  endif()
+endif()
 
-install(EXPORT ${PROJECT_NAME}-targets 
-  DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}"
-  NAMESPACE ${PROJECT_NAME}::)
-install(
-  FILES
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
-install(DIRECTORY include/ DESTINATION include
+# ---- Declare library ----
+
+add_library(ctre_ctre INTERFACE)
+add_library(ctre::ctre ALIAS ctre_ctre)
+
+set_property(TARGET ctre_ctre PROPERTY EXPORT_NAME ctre)
+
+target_include_directories(ctre_ctre ${warning_guard} INTERFACE
+  "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
+target_compile_features(ctre_ctre INTERFACE cxx_std_17)
+
+# ---- Install rules ----
+
+if(NOT CMAKE_SKIP_INSTALL_RULES)
+  # For hygienic reasons, install headers to their own directory (issue #207)
+  if(PROJECT_IS_TOP_LEVEL)
+    set(CMAKE_INSTALL_INCLUDEDIR include/ctre CACHE PATH "")
+  endif()
+
+  # The project is configured without a language, so this needs to be set
+  set(CMAKE_INSTALL_LIBDIR lib CACHE PATH "")
+
+  include(CMakePackageConfigHelpers)
+  include(GNUInstallDirs)
+
+  # For header-only libraries, everything goes in the -dev package
+  set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME ctre_Development)
+
+  install(DIRECTORY include/
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     FILES_MATCHING PATTERN *.hpp)
 
-if(CTRE_BUILD_TESTS)
-  add_subdirectory(tests)
+  install(TARGETS ctre_ctre
+    EXPORT ctre-targets
+    DESTINATION dummy # required until 3.14
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+  # Replace with ARCH_INDEPENDENT once updated to CMake 3.14
+  set(tmp_CMAKE_SIZEOF_VOID_P "${CMAKE_SIZEOF_VOID_P}")
+  set(CMAKE_SIZEOF_VOID_P "")
+
+  write_basic_package_version_file(ctre-config-version.cmake
+    COMPATIBILITY SameMajorVersion)
+
+  set(CMAKE_SIZEOF_VOID_P "${tmp_CMAKE_SIZEOF_VOID_P}")
+
+  # Allow package maintainers to freely override the path for the configs
+  set(ctre_INSTALL_CMAKEDIR "${CMAKE_INSTALL_DATADIR}/cmake/ctre"
+    CACHE PATH "CMake package config location relative to the install prefix")
+  mark_as_advanced(ctre_INSTALL_CMAKEDIR)
+
+  install(FILES "${PROJECT_BINARY_DIR}/ctre-config-version.cmake"
+    DESTINATION "${ctre_INSTALL_CMAKEDIR}")
+
+  install(EXPORT ctre-targets
+    FILE ctre-config.cmake
+    DESTINATION "${ctre_INSTALL_CMAKEDIR}"
+    NAMESPACE ctre::)
+
+  option(ctre_ENABLE_PKGCONFIG "Install a .pc file for the project" OFF)
+  mark_as_advanced(ctre_ENABLE_PKGCONFIG)
+
+  if(ctre_ENABLE_PKGCONFIG)
+    # This can only detect issues on first configure, but it's still better
+    # than nothing
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+      message(WARNING "The value of CMAKE_INSTALL_PREFIX was not set, "
+        "but ctre_ENABLE_PKGCONFIG was enabled. This is likely an error.")
+    endif()
+
+    set(ctre_INSTALL_PKGCONFIGDIR "${CMAKE_INSTALL_DATADIR}/pkgconfig"
+      CACHE FILEPATH "pkgconfig file location relative to the install prefix")
+    mark_as_advanced(ctre_INSTALL_PKGCONFIG)
+
+    configure_file(packaging/pkgconfig.pc.in ctre.pc @ONLY)
+    install(FILES "${PROJECT_BINARY_DIR}/ctre.pc"
+      DESTINATION "${ctre_INSTALL_PKGCONFIGDIR}")
+  endif()
+
+  if(PROJECT_IS_TOP_LEVEL)
+    foreach(cpack_type IN ITEMS Config SourceConfig)
+      configure_file(packaging/CPackDefaults.cmake.in
+        "CPack${cpack_type}-ctre.cmake" @ONLY)
+    endforeach()
+
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+    set(CPACK_PACKAGE_HOMEPAGE_URL "${PROJECT_HOMEPAGE_URL}")
+    include(CPack)
+  endif()
 endif()
 
-if (NOT CTRE_BUILD_PACKAGE)
-  return()
+# ---- Testing ----
+
+if(PROJECT_IS_TOP_LEVEL)
+  include(CTest)
+  if(BUILD_TESTING)
+    add_subdirectory(tests)
+  endif()
 endif()
-
-list(APPEND source-generators TBZ2 TGZ TXZ ZIP)
-
-if (CTRE_BUILD_PACKAGE_DEB)
-  list(APPEND binary-generators "DEB")
-endif()
-
-if (CTRE_BUILD_PACKAGE_RPM)
-  list(APPEND binary-generators "RPM")
-endif()
-
-set(CPACK_SOURCE_GENERATOR ${source-generators})
-set(CPACK_GENERATOR ${binary-generators})
-
-set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
-
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Hanicka Dusíková")
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${PROJECT_DESCRIPTION}")
-set(CPACK_DEBIAN_PACKAGE_NAME "lib${PROJECT_NAME}-dev")
-
-set(CPACK_RPM_PACKAGE_NAME "lib${PROJECT_NAME}-devel")
-
-set(PKG_CONFIG_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/packaging/pkgconfig.pc.in" "${PKG_CONFIG_FILE_NAME}" @ONLY)
-install(FILES "${PKG_CONFIG_FILE_NAME}"
-	DESTINATION "${CMAKE_INSTALL_DATADIR}/pkgconfig"
-)
-
-list(APPEND CPACK_SOURCE_IGNORE_FILES /.git/ /build/ .gitignore .DS_Store)
-
-include(CPack)
