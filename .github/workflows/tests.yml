@@ -65,7 +65,7 @@ jobs:
       matrix:
         standard: [20]
       fail-fast: false
-    name: "MSVC (C++${{ matrix.standard }})"
+    name: "MSVC (latest, C++${{ matrix.standard }})"
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
