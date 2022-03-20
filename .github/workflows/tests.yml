@@ -38,7 +38,7 @@ jobs:
   clang:
     strategy:
       matrix:
-        clang: [6, 7, 8, 9, 10, 11, 12, 13]
+        clang: [7, 8, 9, 10, 11, 12, 13]
         stdlib: ["libc++", "libstdc++"]
         standard: [17, 20]
       fail-fast: false
