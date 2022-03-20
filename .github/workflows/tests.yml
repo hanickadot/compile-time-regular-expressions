@@ -54,7 +54,7 @@ jobs:
       matrix:
         clang: [9, 10, 11, 12, 13]
         stdlib: ["libc++", "libstdc++"]
-    name: "Clang ${{ matrix.clang }} (C++17)"
+    name: "Clang ${{ matrix.clang }} (C++17, ${{ matrix.stdlib }})"
     runs-on: ubuntu-20.04
     steps:
       - name: "Install Clang"
@@ -69,7 +69,7 @@ jobs:
       matrix:
         clang: [9, 10, 11, 12, 13]
         stdlib: ["libc++", "libstdc++"]
-    name: "Clang ${{ matrix.clang }} (C++20)"
+    name: "Clang ${{ matrix.clang }} (C++20, ${{ matrix.stdlib }})"
     runs-on: ubuntu-20.04
     steps:
       - name: "Install Clang"
