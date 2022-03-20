@@ -6,6 +6,7 @@ jobs:
       matrix:
         macos: [10.15, 11]
         standard: [17, 20]
+      fail-fast: false
     name: "AppleClang (MacOS ${{ matrix.macos }}, C++${{ matrix.standard }})"
     runs-on: macos-${{ matrix.macos }}
     steps:
@@ -20,6 +21,7 @@ jobs:
       matrix:
         gcc: [8, 9, 10, 11]
         standard: [17, 20]
+      fail-fast: false
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
     runs-on: ubuntu-20.04
     steps:
@@ -39,6 +41,7 @@ jobs:
         clang: [6, 7, 8, 9, 10, 11, 12, 13]
         stdlib: ["libc++", "libstdc++"]
         standard: [17, 20]
+      fail-fast: false
     name: "Clang ${{ matrix.clang }} (C++${{ matrix.standard }}, ${{ matrix.stdlib }})"
     runs-on: ubuntu-20.04
     steps:
