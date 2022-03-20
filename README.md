@@ -117,7 +117,7 @@ Otherwise you will get missing symbols if you try to use the unicode support wit
 
 ## Supported compilers
 
-* clang 6.0+ (template UDL, C++17 syntax)
+* clang 7.0+ (template UDL, C++17 syntax)
 * xcode clang 10.0+ (template UDL, C++17 syntax)
 * clang 12.0+ (C++17 syntax, C++20 cNTTP syntax)
 * gcc 8.0+ (template UDL, C++17 syntax)

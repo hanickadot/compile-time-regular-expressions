@@ -31,7 +31,10 @@ add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(ctre INTERFACE cxx_std_17)
+
+set(CTRE_CXX_STANDARD 17)
+
+target_compile_features(ctre INTERFACE cxx_std_${CTRE_CXX_STANDARD})
 
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 

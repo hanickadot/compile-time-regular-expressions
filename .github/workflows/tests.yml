@@ -61,12 +61,16 @@ jobs:
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
         if: ${{ matrix.standard == '17' }}
   msvc:
-    name: "MSVC"
+    strategy:
+      matrix:
+        standard: [17, 20]
+      fail-fast: false
+    name: "MSVC (C++${{ matrix.standard }})"
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
       - name: "Install Ninja & CMake"
         run: choco install ninja cmake
       - run: |
-          cmake . -B build -DCTRE_BUILD_TESTS=ON
+          cmake . -B build -DCTRE_BUILD_TESTS=ON -DCTRE_CXX_STANDARD=${{ matrix.standard }}
           cmake --build build --target ctre-test
