@@ -43,3 +43,14 @@ jobs:
       - uses: actions/checkout@v2
       - run: c++ -v
       - run: make CXX_STANDARD=2a
+  clang-ubuntu-2004-cpp20:
+    name: "Clang 9.0 (Ubuntu 20.04, C++20)"
+    runs-on: ubuntu-20.04
+    uses: egor-tensin/setup-clang@v1
+      with:
+        version: 9
+        platform: x64
+    steps:
+      - uses: actions/checkout@v2
+      - run: c++ -v
+      - run: make CXX_STANDARD=2a CXX=$clangxx
