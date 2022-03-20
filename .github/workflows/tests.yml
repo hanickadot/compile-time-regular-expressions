@@ -34,9 +34,9 @@ jobs:
       - run: make CXX=c++ CXX_STANDARD=2a
         if: ${{ matrix.standard == '20' }}
       - run: make CXX=c++ CXX_STANDARD=17
-        if: ${{ matrix.gcc != '9' && matrix.standard == '17' }}
+        if: ${{ matrix.gcc < '9' && matrix.standard == '17' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
-        if: ${{ matrix.gcc == '9' && matrix.standard == '17' }}
+        if: ${{ matrix.gcc >= '9' && matrix.standard == '17' }}
   clang:
     strategy:
       matrix:
