@@ -60,3 +60,8 @@ jobs:
         if: ${{ matrix.standard == '20' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
         if: ${{ matrix.standard == '17' }}
+  msvc:
+    name: "MSVC"
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v2
