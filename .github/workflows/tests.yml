@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=17
+      - run: make CXX=c++ CXX_STANDARD=17
   appleclang-macos-cpp20:
     strategy:
       matrix:
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=2a
+      - run: make CXX=c++ CXX_STANDARD=2a
   gcc-ubuntu-2004-cpp17:
     strategy:
       matrix:
@@ -34,7 +34,7 @@ jobs:
           version: ${{ matrix.gcc }}
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
+      - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
   gcc-ubuntu-2004-cpp20:
     strategy:
       matrix:
@@ -48,7 +48,7 @@ jobs:
           version: ${{ matrix.gcc }}
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=2a
+      - run: make CXX=c++ CXX_STANDARD=2a
   clang-ubuntu-2004-cpp17:
     strategy:
       matrix:
@@ -63,7 +63,7 @@ jobs:
           version: ${{ matrix.clang }}
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+      - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
   clang-ubuntu-2004-cpp20:
     strategy:
       matrix:
@@ -78,4 +78,4 @@ jobs:
           version: ${{ matrix.clang }}
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+      - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
