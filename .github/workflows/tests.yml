@@ -1,31 +1,26 @@
 name: Tests
 on: [push]
 jobs:
-  appleclang-macos-cpp17:
+  appleclang:
     strategy:
       matrix:
         macos: [10.15, 11]
-    name: "AppleClang (MacOS ${{ matrix.macos }}, C++17)"
+        standard: [17, 20]
+    name: "AppleClang (MacOS ${{ matrix.macos }}, C++${{ matrix.standard }})"
     runs-on: macos-${{ matrix.macos }}
     steps:
       - uses: actions/checkout@v2
       - run: c++ -v
+      - run: make CXX=c++ CXX_STANDARD=2a
+        if: ${{ matrix.standard == '20' }}
       - run: make CXX=c++ CXX_STANDARD=17
-  appleclang-macos-cpp20:
-    strategy:
-      matrix:
-        macos: [10.15, 11]
-    name: "AppleClang (MacOS ${{ matrix.macos }}, C++20)"
-    runs-on: macos-${{ matrix.macos }}
-    steps:
-      - uses: actions/checkout@v2
-      - run: c++ -v
-      - run: make CXX=c++ CXX_STANDARD=2a
-  gcc-ubuntu-2004-cpp17:
+        if: ${{ matrix.standard == '17' }}
+  gcc:
     strategy:
       matrix:
         gcc: [9, 10, 11]
-    name: "GCC ${{ matrix.gcc }} (C++17)"
+        standard: [17, 20]
+    name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
     runs-on: ubuntu-20.04
     steps:
       - name: "Install GCC"
@@ -34,27 +29,17 @@ jobs:
           version: ${{ matrix.gcc }}
       - uses: actions/checkout@v2
       - run: c++ -v
+      - run: make CXX=c++ CXX_STANDARD=2a
+        if: ${{ matrix.standard == '20' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
-  gcc-ubuntu-2004-cpp20:
-    strategy:
-      matrix:
-        gcc: [9, 10, 11]
-    name: "GCC ${{ matrix.gcc }} (C++20)"
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Install GCC"
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: ${{ matrix.gcc }}
-      - uses: actions/checkout@v2
-      - run: c++ -v
-      - run: make CXX=c++ CXX_STANDARD=2a
-  clang-ubuntu-2004-cpp17:
+        if: ${{ matrix.standard == '17' }}
+  clang:
     strategy:
       matrix:
         clang: [9, 10, 11, 12, 13]
         stdlib: ["libc++", "libstdc++"]
-    name: "Clang ${{ matrix.clang }} (C++17, ${{ matrix.stdlib }})"
+        standard: [17, 20]
+    name: "Clang ${{ matrix.clang }} (C++${{ matrix.standard }}, ${{ matrix.stdlib }})"
     runs-on: ubuntu-20.04
     steps:
       - name: "Install Clang"
@@ -66,22 +51,4 @@ jobs:
         run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
-  clang-ubuntu-2004-cpp20:
-    strategy:
-      matrix:
-        clang: [9, 10, 11, 12, 13]
-        stdlib: ["libc++", "libstdc++"]
-    name: "Clang ${{ matrix.clang }} (C++20, ${{ matrix.stdlib }})"
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Install Clang"
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: ${{ matrix.clang }}
-      - name: "Install libc++"
-        if: ${{ matrix.stdlib == 'libc++' }}
-        run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
-      - uses: actions/checkout@v2
-      - run: c++ -v
-      - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+      - run: make CXX=c++ CXX_STANDARD=${{ matrix.standard }} CXXFLAGS=-stdlib=${{ matrix.stdlib }}
