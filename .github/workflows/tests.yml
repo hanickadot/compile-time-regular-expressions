@@ -42,4 +42,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=20
+      - run: make CXX_STANDARD=2a
