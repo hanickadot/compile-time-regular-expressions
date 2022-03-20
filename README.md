@@ -122,7 +122,7 @@ Otherwise you will get missing symbols if you try to use the unicode support wit
 * clang 12.0+ (C++17 syntax, C++20 cNTTP syntax)
 * gcc 8.0+ (template UDL, C++17 syntax)
 * gcc 9.0+ (C++17 & C++20 cNTTP syntax)
-* MSVC 15.8.8+ (C++17 syntax only) (semi-supported, I don't have windows machine)
+* MSVC 14.16+ (Visual Studio 15.9+) (C++17 syntax only) (semi-supported, I don't have windows machine)
 
 ### Template UDL syntax
 
