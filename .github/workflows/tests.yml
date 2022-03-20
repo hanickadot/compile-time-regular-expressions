@@ -61,10 +61,10 @@ jobs:
         uses: egor-tensin/setup-clang@v1
         with:
           version: ${{ matrix.clang }}
-      - uses: actions/checkout@v2
       - name: "Install libc++"
         if: ${{ matrix.stdlib == 'libc++' }}
-        run: apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
+        run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
+      - uses: actions/checkout@v2
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
   clang-ubuntu-2004-cpp20:
@@ -79,9 +79,9 @@ jobs:
         uses: egor-tensin/setup-clang@v1
         with:
           version: ${{ matrix.clang }}
-      - uses: actions/checkout@v2
       - name: "Install libc++"
         if: ${{ matrix.stdlib == 'libc++' }}
-        run: apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
+        run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
+      - uses: actions/checkout@v2
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
