@@ -1,8 +1,0 @@
-name: build on mac
-on: [push]
-jobs:
-  build-on-mac:
-    runs-on: macos-11
-    steps:
-      - uses: actions/checkout@v2
-      - run: make

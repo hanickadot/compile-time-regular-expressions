@@ -1,0 +1,23 @@
+name: Tests
+on: [push]
+jobs:
+  macos-11-cpp17:
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v2
+      - run: make CXX_STANDARD=17
+  macos-11-cpp20:
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v2
+      - run: make CXX_STANDARD=20
+  macos-1015-cpp17:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+      - run: make CXX_STANDARD=17
+  macos-1015-cpp20:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+      - run: make CXX_STANDARD=20
