@@ -68,26 +68,10 @@ jobs:
     name: "MSVC ${{ matrix.version }} (C++20)"
     runs-on: windows-2022
     steps:
-      - name: Add msbuild 15.8 to PATH
-        uses: microsoft/setup-msbuild@v1.1
+      - name: Add MSVC ${{ matrix.version }} to PATH
+        uses: ilammy/msvc-dev-cmd@v1
         with:
-          vs-version: '[15.8, 15.9)'
-        if: ${{ matrix.version == 15.8 }}
-      - name: Add msbuild 15.9 to PATH
-        uses: microsoft/setup-msbuild@v1.1
-        with:
-          vs-version: '[15.9, 15.10)'
-        if: ${{ matrix.version == 15.9 }}
-      - name: Add msbuild 16.11 to PATH
-        uses: microsoft/setup-msbuild@v1.1
-        with:
-          vs-version: '[16.11, 16.12)'
-        if: ${{ matrix.version == 16.11 }}
-      - name: Add msbuild 17.1 to PATH
-        uses: microsoft/setup-msbuild@v1.1
-        with:
-          vs-version: '[17.1, 17.2)'
-        if: ${{ matrix.version == 17.1 }}
+          toolset: ${{ matrix.version }}
       - name: "Install Ninja & CMake"
         run: choco install ninja cmake
       - uses: actions/checkout@v2
