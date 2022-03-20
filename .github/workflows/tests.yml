@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=17
+      - run: make CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
   gcc-ubuntu-2004-cpp20:
     name: "GCC Ubuntu 20.04 (C++20)"
     runs-on: ubuntu-20.04
