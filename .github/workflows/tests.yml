@@ -63,14 +63,18 @@ jobs:
   msvc:
     strategy:
       matrix:
-        standard: [20]
+        versions: [15.8, 15.9, 16.11, 17.1]
       fail-fast: false
     name: "MSVC (latest, C++${{ matrix.standard }})"
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v2
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+        with:
+          vs-version: '[${{ matrix.version }}, ${{ matrix.standard+0.1 }})'
       - name: "Install Ninja & CMake"
         run: choco install ninja cmake
+      - uses: actions/checkout@v2
       - name: "Configure"
         run: cmake . -G Ninja -B build -DCTRE_BUILD_TESTS=ON -DCTRE_CXX_STANDARD=${{ matrix.standard }}
       - name: "Build"
