@@ -24,4 +24,4 @@ jobs:
     runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
-      - run: make CXX_STANDARD=20
+      - run: make CXX_STANDARD=2a
