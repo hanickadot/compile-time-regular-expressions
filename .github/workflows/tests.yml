@@ -63,15 +63,15 @@ jobs:
   msvc:
     strategy:
       matrix:
-        versions: [15.8, 15.9, 16.11, 17.1]
+        version: [15.8, 15.9, 16.11, 17.1]
       fail-fast: false
-    name: "MSVC (latest, C++${{ matrix.standard }})"
+    name: "MSVC ${{ matrix.version }} (C++20)"
     runs-on: windows-2022
     steps:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.1
         with:
-          vs-version: '[${{ matrix.version }}, ${{ matrix.standard+0.1 }})'
+          vs-version: '[${{ matrix.version }}, ${{ matrix.version+0.1 }})'
       - name: "Install Ninja & CMake"
         run: choco install ninja cmake
       - uses: actions/checkout@v2
