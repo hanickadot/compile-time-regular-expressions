@@ -323,7 +323,7 @@ range_array(U...)->range_array<sizeof...(U)>;
 
 constexpr char propcharnorm(char a) {
     if(a >= 'A' && a <= 'Z')
-        return a + 32;
+        return static_cast<char>(a + 32);
     if(a == ' ' || a == '-')
         return '_';
     return a;
