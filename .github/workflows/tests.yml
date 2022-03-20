@@ -51,4 +51,7 @@ jobs:
         run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX=c++ CXX_STANDARD=${{ matrix.standard }} CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+      - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+        if: ${{ matrix.standard == '20' }}
+      - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+        if: ${{ matrix.standard == '17' }}
