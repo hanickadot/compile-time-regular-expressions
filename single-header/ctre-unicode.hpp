@@ -5170,10 +5170,8 @@ namespace literals {
 #define CTRE_ENABLE_LITERALS
 #endif
   
-#ifdef _MSVC_LANG
-#if _MSVC_LANG >= 202002L
+#ifdef _MSVC_VER
 #define CTRE_ENABLE_LITERALS
-#endif
 #endif
 
 #ifdef __INTEL_COMPILER
