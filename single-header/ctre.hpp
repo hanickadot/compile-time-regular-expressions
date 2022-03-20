@@ -5167,7 +5167,7 @@ namespace literals {
 #define CTRE_ENABLE_LITERALS
 #endif
   
-#ifdef _MSVC_VER
+#ifdef _MSC_VER
 #define CTRE_ENABLE_LITERALS
 #endif
 
