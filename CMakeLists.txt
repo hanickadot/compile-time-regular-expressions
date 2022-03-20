@@ -33,7 +33,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
   $<INSTALL_INTERFACE:include>)
 
 if (NOT CTRE_CXX_STANDARD)
-  set(CTRE_CXX_STANDARD 17)
+  set(CTRE_CXX_STANDARD 20)
 endif()
 
 target_compile_features(ctre INTERFACE cxx_std_${CTRE_CXX_STANDARD})
