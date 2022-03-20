@@ -18,7 +18,7 @@ jobs:
   gcc:
     strategy:
       matrix:
-        gcc: [9, 10, 11]
+        gcc: [8, 9, 10, 11]
         standard: [17, 20]
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
     runs-on: ubuntu-20.04
@@ -36,7 +36,7 @@ jobs:
   clang:
     strategy:
       matrix:
-        clang: [9, 10, 11, 12, 13]
+        clang: [6, 7, 8, 9, 10, 11, 12, 13]
         stdlib: ["libc++", "libstdc++"]
         standard: [17, 20]
     name: "Clang ${{ matrix.clang }} (C++${{ matrix.standard }}, ${{ matrix.stdlib }})"
