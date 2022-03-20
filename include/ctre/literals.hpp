@@ -29,7 +29,13 @@ namespace literals {
 #endif
   
 #ifdef _MSC_VER
+#ifdef _MSVC_LANG
+#if _MSVC_LANG >= 202002L
 #define CTRE_ENABLE_LITERALS
+#endif
+#else
+#define CTRE_ENABLE_LITERALS
+#endif
 #endif
 
 #ifdef __INTEL_COMPILER
