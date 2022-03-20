@@ -65,4 +65,8 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
-      - run: choco install ninja cmake
+      - name: "Install Ninja & CMake"
+        run: choco install ninja cmake
+      - run: |
+          cmake . -B build -DCTRE_BUILD_TESTS=ON
+          cmake --build build --target ctre-test
