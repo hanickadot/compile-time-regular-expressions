@@ -63,7 +63,6 @@ jobs:
   msvc:
     strategy:
       matrix:
-        system: 
         standard: [20]
       fail-fast: false
     name: "MSVC (C++${{ matrix.standard }})"
