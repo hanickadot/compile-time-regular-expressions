@@ -1,35 +1,18 @@
 name: Tests
 on: [push]
 jobs:
-  appleclang-macos-11-cpp17:
-    name: "AppleClang 13.0 (MacOS 11, C++17)"
-    runs-on: macos-11
+  appleclang-macos:
+    strategy:
+      matrix:
+        macos: [10.15, 11]
+        cpp: [17, "2a"]
+    name: "AppleClang (MacOS ${{ matrix.macos }}, C++${{ matrix.cpp }})"
+    runs-on: macos-${{ matrix.macos }}
     steps:
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=17
-  appleclang-macos-11-cpp20:
-    name: "AppleClang 13.0 (MacOS 11, C++20)"
-    runs-on: macos-11
-    steps:
-      - uses: actions/checkout@v2
-      - run: c++ -v
-      - run: make CXX_STANDARD=20
-  appleclang-macos-1015-cpp17:
-    name: "AppleClang 12.0 (MacOS 10.15, C++17)"
-    runs-on: macos-10.15
-    steps:
-      - uses: actions/checkout@v2
-      - run: c++ -v
-      - run: make CXX_STANDARD=17
-  appleclang-macos-1015-cpp20:
-    name: "AppleClang 12.0 (MacOS 10.15, C++20)"
-    runs-on: macos-10.15
-    steps:
-      - uses: actions/checkout@v2
-      - run: c++ -v
-      - run: make CXX_STANDARD=2a
-  gcc-ubuntu-2004-cpp17:
+      - run: make CXX_STANDARD=${{ matrix.cpp }}
+  gcc-9.3-ubuntu-2004-cpp17:
     name: "GCC 9.3 (Ubuntu 20.04, C++17)"
     runs-on: ubuntu-20.04
     steps:
@@ -37,16 +20,9 @@ jobs:
       - run: c++ -v
       - run: make CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
   gcc-ubuntu-2004-cpp20:
-    name: "GCC 9.3 (Ubuntu 20.04, C++20)"
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - run: c++ -v
-      - run: make CXX_STANDARD=2a
-  gcc-ubuntu-2004-cpp20:
     strategy:
       matrix:
-        gcc: [10, 11]
+        gcc: [9, 10, 11]
      name: "GCC ${{ matrix.clang }} (Ubuntu 20.04, C++20)"
      runs-on: ubuntu-20.04
      steps:
