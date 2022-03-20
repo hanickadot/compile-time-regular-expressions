@@ -47,7 +47,7 @@ jobs:
     name: "Clang 9.0 (Ubuntu 20.04, C++20)"
     runs-on: ubuntu-20.04
     steps:
-      - name "Install Clang"
+      - name: "Install Clang"
         uses: egor-tensin/setup-clang@v1
         with:
           version: 9
