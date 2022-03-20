@@ -63,7 +63,8 @@ jobs:
   msvc:
     strategy:
       matrix:
-        standard: [17, 20]
+        system: 
+        standard: [20]
       fail-fast: false
     name: "MSVC (C++${{ matrix.standard }})"
     runs-on: windows-2022
