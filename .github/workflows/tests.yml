@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         gcc: [9, 10, 11]
-    name: "GCC ${{ matrix.clang }} (Ubuntu 20.04, C++20)"
+    name: "GCC ${{ matrix.gcc }} (Ubuntu 20.04, C++20)"
     runs-on: ubuntu-20.04
     steps:
       - name: "Install GCC"
@@ -32,7 +32,7 @@ jobs:
           version: ${{ matrix.gcc }}
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=20
+      - run: make CXX_STANDARD=2a
   clang-ubuntu-2004-cpp20:
     strategy:
       matrix:
@@ -46,4 +46,4 @@ jobs:
           version: ${{ matrix.clang }}
       - uses: actions/checkout@v2
       - run: c++ -v
-      - run: make CXX_STANDARD=20
+      - run: make CXX_STANDARD=2a
