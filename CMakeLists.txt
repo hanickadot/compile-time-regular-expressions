@@ -34,6 +34,10 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 set(CTRE_CXX_STANDARD 17)
 
+if (CTRE_ENABLE_LITERALS)
+  target_compile_definitions(ctre INTERFACE CTRE_ENABLE_LITERALS)
+endif()
+
 target_compile_features(ctre INTERFACE cxx_std_${CTRE_CXX_STANDARD})
 
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)

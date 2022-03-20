@@ -72,5 +72,5 @@ jobs:
       - name: "Install Ninja & CMake"
         run: choco install ninja cmake
       - run: |
-          cmake . -B build -DCTRE_BUILD_TESTS=ON -DCTRE_CXX_STANDARD=${{ matrix.standard }}
+          cmake . -B build -DCTRE_BUILD_TESTS=ON -DCTRE_ENABLE_LITERALS=ON -DCTRE_CXX_STANDARD=${{ matrix.standard }}
           cmake --build build --target ctre-test
