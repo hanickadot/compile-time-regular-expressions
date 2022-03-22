@@ -462,7 +462,7 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
         #define CTLL_CNTTP_COMPILER_CHECK 1
     #elif __cpp_nontype_template_args >= 201411L
 // appleclang 13+
-      #if !defined __apple_build_version__ || !__apple_build_version__
+      #if defined __apple_build_version__
         #if defined __clang_major__ && __clang_major__ >= 13
 // but only in c++20 and more
           #if __cplusplus > 201703L
