@@ -454,16 +454,27 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 #if defined __cpp_nontype_template_parameter_class
     #define CTLL_CNTTP_COMPILER_CHECK 1
 #elif defined __cpp_nontype_template_args
+// compiler which defines correctly feature test macro (not you clang)
     #if __cpp_nontype_template_args >= 201911L
         #define CTLL_CNTTP_COMPILER_CHECK 1
     #elif __cpp_nontype_template_args >= 201411L
-        #if defined __clang_major__ && __clang_major__ >= 12
-            #if !defined __apple_build_version__ || !__apple_build_version__
-                #if __cplusplus > 201703L
-                    #define CTLL_CNTTP_COMPILER_CHECK 1
-                #endif
-            #endif
+// appleclang 13+
+      #if !defined __apple_build_version__ || !__apple_build_version__
+        #if defined __clang_major__ && __clang_major__ >= 13
+// but only in c++20 and more
+          #if __cplusplus > 201703L
+              #define CTLL_CNTTP_COMPILER_CHECK 1
+          #endif
         #endif
+      #else 
+// clang 12+
+        #if defined __clang_major__ && __clang_major__ >= 12
+// but only in c++20 and more
+          #if __cplusplus > 201703L
+              #define CTLL_CNTTP_COMPILER_CHECK 1
+          #endif
+        #endif
+      #endif
     #endif
 #endif
 
