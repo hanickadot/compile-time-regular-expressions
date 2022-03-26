@@ -21,7 +21,7 @@ namespace ctfa {
 		
 		static constexpr auto list = states();
 		
-		template <int transition_index, int current_state, typename Iterator, typename EndIterator> static CTFA_FORCE_INLINE constexpr bool choose_transition(Iterator it, const EndIterator end) noexcept {
+		template <int transition_index, int current_state, typename Iterator, typename EndIterator> static CTFA_FORCE_INLINE constexpr bool choose_transition([[maybe_unused]] Iterator it, [[maybe_unused]] const EndIterator end) noexcept {
 			if constexpr (transition_index != Dfa.transitions.size() && Dfa.transitions[transition_index].source.id == current_state) {
 				constexpr auto transition = Dfa.transitions[transition_index];
 				if (transition.cond.match(*it) && end != it) {
