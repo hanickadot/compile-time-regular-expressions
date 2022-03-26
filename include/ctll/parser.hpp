@@ -41,8 +41,11 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 	using grammar = augment_grammar<Grammar>;
 	
 	template <size_t Pos, typename Stack, typename Subject, decision Decision> struct results {
+	
+		static constexpr bool is_correct = Decision == decision::accept;
+	
 		constexpr inline CTLL_FORCE_INLINE operator bool() const noexcept {
-			return Decision == decision::accept;
+			return is_correct;
 		}
 		
 		#ifdef __GNUC__ // workaround to GCC bug
@@ -56,6 +59,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 		#endif
 	
 		using output_type = Subject;
+		static constexpr size_t position = Pos;
     
 		constexpr auto operator+(placeholder) const noexcept {
 			if constexpr (Decision == decision::undecided) {
@@ -71,7 +75,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 	template <size_t Pos> static constexpr auto get_current_term() noexcept {
 		if constexpr (Pos < input.size()) {
 			constexpr auto value = input[Pos];
-			if constexpr (value <= static_cast<decltype(value)>(std::numeric_limits<char>::max())) {
+			if constexpr (value <= static_cast<decltype(value)>((std::numeric_limits<char>::max)())) {
 				return term<static_cast<char>(value)>{};
 			} else {
 				return term<value>{};
@@ -88,7 +92,7 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 			return epsilon{};
 		} else if constexpr ((Pos-1) < input.size()) {
 			constexpr auto value = input[Pos-1];
-			if constexpr (value <= static_cast<decltype(value)>(std::numeric_limits<char>::max())) {
+			if constexpr (value <= static_cast<decltype(value)>((std::numeric_limits<char>::max)())) {
 				return term<static_cast<char>(value)>{};
 			} else {
 				return term<value>{};
@@ -126,15 +130,15 @@ template <typename Grammar, const auto & input, typename ActionSelector = empty_
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, typename Stack, typename Subject>
 	static constexpr auto move(push<term<V>, Content...>, term<V>, Stack stack, Subject) noexcept {
-		constexpr auto _input = input;
-		return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+		constexpr auto local_input = input;
+		return typename parser<Grammar, local_input, ActionSelector, IgnoreUnknownActions>::template results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// if rule is string with any character at the beginning (compatible with current term<T>) => move to next character 
 	// and push string without the character (quick LL(1))
 	template <size_t Pos, auto V, typename... Content, auto T, typename Stack, typename Subject>
 	static constexpr auto move(push<anything, Content...>, term<T>, Stack stack, Subject) noexcept {
-		constexpr auto _input = input;
-		return typename parser<Grammar, _input, ActionSelector, IgnoreUnknownActions>::template results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
+		constexpr auto local_input = input;
+		return typename parser<Grammar, local_input, ActionSelector, IgnoreUnknownActions>::template results<Pos+1, decltype(push_front(list<Content...>(), stack)), Subject, decision::undecided>();
 	}
 	// decide if we need to take action or move
 	template <size_t Pos, typename Stack, typename Subject> static constexpr auto decide(Stack previous_stack, Subject previous_subject) noexcept {

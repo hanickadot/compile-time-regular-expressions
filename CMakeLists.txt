@@ -4,6 +4,7 @@ project(ctre
   HOMEPAGE_URL "https://compile-time.re"
   VERSION 3.0
   LANGUAGES CXX)
+set(PROJECT_DESCRIPTION "Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.")
 
 include(CMakePackageConfigHelpers)
 include(CMakeDependentOption)
@@ -30,7 +31,12 @@ add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(ctre INTERFACE cxx_std_17)
+
+if (NOT CTRE_CXX_STANDARD)
+  set(CTRE_CXX_STANDARD 20)
+endif()
+
+target_compile_features(ctre INTERFACE cxx_std_${CTRE_CXX_STANDARD})
 
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 
@@ -88,6 +94,16 @@ set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Hanicka Dusíková")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${PROJECT_DESCRIPTION}")
+set(CPACK_DEBIAN_PACKAGE_NAME "lib${PROJECT_NAME}-dev")
+
+set(CPACK_RPM_PACKAGE_NAME "lib${PROJECT_NAME}-devel")
+
+set(PKG_CONFIG_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/packaging/pkgconfig.pc.in" "${PKG_CONFIG_FILE_NAME}" @ONLY)
+install(FILES "${PKG_CONFIG_FILE_NAME}"
+	DESTINATION "${CMAKE_INSTALL_DATADIR}/pkgconfig"
+)
 
 list(APPEND CPACK_SOURCE_IGNORE_FILES /.git/ /build/ .gitignore .DS_Store)
 

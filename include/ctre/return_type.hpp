@@ -9,16 +9,21 @@
 #include <string>
 #include <iterator>
 #include <iosfwd>
+#if __has_include(<charconv>)
+#include <charconv>
+#endif
 
 namespace ctre {
 
 constexpr bool is_random_accessible(const std::random_access_iterator_tag &) { return true; }
 constexpr bool is_random_accessible(...) { return false; }
 
+template <typename T> constexpr bool is_reverse_iterator(const std::reverse_iterator<T> &) { return true; }
+constexpr bool is_reverse_iterator(...) { return false; }
 
 struct not_matched_tag_t { };
 
-static constexpr inline auto not_matched = not_matched_tag_t{};
+constexpr inline auto not_matched = not_matched_tag_t{};
 	
 template <size_t Id, typename Name = void> struct captured_content {
 	template <typename Iterator> class storage {
@@ -63,7 +68,9 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _matched;
 		}
 		
-		constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
+		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
+			static_assert(!is_reverse_iterator(It{}), "Iterator in your capture must not be reverse!");
+			
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return _begin.ptr;
@@ -75,10 +82,10 @@ template <size_t Id, typename Name = void> struct captured_content {
 			#endif
 		}
 		
-		constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
-			constexpr bool must_be_contiguous_iterator = is_random_accessible(typename std::iterator_traits<Iterator>::iterator_category{});
+		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
+			constexpr bool must_be_contiguous_nonreverse_iterator = is_random_accessible(typename std::iterator_traits<It>::iterator_category{}) && !is_reverse_iterator(It{});
 			
-			static_assert(must_be_contiguous_iterator, "To access result as a pointer you need to provide a random access iterator/range to regex.");
+			static_assert(must_be_contiguous_nonreverse_iterator, "To access result as a pointer you need to provide a random access iterator/range to regex (which is not reverse iterator based).");
 			
 			return data_unsafe();
 		}
@@ -91,16 +98,30 @@ template <size_t Id, typename Name = void> struct captured_content {
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return static_cast<size_t>(std::distance(_begin.ptr, _end.ptr));
+			} else {
+				return static_cast<size_t>(std::distance(begin(), end()));
 			}
-			#endif
+			#else
 			return static_cast<size_t>(std::distance(begin(), end()));
+			#endif
 		}
+		
+#if __has_include(<charconv>)
+		template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
+			R result{0};
+			const auto view = to_view();
+			std::from_chars(view.data(), view.data() + view.size(), result, base);
+			return result;
+		}
+#endif
+		
+		template <typename T> struct identify;
 
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			// random access, because C++ (waving hands around)
-			constexpr bool must_be_contiguous_iterator = is_random_accessible(typename std::iterator_traits<std::remove_const_t<It>>::iterator_category{});
+			constexpr bool must_be_nonreverse_contiguous_iterator = is_random_accessible(typename std::iterator_traits<std::remove_const_t<It>>::iterator_category{}) && !is_reverse_iterator(It{});
 			
-			static_assert(must_be_contiguous_iterator, "To convert capture into a basic_string_view you need to provide a pointer or a contiguous iterator/range to regex.");
+			static_assert(must_be_nonreverse_contiguous_iterator, "To convert capture into a basic_string_view you need to provide a pointer or a contiguous non-reverse iterator/range to regex.");
 	
 			return std::basic_string_view<char_type>(data_unsafe(), static_cast<size_t>(unit_size()));
 		}
@@ -109,9 +130,12 @@ template <size_t Id, typename Name = void> struct captured_content {
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return std::basic_string<char_type>(data_unsafe(), static_cast<size_t>(unit_size()));
+			} else {
+				return std::basic_string<char_type>(begin(), end());
 			}
-			#endif
+			#else
 			return std::basic_string<char_type>(begin(), end());
+			#endif
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto view() const noexcept {
@@ -312,6 +336,12 @@ public:
 		return to_string();
 	}
 	
+#if __has_include(<charconv>)
+	template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
+		return _captures.template select<0>().template to_number<R>(base);
+	}
+#endif
+	
 	constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 		return _captures.template select<0>().to_view();
 	}
@@ -355,6 +385,12 @@ public:
 		_captures.template select<Id>().set_end(pos).matched();
 		return *this;
 	}
+	constexpr auto begin() const noexcept {
+		return _captures.template select<0>().begin();
+	}
+	constexpr auto end() const noexcept {
+		return _captures.template select<0>().end();
+	}
 	friend CTRE_FORCE_INLINE constexpr bool operator==(const regex_results & lhs, std::basic_string_view<char_type> rhs) noexcept {
 		return bool(lhs) ? lhs.view() == rhs : false;
 	}
@@ -371,6 +407,10 @@ public:
 		return str << rhs.view();
 	}
 };
+
+template <size_t Id, typename Iterator, typename... Captures> constexpr auto get(const regex_results<Iterator, Captures...> & results) noexcept {
+	return results.template get<Id>();
+}
 
 template <typename Iterator, typename... Captures> regex_results(Iterator, ctll::list<Captures...>) -> regex_results<Iterator, Captures...>;
 

@@ -18,13 +18,16 @@ template <size_t Sz> constexpr std::string_view get_string_view(const char (& ar
 
 // basic support for binary and type-value properties
 
-template <auto Name> struct binary_property;
-template <auto Name, auto Value> struct property;
+template <typename T, T Type> struct binary_property;
+template <typename T, T Type, auto Value> struct property;
+
+template <auto Type> using make_binary_property = binary_property<std::remove_const_t<decltype(Type)>, Type>;
+template <auto Type, auto Value> using make_property = property<std::remove_const_t<decltype(Type)>, Type, Value>;
 
 // unicode TS#18 level 1.2 general_category
-template <uni::detail::binary_prop Property> struct binary_property<Property> {
+template <uni::detail::binary_prop Property> struct binary_property<uni::detail::binary_prop, Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
-		return uni::detail::get_binary_prop<Property>(c);
+		return uni::detail::get_binary_prop<Property>(static_cast<char32_t>(c));
 	}
 };
 
@@ -36,13 +39,13 @@ enum class property_type {
 
 // unicode TS#18 level 1.2.2
 
-template <uni::script Script> struct binary_property<Script> {
+template <uni::script Script> struct binary_property<uni::script, Script> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_script(c) == Script;
 	}
 };
 
-template <uni::script Script> struct property<property_type::script_extension, Script> {
+template <uni::script Script> struct property<property_type, property_type::script_extension, Script> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		for (uni::script sc: uni::cp_script_extensions(c)) {
 			if (sc == Script) return true;
@@ -51,13 +54,13 @@ template <uni::script Script> struct property<property_type::script_extension, S
 	}
 };
 
-template <uni::version Age> struct binary_property<Age> {
+template <uni::version Age> struct binary_property<uni::version, Age> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_age(c) <= Age;
 	}
 };
 
-template <uni::block Block> struct binary_property<Block> {
+template <uni::block Block> struct binary_property<uni::block, Block> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
 		return uni::cp_block(c) == Block;
 	}
@@ -107,7 +110,7 @@ template <> struct property_type_builder<property_type::script> {
 		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
 		} else {
-			return binary_property<sc>();
+			return make_binary_property<sc>();
 		}
 	}
 };
@@ -119,7 +122,7 @@ template <> struct property_type_builder<property_type::script_extension> {
 		if constexpr (uni::detail::is_unknown(sc)) {
 			return ctll::reject{};
 		} else {
-			return property<property_type::script_extension, sc>();
+			return make_property<property_type::script_extension, sc>();
 		}
 	}
 };
@@ -131,7 +134,7 @@ template <> struct property_type_builder<property_type::age> {
 		if constexpr (uni::detail::is_unassigned(age)) {
 			return ctll::reject{};
 		} else {
-			return binary_property<age>();
+			return make_binary_property<age>();
 		}
 	}
 };
@@ -143,7 +146,7 @@ template <> struct property_type_builder<property_type::block> {
 		if constexpr (uni::detail::is_unknown(block)) {
 			return ctll::reject{};
 		} else {
-			return binary_property<block>();
+			return make_binary_property<block>();
 		}
 	}
 };

@@ -24,7 +24,6 @@ ctre::match<"REGEX">(subject); // C++20
 
 The library is implementing most of the PCRE syntax with a few exceptions:
 
-* atomic groups
 * callouts
 * comments
 * conditional patterns
@@ -37,6 +36,14 @@ The library is implementing most of the PCRE syntax with a few exceptions:
 * unicode grapheme cluster (`\X`)
 
 More documentation on [pcre.org](https://www.pcre.org/current/doc/html/pcre2syntax.html).
+
+### Unknown character escape behaviour
+
+Not all escaped characters are automatically inserted as self, behaviour of the library is escaped characters are with special meaning, unknown escaped character is a syntax error.
+
+Explicitly allowed character escapes which insert only the character are:
+
+```\-\"\<\>```
 
 ## Basic API
 
@@ -109,11 +116,12 @@ Otherwise you will get missing symbols if you try to use the unicode support wit
 
 ## Supported compilers
 
-* clang 6.0+ (template UDL, C++17 syntax)
+* clang 7.0+ (template UDL, C++17 syntax)
 * xcode clang 10.0+ (template UDL, C++17 syntax)
+* clang 12.0+ (C++17 syntax, C++20 cNTTP syntax)
 * gcc 8.0+ (template UDL, C++17 syntax)
 * gcc 9.0+ (C++17 & C++20 cNTTP syntax)
-* MSVC 15.8.8+ (C++17 syntax only) (semi-supported, I don't have windows machine)
+* MSVC 14.29+ (Visual Studio 16.11+) (C++20) 
 
 ### Template UDL syntax
 
@@ -244,6 +252,28 @@ for (auto match: ctre::range<"([0-9]+),?">(input)) {
     std::cout << std::string_view{match.get<0>()} << "\n";
 }
 ```
+
+### Unicode
+
+```c++
+#include <ctre-unicode.hpp>
+#include <iostream>
+// needed if you want to output to the terminal
+std::string_view cast_from_unicode(std::u8string_view input) noexcept {
+    return std::string_view(reinterpret_cast<const char *>(input.data()), input.size());
+}
+int main()
+{
+    using namespace std::literals;
+    std::u8string_view original = u8"Tu es un génie"sv;
+
+    for (auto match : ctre::range<"\\p{Letter}+">(original))
+        std::cout << cast_from_unicode(match) << std::endl;
+    return 0;
+}
+```
+
+[link to compiler explorer](https://godbolt.org/z/erTshe6sz)
 
 ## Running tests (for developers)
 

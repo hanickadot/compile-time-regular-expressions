@@ -56,6 +56,7 @@ template <typename Range, typename RE> struct multi_subject_range {
 		last_type last{};
 		value_type current_result{};
 		
+		constexpr CTRE_FORCE_INLINE iterator() noexcept = default;
 		constexpr CTRE_FORCE_INLINE iterator(first_type f, last_type l) noexcept: first{f}, last{l}, current_result{find_first()} { }
 		
 		constexpr CTRE_FORCE_INLINE value_type find_first() noexcept {
@@ -113,8 +114,9 @@ template <typename Range, typename RE> struct multi_subject_range {
 		}
 	};
 	
-	Range range;
+	Range range{};
 	
+	constexpr CTRE_FORCE_INLINE multi_subject_range() noexcept = default;
 	constexpr CTRE_FORCE_INLINE multi_subject_range(Range r) noexcept:  range{r} { }
 	
 	constexpr CTRE_FORCE_INLINE auto begin() const noexcept {
@@ -131,12 +133,13 @@ template <typename... Ts> constexpr bool is_range<multi_subject_range<Ts...>> = 
 
 }
 
-#if __cpp_lib_ranges >= 201911
+#if defined __cpp_lib_ranges && __cpp_lib_ranges >= 201911
 namespace std::ranges {
 
 	template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_range<Ts...>> = true;
 	template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_split_range<Ts...>> = true;
-	template <typename Range, typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::multi_subject_range<Range, Ts...>> = enable_borrowed_range<Range>;
+	template <typename Range, typename RE> inline constexpr bool enable_borrowed_range<::ctre::multi_subject_range<Range, RE>> = enable_borrowed_range<Range>;
+	template <typename Range, typename RE> inline constexpr bool enable_view<::ctre::multi_subject_range<Range, RE>> = true;
 
 }
 #endif 

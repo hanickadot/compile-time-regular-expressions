@@ -42,7 +42,7 @@ template <size_t N> struct fixed_string {
 	bool correct_flag{true};
 	template <typename T> constexpr fixed_string(const T (&input)[N+1]) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
-			#if CTRE_STRING_IS_UTF8
+			#ifdef CTRE_STRING_IS_UTF8
 				size_t out{0};
 				for (size_t i{0}; i < N; ++i) {
 					if ((i == (N-1)) && (input[i] == 0)) break;
@@ -118,7 +118,7 @@ template <size_t N> struct fixed_string {
 				if (info.length == 2) {
 					if (++i < N) {
 						if ((input[i] & 0b1111'1100'0000'0000) == 0b1101'1100'0000'0000) {
-							content[out++] = (info.value << 10) | (input[i] & 0b0000'0011'1111'1111);
+							content[out++] = ((info.value << 10) | (input[i] & 0b0000'0011'1111'1111)) + 0x10000;
 						} else {
 							correct_flag = false;
 							break;
@@ -132,7 +132,7 @@ template <size_t N> struct fixed_string {
 			real_size = out;
 		} else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
 			for (size_t i{0}; i < N; ++i) {
-				content[i] = input[i];
+				content[i] = static_cast<char32_t>(input[i]);
 				if ((i == (N-1)) && (input[i] == 0)) break;
 				real_size++;
 			}
@@ -208,11 +208,5 @@ template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_st
 template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 }
-
-#if CTLL_CNTTP_COMPILER_CHECK
-	#define CTLL_FIXED_STRING ctll::fixed_string
-#else
-	#define CTLL_FIXED_STRING const auto &
-#endif
 
 #endif

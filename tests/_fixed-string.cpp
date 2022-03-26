@@ -20,12 +20,13 @@ static_assert(ctll::fixed_string("😍").size() == 4); // it's just a bunch of b
 // u8"" is utf-8 encoded
 static_assert(ctll::fixed_string(u8"ěšč").size() == 3);
 static_assert(ctll::fixed_string(u8"😍").size() == 1);
-static_assert(ctll::fixed_string(u8"😍")[0] == L'😍');
+static_assert(ctll::fixed_string(u8"😍")[0] == U'😍');
 #endif
 
 // u"" is utf-16
 static_assert(ctll::fixed_string(u"ěšč").size() == 3);
 static_assert(ctll::fixed_string(u"😍").size() == 1);
+static_assert(ctll::fixed_string(u"😍").is_same_as(ctll::fixed_string(U"😍")));
 
 // U"" is utf-32
 static_assert(ctll::fixed_string(U"ěšč").size() == 3);
