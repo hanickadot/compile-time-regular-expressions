@@ -4650,7 +4650,7 @@ public:
 		while (count > 0) {
 			it = first;
 			size_t step = count / 2;
-			std::advance(it, step);
+			std::advance(it, static_cast<long>(step));
 			if (!(obj < *it)) {
 				first = ++it;
 				count -= step + 1;
@@ -4668,7 +4668,7 @@ public:
 		while (count > 0) {
 			it = first;
 			size_t step = count / 2;
-			std::advance(it, step);
+			std::advance(it, static_cast<long>(step));
 			if (!(obj < *it)) {
 				first = ++it;
 				count -= step + 1;
@@ -4704,7 +4704,7 @@ public:
 		while (count > 0) {
 			it = first;
 			size_t step = count / 2;
-			std::advance(it, step);
+			std::advance(it, static_cast<long>(step));
 			if (*it < obj) {
 				first = ++it;
 				count -= step + 1;
