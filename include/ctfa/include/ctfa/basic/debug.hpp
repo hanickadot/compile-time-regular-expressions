@@ -98,7 +98,7 @@ template <const auto & Fa, typename WriteCB> void print_json(WriteCB && cb) {
 		}
 	};
 	
-	int counter = known_state.size()+1;
+	int counter = static_cast<int>(known_state.size()+1);
 	for (const auto & t: Fa.transitions) {
 		if (t.source == t.target) {
 			//{"name":"dec","repeat":true,"id":11,"weight":0}
@@ -145,7 +145,7 @@ template <const auto & Fa, typename WriteCB> void print_json(WriteCB && cb) {
 	//{"source": 9, "target": 10, "simple": false, "term": "'a'"}]}
 	cb("{\"source\": 0, \"target\": 1, \"start\": true}");
 	
-	counter = known_state.size()+1;
+	counter = static_cast<int>(known_state.size()+1);
 	
 	std::set<std::pair<state, state>> transitions;
 	std::map<std::tuple<state, state, std::string>, bool> duplicit;

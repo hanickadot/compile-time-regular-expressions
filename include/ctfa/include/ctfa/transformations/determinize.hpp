@@ -21,6 +21,7 @@ template <size_t States, size_t Length> struct line {
 	constexpr line() { }
 	constexpr line(const ctfa::set<state, Length> & states, bool final): states{states}, final{final} { }
 	constexpr line(const line & other) = default;
+	constexpr line & operator=(const line &) = default;
 	template <size_t RhsStates, size_t RhsLength> constexpr line(const line<RhsStates, RhsLength> & other): states{other.states}, final{other.final}, visited{other.visited} { }
 	constexpr bool operator<(const line & rhs) const {
 		return states < rhs.states;

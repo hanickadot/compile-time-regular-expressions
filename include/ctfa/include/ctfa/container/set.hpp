@@ -49,6 +49,7 @@ public:
 		}
 	}
 	constexpr set(const set & rhs) = default;
+	constexpr set & operator=(const set & rhs) = default;
 	template <size_t S2> constexpr set(const set<T, S2> & rhs) {
 		for (const auto & v: rhs) {
 			push_back(v);
@@ -142,7 +143,7 @@ public:
 		auto first = begin();
 		auto last = end();
 		auto it = first;
-		size_t count = std::distance(first, last);
+		size_t count = static_cast<size_t>(std::distance(first, last));
 		while (count > 0) {
 			it = first;
 			size_t step = count / 2;
@@ -160,7 +161,7 @@ public:
 		auto first = begin();
 		auto last = end();
 		auto it = first;
-		size_t count = std::distance(first, last);
+		size_t count = static_cast<size_t>(std::distance(first, last));
 		while (count > 0) {
 			it = first;
 			size_t step = count / 2;

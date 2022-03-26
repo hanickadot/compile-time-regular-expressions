@@ -42,7 +42,7 @@ template <size_t N> struct transitions_from_state {
 		intervals<N, char32_t, state> i;
 		
 		for (const auto & t: transitions) {
-			i.insert_range(t.t.cond.r.low, t.t.cond.r.high, table[t.target_index].group);
+			i.insert_range(t.t.cond.r.low, t.t.cond.r.high, table[static_cast<size_t>(t.target_index)].group);
 		}
 		
 		count = 0;
@@ -169,7 +169,7 @@ template <const auto & Arg> struct minimize_one {
 			// insert transition with target index in the extended_transition
 			for (const auto & t: fa.transitions) {
 				auto source = known_states.find(t.source);
-				int index = known_states.find(t.target) - known_states.begin();
+				int index = static_cast<int>(known_states.find(t.target) - known_states.begin());
 				source->transitions.push_back(impl::extended_transition{t, index});
 			}
 		
@@ -204,7 +204,7 @@ template <const auto & Arg> struct minimize_one {
 				auto source = s.group;
 				
 				for (const auto & et: s.transitions) {
-					i.insert_range(et.t.cond.r.low, et.t.cond.r.high, known_states[et.target_index].group);
+					i.insert_range(et.t.cond.r.low, et.t.cond.r.high, known_states[static_cast<size_t>(et.target_index)].group);
 				}
 		
 				i.merge_and_split([&](char32_t low, char32_t high, const auto & target_set){
