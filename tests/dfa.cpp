@@ -43,7 +43,7 @@ template <typename Fa, typename TransitionCB, typename FinalCB> void debug_fa(co
 }
 
 template <typename Fa> void my_debug(const Fa & fa) {
-	debug_fa(fa, [](ctfa::state s, ctfa::state t, ctfa::condition cond, bool final){
+	debug_fa(fa, [](ctfa::state s, ctfa::state t, ctfa::condition /*cond*/, bool final){
 		if (final) {
 			if (s.is_start()) std::cout << "<-> ";
 			else std::cout << " <- ";
@@ -53,9 +53,9 @@ template <typename Fa> void my_debug(const Fa & fa) {
 		}
 		std::cout << s.id << " x ";
 		
-		cond.debug([](auto && ... c){
-			(std::cout << ... << c);
-		});
+		//cond.debug([](auto && ... c){
+		//	(std::cout << ... << c);
+		//});
 		
 		std::cout <<" => " << t.id << "\n";
 	},[](ctfa::state f){

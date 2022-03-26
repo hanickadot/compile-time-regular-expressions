@@ -169,7 +169,7 @@ namespace ctfa {
 					//std::cout << "hit end == it => ";
 					while (true) {
 						const auto & jump = jump_table[state++];
-						if (~jump.target) {
+						if (static_cast<uint16_t>(~static_cast<uint16_t>(jump.target)) != static_cast<uint16_t>(0)) {
 							//std::cout << (jump.low ? "ACCEPT\n" : "REJECT\n");
 							return jump.low;
 						}
