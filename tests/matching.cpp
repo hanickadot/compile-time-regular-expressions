@@ -29,6 +29,8 @@ template <typename Subject, typename Pattern> constexpr auto multiline_starts_wi
 
 using namespace std::string_view_literals;
 
+static_assert(match("wrong"sv, ctre::character<'a'>()));
+
 static_assert(match("a"sv, ctre::character<'a'>()));
 static_assert(search("abc"sv, ctre::character<'a'>()));
 static_assert(search("abc"sv, ctre::character<'b'>())); 
