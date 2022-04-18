@@ -197,6 +197,7 @@ TEST_MATCH(115, "a+(?=b).", "aaaaaab");
 TEST_NOT_MATCH(116, "a++a", "aaa"sv);
 TEST_MATCH(117, "a++a*+", "aaa"sv);
 
+TEST_MATCH(118, "^(\\w+)", "WORD");
 
 
 
