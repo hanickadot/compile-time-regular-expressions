@@ -5349,105 +5349,102 @@ template <typename A, typename B> constexpr auto operator>>(ctre::regular_expres
 #ifndef CTRE_V2__UNICODE_CODE_DB__HPP
 #define CTRE_V2__UNICODE_CODE_DB__HPP
 
-#define UNI_SINGLE_HEADER
-#ifndef H_COR3NTIN_UNICODE_SYNOPSYS
-#define H_COR3NTIN_UNICODE_SYNOPSYS
+#define CTRE_UNICODE_SYNOPSYS_WAS_INCLUDED
 
 #include <string_view>
 
-namespace uni
-{
-    enum class category;
-    enum class property;
-    enum class version : unsigned char;
-    enum class script ;
-    enum class block;
+#ifndef CTRE_UNICODE_SYNOPSYS_WAS_INCLUDED
+namespace uni {
+enum class category;
+enum class property;
+enum class version : unsigned char;
+enum class script;
+enum class block;
 
-    struct script_extensions_view {
-        constexpr script_extensions_view(char32_t);
+struct script_extensions_view {
+    constexpr script_extensions_view(char32_t);
 
-        struct sentinel {};
-        struct iterator {
+    struct sentinel {};
+    struct iterator {
 
-            constexpr iterator(char32_t c);
-            constexpr script operator*() const;
+        constexpr iterator(char32_t c);
+        constexpr script operator*() const;
 
-            constexpr iterator& operator++(int);
+        constexpr iterator& operator++(int);
 
-            constexpr iterator operator++();
+        constexpr iterator operator++();
 
-            constexpr bool operator==(sentinel) const;
-            constexpr bool operator!=(sentinel) const;
+        constexpr bool operator==(sentinel) const;
+        constexpr bool operator!=(sentinel) const;
 
-        private:
-            char32_t m_c;
-            script m_script;
-            int idx = 1;
-        };
-
-        constexpr iterator begin() const;
-        constexpr sentinel end() const;
-
-        private:
-            char32_t c;
+    private:
+        char32_t m_c;
+        script m_script;
+        int idx = 1;
     };
 
-    struct numeric_value {
+    constexpr iterator begin() const;
+    constexpr sentinel end() const;
 
-        constexpr double value() const;
-        constexpr long long numerator() const;
-        constexpr int denominator() const;
-        constexpr bool is_valid() const;
+private:
+    char32_t c;
+};
 
-    protected:
-        constexpr numeric_value() = default;
-        constexpr numeric_value(long long n, int16_t d);
+struct numeric_value {
 
-        long long _n = 0;
-        int16_t _d = 0;
-        friend constexpr numeric_value cp_numeric_value(char32_t cp);
-    };
+    constexpr double value() const;
+    constexpr long long numerator() const;
+    constexpr int denominator() const;
+    constexpr bool is_valid() const;
 
-    constexpr category cp_category(char32_t cp);
-    constexpr script cp_script(char32_t cp);
-    constexpr script_extensions_view cp_script_extensions(char32_t cp);
-    constexpr version cp_age(char32_t cp);
-    constexpr block cp_block(char32_t cp);
-    constexpr bool cp_is_valid(char32_t cp);
-    constexpr bool cp_is_assigned(char32_t cp);
-    constexpr bool cp_is_ascii(char32_t cp);
-    constexpr numeric_value cp_numeric_value(char32_t cp);
+protected:
+    constexpr numeric_value() = default;
+    constexpr numeric_value(long long n, int16_t d);
 
-    template<script>
-    constexpr bool cp_script_is(char32_t);
-    template<property>
-    constexpr bool cp_property_is(char32_t);
-    template<category>
-    constexpr bool cp_category_is(char32_t);
+    long long _n = 0;
+    int16_t _d = 0;
+    friend constexpr numeric_value cp_numeric_value(char32_t cp);
+};
 
-    namespace detail
-    {
-        enum class binary_prop;
-        constexpr int propnamecomp(std::string_view sa, std::string_view sb);
-        constexpr binary_prop binary_prop_from_string(std::string_view s);
+constexpr category cp_category(char32_t cp);
+constexpr script cp_script(char32_t cp);
+constexpr script_extensions_view cp_script_extensions(char32_t cp);
+constexpr version cp_age(char32_t cp);
+constexpr block cp_block(char32_t cp);
+constexpr bool cp_is_valid(char32_t cp);
+constexpr bool cp_is_assigned(char32_t cp);
+constexpr bool cp_is_ascii(char32_t cp);
+constexpr numeric_value cp_numeric_value(char32_t cp);
 
-        template<binary_prop p>
-        constexpr bool get_binary_prop(char32_t) = delete;
+template<script>
+constexpr bool cp_script_is(char32_t);
+template<property>
+constexpr bool cp_property_is(char32_t);
+template<category>
+constexpr bool cp_category_is(char32_t);
 
-        constexpr script   script_from_string(std::string_view s);
-        constexpr block    block_from_string(std::string_view s);
-        constexpr version  age_from_string(std::string_view a);
-        constexpr category category_from_string(std::string_view a);
+namespace detail {
+    enum class binary_prop;
+    constexpr int propnamecomp(std::string_view sa, std::string_view sb);
+    constexpr binary_prop binary_prop_from_string(std::string_view s);
 
-        constexpr bool is_unassigned(category cat);
-        constexpr bool is_unknown(script s);
-        constexpr bool is_unknown(block b);
-        constexpr bool is_unassigned(version v);
-        constexpr bool is_unknown(binary_prop s);
-    }
-}
+    template<binary_prop p>
+    constexpr bool get_binary_prop(char32_t) = delete;
 
+    constexpr script script_from_string(std::string_view s);
+    constexpr block block_from_string(std::string_view s);
+    constexpr version age_from_string(std::string_view a);
+    constexpr category category_from_string(std::string_view a);
+
+    constexpr bool is_unassigned(category cat);
+    constexpr bool is_unknown(script s);
+    constexpr bool is_unknown(block b);
+    constexpr bool is_unassigned(version v);
+    constexpr bool is_unknown(binary_prop s);
+}    // namespace detail
+}    // namespace uni
 #endif
+
 #include <cstdint>
 #include <algorithm>
 #include <string_view>
@@ -5521,10 +5518,11 @@ struct compact_range {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
-            char32_t c = (v >> 8);
-            return local_cp < c;
-        });
+        auto it =
+            detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
+                char32_t c = (v >> 8);
+                return local_cp < c;
+            });
         if(it == end)
             return default_value;
         it--;
@@ -5539,29 +5537,30 @@ struct compact_list {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::lower_bound(std::begin(_data), end, cp, [](uint32_t v, char32_t local_cp) {
-            char32_t c = (v >> 8);
-            return c < local_cp;
-        });
+        auto it =
+            detail::lower_bound(std::begin(_data), end, cp, [](uint32_t v, char32_t local_cp) {
+                char32_t c = (v >> 8);
+                return c < local_cp;
+            });
         if(it == end || ((*it) >> 8) != cp)
             return default_value;
         return *(it)&0xFF;
     }
 };
 template<class T, class... U>
-compact_list(T, U...)-> compact_list<T, sizeof...(U) + 1>;
+compact_list(T, U...) -> compact_list<T, sizeof...(U) + 1>;
 
-template <typename T, std::size_t N>
+template<typename T, std::size_t N>
 struct array {
     using type = T[N];
 };
 
-template <typename T>
+template<typename T>
 struct array<T, 0> {
     using type = T*;
 };
 
-template <typename T, std::size_t N>
+template<typename T, std::size_t N>
 using array_t = typename array<T, N>::type;
 
 template<std::size_t r1_s, std::size_t r2_s, int16_t r2_t_f, int16_t r2_t_b, std::size_t r3_s,
@@ -5579,8 +5578,8 @@ struct bool_trie {
 
     // trie for 0x10000..0x10FFFF (UTF-8 4-byte sequences, aka non-BMP code points)
     array_t<std::uint8_t, r4_s> r4;
-    array_t<std::uint8_t, r5_s> r5;   // two level to exploit sparseness of non-BMP
-    array_t<std::uint64_t, r6_s> r6;  // again, leaves are shared
+    array_t<std::uint8_t, r5_s> r5;     // two level to exploit sparseness of non-BMP
+    array_t<std::uint64_t, r6_s> r6;    // again, leaves are shared
 
     constexpr bool lookup(char32_t u) const {
         std::uint32_t c = u;
@@ -5588,36 +5587,34 @@ struct bool_trie {
             if constexpr(r1_s == 0) {
                 return false;
             } else {
-                return trie_range_leaf(c, r1[c >> 6]);
+                return trie_range_leaf(c, r1[std::size_t(c >> 6)]);
             }
         } else if(c < 0x10000) {
             if constexpr(r3_s == 0) {
                 return false;
             } else {
-                std::size_t i = ((c >> 6) - 0x20);
+                std::size_t i = (std::size_t(c >> 6) - 0x20);
                 auto child = 0;
                 if(i >= r2_t_f && i < r2_t_f + r2_s)
                     child = r2[i - r2_t_f];
                 return trie_range_leaf(c, r3[child]);
             }
         } else {
-            if constexpr(r6_s == 0) {
+            if constexpr(r6_s == 0)
                 return false;
-            }
             std::size_t i4 = (c >> 12) - 0x10;
             auto child = 0;
             if constexpr(r4_s > 0) {
-                if(i4 >= r4_t_f && i4 < r4_t_f + r4_s) {
+                if(i4 >= r4_t_f && i4 < r4_t_f + r4_s)
                     child = r4[i4 - r4_t_f];
-                }
             }
 
-            std::size_t i5 = static_cast<std::size_t>(child << 6) + ((c >> 6) & 0x3f);
+            std::size_t i5 = static_cast<std::size_t>(std::size_t(child << 6) +
+                                                      (std::size_t(c >> 6) & std::size_t(0x3f)));
             auto leaf = 0;
-            if constexpr(r5_s > 0) {
-                if(i5 >= r5_t_f && i5 < r5_t_f + r5_s) {
-                    leaf = r5[i5 - r5_t_f];
-                }
+            if constexpr(r5_s != 0) {
+                if(i5 >= std::size_t(r5_t_f) && i5 < std::size_t(r5_t_f) + r5_s)
+                    leaf = r5[i5 - std::size_t(r5_t_f)];
             }
             return trie_range_leaf(c, r6[leaf]);
         }
@@ -5651,10 +5648,11 @@ struct range_array {
     std::uint32_t _data[N];
     constexpr bool lookup(char32_t cp) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
-            char32_t c = (v >> 8);
-            return local_cp < c;
-        });
+        auto it =
+            detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
+                char32_t c = (v >> 8);
+                return local_cp < c;
+            });
         if(it == end)
             return false;
         it--;
@@ -5663,11 +5661,11 @@ struct range_array {
 };
 
 template<class... U>
-range_array(U...)->range_array<sizeof...(U)>;
+range_array(U...) -> range_array<sizeof...(U)>;
 
 constexpr char propcharnorm(char a) {
     if(a >= 'A' && a <= 'Z')
-        return static_cast<char>(a + 32);
+        return static_cast<char>(a + char(32));
     if(a == ' ' || a == '-')
         return '_';
     return a;
@@ -5703,17 +5701,19 @@ constexpr int propnamecomp(std::string_view sa, std::string_view sb) {
     return 0;
 }
 
-template <typename A, typename B>
-struct pair
-{
+template<typename A, typename B>
+struct pair {
     A first;
     B second;
 };
 
-template <typename A, typename B>
+template<typename A, typename B>
 pair(A, B) -> pair<A, B>;
 
-struct string_with_idx { const char* name; uint32_t value; };
+struct string_with_idx {
+    const char* name;
+    uint32_t value;
+};
 
 }    // namespace uni::detail
 
@@ -7322,10 +7322,10 @@ namespace detail::tables {
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6},
         {0x0000000000000000, 0x0800000008000002, 0x0020000000200000, 0x0000800000008000,
          0x0000020000000200, 0x0000000000000008, 0x0003000000000000}};
-    static constexpr flat_array<26> cat_pd{{0x002D, 0x058A, 0x05BE, 0x1400, 0x1806, 0x2010, 0x2011,
-                                            0x2012, 0x2013, 0x2014, 0x2015, 0x2E17, 0x2E1A, 0x2E3A,
-                                            0x2E3B, 0x2E40, 0x2E5D, 0x301C, 0x3030, 0x30A0, 0xFE31,
-                                            0xFE32, 0xFE58, 0xFE63, 0xFF0D, 0x10EAD}};
+    static constexpr flat_array<26> cat_pd{{0x1400, 0x1806,  0x058A, 0xFF0D, 0x2010, 0x2011, 0x2012,
+                                            0x2013, 0x2014,  0x2015, 0x2E17, 0x2E1A, 0x301C, 0x30A0,
+                                            0x002D, 0x10EAD, 0x3030, 0xFE31, 0xFE32, 0x2E3A, 0x2E3B,
+                                            0x05BE, 0x2E40,  0xFE58, 0x2E5D, 0xFE63}};
     static constexpr bool_trie<32, 984, 5, 3, 9, 255, 1, 0, 414, 18, 16, 8> cat_nd{
         {0x03ff000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
          0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -7530,7 +7530,7 @@ namespace detail::tables {
         {1},
         {0x0000000000000000, 0xf800000000000000}};
     static constexpr flat_array<10> cat_pc{
-        {0x005F, 0x203F, 0x2040, 0x2054, 0xFE33, 0xFE34, 0xFE4D, 0xFE4E, 0xFE4F, 0xFF3F}};
+        {0x2040, 0xFE4D, 0xFE4E, 0xFE4F, 0xFE33, 0x2054, 0xFE34, 0xFF3F, 0x005F, 0x203F}};
     static constexpr bool_trie<32, 955, 35, 2, 30, 255, 1, 0, 342, 16, 26, 27> cat_ll{
         {0x0000000000000000, 0x07fffffe00000000, 0x0020000000000000, 0xff7fffff80000000,
          0x55aaaaaaaaaaaaaa, 0xd4aaaaaaaaaaab55, 0xe6512d2a4e243129, 0xaa29aaaab5555240,
@@ -7909,8 +7909,8 @@ namespace detail::tables {
          0x00001fffffffffff, 0x0000000000004000, 0x7fff6f7f00000000, 0x000000000000001f,
          0x0af7fe96ffffffef, 0x5ef7f796aa96ea84, 0x0ffffbee0ffffbff, 0x00000000ffffffff,
          0xffff0003ffffffff, 0x00000001ffffffff, 0x00000000000007ff}};
-    static constexpr flat_array<12> cat_pi{{0x00AB, 0x2018, 0x201B, 0x201C, 0x201F, 0x2039, 0x2E02,
-                                            0x2E04, 0x2E09, 0x2E0C, 0x2E1C, 0x2E20}};
+    static constexpr flat_array<12> cat_pi{{0x2E20, 0x2E02, 0x2E04, 0x2E09, 0x00AB, 0x2E0C, 0x2018,
+                                            0x2039, 0x201B, 0x201C, 0x2E1C, 0x201F}};
     static constexpr range_array cat_cf = {
         0x00000000, 0x0000AD01, 0x0000AE00, 0x00060001, 0x00060600, 0x00061C01, 0x00061D00,
         0x0006DD01, 0x0006DE00, 0x00070F01, 0x00071000, 0x00089001, 0x00089200, 0x0008E201,
@@ -7996,7 +7996,7 @@ namespace detail::tables {
          0x000000000000ff80, 0xfffe000000000000, 0x001eefffffffffff, 0x3fffbffffffffffe,
          0x0000000000001fff}};
     static constexpr flat_array<10> cat_pf{
-        {0x00BB, 0x2019, 0x201D, 0x203A, 0x2E03, 0x2E05, 0x2E0A, 0x2E0D, 0x2E1D, 0x2E21}};
+        {0x2E21, 0x2E1D, 0x2E03, 0x2E05, 0x2E0A, 0x2E0D, 0x2019, 0x203A, 0x00BB, 0x201D}};
     static constexpr range_array cat_lt = {
         0x00000000, 0x0001C501, 0x0001C600, 0x0001C801, 0x0001C900, 0x0001CB01, 0x0001CC00,
         0x0001F201, 0x0001F300, 0x001F8801, 0x001F9000, 0x001F9801, 0x001FA000, 0x001FA801,
@@ -11085,12 +11085,12 @@ namespace detail::tables {
         {0x0000000000000000, 0x0000001fc0000000, 0xf800000000000000, 0x0000000000000001,
          0xffffffffffffffff, 0x000000003fffffff}};
     static constexpr flat_array<30> prop_dash_data{
-        {0x002D, 0x058A, 0x05BE, 0x1400, 0x1806, 0x2010, 0x2011, 0x2012, 0x2013, 0x2014,
-         0x2015, 0x2053, 0x207B, 0x208B, 0x2212, 0x2E17, 0x2E1A, 0x2E3A, 0x2E3B, 0x2E40,
-         0x2E5D, 0x301C, 0x3030, 0x30A0, 0xFE31, 0xFE32, 0xFE58, 0xFE63, 0xFF0D, 0x10EAD}};
-    static constexpr flat_array<15> prop_dep_data{{0x0149, 0x0673, 0x0F77, 0x0F79, 0x17A3, 0x17A4,
-                                                   0x206A, 0x206B, 0x206C, 0x206D, 0x206E, 0x206F,
-                                                   0x2329, 0x232A, 0xE0001}};
+        {0x1400, 0x1806, 0x058A, 0x208B, 0xFF0D, 0x2010, 0x2011, 0x2012,  0x2013, 0x2014,
+         0x2015, 0x2212, 0x2E17, 0x2E1A, 0x301C, 0x30A0, 0x002D, 0x10EAD, 0x3030, 0xFE31,
+         0xFE32, 0x2E3A, 0x2E3B, 0x05BE, 0x2E40, 0x2053, 0xFE58, 0x2E5D,  0xFE63, 0x207B}};
+    static constexpr flat_array<15> prop_dep_data{{0xE0001, 0x17A3, 0x17A4, 0x0149, 0x206A, 0x206B,
+                                                   0x206C, 0x206D, 0x206E, 0x206F, 0x2329, 0x232A,
+                                                   0x0673, 0x0F77, 0x0F79}};
     static constexpr bool_trie<32, 991, 1, 0, 64, 255, 1, 0, 475, 11, 26, 42> prop_dia_data{
         {0x0000000000000000, 0x0000000140000000, 0x0190810000000000, 0x0000000000000000,
          0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -11265,11 +11265,11 @@ namespace detail::tables {
              0x1ff01800e0e7103f, 0x00010fff00000000, 0xf7fffffffffff000, 0xffffffffffffffbf,
              0x1f1f000000000000, 0x07ff1fffffff007f, 0x007f00ff03ff003f}};
     static constexpr flat_array<50> prop_ext_data{
-        {0x00B7,  0x02D0,  0x02D1,  0x0640,  0x07FA,  0x0B55,  0x0E46,  0x0EC6,  0x180A,  0x1843,
-         0x1AA7,  0x1C36,  0x1C7B,  0x3005,  0x3031,  0x3032,  0x3033,  0x3034,  0x3035,  0x309D,
-         0x309E,  0x30FC,  0x30FD,  0x30FE,  0xA015,  0xA60C,  0xA9CF,  0xA9E6,  0xAA70,  0xAADD,
-         0xAAF3,  0xAAF4,  0xFF70,  0x10781, 0x10782, 0x1135D, 0x115C6, 0x115C7, 0x115C8, 0x11A98,
-         0x16B42, 0x16B43, 0x16FE0, 0x16FE1, 0x16FE3, 0x1E13C, 0x1E13D, 0x1E944, 0x1E945, 0x1E946}};
+        {0x10781, 0x10782, 0x3005,  0x180A,  0xA60C, 0xA015, 0x11A98, 0x309D,  0x309E,  0x1AA7,
+         0x3031,  0x3032,  0x3033,  0x3034,  0x3035, 0x1C36, 0x00B7,  0x1E13C, 0x1E13D, 0x0640,
+         0x16B42, 0x1843,  0x16B43, 0x1E944, 0x0E46, 0x0EC6, 0x115C6, 0x115C7, 0x115C8, 0x1E945,
+         0x1E946, 0xA9CF,  0x02D0,  0x02D1,  0x0B55, 0xAADD, 0x1135D, 0x16FE0, 0x16FE1, 0x16FE3,
+         0xA9E6,  0xAA70,  0xFF70,  0xAAF3,  0xAAF4, 0x07FA, 0x1C7B,  0x30FC,  0x30FD,  0x30FE}};
     static constexpr bool_trie<32, 75, 96, 821, 22, 1, 15, 240, 44, 64, 20, 22>
         prop_extended_pictographic_data{
             {0x0000000000000000, 0x0000000000000000, 0x0000420000000000, 0x0000000000000000,
@@ -11647,7 +11647,7 @@ namespace detail::tables {
          0xfffffffffffe8000, 0x00000000000780ff, 0x0003000000000000, 0x0000000040000000,
          0x000007dbf9ffff7f, 0x0000000000000080, 0xffff03ffffff03ff, 0x00000000000003ff}};
     static constexpr flat_array<7> prop_odi_data{
-        {0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x3164, 0xFFA0}};
+        {0x1160, 0xFFA0, 0x3164, 0x034F, 0x17B4, 0x17B5, 0x115F}};
     static constexpr bool_trie<0, 985, 6, 1, 9, 208, 1, 47, 118, 76, 62, 9> prop_ogr_ext_data{
         {},
         {1, 2, 0, 0, 0, 0, 1, 2, 1, 2, 0, 0, 0, 3, 1, 2, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -11703,7 +11703,7 @@ namespace detail::tables {
     static constexpr range_array prop_oidc_data = {0x00000000, 0x0000B701, 0x0000B800,
                                                    0x00038701, 0x00038800, 0x00136901,
                                                    0x00137200, 0x0019DA01, 0x0019DB00};
-    static constexpr flat_array<6> prop_oids_data{{0x1885, 0x1886, 0x2118, 0x212E, 0x309B, 0x309C}};
+    static constexpr flat_array<6> prop_oids_data{{0x1885, 0x1886, 0x212E, 0x2118, 0x309B, 0x309C}};
     static constexpr range_array prop_olower_data = {
         0x00000000, 0x0000AA01, 0x0000AB00, 0x0000BA01, 0x0000BB00, 0x0002B001, 0x0002B900,
         0x0002C001, 0x0002C200, 0x0002E001, 0x0002E500, 0x00034501, 0x00034600, 0x00037A01,
@@ -11821,10 +11821,10 @@ namespace detail::tables {
         {},
         {}};
     static constexpr flat_array<11> prop_pat_ws_data{
-        {0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x0020, 0x0085, 0x200E, 0x200F, 0x2028, 0x2029}};
+        {0x0020, 0x0085, 0x2028, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x200E, 0x200F, 0x2029}};
     static constexpr flat_array<13> prop_pcm_data{{0x0600, 0x0601, 0x0602, 0x0603, 0x0604, 0x0605,
-                                                   0x06DD, 0x070F, 0x0890, 0x0891, 0x08E2, 0x110BD,
-                                                   0x110CD}};
+                                                   0x08E2, 0x110CD, 0x070F, 0x0890, 0x0891, 0x110BD,
+                                                   0x06DD}};
     static constexpr range_array prop_qmark_data = {
         0x00000000, 0x00002201, 0x00002300, 0x00002701, 0x00002800, 0x0000AB01, 0x0000AC00,
         0x0000BB01, 0x0000BC00, 0x00201801, 0x00202000, 0x00203901, 0x00203B00, 0x002E4201,
@@ -11834,11 +11834,11 @@ namespace detail::tables {
         0x00000000, 0x002E8001, 0x002E9A00, 0x002E9B01, 0x002EF400, 0x002F0001, 0x002FD600};
     static constexpr range_array prop_ri_data = {0x00000000, 0x01F1E601, 0x01F20000};
     static constexpr flat_array<47> prop_sd_data{
-        {0x0069,  0x006A,  0x012F,  0x0249,  0x0268,  0x029D,  0x02B2,  0x03F3,  0x0456,  0x0458,
-         0x1D62,  0x1D96,  0x1DA4,  0x1DA8,  0x1E2D,  0x1ECB,  0x2071,  0x2148,  0x2149,  0x2C7C,
-         0x1D422, 0x1D423, 0x1D456, 0x1D457, 0x1D48A, 0x1D48B, 0x1D4BE, 0x1D4BF, 0x1D4F2, 0x1D4F3,
-         0x1D526, 0x1D527, 0x1D55A, 0x1D55B, 0x1D58E, 0x1D58F, 0x1D5C2, 0x1D5C3, 0x1D5F6, 0x1D5F7,
-         0x1D62A, 0x1D62B, 0x1D65E, 0x1D65F, 0x1D692, 0x1D693, 0x1DF1A}};
+        {0x1D48A, 0x1D48B, 0x1D58E, 0x1D58F, 0x1D692, 0x1D693, 0x1D96,  0x1DF1A, 0x029D, 0x1D422,
+         0x1D423, 0x1DA4,  0x1D526, 0x1D527, 0x1DA8,  0x1D62A, 0x1D62B, 0x1E2D,  0x012F, 0x02B2,
+         0x1D4BE, 0x1D4BF, 0x1D5C2, 0x1D5C3, 0x2148,  0x2149,  0x0249,  0x1ECB,  0x0456, 0x1D456,
+         0x0458,  0x1D457, 0x1D55A, 0x1D55B, 0x1D65E, 0x1D65F, 0x1D62,  0x0268,  0x0069, 0x006A,
+         0x2071,  0x1D4F2, 0x03F3,  0x1D4F3, 0x1D5F6, 0x1D5F7, 0x2C7C}};
     static constexpr bool_trie<32, 991, 1, 0, 30, 255, 1, 0, 322, 41, 21, 25> prop_sterm_data{
         {0x8000400200000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
          0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
@@ -12591,6 +12591,7 @@ constexpr bool cp_property_is<property::xids>(char32_t c) {
     return detail::tables::prop_xids_data.lookup(c);
 }
 }    // namespace uni
+
 #include <iterator>
 
 namespace uni {
@@ -12637,13 +12638,11 @@ constexpr script detail::script_from_string(std::string_view s) {
     return script::unknown;
 }
 
-constexpr bool detail::is_unassigned(category cat)
-{
+constexpr bool detail::is_unassigned(category cat) {
     return cat == category::unassigned;
 }
 
-constexpr bool detail::is_unknown(script s)
-{
+constexpr bool detail::is_unknown(script s) {
     return s == script::unknown;
 }
 
@@ -12651,8 +12650,7 @@ constexpr bool detail::is_unknown(block b) {
     return b == block::no_block;
 }
 
-constexpr bool detail::is_unassigned(version v)
-{
+constexpr bool detail::is_unassigned(version v) {
     return v == version::unassigned;
 }
 
@@ -12660,24 +12658,25 @@ constexpr script cp_script(char32_t cp) {
     return detail::tables::cp_script<0>(cp);
 }
 
-constexpr script_extensions_view::script_extensions_view(char32_t c_) : c(c_){}
+constexpr script_extensions_view::script_extensions_view(char32_t c_) : c(c_) {}
 
-constexpr script_extensions_view::iterator::iterator(char32_t c_) : m_c(c_), m_script(detail::tables::get_cp_script(m_c, 1)) {
+constexpr script_extensions_view::iterator::iterator(char32_t c_) :
+    m_c(c_), m_script(detail::tables::get_cp_script(m_c, 1)) {
     if(m_script == script::unknown)
         m_script = detail::tables::cp_script<0>(m_c);
-    }
+}
 
 constexpr script script_extensions_view::iterator::operator*() const {
     return m_script;
 }
 
-constexpr auto script_extensions_view::iterator::operator++(int) ->iterator & {
+constexpr auto script_extensions_view::iterator::operator++(int) -> iterator& {
     idx++;
     m_script = detail::tables::get_cp_script(m_c, idx);
     return *this;
 }
 
-constexpr auto script_extensions_view::iterator::operator++()  -> iterator {
+constexpr auto script_extensions_view::iterator::operator++() -> iterator {
     auto c = *this;
     idx++;
     m_script = detail::tables::get_cp_script(m_c, idx);
@@ -12716,10 +12715,11 @@ constexpr version cp_age(char32_t cp) {
 
 constexpr block cp_block(char32_t cp) {
     const auto end = std::end(detail::tables::block_data._data);
-    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp, [](char32_t cp_, uint32_t v) {
-        char32_t c = (v >> 8);
-        return cp_ < c;
-    });
+    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp,
+                                  [](char32_t cp_, uint32_t v) {
+                                      char32_t c = (v >> 8);
+                                      return cp_ < c;
+                                  });
     if(it == end)
         return block::no_block;
     it--;
@@ -12740,13 +12740,15 @@ constexpr bool cp_property_is<property::noncharacter_code_point>(char32_t cp) {
 // http://unicode.org/reports/tr44/#Lowercase
 template<>
 constexpr bool cp_property_is<property::lowercase>(char32_t cp) {
-    return detail::tables::cat_ll.lookup(char32_t(cp)) || detail::tables::prop_olower_data.lookup(char32_t(cp));
+    return detail::tables::cat_ll.lookup(char32_t(cp)) ||
+           detail::tables::prop_olower_data.lookup(char32_t(cp));
 }
 
 // http://unicode.org/reports/tr44/#Uppercase
 template<>
 constexpr bool cp_property_is<property::uppercase>(char32_t cp) {
-    return detail::tables::cat_lu.lookup(char32_t(cp)) || detail::tables::prop_oupper_data.lookup(char32_t(cp));
+    return detail::tables::cat_lu.lookup(char32_t(cp)) ||
+           detail::tables::prop_oupper_data.lookup(char32_t(cp));
 }
 
 // http://unicode.org/reports/tr44/#Cased
@@ -12759,7 +12761,8 @@ constexpr bool cp_property_is<property::cased>(char32_t cp) {
 // http://unicode.org/reports/tr44/#Math
 template<>
 constexpr bool cp_property_is<property::math>(char32_t cp) {
-    return detail::tables::cat_sm.lookup(char32_t(cp)) || detail::tables::prop_omath_data.lookup(cp);
+    return detail::tables::cat_sm.lookup(char32_t(cp)) ||
+           detail::tables::prop_omath_data.lookup(cp);
 }
 
 // http://unicode.org/reports/tr44/#Case_Ignorable
@@ -12771,7 +12774,8 @@ constexpr bool cp_property_is<property::case_ignorable>(char32_t) {
 // http://unicode.org/reports/tr44/#Grapheme_Extend
 template<>
 constexpr bool cp_property_is<property::grapheme_extend>(char32_t cp) {
-    return detail::tables::cat_me.lookup(char32_t(cp)) || detail::tables::cat_mn.lookup(char32_t(cp)) ||
+    return detail::tables::cat_me.lookup(char32_t(cp)) ||
+           detail::tables::cat_mn.lookup(char32_t(cp)) ||
            detail::tables::prop_ogr_ext_data.lookup(cp);
 }
 
@@ -12789,8 +12793,8 @@ constexpr bool cp_is_ascii(char32_t cp) {
 template<>
 constexpr bool cp_property_is<property::default_ignorable_code_point>(char32_t cp) {
     const auto c = char32_t(cp);
-    const bool maybe = detail::tables::prop_odi_data.lookup(cp) || detail::tables::cat_cf.lookup(cp) ||
-                       detail::tables::prop_vs_data.lookup(cp);
+    const bool maybe = detail::tables::prop_odi_data.lookup(cp) ||
+                       detail::tables::cat_cf.lookup(cp) || detail::tables::prop_vs_data.lookup(cp);
     if(!maybe)
         return false;
     // ignore (Interlinear annotation format characters
@@ -12810,42 +12814,47 @@ constexpr bool cp_property_is<property::default_ignorable_code_point>(char32_t c
 // http://www.unicode.org/reports/tr31/#D1
 template<>
 constexpr bool cp_property_is<property::id_start>(char32_t cp) {
-    const bool maybe =
-        cp_category_is<category::letter>(cp) || detail::tables::cat_nl.lookup(cp) || detail::tables::prop_oids_data.lookup(cp);
+    const bool maybe = cp_category_is<category::letter>(cp) || detail::tables::cat_nl.lookup(cp) ||
+                       detail::tables::prop_oids_data.lookup(cp);
     if(!maybe)
         return false;
-    return !detail::tables::prop_pat_syn_data.lookup(cp) && !detail::tables::prop_pat_ws_data.lookup(cp);
+    return !detail::tables::prop_pat_syn_data.lookup(cp) &&
+           !detail::tables::prop_pat_ws_data.lookup(cp);
 }
 
 template<>
 constexpr bool cp_property_is<property::id_continue>(char32_t cp) {
     const bool maybe = cp_category_is<category::letter>(cp) || detail::tables::cat_nl.lookup(cp) ||
-                       detail::tables::prop_oids_data.lookup(cp) || detail::tables::cat_mn.lookup(cp) || detail::tables::cat_mc.lookup(cp) ||
-                       detail::tables::cat_nd.lookup(cp) || detail::tables::cat_pc.lookup(cp) || detail::tables::prop_oidc_data.lookup(cp);
+                       detail::tables::prop_oids_data.lookup(cp) ||
+                       detail::tables::cat_mn.lookup(cp) || detail::tables::cat_mc.lookup(cp) ||
+                       detail::tables::cat_nd.lookup(cp) || detail::tables::cat_pc.lookup(cp) ||
+                       detail::tables::prop_oidc_data.lookup(cp);
     if(!maybe)
         return false;
-    return !detail::tables::prop_pat_syn_data.lookup(cp) && !detail::tables::prop_pat_ws_data.lookup(cp);
+    return !detail::tables::prop_pat_syn_data.lookup(cp) &&
+           !detail::tables::prop_pat_ws_data.lookup(cp);
 }
 
 namespace detail {
 
-template<typename Array, typename Res = long long>
-constexpr bool get_numeric_value(char32_t cp, const Array& array, Res& res) {
-    auto it = detail::lower_bound(std::begin(array), std::end(array), cp,
-                               [](const auto& d, char32_t cp_) { return d.first < cp_; });
-    if(it == std::end(array) || it->first != cp)
-        return false;
-    res = it->second;
-    return true;
-}
+    template<typename Array, typename Res = long long>
+    constexpr bool get_numeric_value(char32_t cp, const Array& array, Res& res) {
+        auto it = detail::lower_bound(std::begin(array), std::end(array), cp,
+                                      [](const auto& d, char32_t cp_) { return d.first < cp_; });
+        if(it == std::end(array) || it->first != cp)
+            return false;
+        res = it->second;
+        return true;
+    }
 
-}
+}    // namespace detail
 
 constexpr numeric_value cp_numeric_value(char32_t cp) {
     long long res = 0;
     if(!(detail::get_numeric_value(cp, detail::tables::numeric_data64, res) ||
              detail::get_numeric_value(cp, detail::tables::numeric_data32, res) ||
-             detail::get_numeric_value(cp, detail::tables::numeric_data16, res) || [&res, cp]() -> bool {
+             detail::get_numeric_value(cp, detail::tables::numeric_data16, res) ||
+             [&res, cp]() -> bool {
            res = detail::tables::numeric_data8.value(cp, 255);
            return res != 255;
        }())) {
@@ -12858,18 +12867,16 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
 
 }    // namespace uni
 
-namespace std
-{
-    template<>
-    struct iterator_traits<uni::script_extensions_view::iterator>
-    {
-        using difference_type = std::ptrdiff_t;
-        using value_type = uni::script;
-        using pointer =  uni::script *;
-        using reference	=  uni::script;
-        using iterator_category = std::forward_iterator_tag;
-    };
-}
+namespace std {
+template<>
+struct iterator_traits<uni::script_extensions_view::iterator> {
+    using difference_type = std::ptrdiff_t;
+    using value_type = uni::script;
+    using pointer = uni::script*;
+    using reference = uni::script;
+    using iterator_category = std::forward_iterator_tag;
+};
+}    // namespace std
 
 namespace uni::detail {
 enum class binary_prop {
@@ -14866,8 +14873,7 @@ constexpr bool get_binary_prop<binary_prop::any>(char32_t c) {
     return cp_is_valid(c);
 }
 
-constexpr bool is_unknown(binary_prop s)
-{
+constexpr bool is_unknown(binary_prop s) {
     return s == binary_prop::unknown;
 }
 
