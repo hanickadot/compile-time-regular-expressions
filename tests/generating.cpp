@@ -210,6 +210,9 @@ static_assert(same_f(CTRE_GEN("(((a)(b)))"),ctre::capture<1, ctre::capture<2,ctr
 
 static_assert(same_f(CTRE_GEN("((?:a)(b))"), ctre::capture<1,ctre::character<'a'>,ctre::capture<2,ctre::character<'b'>>>()));
 
+// reset groups
+static_assert(same_f(CTRE_GEN("(?|(?<name>a)|(b))"), ctre::reset_group_with_name<1,ctre::id<'n','a','m','e'>,ctre::select<ctre::capture_with_name<1,ctre::id<'n','a','m','e'>, ctre::character<'a'>>,ctre::capture<1, ctre::character<'b'>>>>()));
+static_assert(same_f(CTRE_GEN("(?|(b)|(a))"), ctre::reset_group<1,ctre::select<ctre::capture<1, ctre::character<'b'>>, ctre::capture<1, ctre::character<'a'>>>>()));
 
 // backreference
 static_assert(same_f(CTRE_GEN("(a)\\g{1}"), ctre::sequence<ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>>()));

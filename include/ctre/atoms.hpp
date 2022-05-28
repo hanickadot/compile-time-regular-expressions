@@ -43,9 +43,13 @@ template <size_t Index, typename... Content> struct capture { };
 
 template <size_t Index, typename Name, typename... Content> struct capture_with_name { };
 
+template <size_t Index, typename... Content> struct reset_group { };
+template <size_t Index, typename Name, typename... Content> struct reset_group_with_name { };
+
 template <size_t Index> struct back_reference { };
 template <typename Name> struct back_reference_with_name { };
 
+template <size_t Idx> struct reset_start { };
 template <typename Type> struct look_start { };
 
 template <typename... Content> struct lookahead_positive { };
