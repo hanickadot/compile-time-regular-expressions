@@ -20,6 +20,7 @@ struct any { };
 // actual AST of regexp
 template <auto... Str> struct string { };
 template <typename... Opts> struct select { };
+template <typename... Opts> struct non_exclusive_select { };
 template <typename... Content> struct sequence { };
 struct empty { };
 
