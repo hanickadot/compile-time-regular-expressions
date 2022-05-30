@@ -2,20 +2,23 @@
 
 #if CTRE_CNTTP_COMPILER_CHECK
 
-#define TEST_MATCH(pattern, subject) ctre::match<pattern>(subject)
+#define TEST_MATCH(pattern, subject, result) static_assert(ctre::match<pattern, ctre::case_sensitive>(subject) == result)
 
-#define TEST_CI_MATCH(pattern, subject) ctre::match<pattern, ctre::case_insensitive>(subject)
+#define TEST_CI_MATCH(pattern, subject, result) static_assert(ctre::match<pattern, ctre::case_insensitive>(subject) == result)
 
 #else
 
-#define TEST_MATCH(pattern, subject) []{ static constexpr inline auto _ptn ## __LINE__ = ctll::fixed_string(pattern); return ctre::re<_ptn ## i__LINE__d, ctre::match_method, ctre::case_insensitive>(subject); }()
+#define UNIQUE_ID_HELPER(A,B) A ## B 
+#define UNIQUE_ID(LINE) UNIQUE_ID_HELPER(_ptn, LINE)
 
-#define TEST_CI_MATCH(pattern, subject) []{ static constexpr inline auto _ptn ## __LINE__ = ctll::fixed_string(pattern); return ctre::re<_ptn ## i__LINE__d, ctre::match_method, ctre::case_insensitive>(subject); }()
+#define TEST_MATCH(pattern, subject, result) static constexpr auto UNIQUE_ID(__LINE__) = ctll::fixed_string(pattern); static_assert(ctre::regular_expression<typename ctre::regex_builder<UNIQUE_ID(__LINE__)>::type, ctre::match_method, ctre::case_sensitive>{}(subject) == result)
+
+#define TEST_CI_MATCH(pattern, subject, result) static constexpr auto UNIQUE_ID(__LINE__) = ctll::fixed_string(pattern); static_assert(ctre::regular_expression<typename ctre::regex_builder<UNIQUE_ID(__LINE__)>::type, ctre::match_method, ctre::case_insensitive>{}(subject) == result)
 
 #endif
 
-static_assert(TEST_MATCH("aloha","aloha"));
-static_assert(!TEST_MATCH("aloha","ALOHA"));
+TEST_MATCH("aloha","aloha", true);
+TEST_MATCH("aloha","ALOHA", false);
 
-static_assert(TEST_CI_MATCH("aloha", "aloha"));
-static_assert(TEST_CI_MATCH("aloha", "ALOHA"));
+TEST_CI_MATCH("aloha", "aloha", true);
+TEST_CI_MATCH("aloha", "ALOHA", true);
