@@ -9,6 +9,9 @@ struct multiline { };
 struct case_sensitive { };
 struct case_insensitive { };
 
+using ci = case_insensitive;
+using cs = case_sensitive;
+
 template <typename... Flags> struct flag_list { };
 
 struct flags {
@@ -65,7 +68,7 @@ constexpr CTRE_FORCE_INLINE bool multiline_mode(flags f) {
 	return f.multiline;
 }
 
-constexpr CTRE_FORCE_INLINE bool case_insensitive(flags f) {
+constexpr CTRE_FORCE_INLINE bool is_case_insensitive(flags f) {
 	return f.case_insensitive;
 }
 

@@ -1382,6 +1382,83 @@ struct pcre {
 
 #endif
 
+#ifndef CTRE_V2__CTRE__FLAGS_AND_MODES__HPP
+#define CTRE_V2__CTRE__FLAGS_AND_MODES__HPP
+
+namespace ctre {
+
+struct singleline { };
+struct multiline { };
+
+struct case_sensitive { };
+struct case_insensitive { };
+
+using ci = case_insensitive;
+using cs = case_sensitive;
+
+template <typename... Flags> struct flag_list { };
+
+struct flags {
+	bool block_empty_match = false;
+	bool multiline = false;
+	bool case_insensitive = false;
+	
+	constexpr flags() = default;
+	constexpr flags(const flags &) = default;
+	constexpr flags(flags &&) = default;
+	
+	constexpr CTRE_FORCE_INLINE flags(ctre::singleline v) noexcept { set_flag(v); }
+	constexpr CTRE_FORCE_INLINE flags(ctre::multiline v) noexcept { set_flag(v); }
+	constexpr CTRE_FORCE_INLINE flags(ctre::case_sensitive v) noexcept { set_flag(v); }
+	constexpr CTRE_FORCE_INLINE flags(ctre::case_insensitive v) noexcept { set_flag(v); }
+	
+	
+	template <typename... Args> constexpr CTRE_FORCE_INLINE flags(ctll::list<Args...>) noexcept {
+		(this->set_flag(Args{}), ...);
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::singleline) noexcept {
+		multiline = false;
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::multiline) noexcept {
+		multiline = true;
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::case_insensitive) noexcept {
+		case_insensitive = true;
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::case_sensitive) noexcept {
+		case_insensitive = false;
+	}
+};
+
+constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
+	f.block_empty_match = true;
+	return f;
+}
+
+constexpr CTRE_FORCE_INLINE auto consumed_something(flags f, bool condition = true) {
+	if (condition) f.block_empty_match = false;
+	return f;
+}
+
+constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(flags f) {
+	return f.block_empty_match;
+}
+
+constexpr CTRE_FORCE_INLINE bool multiline_mode(flags f) {
+	return f.multiline;
+}
+
+constexpr CTRE_FORCE_INLINE bool is_case_insensitive(flags f) {
+	return f.case_insensitive;
+}
+
+} // namespace ctre
+
+#endif
 #include <cstdint>
 
 namespace ctre {
@@ -1389,40 +1466,58 @@ namespace ctre {
 // sfinae check for types here
 
 template <typename T> class MatchesCharacter {
-	template <typename Y, typename CharT> static auto test(CharT c) -> decltype(Y::match_char(c), std::true_type());
+	template <typename Y, typename CharT> static auto test(CharT c) -> decltype(Y::match_char(c, std::declval<const flags &>()), std::true_type());
 	template <typename> static auto test(...) -> std::false_type;
 public:
 	template <typename CharT> static inline constexpr bool value = decltype(test<T>(std::declval<CharT>()))();
 };
 
+template <typename T> constexpr CTRE_FORCE_INLINE bool is_ascii_alpha(T v) {
+	return ((v >= static_cast<T>('a') && v <= static_cast<T>('z')) || (v >= static_cast<T>('A') && v <= static_cast<T>('Z')));
+}
+
 template <auto V> struct character {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		if constexpr (is_ascii_alpha(V)) {
+			if (is_case_insensitive(f)) {
+				if (value == (V ^ static_cast<decltype(V)>(0x20))) {
+					return true;//
+				}
+			}	
+		}
 		return value == V;
 	}
 };
 
 template <typename... Content> struct negative_set {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return !(Content::match_char(value) || ... || false);
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		return !(Content::match_char(value, f) || ... || false);
 	}
 };
 
 template <typename... Content> struct set {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return (Content::match_char(value) || ... || false);
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		return (Content::match_char(value, f) || ... || false);
 	}
 };
 
 template <auto... Cs> struct enumeration : set<character<Cs>...> { };
 
 template <typename... Content> struct negate {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return !(Content::match_char(value) || ... || false);
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		return !(Content::match_char(value, f) || ... || false);
 	}
 };
 
 template <auto A, auto B> struct char_range {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		if constexpr (is_ascii_alpha(A) && is_ascii_alpha(B)) {
+			if (is_case_insensitive(f)) {
+				if (value >= (A ^ static_cast<decltype(A)>(0x20)) && value <= (A ^ static_cast<decltype(B)>(0x20))) {
+					return true;//
+				}
+			}	
+		}
 		return (value >= A) && (value <= B);
 	}
 };
@@ -1675,7 +1770,7 @@ template <auto Type, auto Value> using make_property = property<std::remove_cons
 
 // unicode TS#18 level 1.2 general_category
 template <uni::detail::binary_prop Property> struct binary_property<uni::detail::binary_prop, Property> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+	template <typename CharT> inline static constexpr bool match_char(CharT c, const flags &) noexcept {
 		return uni::detail::get_binary_prop<Property>(static_cast<char32_t>(c));
 	}
 };
@@ -1689,13 +1784,13 @@ enum class property_type {
 // unicode TS#18 level 1.2.2
 
 template <uni::script Script> struct binary_property<uni::script, Script> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+	template <typename CharT> inline static constexpr bool match_char(CharT c, const flags &) noexcept {
 		return uni::cp_script(c) == Script;
 	}
 };
 
 template <uni::script Script> struct property<property_type, property_type::script_extension, Script> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+	template <typename CharT> inline static constexpr bool match_char(CharT c, const flags &) noexcept {
 		for (uni::script sc: uni::cp_script_extensions(c)) {
 			if (sc == Script) return true;
 		}
@@ -1704,13 +1799,13 @@ template <uni::script Script> struct property<property_type, property_type::scri
 };
 
 template <uni::version Age> struct binary_property<uni::version, Age> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+	template <typename CharT> inline static constexpr bool match_char(CharT c, const flags &) noexcept {
 		return uni::cp_age(c) <= Age;
 	}
 };
 
 template <uni::block Block> struct binary_property<uni::block, Block> {
-	template <typename CharT> inline static constexpr bool match_char(CharT c) noexcept {
+	template <typename CharT> inline static constexpr bool match_char(CharT c, const flags &) noexcept {
 		return uni::cp_block(c) == Block;
 	}
 };
@@ -2603,43 +2698,6 @@ template <auto V, auto B, auto A, typename... Ts, typename Parameters> static co
 
 #ifndef CTRE__EVALUATION__HPP
 #define CTRE__EVALUATION__HPP
-
-#ifndef CTRE_V2__CTRE__FLAGS_AND_MODES__HPP
-#define CTRE_V2__CTRE__FLAGS_AND_MODES__HPP
-
-namespace ctre {
-
-struct singleline { };
-struct multiline { };
-
-struct flags {
-	bool block_empty_match = false;
-	bool multiline = false;
-	constexpr CTRE_FORCE_INLINE flags(ctre::singleline) { }
-	constexpr CTRE_FORCE_INLINE flags(ctre::multiline): multiline{true} { }
-};
-
-constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
-	f.block_empty_match = true;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE auto consumed_something(flags f, bool condition = true) {
-	if (condition) f.block_empty_match = false;
-	return f;
-}
-
-constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(flags f) {
-	return f.block_empty_match;
-}
-
-constexpr CTRE_FORCE_INLINE bool multiline_mode(flags f) {
-	return f.multiline;
-}
-
-} // namespace ctre
-
-#endif
 
 #ifndef CTRE__STARTS_WITH_ANCHOR__HPP
 #define CTRE__STARTS_WITH_ANCHOR__HPP
@@ -4060,7 +4118,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const E
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
 	if (current == last) return not_matched;
-	if (!CharacterLike::match_char(*current)) return not_matched;
+	if (!CharacterLike::match_char(*current, f)) return not_matched;
 	
 	return evaluate(begin, ++current, last, consumed_something(f), captures, ctll::list<Tail...>());
 }
@@ -4077,36 +4135,17 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // matching strings in patterns
-
-template <typename Iterator> struct string_match_result {
-	Iterator position;
-	bool match;
-};
-
-template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & last) noexcept {
-	if (it != last) {
-		using char_type = decltype(*it);
-		return *it++ == static_cast<char_type>(c);
-	}
-	return false;
-}
-
-template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, [[maybe_unused]] const EndIterator last, std::index_sequence<Idx...>) noexcept {
-
-	bool same = (compare_character(String, current, last) && ... && true);
-
-	return {current, same};
+template <auto... String, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool match_string(Iterator & current, const EndIterator last, const flags & f) {
+	return ((current != last && character<String>::match_char(*current++, f)) && ... && true);
 }
 
 template <typename R, typename Iterator, typename EndIterator, auto... String, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, [[maybe_unused]] const flags & f, R captures, ctll::list<string<String...>, Tail...>) noexcept {
-	auto result = evaluate_match_string<String...>(current, last, std::make_index_sequence<sizeof...(String)>());
-	
-	if (!result.match) {
+	if (!match_string<String...>(current, last, f)) {
 		return not_matched;
 	}
-	
-	return evaluate(begin, result.position, last, consumed_something(f, sizeof...(String) > 0), captures, ctll::list<Tail...>());
+
+	return evaluate(begin, current, last, consumed_something(f, sizeof...(String) > 0), captures, ctll::list<Tail...>());
 }
 
 // matching select in patterns
@@ -4229,10 +4268,10 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
 	
 	if (last != current) {
-		after = CharacterLike::match_char(*current);
+		after = CharacterLike::match_char(*current, f);
 	}
 	if (begin != current) {
-		before = CharacterLike::match_char(*std::prev(current));
+		before = CharacterLike::match_char(*std::prev(current), f);
 	}
 	
 	if (before == after) return not_matched;
@@ -4251,10 +4290,10 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
 	
 	if (last != current) {
-		after = CharacterLike::match_char(*current);
+		after = CharacterLike::match_char(*current, f);
 	}
 	if (begin != current) {
-		before = CharacterLike::match_char(*std::prev(current));
+		before = CharacterLike::match_char(*std::prev(current), f);
 	}
 	
 	if (before != after) return not_matched;
@@ -4431,7 +4470,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // backreference support (match agains content of iterators)
-template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> match_against_range(Iterator current, const EndIterator last, Iterator range_current, const Iterator range_end, flags) noexcept {
+template <typename Iterator> struct string_match {
+	Iterator position;
+	bool match;
+};
+
+template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match<Iterator> match_against_range(Iterator current, const EndIterator last, Iterator range_current, const Iterator range_end, flags) noexcept {
 	while (last != current && range_end != range_current) {
 		if (*current == *range_current) {
 			current++;
@@ -5121,35 +5165,39 @@ template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct regex_builder {
 	using type = ctll::conditional<result::is_correct, decltype(ctll::front(typename result::output_type::stack_type())), ctll::list<reject>>;
 };
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto match = regular_expression<typename regex_builder<input>::type, match_method, singleline>();
+// case-sensitive
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto search = regular_expression<typename regex_builder<input>::type, search_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto match = regular_expression<typename regex_builder<input>::type, match_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto search = regular_expression<typename regex_builder<input>::type, search_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto split = regular_expression<typename regex_builder<input>::type, split_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, ctll::list<singleline, Modifiers...>>();
+
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, ctll::list<singleline, Modifiers...>>();
 
 static constexpr inline auto sentinel = regex_end_iterator();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_match = regular_expression<typename regex_builder<input>::type, match_method, multiline>();
+// multiline
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_search = regular_expression<typename regex_builder<input>::type, search_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_match = regular_expression<typename regex_builder<input>::type, match_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_search = regular_expression<typename regex_builder<input>::type, search_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_split = regular_expression<typename regex_builder<input>::type, split_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_iterator = regular_expression<typename regex_builder<input>::type, iterator_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, ctll::list<multiline, Modifiers...>>();
+
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_iterator = regular_expression<typename regex_builder<input>::type, iterator_method, ctll::list<multiline, Modifiers...>>();
 
 static constexpr inline auto multiline_sentinel = regex_end_iterator();
 

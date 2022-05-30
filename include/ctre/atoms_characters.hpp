@@ -23,7 +23,7 @@ template <typename T> constexpr CTRE_FORCE_INLINE bool is_ascii_alpha(T v) {
 template <auto V> struct character {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
 		if constexpr (is_ascii_alpha(V)) {
-			if (case_insensitive(f)) {
+			if (is_case_insensitive(f)) {
 				if (value == (V ^ static_cast<decltype(V)>(0x20))) {
 					return true;//
 				}
@@ -56,7 +56,7 @@ template <typename... Content> struct negate {
 template <auto A, auto B> struct char_range {
 	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
 		if constexpr (is_ascii_alpha(A) && is_ascii_alpha(B)) {
-			if (case_insensitive(f)) {
+			if (is_case_insensitive(f)) {
 				if (value >= (A ^ static_cast<decltype(A)>(0x20)) && value <= (A ^ static_cast<decltype(B)>(0x20))) {
 					return true;//
 				}
