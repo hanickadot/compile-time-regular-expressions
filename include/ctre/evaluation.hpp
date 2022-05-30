@@ -86,7 +86,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator current, const E
 template <typename R, typename Iterator, typename EndIterator, typename CharacterLike, typename... Tail, typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<decltype(*std::declval<Iterator>())>)>> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<CharacterLike, Tail...>) noexcept {
 	if (current == last) return not_matched;
-	if (!CharacterLike::match_char(*current)) return not_matched;
+	if (!CharacterLike::match_char(*current, f)) return not_matched;
 	
 	return evaluate(begin, ++current, last, consumed_something(f), captures, ctll::list<Tail...>());
 }
@@ -255,10 +255,10 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
 	
 	if (last != current) {
-		after = CharacterLike::match_char(*current);
+		after = CharacterLike::match_char(*current, f);
 	}
 	if (begin != current) {
-		before = CharacterLike::match_char(*std::prev(current));
+		before = CharacterLike::match_char(*std::prev(current), f);
 	}
 	
 	if (before == after) return not_matched;
@@ -277,10 +277,10 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 	static_assert(is_bidirectional(typename std::iterator_traits<Iterator>::iterator_category{}), "To use boundary in regex you need to provide bidirectional iterator or range.");
 	
 	if (last != current) {
-		after = CharacterLike::match_char(*current);
+		after = CharacterLike::match_char(*current, f);
 	}
 	if (begin != current) {
-		before = CharacterLike::match_char(*std::prev(current));
+		before = CharacterLike::match_char(*std::prev(current), f);
 	}
 	
 	if (before != after) return not_matched;
