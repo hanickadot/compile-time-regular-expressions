@@ -459,7 +459,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // backreference support (match agains content of iterators)
-template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> match_against_range(Iterator current, const EndIterator last, Iterator range_current, const Iterator range_end, flags) noexcept {
+template <typename Iterator> struct backreference_match {
+	Iterator position;
+	bool match;
+};
+
+template <typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE backreference_match<Iterator> match_against_range(Iterator current, const EndIterator last, Iterator range_current, const Iterator range_end, flags) noexcept {
 	while (last != current && range_end != range_current) {
 		if (*current == *range_current) {
 			current++;
