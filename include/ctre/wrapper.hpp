@@ -285,36 +285,39 @@ template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct regex_builder {
 	using type = ctll::conditional<result::is_correct, decltype(ctll::front(typename result::output_type::stack_type())), ctll::list<reject>>;
 };
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto match = regular_expression<typename regex_builder<input>::type, match_method, singleline>();
+// case-sensitive
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto search = regular_expression<typename regex_builder<input>::type, search_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto match = regular_expression<typename regex_builder<input>::type, match_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto search = regular_expression<typename regex_builder<input>::type, search_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto split = regular_expression<typename regex_builder<input>::type, split_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, singleline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, ctll::list<singleline, Modifiers...>>();
+
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto iterator = regular_expression<typename regex_builder<input>::type, iterator_method, ctll::list<singleline, Modifiers...>>();
 
 static constexpr inline auto sentinel = regex_end_iterator();
 
+// multiline
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_match = regular_expression<typename regex_builder<input>::type, match_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_match = regular_expression<typename regex_builder<input>::type, match_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_search = regular_expression<typename regex_builder<input>::type, search_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_search = regular_expression<typename regex_builder<input>::type, search_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_split = regular_expression<typename regex_builder<input>::type, split_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input> static constexpr inline auto multiline_iterator = regular_expression<typename regex_builder<input>::type, iterator_method, multiline>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_iterator = regular_expression<typename regex_builder<input>::type, iterator_method, ctll::list<multiline, Modifiers...>>();
 
 static constexpr inline auto multiline_sentinel = regex_end_iterator();
 
