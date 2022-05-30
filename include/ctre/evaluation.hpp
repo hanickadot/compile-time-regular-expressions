@@ -109,7 +109,7 @@ template <typename Iterator> struct string_match_result {
 	bool match;
 };
 
-template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & last) noexcept {
+template <typename CharT, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool compare_character(CharT c, Iterator & it, const EndIterator & last, const flags &) noexcept {
 	if (it != last) {
 		using char_type = decltype(*it);
 		return *it++ == static_cast<char_type>(c);
@@ -117,16 +117,16 @@ template <typename CharT, typename Iterator, typename EndIterator> constexpr CTR
 	return false;
 }
 
-template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, [[maybe_unused]] const EndIterator last, std::index_sequence<Idx...>) noexcept {
+template <auto... String, size_t... Idx, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE string_match_result<Iterator> evaluate_match_string(Iterator current, [[maybe_unused]] const EndIterator last, std::index_sequence<Idx...>, const flags & f) noexcept {
 
-	bool same = (compare_character(String, current, last) && ... && true);
+	bool same = (compare_character(String, current, last, f) && ... && true);
 
 	return {current, same};
 }
 
 template <typename R, typename Iterator, typename EndIterator, auto... String, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, [[maybe_unused]] const flags & f, R captures, ctll::list<string<String...>, Tail...>) noexcept {
-	auto result = evaluate_match_string<String...>(current, last, std::make_index_sequence<sizeof...(String)>());
+	auto result = evaluate_match_string<String...>(current, last, std::make_index_sequence<sizeof...(String)>(), f);
 	
 	if (!result.match) {
 		return not_matched;
