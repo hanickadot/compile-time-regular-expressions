@@ -4135,7 +4135,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, c
 }
 
 // matching strings in patterns
-template <auto... String, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool match_string(Iterator & current, const EndIterator last, const flags & f) {
+template <auto... String, typename Iterator, typename EndIterator> constexpr CTRE_FORCE_INLINE bool match_string([[maybe_unused]] Iterator & current, [[maybe_unused]] const EndIterator last, [[maybe_unused]] const flags & f) {
 	return ((current != last && character<String>::match_char(*current++, f)) && ... && true);
 }
 
