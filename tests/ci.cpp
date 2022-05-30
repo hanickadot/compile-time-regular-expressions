@@ -20,5 +20,21 @@
 TEST_MATCH("aloha","aloha", true);
 TEST_MATCH("aloha","ALOHA", false);
 
+TEST_MATCH("[a-z]+","aloha", true);
+TEST_MATCH("[a-z]+","ALOHA", false);
+
 TEST_CI_MATCH("aloha", "aloha", true);
 TEST_CI_MATCH("aloha", "ALOHA", true);
+
+TEST_CI_MATCH("[a-z]+", "aloha", true);
+TEST_CI_MATCH("[a-z]+", "ALOHA", true);
+
+TEST_CI_MATCH("[a-z]+", "9", false);
+TEST_CI_MATCH("[a-z]+", " ", false);
+
+TEST_CI_MATCH("[a-Z]+", "9", false);
+TEST_CI_MATCH("[a-Z]+", " ", false);
+
+TEST_CI_MATCH("[a-Z]+", "z", false);
+TEST_CI_MATCH("[a-Z]+", "z", false);
+
