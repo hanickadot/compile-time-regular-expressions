@@ -2025,8 +2025,6 @@ static auto rotate(assert_line_end) -> assert_line_end;
 
 };
 
-decltype(ctre::rotate_for_lookbehind::rotate(ctre::capture<1, ctre::string<'a', 'b'> >{})) i;
-
 }
 
 #endif
