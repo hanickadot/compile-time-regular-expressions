@@ -4,7 +4,6 @@
 #include "atoms.hpp"
 #include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
-#include <ctll/list.hpp>
 
 namespace ctre {
 

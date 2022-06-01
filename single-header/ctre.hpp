@@ -1932,8 +1932,6 @@ template <> struct property_type_builder<property_type::block> {
 
 #endif
 
-#include <ctll/list.hpp>
-
 namespace ctre {
 
 // helper functions
