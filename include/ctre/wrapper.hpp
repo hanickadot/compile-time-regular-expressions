@@ -13,6 +13,12 @@ namespace ctre {
 template <typename RE, typename Method = void, typename Modifier = singleline> struct regular_expression;
 	
 struct zero_terminated_string_end_iterator {
+	using value_type = void;
+	using reference = void;
+	using pointer = const void *;
+	using iterator_category = std::bidirectional_iterator_tag;
+	using difference_type = int;
+	
 	constexpr CTRE_FORCE_INLINE friend bool operator==(const char * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr == '\0';
 	} 
