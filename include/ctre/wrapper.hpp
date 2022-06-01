@@ -14,11 +14,20 @@ template <typename RE, typename Method = void, typename Modifier = singleline> s
 	
 struct zero_terminated_string_end_iterator {
 	// this is here only because I want to support std::make_reverse_iterator
-	using value_type = void;
-	using reference = void;
-	using pointer = const void *;
+	using self_type = zero_terminated_string_end_iterator;
+	using value_type = char;
+	using reference = char &;
+	using pointer = const char *;
 	using iterator_category = std::bidirectional_iterator_tag;
 	using difference_type = int;
+	
+	// it's just sentinel it won't be ever called
+	auto operator++() noexcept -> self_type &;
+	auto operator++(int) noexcept -> self_type;
+	auto operator--() noexcept -> self_type &;
+	auto operator--(int) noexcept -> self_type;
+	friend auto operator==(self_type, self_type) noexcept -> bool;
+	auto operator*() noexcept -> reference;
 	
 	constexpr CTRE_FORCE_INLINE friend bool operator==(const char * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr == '\0';
