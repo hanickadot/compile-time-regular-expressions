@@ -47,6 +47,14 @@ template <typename T = _nothing> constexpr auto pop_and_get_front(empty_list, T 
 template <typename Head, typename... As, typename T = _nothing> constexpr auto front(list<Head, As...>, T = T()) noexcept -> Head { return {}; }
 template <typename T = _nothing> constexpr auto front(empty_list, T = T()) noexcept -> T { return {}; }
 
+// rotate list
+template <typename T> struct rotate_item {
+	template <typename... Ts> friend constexpr auto operator+(list<Ts...>, rotate_item<T>) noexcept -> list<T, Ts...> { return {}; }
+};
+
+template <typename... Ts> constexpr auto rotate(list<Ts...>) -> decltype((list<>{} + ... + rotate_item<Ts>{})) {
+	return {};
+}
 
 // set operations
 template <typename T> struct item_matcher {
