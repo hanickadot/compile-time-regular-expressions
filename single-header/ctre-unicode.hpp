@@ -1949,69 +1949,83 @@ template <auto V> struct rotate_value {
 	template <auto... Vs> friend constexpr auto operator+(string<Vs...>, rotate_value<V>) noexcept -> string<V, Vs...> { return {}; }
 };
 
+struct rotate_for_lookbehind {
+
 // from atoms_characters.hpp
-template <auto V> auto rotate(character<V>) -> character<V>;
-template <typename... Content> auto rotate(negative_set<Content...>) -> negative_set<Content...>;
-template <typename... Content> auto rotate(set<Content...>) -> set<Content...>;
-template <auto... Cs> auto rotate(enumeration<Cs...>) -> enumeration<Cs...>;
-template <typename... Content> auto rotate(negate<Content...>) -> negate<Content...>;
-template <auto A, auto B> auto rotate(char_range<A,B>) -> char_range<A,B>;
+template <auto V> static auto rotate(character<V>) -> character<V>;
+template <typename... Content> static auto rotate(negative_set<Content...>) -> negative_set<Content...>;
+template <typename... Content> static auto rotate(set<Content...>) -> set<Content...>;
+template <auto... Cs> static auto rotate(enumeration<Cs...>) -> enumeration<Cs...>;
+template <typename... Content> static auto rotate(negate<Content...>) -> negate<Content...>;
+template <auto A, auto B> static auto rotate(char_range<A,B>) -> char_range<A,B>;
 
 // from atoms_unicode.hpp
-template <auto... Str> auto rotate(property_name<Str...>) -> property_name<Str...>;
-template <auto... Str> auto rotate(property_value<Str...>) -> property_value<Str...>;
-template <typename T, T Type> auto rotate(binary_property<T, Type>) -> binary_property<T, Type>;
-template <typename T, T Type, auto Value> auto rotate(property<T, Type, Value>) -> property<T, Type, Value>;
+template <auto... Str> static auto rotate(property_name<Str...>) -> property_name<Str...>;
+template <auto... Str> static auto rotate(property_value<Str...>) -> property_value<Str...>;
+template <typename T, T Type> static auto rotate(binary_property<T, Type>) -> binary_property<T, Type>;
+template <typename T, T Type, auto Value> static auto rotate(property<T, Type, Value>) -> property<T, Type, Value>;
 
 // from atoms.hpp
-auto rotate(accept) -> accept;
-auto rotate(reject) -> reject;
-auto rotate(start_mark) -> start_mark;
-auto rotate(end_mark) -> end_mark;
-auto rotate(end_cycle_mark) -> end_cycle_mark;
-auto rotate(end_lookahead_mark) -> end_lookahead_mark;
-auto rotate(end_lookbehind_mark) -> end_lookbehind_mark;
-template <size_t Id> auto rotate(numeric_mark<Id>) -> numeric_mark<Id>;
-auto rotate(any) -> any;
+static auto rotate(accept) -> accept;
+static auto rotate(reject) -> reject;
+static auto rotate(start_mark) -> start_mark;
+static auto rotate(end_mark) -> end_mark;
+static auto rotate(end_cycle_mark) -> end_cycle_mark;
+static auto rotate(end_lookahead_mark) -> end_lookahead_mark;
+static auto rotate(end_lookbehind_mark) -> end_lookbehind_mark;
+template <size_t Id> static auto rotate(numeric_mark<Id>) -> numeric_mark<Id>;
+static auto rotate(any) -> any;
 
-template <typename... Content> auto rotate(select<Content...>) -> select<Content...>;
-auto rotate(empty) -> empty;
+template <typename... Content> static auto rotate(select<Content...>) -> select<Content...>;
+static auto rotate(empty) -> empty;
 
-template <size_t a, size_t b, typename... Content> auto rotate(repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
-template <size_t a, size_t b, typename... Content> auto rotate(lazy_repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<lazy_repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
-template <size_t a, size_t b, typename... Content> auto rotate(possessive_repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<possessive_repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
+template <size_t a, size_t b, typename... Content> static auto rotate(repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
+template <size_t a, size_t b, typename... Content> static auto rotate(lazy_repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<lazy_repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
+template <size_t a, size_t b, typename... Content> static auto rotate(possessive_repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<possessive_repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
 
-template <size_t Index, typename... Content> auto rotate(capture<Index, Content...>) -> decltype(ctre::convert_to_capture<Index>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
-template <size_t Index, typename Name, typename... Content> auto rotate(capture_with_name<Index, Name, Content...>) -> decltype(ctre::convert_to_named_capture<Index, Name>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
+template <size_t Index, typename... Content> static auto rotate(capture<Index, Content...>) {
+	return ctre::convert_to_capture<Index>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{}));
+}
 
-template <size_t Index> auto rotate(back_reference<Index>) -> back_reference<Index>;
-template <typename Name> auto rotate(back_reference_with_name<Name>) -> back_reference_with_name<Name>;
+template <size_t Index, typename Name, typename... Content> static auto rotate(capture_with_name<Index, Name, Content...>) {
+	return ctre::convert_to_named_capture<Index, Name>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{}));
+}
 
-template <typename... Content> auto rotate(look_start<Content...>) -> look_start<Content...>;
+template <size_t Index> static auto rotate(back_reference<Index>) -> back_reference<Index>;
+template <typename Name> static auto rotate(back_reference_with_name<Name>) -> back_reference_with_name<Name>;
 
-template <auto... Str> constexpr auto rotate(string<Str...>) -> decltype((string<>{} + ... + rotate_value<Str>{}));
+template <typename... Content> static auto rotate(look_start<Content...>) -> look_start<Content...>;
 
-template <typename... Content> auto rotate(sequence<Content...>) -> decltype(ctre::convert_to_basic_list<sequence>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
+template <auto... Str> static auto rotate(string<Str...>) -> decltype((string<>{} + ... + rotate_value<Str>{}));
+
+template <typename... Content> static auto rotate(sequence<Content...>) {
+	return ctre::convert_to_basic_list<sequence>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{}));
+}
 
 // we don't rotate lookaheads
-template <typename... Content> auto rotate(lookahead_positive<Content...>) -> lookahead_positive<Content...>;
-template <typename... Content> auto rotate(lookahead_negative<Content...>) -> lookahead_negative<Content...>;
-template <typename... Content> auto rotate(lookbehind_positive<Content...>) -> lookbehind_positive<Content...>;
-template <typename... Content> auto rotate(lookbehind_negative<Content...>) -> lookbehind_negative<Content...>;
+template <typename... Content> static auto rotate(lookahead_positive<Content...>) -> lookahead_positive<Content...>;
+template <typename... Content> static auto rotate(lookahead_negative<Content...>) -> lookahead_negative<Content...>;
+template <typename... Content> static auto rotate(lookbehind_positive<Content...>) -> lookbehind_positive<Content...>;
+template <typename... Content> static auto rotate(lookbehind_negative<Content...>) -> lookbehind_negative<Content...>;
 
-auto rotate(atomic_start) -> atomic_start;
+static auto rotate(atomic_start) -> atomic_start;
 
-template <typename... Content> auto rotate(atomic_group<Content...>) -> decltype(ctre::convert_to_basic_list<atomic_group>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
+template <typename... Content> static auto rotate(atomic_group<Content...>) {
+	return ctre::convert_to_basic_list<atomic_group>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{}));
+}
 
-template <typename... Content> auto rotate(boundary<Content...>) -> boundary<Content...>;
-template <typename... Content> auto rotate(not_boundary<Content...>) -> not_boundary<Content...>;
+template <typename... Content> static auto rotate(boundary<Content...>) -> boundary<Content...>;
+template <typename... Content> static auto rotate(not_boundary<Content...>) -> not_boundary<Content...>;
 
-auto rotate(assert_subject_begin) -> assert_subject_begin;
-auto rotate(assert_subject_end) -> assert_subject_end;
-auto rotate(assert_subject_end_line) -> assert_subject_end_line;
-auto rotate(assert_line_begin) -> assert_line_begin;
-auto rotate(assert_line_end) -> assert_line_end;
- 
+static auto rotate(assert_subject_begin) -> assert_subject_begin;
+static auto rotate(assert_subject_end) -> assert_subject_end;
+static auto rotate(assert_subject_end_line) -> assert_subject_end_line;
+static auto rotate(assert_line_begin) -> assert_line_begin;
+static auto rotate(assert_line_end) -> assert_line_end;
+
+};
+
+decltype(ctre::rotate_for_lookbehind::rotate(ctre::capture<1, ctre::string<'a', 'b'> >{})) i;
 
 }
 
@@ -2439,12 +2453,12 @@ template <auto V, typename... Ts, size_t Counter> static constexpr auto apply(pc
 
 // lookbehind positive end
 template <auto V, typename Look, typename... Ts, size_t Counter> static constexpr auto apply(pcre::look_finish, ctll::term<V>, pcre_context<ctll::list<Look, look_start<lookbehind_positive<>>, Ts...>, pcre_parameters<Counter>>) {
-	return pcre_context{ctll::list<lookbehind_positive<decltype(ctre::rotate(Look{}))>, Ts...>(), pcre_parameters<Counter>()};
+	return pcre_context{ctll::list<lookbehind_positive<decltype(ctre::rotate_for_lookbehind::rotate(Look{}))>, Ts...>(), pcre_parameters<Counter>()};
 }
 
 // lookbehind positive end (sequence)
 template <auto V, typename... Look, typename... Ts, size_t Counter> static constexpr auto apply(pcre::look_finish, ctll::term<V>, pcre_context<ctll::list<ctre::sequence<Look...>, look_start<lookbehind_positive<>>, Ts...>, pcre_parameters<Counter>>) {
-	using my_lookbehind = decltype(ctre::convert_to_basic_list<lookbehind_positive>(ctll::rotate(ctll::list<decltype(rotate(Look{}))...>{})));
+	using my_lookbehind = decltype(ctre::convert_to_basic_list<lookbehind_positive>(ctll::rotate(ctll::list<decltype(ctre::rotate_for_lookbehind::rotate(Look{}))...>{})));
 	return pcre_context{ctll::list<my_lookbehind, Ts...>(), pcre_parameters<Counter>()};
 }
 
@@ -2455,12 +2469,12 @@ template <auto V, typename... Ts, size_t Counter> static constexpr auto apply(pc
 
 // lookbehind negative end
 template <auto V, typename Look, typename... Ts, size_t Counter> static constexpr auto apply(pcre::look_finish, ctll::term<V>, pcre_context<ctll::list<Look, look_start<lookbehind_negative<>>, Ts...>, pcre_parameters<Counter>>) {
-	return pcre_context{ctll::list<lookbehind_negative<decltype(ctre::rotate(Look{}))>, Ts...>(), pcre_parameters<Counter>()};
+	return pcre_context{ctll::list<lookbehind_negative<decltype(ctre::rotate_for_lookbehind::rotate(Look{}))>, Ts...>(), pcre_parameters<Counter>()};
 }
 
 // lookbehind negative end (sequence)
 template <auto V, typename... Look, typename... Ts, size_t Counter> static constexpr auto apply(pcre::look_finish, ctll::term<V>, pcre_context<ctll::list<ctre::sequence<Look...>, look_start<lookbehind_negative<>>, Ts...>, pcre_parameters<Counter>>) {
-	using my_lookbehind = decltype(ctre::convert_to_basic_list<lookbehind_negative>(ctll::rotate(ctll::list<decltype(rotate(Look{}))...>{})));
+	using my_lookbehind = decltype(ctre::convert_to_basic_list<lookbehind_negative>(ctll::rotate(ctll::list<decltype(ctre::rotate_for_lookbehind::rotate(Look{}))...>{})));
 	return pcre_context{ctll::list<my_lookbehind, Ts...>(), pcre_parameters<Counter>()};
 }
 
