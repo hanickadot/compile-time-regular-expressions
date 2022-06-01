@@ -18,7 +18,12 @@ struct utf8_iterator {
 	using difference_type = int;
 	
 	struct sentinel {
-
+		// this is here only because I want to support std::make_reverse_iterator
+		using value_type = void;
+		using reference = void;
+		using pointer = const void *;
+		using iterator_category = std::bidirectional_iterator_tag;
+		using difference_type = int;
 	};
 	
 	const char8_t * ptr{nullptr};
