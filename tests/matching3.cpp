@@ -204,7 +204,7 @@ TEST_MATCH(203, "(?=foo)foo", "foo");
 TEST_MATCH(204, "(?!notfoo)foo", "foo");
 
 // TODO reverse content of lookbehind
-TEST_MATCH(205, "ab(?<=ba)foo", "abfoo");
+TEST_MATCH(205, "ab(?<=ab)foo", "abfoo");
 TEST_MATCH(206, "ab(?<!foo)foo", "abfoo");
 
 

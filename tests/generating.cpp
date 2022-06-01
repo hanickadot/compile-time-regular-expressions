@@ -260,7 +260,8 @@ static_assert(same_f(CTRE_GEN("^(?=.*(a)\\g{1}.*)[a-z]$"), ctre::sequence<ctre::
 static_assert(same_f(CTRE_GEN("(?<=a)"), ctre::lookbehind_positive<ctre::character<'a'>>()));
 static_assert(same_f(CTRE_GEN("(?<!a)"), ctre::lookbehind_negative<ctre::character<'a'>>()));
 
-// TODO rotate
-static_assert(same_f(CTRE_GEN("(?<=ab)"), ctre::lookbehind_positive<ctre::string<'a','b'>>()));
-static_assert(same_f(CTRE_GEN("(?<!ab)"), ctre::lookbehind_negative<ctre::string<'a','b'>>()));
+static_assert(same_f(CTRE_GEN("(?<=ab)"), ctre::lookbehind_positive<ctre::string<'b','a'>>()));
+static_assert(same_f(CTRE_GEN("(?<!ab)"), ctre::lookbehind_negative<ctre::string<'b','a'>>()));
 
+static_assert(same_f(CTRE_GEN("(?<=(ab))"), ctre::lookbehind_positive<ctre::capture<1, ctre::string<'b','a'>>>()));
+static_assert(same_f(CTRE_GEN("(?<!(ab))"), ctre::lookbehind_negative<ctre::capture<1, ctre::string<'b','a'>>>()));
