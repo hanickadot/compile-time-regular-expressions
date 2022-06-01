@@ -3856,6 +3856,18 @@ constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_positive<Seq..
 	return ctll::list<can_be_anything>{};
 }
 
+// lookbehind_negative TODO fixme
+template <typename... Content, typename... Seq, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<lookbehind_negative<Seq...>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
+}
+
+// lookbehind_positive
+template <typename... Content, typename... Seq, typename... Tail> 
+constexpr auto first(ctll::list<Content...>, ctll::list<lookbehind_positive<Seq...>, Tail...>) noexcept {
+	return ctll::list<can_be_anything>{};
+}
+
 // lookahead_negative TODO fixme
 template <typename... Content, typename... Seq, typename... Tail> 
 constexpr auto first(ctll::list<Content...>, ctll::list<lookahead_negative<Seq...>, Tail...>) noexcept {
