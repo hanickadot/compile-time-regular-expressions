@@ -488,6 +488,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterat
 	return captures.matched();
 }
 
+template <typename R, typename Iterator, typename EndIterator, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator, Iterator, const EndIterator, flags, R captures, ctll::list<end_lookbehind_mark>) noexcept {
+	// TODO check interaction with non-empty flag
+	return captures.matched();
+}
+
 // lookahead positive
 template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<lookahead_positive<Content...>, Tail...>) noexcept {
@@ -505,6 +511,29 @@ template <typename R, typename Iterator, typename EndIterator, typename... Conte
 constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<lookahead_negative<Content...>, Tail...>) noexcept {
 	
 	if (auto lookahead_result = evaluate(begin, current, last, f, captures, ctll::list<sequence<Content...>, end_lookahead_mark>())) {
+		return not_matched;
+	} else {
+		return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
+	}
+}
+
+// lookbehind positive
+template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<lookbehind_positive<Content...>, Tail...>) noexcept {
+	// TODO do something with `begin` iterator which shouldn' be reversed `current`
+	if (auto lookbehind_result = evaluate(std::make_reverse_iterator(current), std::make_reverse_iterator(current), std::make_reverse_iterator(begin), f, captures, ctll::list<sequence<Content...>, end_lookbehind_mark>())) {
+		captures = lookbehind_result.unmatch();
+		return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
+	} else {
+		return not_matched;
+	}
+}
+
+// lookbehind negative
+template <typename R, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const Iterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<lookbehind_negative<Content...>, Tail...>) noexcept {
+	// TODO do something with `begin` iterator which shouldn' be reversed `current`
+	if (auto lookbehind_result = evaluate(std::make_reverse_iterator(current), std::make_reverse_iterator(current), std::make_reverse_iterator(begin), f, captures, ctll::list<sequence<Content...>, end_lookbehind_mark>())) {
 		return not_matched;
 	} else {
 		return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
