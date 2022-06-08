@@ -13,6 +13,7 @@ struct start_mark { };
 struct end_mark { };
 struct end_cycle_mark { };
 struct end_lookahead_mark { };
+struct end_lookbehind_mark { };
 template <size_t Id> struct numeric_mark { };
 
 struct any { };
@@ -50,6 +51,9 @@ template <typename Type> struct look_start { };
 
 template <typename... Content> struct lookahead_positive { };
 template <typename... Content> struct lookahead_negative { };
+
+template <typename... Content> struct lookbehind_positive { };
+template <typename... Content> struct lookbehind_negative { };
 
 struct atomic_start { };
 

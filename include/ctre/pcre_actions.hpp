@@ -2,8 +2,7 @@
 #define CTRE__PCRE_ACTIONS__HPP
 
 #include "pcre.hpp"
-#include "atoms.hpp"
-#include "atoms_unicode.hpp"
+#include "rotate.hpp"
 #include "id.hpp"
 #include <cstdint>
 #include <limits>

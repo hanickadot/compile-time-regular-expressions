@@ -256,4 +256,12 @@ static_assert(same_f(CTRE_GEN("^(?=.*(a)\\g{1}.*)$"), ctre::sequence<ctre::asser
 
 static_assert(same_f(CTRE_GEN("^(?=.*(a)\\g{1}.*)[a-z]$"), ctre::sequence<ctre::assert_line_begin, ctre::lookahead_positive<ctre::star<ctre::any>,ctre::capture<1,ctre::character<'a'>>, ctre::back_reference<1>, ctre::star<ctre::any>>, ctre::set<ctre::char_range<'a','z'>>, ctre::assert_line_end>()));
 
+// lookbehind positive/negative
+static_assert(same_f(CTRE_GEN("(?<=a)"), ctre::lookbehind_positive<ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("(?<!a)"), ctre::lookbehind_negative<ctre::character<'a'>>()));
 
+static_assert(same_f(CTRE_GEN("(?<=ab)"), ctre::lookbehind_positive<ctre::string<'b','a'>>()));
+static_assert(same_f(CTRE_GEN("(?<!ab)"), ctre::lookbehind_negative<ctre::string<'b','a'>>()));
+
+static_assert(same_f(CTRE_GEN("(?<=(ab))"), ctre::lookbehind_positive<ctre::capture<1, ctre::string<'b','a'>>>()));
+static_assert(same_f(CTRE_GEN("(?<!(ab))"), ctre::lookbehind_negative<ctre::capture<1, ctre::string<'b','a'>>>()));

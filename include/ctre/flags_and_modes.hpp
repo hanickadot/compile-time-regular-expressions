@@ -6,11 +6,48 @@ namespace ctre {
 struct singleline { };
 struct multiline { };
 
+struct case_sensitive { };
+struct case_insensitive { };
+
+using ci = case_insensitive;
+using cs = case_sensitive;
+
+template <typename... Flags> struct flag_list { };
+
 struct flags {
 	bool block_empty_match = false;
 	bool multiline = false;
-	constexpr CTRE_FORCE_INLINE flags(ctre::singleline) { }
-	constexpr CTRE_FORCE_INLINE flags(ctre::multiline): multiline{true} { }
+	bool case_insensitive = false;
+	
+	constexpr flags() = default;
+	constexpr flags(const flags &) = default;
+	constexpr flags(flags &&) = default;
+	
+	constexpr CTRE_FORCE_INLINE flags(ctre::singleline v) noexcept { set_flag(v); }
+	constexpr CTRE_FORCE_INLINE flags(ctre::multiline v) noexcept { set_flag(v); }
+	constexpr CTRE_FORCE_INLINE flags(ctre::case_sensitive v) noexcept { set_flag(v); }
+	constexpr CTRE_FORCE_INLINE flags(ctre::case_insensitive v) noexcept { set_flag(v); }
+	
+	
+	template <typename... Args> constexpr CTRE_FORCE_INLINE flags(ctll::list<Args...>) noexcept {
+		(this->set_flag(Args{}), ...);
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::singleline) noexcept {
+		multiline = false;
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::multiline) noexcept {
+		multiline = true;
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::case_insensitive) noexcept {
+		case_insensitive = true;
+	}
+	
+	constexpr CTRE_FORCE_INLINE void set_flag(ctre::case_sensitive) noexcept {
+		case_insensitive = false;
+	}
 };
 
 constexpr CTRE_FORCE_INLINE auto not_empty_match(flags f) {
@@ -29,6 +66,10 @@ constexpr CTRE_FORCE_INLINE bool cannot_be_empty_match(flags f) {
 
 constexpr CTRE_FORCE_INLINE bool multiline_mode(flags f) {
 	return f.multiline;
+}
+
+constexpr CTRE_FORCE_INLINE bool is_case_insensitive(flags f) {
+	return f.case_insensitive;
 }
 
 } // namespace ctre

@@ -2,6 +2,7 @@
 #define CTRE__ATOMS_CHARACTERS__HPP
 
 #include "utility.hpp"
+#include "flags_and_modes.hpp"
 #include <cstdint>
 
 namespace ctre {
@@ -9,46 +10,75 @@ namespace ctre {
 // sfinae check for types here
 
 template <typename T> class MatchesCharacter {
-	template <typename Y, typename CharT> static auto test(CharT c) -> decltype(Y::match_char(c), std::true_type());
+	template <typename Y, typename CharT> static auto test(CharT c) -> decltype(Y::match_char(c, std::declval<const flags &>()), std::true_type());
 	template <typename> static auto test(...) -> std::false_type;
 public:
 	template <typename CharT> static inline constexpr bool value = decltype(test<T>(std::declval<CharT>()))();
 };
 
+template <typename T> constexpr CTRE_FORCE_INLINE bool is_ascii_alpha(T v) {
+	return ((v >= static_cast<T>('a') && v <= static_cast<T>('z')) || (v >= static_cast<T>('A') && v <= static_cast<T>('Z')));
+}
 
+template <typename T> constexpr CTRE_FORCE_INLINE bool is_ascii_alpha_lowercase(T v) {
+	return (v >= static_cast<T>('a')) && (v <= static_cast<T>('z'));
+}
+
+template <typename T> constexpr CTRE_FORCE_INLINE bool is_ascii_alpha_uppercase(T v) {
+	return (v >= static_cast<T>('A')) && v <= (static_cast<T>('Z'));
+}
 
 template <auto V> struct character {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		if constexpr (is_ascii_alpha(V)) {
+			if (is_case_insensitive(f)) {
+				if (value == (V ^ static_cast<decltype(V)>(0x20))) {
+					return true;//
+				}
+			}	
+		}
 		return value == V;
 	}
 };
 
 template <typename... Content> struct negative_set {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return !(Content::match_char(value) || ... || false);
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		return !(Content::match_char(value, f) || ... || false);
 	}
 };
 
 template <typename... Content> struct set {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return (Content::match_char(value) || ... || false);
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		return (Content::match_char(value, f) || ... || false);
 	}
 };
 
 template <auto... Cs> struct enumeration : set<character<Cs>...> { };
 
 template <typename... Content> struct negate {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
-		return !(Content::match_char(value) || ... || false);
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		return !(Content::match_char(value, f) || ... || false);
 	}
 };
 
 template <auto A, auto B> struct char_range {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+		if constexpr (is_ascii_alpha_lowercase(A) && is_ascii_alpha_lowercase(B)) {
+			if (is_case_insensitive(f)) {
+				if (value >= (A ^ static_cast<decltype(A)>(0x20)) && value <= (B ^ static_cast<decltype(B)>(0x20))) {
+					return true;//
+				}
+			}	
+		} else if constexpr (is_ascii_alpha_uppercase(A) && is_ascii_alpha_uppercase(B)) {
+			if (is_case_insensitive(f)) {
+				if (value >= (A ^ static_cast<decltype(A)>(0x20)) && value <= (B ^ static_cast<decltype(B)>(0x20))) {
+					return true;//
+				}
+			}	
+		}
 		return (value >= A) && (value <= B);
 	}
 };
-
 using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> >;
 
 using space_chars = enumeration<' ', '\t', '\n', '\v', '\f', '\r'>;
