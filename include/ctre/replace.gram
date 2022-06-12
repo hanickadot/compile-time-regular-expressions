@@ -6,21 +6,23 @@ dolar={$}
 open={\{}
 close={\}}
 
-S->other,[replacement_char_push],<S>|num,[replacement_char_push],<S>|open,[replacement_char_push],<S>|close,[replacement_char_push],<S>|epsilon
+S-><replacement>,[rotate]
 
-S->backslash,<escape>
-escape->backslash,[replacement_char_push],<S>
-escape->dolar,[replacement_char_push],<S>
+replacement->other,[replacement_char_push],<replacement>|num,[replacement_char_push],<replacement>|open,[replacement_char_push],<replacement>|close,[replacement_char_push],<replacement>|epsilon
+
+replacement->backslash,<escape>
+escape->backslash,[replacement_char_push],<replacement>
+escape->dolar,[replacement_char_push],<replacement>
 escape-><capture>
-escape->open,<capture_ext>,close,<S>
+escape->open,<capture_ext>,close,<replacement>
 
-S->dolar,<insert>
+replacement->dolar,<insert>
 
 insert-><capture>
-insert->open,<capture_ext>,close,<S>
+insert->open,<capture_ext>,close,<replacement>
 
-capture->num_non_zero,[replacement_capture],<capture2> | zero,[replacement_capture],<S>
-capture2->num,[replacement_capture_push],<capture2>|other,[replacement_char_push],<S>|open,[replacement_char_push],<S>|close,[replacement_char_push],<S>|epsilon
+capture->num_non_zero,[replacement_capture],<capture2> | zero,[replacement_capture],<replacement>
+capture2->num,[replacement_capture_push],<capture2>|other,[replacement_char_push],<replacement>|open,[replacement_char_push],<replacement>|close,[replacement_char_push],<replacement>|epsilon
 
 capture_ext->num_non_zero,[replacement_capture],<capture_ext2> | zero,[replacement_capture]
 capture_ext2->num,[replacement_capture_push],<capture_ext2>|epsilon

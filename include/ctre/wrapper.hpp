@@ -146,7 +146,7 @@ template <typename Replacement> struct replace_method {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
 	
-		return regex_split_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+		return regex_replace_range<IteratorBegin, IteratorEnd, wrapped_regex, Replacement, result_iterator>(begin, end);
 	}
 };
 
@@ -291,14 +291,6 @@ template <> struct problem_at_position<~static_cast<size_t>(0)> {
 	}
 };
 
-#if CTRE_CNTTP_COMPILER_CHECK
-#define CTRE_REGEX_INPUT_TYPE ctll::fixed_string
-#define CTRE_REGEX_TEMPLATE_COPY_TYPE auto
-#else
-#define CTRE_REGEX_INPUT_TYPE const auto &
-#define CTRE_REGEX_TEMPLATE_COPY_TYPE const auto &
-#endif
-
 template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct regex_builder {
 	static constexpr auto _input = input;
 	using result = typename ctll::parser<ctre::pcre, _input, ctre::pcre_actions>::template output<pcre_context<>>;
@@ -312,13 +304,13 @@ template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct regex_builder {
 
 template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct replace_builder {
 	static constexpr auto _input = input;
-	using result = typename ctll::parser<ctre::replace_gram, _input, ctre::pcre_actions>::template output<pcre_context<>>;
+	using result = typename ctll::parser<ctre::replace_gram, _input, ctre::pcre_actions>::template output<ctre::sequence<>>;
 	
 	static constexpr auto n = result::is_correct ? ~static_cast<size_t>(0) : result::position;
 	
 	static_assert(result::is_correct && problem_at_position<n>{}, "Replace Expression contains syntax error.");
 	
-	using type = ctll::conditional<result::is_correct, decltype(ctll::front(typename result::output_type::stack_type())), ctll::list<reject>>;
+	using type = ctll::conditional<result::is_correct, typename result::output_type, ctll::list<reject>>;
 };
 
 // case-sensitive

@@ -39,6 +39,22 @@ template <typename BeginIterator, typename EndIterator, typename RE, typename Re
 
 template <typename... Ts> constexpr bool is_range<regex_split_range<Ts...>> = true;
 
+template <typename BeginIterator, typename EndIterator, typename RE, typename Replacement, typename ResultIterator = BeginIterator> struct regex_replace_range {
+	BeginIterator _begin;
+	EndIterator _end;
+	
+	constexpr CTRE_FORCE_INLINE regex_replace_range(BeginIterator begin, EndIterator end) noexcept: _begin{begin}, _end{end} { }
+	
+	constexpr CTRE_FORCE_INLINE auto begin() const noexcept {
+		return regex_split_iterator<BeginIterator, EndIterator, RE, ResultIterator>(_begin, _end);
+	}
+	constexpr CTRE_FORCE_INLINE auto end() const noexcept {
+		return regex_end_iterator{};
+	}
+};
+
+template <typename... Ts> constexpr bool is_range<regex_replace_range<Ts...>> = true;
+
 template <typename Range, typename RE> struct multi_subject_range {
 	struct end_iterator { };
 	
@@ -138,6 +154,7 @@ namespace std::ranges {
 
 	template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_range<Ts...>> = true;
 	template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_split_range<Ts...>> = true;
+    template <typename... Ts> inline constexpr bool enable_borrowed_range<::ctre::regex_replace_range<Ts...>> = true;
 	template <typename Range, typename RE> inline constexpr bool enable_borrowed_range<::ctre::multi_subject_range<Range, RE>> = enable_borrowed_range<Range>;
 	template <typename Range, typename RE> inline constexpr bool enable_view<::ctre::multi_subject_range<Range, RE>> = true;
 

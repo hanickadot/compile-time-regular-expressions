@@ -9,11 +9,24 @@
 #include <string>
 #include <iterator>
 #include <iosfwd>
+#include <sstream>
 #if __has_include(<charconv>)
 #include <charconv>
 #endif
 
+#if CTRE_CNTTP_COMPILER_CHECK
+#define CTRE_REGEX_INPUT_TYPE ctll::fixed_string
+#define CTRE_REGEX_TEMPLATE_COPY_TYPE auto
+#else
+#define CTRE_REGEX_INPUT_TYPE const auto &
+#define CTRE_REGEX_TEMPLATE_COPY_TYPE const auto &
+#endif
+
+template <typename...> struct identify;
+
 namespace ctre {
+
+template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct replace_builder;
 
 constexpr bool is_random_accessible(const std::random_access_iterator_tag &) { return true; }
 constexpr bool is_random_accessible(...) { return false; }
@@ -405,6 +418,29 @@ public:
 	}
 	friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const regex_results & rhs) {
 		return str << rhs.view();
+	}
+	template <auto... Str> static constexpr size_t length_of(string<Str...>) noexcept {
+		return sizeof...(Str);
+	}
+	template <auto C> static constexpr size_t length_of(character<C>) noexcept {
+		return 1;
+	}
+	template <size_t Id> constexpr size_t length_of(back_reference<Id>) const noexcept {
+		return this->template get<Id>().size();
+	}
+	template <typename... Items> auto format(sequence<Items...> seq) const {
+		std::ostringstream result;
+		
+		((result << length_of(Items{}) << ","), ...);
+		
+		//result.resize((length_of(Items{}) + ... + size_t(0)), 'a');
+		
+		
+		
+		return result.str();
+	}
+	template <ctll::fixed_string pattern> auto format() const {
+		return this->format(typename ctre::replace_builder<pattern>::type{});
 	}
 };
 
