@@ -141,6 +141,15 @@ struct split_method {
 	}
 };
 
+template <typename Replacement> struct replace_method {
+	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
+		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
+		using wrapped_regex = regular_expression<RE, search_method, Modifier>;
+	
+		return regex_split_range<IteratorBegin, IteratorEnd, wrapped_regex, result_iterator>(begin, end);
+	}
+};
+
 struct iterator_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
@@ -301,6 +310,17 @@ template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct regex_builder {
 	using type = ctll::conditional<result::is_correct, decltype(ctll::front(typename result::output_type::stack_type())), ctll::list<reject>>;
 };
 
+template <CTRE_REGEX_TEMPLATE_COPY_TYPE input> struct replace_builder {
+	static constexpr auto _input = input;
+	using result = typename ctll::parser<ctre::replace_gram, _input, ctre::pcre_actions>::template output<pcre_context<>>;
+	
+	static constexpr auto n = result::is_correct ? ~static_cast<size_t>(0) : result::position;
+	
+	static_assert(result::is_correct && problem_at_position<n>{}, "Replace Expression contains syntax error.");
+	
+	using type = ctll::conditional<result::is_correct, decltype(ctll::front(typename result::output_type::stack_type())), ctll::list<reject>>;
+};
+
 // case-sensitive
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto match = regular_expression<typename regex_builder<input>::type, match_method, ctll::list<singleline, Modifiers...>>();
@@ -312,6 +332,8 @@ template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr i
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<singleline, Modifiers...>>();
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<singleline, Modifiers...>>();
+
+template <CTRE_REGEX_INPUT_TYPE input, CTRE_REGEX_INPUT_TYPE replacement, typename... Modifiers> static constexpr inline auto replace = regular_expression<typename regex_builder<input>::type, replace_method<typename replace_builder<replacement>::type>, ctll::list<singleline, Modifiers...>>();
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, ctll::list<singleline, Modifiers...>>();
 
@@ -330,6 +352,8 @@ template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr i
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<multiline, Modifiers...>>();
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<multiline, Modifiers...>>();
+
+template <CTRE_REGEX_INPUT_TYPE input, CTRE_REGEX_INPUT_TYPE replacement, typename... Modifiers> static constexpr inline auto multiline_replace = regular_expression<typename regex_builder<input>::type, replace_method<typename replace_builder<replacement>::type>, ctll::list<multiline, Modifiers...>>();
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_tokenize = regular_expression<typename regex_builder<input>::type, tokenize_method, ctll::list<multiline, Modifiers...>>();
 

@@ -44,15 +44,19 @@ benchmark-clean:
 clean:
 	rm -f $(TRUE_TARGETS) $(OBJECTS) $(DEPEDENCY_FILES) mtent12.txt mtent12.zip
 	
-grammar: include/ctre/pcre.hpp
+grammar: include/ctre/pcre.hpp include/ctre/replace.hpp
 	
 regrammar: 
-	@rm -f include/ctre/pcre.hpp
+	@rm -f include/ctre/pcre.hpp include/ctre/replace.hpp
 	@$(MAKE) grammar
 	
 include/ctre/pcre.hpp: include/ctre/pcre.gram
 	@echo "LL1q $<"
 	@$(DESATOMAT) --ll --q --input=include/ctre/pcre.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=pcre.hpp --cfg:namespace=ctre --cfg:guard=CTRE__PCRE__HPP --cfg:grammar_name=pcre
+
+include/ctre/replace.hpp: include/ctre/replace.gram
+	@echo "LL1q $<"
+	@$(DESATOMAT) --ll --q --input=include/ctre/replace.gram --output=include/ctre/ --generator=cpp_ctll_v2  --cfg:fname=replace.hpp --cfg:namespace=ctre --cfg:guard=CTRE__REPLACE__HPP --cfg:grammar_name=replace_gram
 	
 mtent12.zip:
 	curl -s http://www.gutenberg.org/files/3200/old/mtent12.zip -o mtent12.zip

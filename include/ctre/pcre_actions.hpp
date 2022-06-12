@@ -2,6 +2,7 @@
 #define CTRE__PCRE_ACTIONS__HPP
 
 #include "pcre.hpp"
+#include "replace.hpp"
 #include "rotate.hpp"
 #include "id.hpp"
 #include <cstdint>
@@ -46,6 +47,7 @@ struct pcre_actions {
 #include "actions/repeat.inc.hpp"
 #include "actions/sequence.inc.hpp"
 #include "actions/set.inc.hpp"
+#include "actions/replace.inc.hpp"
 
 };
 

@@ -1,0 +1,26 @@
+zero={0}
+num_non_zero={1,2,3,4,5,6,7,8,9}
+num={0,1,2,3,4,5,6,7,8,9}
+backslash={\\}
+dolar={$}
+open={\{}
+close={\}}
+
+S->other,[replacement_char_push],<S>|num,[replacement_char_push],<S>|open,[replacement_char_push],<S>|close,[replacement_char_push],<S>|epsilon
+
+S->backslash,<escape>
+escape->backslash,[replacement_char_push],<S>
+escape->dolar,[replacement_char_push],<S>
+escape-><capture>
+escape->open,<capture_ext>,close,<S>
+
+S->dolar,<insert>
+
+insert-><capture>
+insert->open,<capture_ext>,close,<S>
+
+capture->num_non_zero,[replacement_capture],<capture2> | zero,[replacement_capture],<S>
+capture2->num,[replacement_capture_push],<capture2>|other,[replacement_char_push],<S>|open,[replacement_char_push],<S>|close,[replacement_char_push],<S>|epsilon
+
+capture_ext->num_non_zero,[replacement_capture],<capture_ext2> | zero,[replacement_capture]
+capture_ext2->num,[replacement_capture_push],<capture_ext2>|epsilon
