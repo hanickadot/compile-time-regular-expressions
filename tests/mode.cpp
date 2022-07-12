@@ -41,4 +41,6 @@ static_assert(CTRE_TEST("y(?i)"));
 static_assert(CTRE_TEST("y(?ic)"));
 static_assert(CTRE_TEST("y(?icsm)"));
 
+static_assert(CTRE_TEST("(?i)Tom|Sawyer|Huckleberry|Finn"));
+
 
