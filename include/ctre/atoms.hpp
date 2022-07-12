@@ -71,6 +71,8 @@ struct assert_subject_end_line{ };
 struct assert_line_begin { };
 struct assert_line_end { };
 
+template <typename> struct mode_switch { };
+
 }
 
 #endif

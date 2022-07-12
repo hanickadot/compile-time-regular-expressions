@@ -550,6 +550,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 	}
 }
 
+// switching modes
+template <typename R, typename BeginIterator, typename Iterator, typename EndIterator, typename Mode, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<mode_switch<Mode>, Tail...>) noexcept {
+	return evaluate(begin, current, last, f + Mode{}, captures, ctll::list<Tail...>());
+}
+
 
 }
 

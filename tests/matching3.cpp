@@ -203,8 +203,9 @@ TEST_MATCH(118, "^(\\w+)", "WORD");
 TEST_MATCH(203, "(?=foo)foo", "foo");
 TEST_MATCH(204, "(?!notfoo)foo", "foo");
 
-// TODO reverse content of lookbehind
 TEST_MATCH(205, "ab(?<=ab)foo", "abfoo");
 TEST_MATCH(206, "ab(?<!foo)foo", "abfoo");
 
+// modes
+TEST_MATCH(207, "(?i)AB(?c)AB", "abAB");
 

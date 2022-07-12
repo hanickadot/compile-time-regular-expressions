@@ -67,6 +67,7 @@ number2->epsilon | num,[push_number],<number2>
 preblock->open,[prepare_capture],<block>
 
 block-><content_in_capture>,[make_capture],close
+block->questionmark,<mode_switch>
 block->questionmark,angle_close,[reset_capture],[start_atomic],<content_in_capture>,[make_atomic],close
 block->questionmark,equal_sign,[reset_capture],[start_lookahead_positive],<content_in_capture>,[look_finish],close
 block->questionmark,angle_open,equal_sign,[reset_capture],[start_lookbehind_positive],<content_in_capture>,[look_finish],close
@@ -78,6 +79,11 @@ block->questionmark,angle_open,<block_name>,angle_close,<content_in_capture>,[ma
 block_name->alpha_characters,[push_name],<block_name2>
 block_name2->alphanum_characters,[push_name],<block_name2>|epsilon
 
+mode_switch->i,[mode_case_insensitive],<mode_switch2>
+mode_switch->c,[mode_case_sensitive],<mode_switch2>
+mode_switch->s,[mode_singleline],<mode_switch2>
+mode_switch->m,[mode_multiline],<mode_switch2>
+mode_switch2->close | <mode_switch>
 
 character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set2a>,[set_make_negative],sclose
 set-><setitem>,[set_start],<set2b>

@@ -959,6 +959,7 @@ struct pcre {
 	struct l {};
 	struct m {};
 	struct mod {};
+	struct mode_switch2 {};
 	struct n {};
 	struct number2 {};
 	struct number {};
@@ -1018,6 +1019,10 @@ struct pcre {
 	struct make_range: ctll::action {};
 	struct make_relative_back_reference: ctll::action {};
 	struct make_sequence: ctll::action {};
+	struct mode_case_insensitive: ctll::action {};
+	struct mode_case_sensitive: ctll::action {};
+	struct mode_multiline: ctll::action {};
+	struct mode_singleline: ctll::action {};
 	struct negate_class_named: ctll::action {};
 	struct prepare_capture: ctll::action {};
 	struct push_assert_begin: ctll::action {};
@@ -1190,6 +1195,10 @@ struct pcre {
 	static constexpr auto rule(content_in_capture, ctll::term<'\x29'>) -> ctll::push<push_empty>;
 	static constexpr auto rule(content_in_capture, ctll::set<'*','+','?','\x7B','\x7D'>) -> ctll::reject;
 
+	static constexpr auto rule(d, ctll::term<'i'>) -> ctll::push<ctll::anything, mode_case_insensitive, mode_switch2>;
+	static constexpr auto rule(d, ctll::term<'c'>) -> ctll::push<ctll::anything, mode_case_sensitive, mode_switch2>;
+	static constexpr auto rule(d, ctll::term<'m'>) -> ctll::push<ctll::anything, mode_multiline, mode_switch2>;
+	static constexpr auto rule(d, ctll::term<'s'>) -> ctll::push<ctll::anything, mode_singleline, mode_switch2>;
 	static constexpr auto rule(d, ctll::term<'<'>) -> ctll::push<ctll::anything, o>;
 	static constexpr auto rule(d, ctll::term<':'>) -> ctll::push<ctll::anything, reset_capture, content_in_capture, ctll::term<'\x29'>>;
 	static constexpr auto rule(d, ctll::term<'>'>) -> ctll::push<ctll::anything, reset_capture, start_atomic, content_in_capture, make_atomic, ctll::term<'\x29'>>;
@@ -1287,6 +1296,12 @@ struct pcre {
 	static constexpr auto rule(mod, ctll::term<'?'>) -> ctll::push<ctll::anything, make_lazy>;
 	static constexpr auto rule(mod, ctll::term<'+'>) -> ctll::push<ctll::anything, make_possessive>;
 	static constexpr auto rule(mod, ctll::set<'*','\x7B','\x7D'>) -> ctll::reject;
+
+	static constexpr auto rule(mode_switch2, ctll::term<'i'>) -> ctll::push<ctll::anything, mode_case_insensitive, mode_switch2>;
+	static constexpr auto rule(mode_switch2, ctll::term<'c'>) -> ctll::push<ctll::anything, mode_case_sensitive, mode_switch2>;
+	static constexpr auto rule(mode_switch2, ctll::term<'m'>) -> ctll::push<ctll::anything, mode_multiline, mode_switch2>;
+	static constexpr auto rule(mode_switch2, ctll::term<'s'>) -> ctll::push<ctll::anything, mode_singleline, mode_switch2>;
+	static constexpr auto rule(mode_switch2, ctll::term<'\x29'>) -> ctll::push<ctll::anything>;
 
 	static constexpr auto rule(n, ctll::set<'0','1','2','3','4','5','6','7','8','9'>) -> ctll::push<ctll::anything, create_number, number2, repeat_ab, ctll::term<'\x7D'>, mod>;
 	static constexpr auto rule(n, ctll::term<'\x7D'>) -> ctll::push<repeat_at_least, ctll::anything, mod>;
@@ -1434,6 +1449,26 @@ struct flags {
 	
 	template <typename... Args> constexpr CTRE_FORCE_INLINE flags(ctll::list<Args...>) noexcept {
 		(this->set_flag(Args{}), ...);
+	}
+	
+	constexpr friend CTRE_FORCE_INLINE auto operator+(flags f, pcre::mode_case_insensitive) noexcept {
+		f.case_insensitive = true;
+		return f;
+	}
+	
+	constexpr friend CTRE_FORCE_INLINE auto operator+(flags f, pcre::mode_case_sensitive) noexcept {
+		f.case_insensitive = false;
+		return f;
+	}
+	
+	constexpr friend CTRE_FORCE_INLINE auto operator+(flags f, pcre::mode_singleline) noexcept {
+		f.multiline = false;
+		return f;
+	}
+	
+	constexpr friend CTRE_FORCE_INLINE auto operator+(flags f, pcre::mode_multiline) noexcept {
+		f.multiline = true;
+		return f;
 	}
 	
 	constexpr CTRE_FORCE_INLINE void set_flag(ctre::singleline) noexcept {
@@ -1677,6 +1712,8 @@ struct assert_subject_end { };
 struct assert_subject_end_line{ };
 struct assert_line_begin { };
 struct assert_line_end { };
+
+template <typename> struct mode_switch { };
 
 }
 
@@ -2059,13 +2096,16 @@ template <size_t Counter> struct pcre_parameters {
 	static constexpr size_t current_counter = Counter;
 };
 	
-template <typename Stack = ctll::list<>, typename Parameters = pcre_parameters<0>> struct pcre_context {
+template <typename Stack = ctll::list<>, typename Parameters = pcre_parameters<0>, typename Mode = ctll::list<>> struct pcre_context {
 	using stack_type = Stack;
 	using parameters_type = Parameters;
+	using mode_list = Mode;
 	static constexpr inline auto stack = stack_type();
 	static constexpr inline auto parameters = parameters_type();
+	static constexpr inline auto mode = mode_list();
 	constexpr pcre_context() noexcept { }
 	constexpr pcre_context(Stack, Parameters) noexcept { }
+	constexpr pcre_context(Stack, Parameters, Mode) noexcept { }
 };
 
 template <typename... Content, typename Parameters> pcre_context(ctll::list<Content...>, Parameters) -> pcre_context<ctll::list<Content...>, Parameters>;
@@ -2849,6 +2889,39 @@ template <auto V, typename A, typename... Ts, typename Parameters> static conste
 template <auto V, auto B, auto A, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_range, ctll::term<V>, pcre_context<ctll::list<character<B>,character<A>, Ts...>, Parameters> subject) {
 	return pcre_context{ctll::push_front(char_range<A,B>(), ctll::list<Ts...>()), subject.parameters};
 }
+
+#endif
+
+#ifndef CTRE__ACTIONS__MODE__HPP
+#define CTRE__ACTIONS__MODE__HPP
+
+// we need to reset counter and wrap Mode into mode_switch
+template <typename Mode, typename... Ts, typename Parameters> static constexpr auto apply_mode(Mode, ctll::list<Ts...>, Parameters) {
+	return pcre_context<ctll::list<mode_switch<Mode>, Ts...>, Parameters>{};
+}
+
+template <typename Mode, typename... Ts, size_t Id, size_t Counter> static constexpr auto apply_mode(Mode, ctll::list<capture_id<Id>, Ts...>, pcre_parameters<Counter>) {
+	return pcre_context<ctll::list<mode_switch<Mode>, Ts...>, pcre_parameters<Counter-1>>{};
+}
+
+// catch a semantic action into mode
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::mode_case_insensitive mode, ctll::term<V>,pcre_context<ctll::list<Ts...>, Parameters>) {
+	return apply_mode(mode, ctll::list<Ts...>{}, Parameters{});
+}
+
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::mode_case_sensitive mode, ctll::term<V>,pcre_context<ctll::list<Ts...>, Parameters>) {
+	return apply_mode(mode, ctll::list<Ts...>{}, Parameters{});
+}
+
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::mode_singleline mode, ctll::term<V>,pcre_context<ctll::list<Ts...>, Parameters>) {
+	return apply_mode(mode, ctll::list<Ts...>{}, Parameters{});
+}
+
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::mode_multiline mode, ctll::term<V>,pcre_context<ctll::list<Ts...>, Parameters>) {
+	return apply_mode(mode, ctll::list<Ts...>{}, Parameters{});
+}
+
+// to properly reset capture
 
 #endif
 
@@ -4766,6 +4839,12 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 	} else {
 		return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
 	}
+}
+
+// switching modes
+template <typename R, typename BeginIterator, typename Iterator, typename EndIterator, typename Mode, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<mode_switch<Mode>, Tail...>) noexcept {
+	return evaluate(begin, current, last, f + Mode{}, captures, ctll::list<Tail...>());
 }
 
 }
