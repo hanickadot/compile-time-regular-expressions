@@ -3238,11 +3238,14 @@ struct utf8_range {
 
 namespace ctre {
 
-constexpr bool is_random_accessible(const std::random_access_iterator_tag &) { return true; }
-constexpr bool is_random_accessible(...) { return false; }
+constexpr auto is_random_accessible_f(const std::random_access_iterator_tag &) { return std::true_type{}; }
+constexpr auto is_random_accessible_f(...) { return std::false_type{}; }
 
-template <typename T> constexpr bool is_reverse_iterator(const std::reverse_iterator<T> &) { return true; }
-constexpr bool is_reverse_iterator(...) { return false; }
+template <typename T> constexpr auto is_reverse_iterator_f(const std::reverse_iterator<T> &) { return std::true_type{}; }
+constexpr auto is_reverse_iterator_f(...) { return std::false_type{}; }
+
+template <typename T> constexpr bool is_random_accessible = decltype(is_random_accessible_f(std::declval<const T &>())){};
+template <typename T> constexpr bool is_reverse_iterator = decltype(is_reverse_iterator_f(std::declval<const T &>())){};
 
 struct not_matched_tag_t { };
 
@@ -3292,7 +3295,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
-			static_assert(!is_reverse_iterator(It{}), "Iterator in your capture must not be reverse!");
+			static_assert(!is_reverse_iterator<It>, "Iterator in your capture must not be reverse!");
 			
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
@@ -3306,7 +3309,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
-			constexpr bool must_be_contiguous_nonreverse_iterator = is_random_accessible(typename std::iterator_traits<It>::iterator_category{}) && !is_reverse_iterator(It{});
+			constexpr bool must_be_contiguous_nonreverse_iterator = is_random_accessible<typename std::iterator_traits<It>::iterator_category> && !is_reverse_iterator<It>;
 			
 			static_assert(must_be_contiguous_nonreverse_iterator, "To access result as a pointer you need to provide a random access iterator/range to regex (which is not reverse iterator based).");
 			
@@ -3342,7 +3345,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			// random access, because C++ (waving hands around)
-			constexpr bool must_be_nonreverse_contiguous_iterator = is_random_accessible(typename std::iterator_traits<std::remove_const_t<It>>::iterator_category{}) && !is_reverse_iterator(It{});
+			constexpr bool must_be_nonreverse_contiguous_iterator = is_random_accessible<typename std::iterator_traits<std::remove_const_t<It>>::iterator_category> && !is_reverse_iterator<It>;
 			
 			static_assert(must_be_nonreverse_contiguous_iterator, "To convert capture into a basic_string_view you need to provide a pointer or a contiguous non-reverse iterator/range to regex.");
 	
