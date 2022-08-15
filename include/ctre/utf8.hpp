@@ -7,6 +7,10 @@
 #include <string_view>
 #include <iterator>
 
+#if __cpp_lib_char8_t >= 201811L
+#define CTRE_ENABLE_UTF8_RANGE
+#endif
+
 namespace ctre {
 
 struct utf8_iterator {
@@ -188,6 +192,7 @@ struct utf8_iterator {
 	}
 };
 
+#ifdef CTRE_ENABLE_UTF8_RANGE
 struct utf8_range {
 	std::u8string_view range;
 	constexpr utf8_range(std::u8string_view r) noexcept: range{r} { }
@@ -199,6 +204,7 @@ struct utf8_range {
 		return utf8_iterator::sentinel{};
 	}
 };
+#endif
 
 }
 

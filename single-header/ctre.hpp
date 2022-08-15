@@ -3028,6 +3028,10 @@ constexpr bool starts_with_anchor(const flags & f, ctll::list<capture_with_name<
 #include <string_view>
 #include <iterator>
 
+#if __cpp_lib_char8_t >= 201811L
+#define CTRE_ENABLE_UTF8_RANGE
+#endif
+
 namespace ctre {
 
 struct utf8_iterator {
@@ -3209,6 +3213,7 @@ struct utf8_iterator {
 	}
 };
 
+#ifdef CTRE_ENABLE_UTF8_RANGE
 struct utf8_range {
 	std::u8string_view range;
 	constexpr utf8_range(std::u8string_view r) noexcept: range{r} { }
@@ -3220,12 +3225,14 @@ struct utf8_range {
 		return utf8_iterator::sentinel{};
 	}
 };
+#endif
 
 }
 
 #endif
 
 #endif
+
 #include <type_traits>
 #include <tuple>
 #include <string_view>
@@ -5374,7 +5381,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	static constexpr CTRE_FORCE_INLINE auto exec(std::wstring_view sv) noexcept {
 		return exec(sv.begin(), sv.end());
 	}
-#if __cpp_char8_t >= 201811
+#ifdef CTRE_ENABLE_UTF8_RANGE
 	static constexpr CTRE_FORCE_INLINE auto exec(std::u8string_view sv) noexcept {
 		return exec_with_result_iterator<const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end());
 	}
