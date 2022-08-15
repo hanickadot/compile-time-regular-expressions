@@ -1,7 +1,7 @@
 #include <ctre/utf8.hpp>
 #include <algorithm>
 
-#if __cpp_char8_t >= 201811
+#ifdef CTRE_ENABLE_UTF8_RANGE
 
 #define UNICODE_TEST(a) static_assert(call_test(u8 ##a, U ##a))
 
