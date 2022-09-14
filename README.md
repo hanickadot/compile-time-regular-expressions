@@ -275,6 +275,21 @@ int main()
 
 [link to compiler explorer](https://godbolt.org/z/erTshe6sz)
 
+
+## Installing ctre using vcpkg
+
+You can download and install ctre using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+```bash
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh
+./vcpkg integrate install
+./vcpkg install ctre
+```
+
+The ctre port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
 ## Running tests (for developers)
 
 Just run `make` in root of this project.
