@@ -3062,8 +3062,8 @@ struct utf8_iterator {
 		friend auto operator==(self_type, self_type) noexcept -> bool;
 		auto operator*() noexcept -> reference;
 		
-		friend constexpr auto operator==(self_type, const char8_t * ptr) noexcept {
-			return *ptr == char8_t{0};
+		friend constexpr auto operator==(self_type, const char8_t * other_ptr) noexcept {
+			return *other_ptr == char8_t{0};
 		}
 	};
 	
