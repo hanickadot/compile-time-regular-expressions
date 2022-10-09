@@ -24,7 +24,11 @@
 
 #ifdef _MSC_VER
 #define CTRE_FORCE_INLINE __forceinline
+#if _MSC_VER >= 1930
 #define CTRE_FLATTEN [[msvc::flatten]]
+#else
+#define CTRE_FLATTEN
+#endif
 #else
 #define CTRE_FORCE_INLINE inline __attribute__((always_inline))
 #define CTRE_FLATTEN __attribute__((flatten))
