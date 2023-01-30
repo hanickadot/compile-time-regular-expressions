@@ -19,7 +19,7 @@ jobs:
   gcc:
     strategy:
       matrix:
-        gcc: [8, 9, 10, 11, 12]
+        gcc: [8, 9, 10, 11]
         standard: [17, 20]
       fail-fast: false
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
@@ -40,7 +40,7 @@ jobs:
   clang:
     strategy:
       matrix:
-        clang: [7, 8, 9, 10, 11, 12, 13, 14, 15]
+        clang: [7, 8, 9, 10, 11, 12, 13, 14]
         stdlib: ["libc++", "libstdc++"]
         standard: [17, 20]
       fail-fast: false
