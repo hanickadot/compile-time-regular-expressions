@@ -3303,8 +3303,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _end;
 		}
 	
-		// TODO explicit
-		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
+		constexpr explicit CTRE_FORCE_INLINE operator bool() const noexcept {
 			return _matched;
 		}
 		
