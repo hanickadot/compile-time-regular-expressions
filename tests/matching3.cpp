@@ -209,3 +209,11 @@ TEST_MATCH(206, "ab(?<!foo)foo", "abfoo");
 // modes
 TEST_MATCH(207, "(?i)AB(?c)AB", "abAB");
 
+// bug
+TEST_MATCH(208, "x+?", u8"x");
+TEST_MATCH(209, "x+", u8"x");
+TEST_MATCH(210, "x+?", "x");
+TEST_MATCH(211, "x+", "x");
+TEST_MATCH(212, "x+?", L"x");
+TEST_MATCH(213, "x+", L"x");
+

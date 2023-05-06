@@ -23,7 +23,7 @@ struct utf8_iterator {
 	
 	struct sentinel {
 		// this is here only because I want to support std::make_reverse_iterator
-		using self_type = utf8_iterator;
+		using self_type = sentinel;
 		using value_type = char8_t;
 		using reference = char8_t &;
 		using pointer = const char8_t *;
