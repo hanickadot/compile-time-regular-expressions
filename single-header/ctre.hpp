@@ -1405,7 +1405,11 @@ struct pcre {
 
 #ifdef _MSC_VER
 #define CTRE_FORCE_INLINE __forceinline
+#if _MSC_VER >= 1930
+#define CTRE_FLATTEN [[msvc::flatten]]
+#else
 #define CTRE_FLATTEN
+#endif
 #else
 #define CTRE_FORCE_INLINE inline __attribute__((always_inline))
 #define CTRE_FLATTEN __attribute__((flatten))
@@ -3296,8 +3300,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _end;
 		}
 	
-		// TODO explicit
-		constexpr CTRE_FORCE_INLINE operator bool() const noexcept {
+		constexpr explicit CTRE_FORCE_INLINE operator bool() const noexcept {
 			return _matched;
 		}
 		

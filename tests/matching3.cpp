@@ -209,3 +209,18 @@ TEST_MATCH(206, "ab(?<!foo)foo", "abfoo");
 // modes
 TEST_MATCH(207, "(?i)AB(?c)AB", "abAB");
 
+// bug
+
+TEST_MATCH(210, "x+?", "x");
+TEST_MATCH(211, "x+", "x");
+TEST_MATCH(212, "x+?", L"x");
+TEST_MATCH(213, "x+", L"x");
+TEST_MATCH(214, "x+?", u8"x");
+TEST_MATCH(215, "x+", u8"x");
+TEST_SEARCH(216, "(?<!a)b", "xb");
+TEST_SEARCH(217, "(?<!a)b", L"xb");
+TEST_SEARCH(218, "(?<!a)b", u8"xb");
+TEST_NOT_SEARCH(219, u8"(?<!č)b", u8"čb");
+TEST_SEARCH(220, u8"(?<=č)b", u8"čb");
+TEST_SEARCH(221, u8"(?<!ě)b", u8"čb");
+TEST_NOT_SEARCH(222, u8"(?<=ě)b", u8"čb");
