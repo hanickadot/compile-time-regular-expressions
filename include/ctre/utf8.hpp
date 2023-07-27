@@ -41,6 +41,18 @@ struct utf8_iterator {
 		friend constexpr auto operator==(self_type, const char8_t * other_ptr) noexcept {
 			return *other_ptr == char8_t{0};
 		}
+		
+		friend constexpr auto operator==(const char8_t * other_ptr, self_type) noexcept {
+			return *other_ptr == char8_t{0};
+		}
+		
+		friend constexpr auto operator!=(self_type, const char8_t * other_ptr) noexcept {
+			return *other_ptr != char8_t{0};
+		}
+		
+		friend constexpr auto operator!=(const char8_t * other_ptr, self_type) noexcept {
+			return *other_ptr != char8_t{0};
+		}
 	};
 	
 	const char8_t * ptr{nullptr};
