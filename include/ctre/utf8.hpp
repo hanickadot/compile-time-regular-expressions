@@ -42,17 +42,19 @@ struct utf8_iterator {
 			return *other_ptr == char8_t{0};
 		}
 		
-		friend constexpr auto operator==(const char8_t * other_ptr, self_type) noexcept {
-			return *other_ptr == char8_t{0};
-		}
-		
 		friend constexpr auto operator!=(self_type, const char8_t * other_ptr) noexcept {
 			return *other_ptr != char8_t{0};
 		}
 		
+#if __cpp_impl_three_way_comparison < 201907L
+		friend constexpr auto operator==(const char8_t * other_ptr, self_type) noexcept {
+			return *other_ptr == char8_t{0};
+		}
+
 		friend constexpr auto operator!=(const char8_t * other_ptr, self_type) noexcept {
 			return *other_ptr != char8_t{0};
 		}
+#endif
 	};
 	
 	const char8_t * ptr{nullptr};
@@ -60,10 +62,6 @@ struct utf8_iterator {
 	
 	constexpr friend bool operator!=(const utf8_iterator & lhs, sentinel) {
 		return lhs.ptr < lhs.end;
-	}
-	
-	constexpr friend bool operator!=(sentinel, const utf8_iterator & rhs) {
-		return rhs.ptr < rhs.end;
 	}
 	
 	constexpr friend bool operator!=(const utf8_iterator & lhs, const char8_t * rhs) {
@@ -78,13 +76,32 @@ struct utf8_iterator {
 		return lhs.ptr >= lhs.end;
 	}
 	
+	constexpr friend bool operator==(const utf8_iterator & lhs, const char8_t * rhs) {
+		return lhs.ptr == rhs;
+	}
+	
+	constexpr friend bool operator==(const utf8_iterator & lhs, const utf8_iterator & rhs) {
+		return lhs.ptr == rhs.ptr;
+	}
+	
+#if __cpp_impl_three_way_comparison < 201907L
+	constexpr friend bool operator!=(sentinel, const utf8_iterator & rhs) {
+		return rhs.ptr < rhs.end;
+	}
+	
+	constexpr friend bool operator!=(const char8_t * lhs, const utf8_iterator & rhs) {
+		return lhs == rhs.ptr;
+	}
+	
 	constexpr friend bool operator==(sentinel, const utf8_iterator & rhs) {
 		return rhs.ptr >= rhs.end;
 	}
 	
-	constexpr friend bool operator==(const utf8_iterator & lhs, const char8_t * rhs) {
-		return lhs.ptr == rhs;
+	constexpr friend bool operator==(const char8_t * lhs, const utf8_iterator & rhs) {
+		return lhs == rhs.ptr;
 	}
+#endif
+	
 	
 	constexpr utf8_iterator & operator=(const char8_t * rhs) {
 		ptr = rhs;
