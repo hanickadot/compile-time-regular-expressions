@@ -550,6 +550,19 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 	}
 }
 
+template <typename...> constexpr auto dependent_false = false;
+
+// atomic (unsupported for now)
+template <typename R, typename BeginIterator, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
+constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<atomic_group<Content...>, Tail...>) noexcept {
+	(void)begin;
+	(void)current;
+	(void)last;
+	(void)f;
+	(void)captures;
+	static_assert(dependent_false<Content...>, "Atomic groups are not supported (yet)");
+}
+
 // switching modes
 template <typename R, typename BeginIterator, typename Iterator, typename EndIterator, typename Mode, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<mode_switch<Mode>, Tail...>) noexcept {

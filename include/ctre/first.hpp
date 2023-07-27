@@ -86,6 +86,12 @@ constexpr auto first(ctll::list<Content...> l, ctll::list<sequence<Seq...>, Tail
 	return first(l, ctll::list<Seq..., Tail...>{});
 }
 
+// atomic group
+template <typename... Content, typename... Seq, typename... Tail> 
+constexpr auto first(ctll::list<Content...> l, ctll::list<atomic_group<Seq...>, Tail...>) noexcept {
+	return first(l, ctll::list<Seq..., Tail...>{});
+}
+
 // plus
 template <typename... Content, typename... Seq, typename... Tail> 
 constexpr auto first(ctll::list<Content...> l, ctll::list<plus<Seq...>, Tail...>) noexcept {

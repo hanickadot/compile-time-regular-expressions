@@ -225,3 +225,10 @@ TEST_SEARCH(218, "(?<!a)b", u8"xb");
 //TEST_SEARCH(220, u8"(?<=č)b", u8"čb");
 TEST_SEARCH(221, u8"(?<!ě)b", u8"čb");
 TEST_NOT_SEARCH(222, u8"(?<=ě)b", u8"čb");
+
+// atomic groups (yet unsupported)
+// TEST_MATCH(223, "(?>abc)?", "abc");
+// TEST_MATCH(224, "(?>abc)?", "");
+
+
+

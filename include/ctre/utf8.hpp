@@ -54,6 +54,10 @@ struct utf8_iterator {
 		return rhs.ptr < rhs.end;
 	}
 	
+	constexpr friend bool operator!=(const utf8_iterator & lhs, const char8_t * rhs) {
+		return lhs.ptr != rhs;
+	}
+	
 	constexpr friend bool operator!=(const utf8_iterator & lhs, const utf8_iterator & rhs) {
 		return lhs.ptr != rhs.ptr;
 	}
@@ -64,6 +68,10 @@ struct utf8_iterator {
 	
 	constexpr friend bool operator==(sentinel, const utf8_iterator & rhs) {
 		return rhs.ptr >= rhs.end;
+	}
+	
+	constexpr friend bool operator==(const utf8_iterator & lhs, const char8_t * rhs) {
+		return lhs.ptr == rhs;
 	}
 	
 	constexpr utf8_iterator & operator=(const char8_t * rhs) {
