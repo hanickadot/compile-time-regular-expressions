@@ -4,6 +4,7 @@
 #include <utility>
 #include <cstddef>
 #include <string_view>
+#include <array>
 #include <cstdint>
 
 namespace ctll {
@@ -36,11 +37,16 @@ constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_uni
 	else return {first_unit, 1};
 }
 
+struct construct_from_pointer_t { };
+
+constexpr auto construct_from_pointer = construct_from_pointer_t{};
+
 template <size_t N> struct fixed_string {
 	char32_t content[N] = {};
 	size_t real_size{0};
 	bool correct_flag{true};
-	template <typename T> constexpr fixed_string(const T (&input)[N+1]) noexcept {
+	
+	template <typename T> constexpr fixed_string(construct_from_pointer_t, const T * input) noexcept {
 		if constexpr (std::is_same_v<T, char>) {
 			#ifdef CTRE_STRING_IS_UTF8
 				size_t out{0};
@@ -138,6 +144,10 @@ template <size_t N> struct fixed_string {
 			}
 		}
 	}
+	
+	template <typename T> constexpr fixed_string(const std::array<T, N> & in) noexcept: fixed_string{construct_from_pointer, in.data()} { }
+	template <typename T> constexpr fixed_string(const T (&input)[N+1]) noexcept: fixed_string{construct_from_pointer, input} { }
+	
 	constexpr fixed_string(const fixed_string & other) noexcept {
 		for (size_t i{0}; i < N; ++i) {
 			content[i] = other.content[i];
@@ -205,6 +215,8 @@ public:
 };
 
 template <typename CharT, size_t N> fixed_string(const CharT (&)[N]) -> fixed_string<N-1>;
+template <typename CharT, size_t N> fixed_string(const std::array<CharT,N> &) -> fixed_string<N>;
+
 template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 }
