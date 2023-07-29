@@ -552,15 +552,10 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 
 template <typename...> constexpr auto dependent_false = false;
 
-// atomic (unsupported for now)
+// atomic_group<...> is just transformation to possessive_repeat<1,1,...>
 template <typename R, typename BeginIterator, typename Iterator, typename EndIterator, typename... Content, typename... Tail> 
 constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator current, const EndIterator last, const flags & f, R captures, ctll::list<atomic_group<Content...>, Tail...>) noexcept {
-	(void)begin;
-	(void)current;
-	(void)last;
-	(void)f;
-	(void)captures;
-	static_assert(dependent_false<Content...>, "Atomic groups are not supported (yet)");
+	return evaluate(begin, current, last, f, captures, ctll::list<possessive_repeat<1,1,Content...>, Tail...>{});
 }
 
 // switching modes
