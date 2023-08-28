@@ -1420,7 +1420,9 @@ struct pcre {
 
 #ifdef _MSC_VER
 #define CTRE_FORCE_INLINE __forceinline
-#if _MSC_VER >= 1930
+#if __has_cpp_attribute(msvc::flatten)
+#define CTRE_FLATTEN [[msvc::flatten]]
+#elif _MSC_VER >= 1930 && !defined(__clang__)
 #define CTRE_FLATTEN [[msvc::flatten]]
 #else
 #define CTRE_FLATTEN
