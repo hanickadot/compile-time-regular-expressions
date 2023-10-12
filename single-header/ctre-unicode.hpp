@@ -4578,11 +4578,6 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 		} else {
 			return not_matched;
 		}
-	} else {
-		if (last != current) {
-			return not_matched;
-		}
-		return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
 	}
 	
 	// TODO properly match line end
