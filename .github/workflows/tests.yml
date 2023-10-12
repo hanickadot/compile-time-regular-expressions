@@ -63,7 +63,7 @@ jobs:
   msvc:
     strategy:
       matrix:
-        version: [14.29, 14.36]
+        version: [14.29, ""]
       fail-fast: false
     name: "MSVC ${{ matrix.version }} (C++20)"
     runs-on: windows-2022
