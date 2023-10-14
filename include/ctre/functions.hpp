@@ -11,7 +11,7 @@ namespace ctre {
 
 #if !CTRE_CNTTP_COMPILER_CHECK
 // avoiding CTAD limitation in C++17
-template <typename CharT, size_t N> class pattern: public ctll::fixed_string<N> {
+CTRE_EXPORT template <typename CharT, size_t N> class pattern: public ctll::fixed_string<N> {
 	using parent = ctll::fixed_string<N>;
 public:
 	constexpr pattern(const CharT (&input)[N]) noexcept: parent(input) { }
@@ -20,7 +20,7 @@ public:
 template <typename CharT, size_t N> pattern(const CharT (&)[N]) -> pattern<CharT, N>;
 
 // for better examples
-template <typename CharT, size_t N> class fixed_string: public ctll::fixed_string<N> {
+CTRE_EXPORT template <typename CharT, size_t N> class fixed_string: public ctll::fixed_string<N> {
 	using parent = ctll::fixed_string<N>;
 public:
 	constexpr fixed_string(const CharT (&input)[N]) noexcept: parent(input) { }

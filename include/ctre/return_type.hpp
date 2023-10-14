@@ -3,6 +3,8 @@
 
 #include "id.hpp"
 #include "utf8.hpp"
+
+#ifndef CTRE_IN_MODULE
 #include <type_traits>
 #include <tuple>
 #include <string_view>
@@ -11,6 +13,7 @@
 #include <iosfwd>
 #if __has_include(<charconv>)
 #include <charconv>
+#endif
 #endif
 
 namespace ctre {

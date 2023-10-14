@@ -3,7 +3,10 @@
 
 #include "literals.hpp"
 #include "wrapper.hpp"
+
+#ifndef CTRE_IN_MODULE
 #include <cstddef>
+#endif
 
 namespace ctre {
 

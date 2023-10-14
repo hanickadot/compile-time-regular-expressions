@@ -6,7 +6,9 @@
 #include "grammars.hpp"
 #include "actions.hpp"
 
+#ifndef CTLL_IN_MODULE
 #include <limits>
+#endif
 
 namespace ctll {
 

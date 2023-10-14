@@ -1,7 +1,9 @@
 #ifndef CTLL__UTILITIES__HPP
 #define CTLL__UTILITIES__HPP
 
+#ifndef CTLL_IN_MODULE
 #include <type_traits>
+#endif
 
 #if defined __cpp_nontype_template_parameter_class
     #define CTLL_CNTTP_COMPILER_CHECK 1

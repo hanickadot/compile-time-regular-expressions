@@ -67,7 +67,7 @@ single-header/unicode-db.hpp: include/unicode-db/unicode-db.hpp
 	cp $+ $@
 
 single-header/ctre.hpp:
-	python3 -m quom include/ctre.hpp ctre.hpp.tmp
+	python3.9 -m quom include/ctre.hpp ctre.hpp.tmp
 	echo "/*" > single-header/ctre.hpp
 	cat LICENSE >> single-header/ctre.hpp
 	echo "*/" >> single-header/ctre.hpp
@@ -75,7 +75,7 @@ single-header/ctre.hpp:
 	rm ctre.hpp.tmp
 
 single-header/ctre-unicode.hpp:
-	python3 -m quom include/ctre-unicode.hpp ctre-unicode.hpp.tmp
+	python3.9 -m quom include/ctre-unicode.hpp ctre-unicode.hpp.tmp
 	echo "/*" > single-header/ctre-unicode.hpp
 	cat LICENSE >> single-header/ctre-unicode.hpp
 	echo "*/" >> single-header/ctre-unicode.hpp

@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.8.0)
+cmake_minimum_required(VERSION 3.28)
 # When updating to a newer version of CMake, see if we can use the following
 project(ctre
   HOMEPAGE_URL "https://compile-time.re"
-  VERSION 3.0
+  VERSION 3.9
   LANGUAGES CXX)
 set(PROJECT_DESCRIPTION "Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.")
 
@@ -25,10 +25,12 @@ cmake_dependent_option(CTRE_BUILD_PACKAGE_RPM
   "Create RPM Package (${PROJECT_NAME})" ON
   "CTRE_BUILD_PACKAGE;CTRE_RPMBUILD_FOUND" OFF)
 
-add_library(${PROJECT_NAME} INTERFACE)
+add_library(${PROJECT_NAME} STATIC)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} INTERFACE
+target_sources(${PROJECT_NAME} PUBLIC FILE_SET sources TYPE CXX_MODULES FILES include/ctre.cppm)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
@@ -36,9 +38,9 @@ if (NOT CTRE_CXX_STANDARD)
   set(CTRE_CXX_STANDARD 20)
 endif()
 
-target_compile_features(ctre INTERFACE cxx_std_${CTRE_CXX_STANDARD})
+target_compile_features(ctre PUBLIC cxx_std_${CTRE_CXX_STANDARD})
 
-install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+#install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 
 if (NOT EXISTS "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in")
   file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in [[
@@ -58,19 +60,21 @@ write_basic_package_version_file(ctre-config-version.cmake
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY SameMajorVersion)
 
-install(EXPORT ${PROJECT_NAME}-targets 
-  DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}"
-  NAMESPACE ${PROJECT_NAME}::)
-install(
-  FILES
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
-install(DIRECTORY include/ DESTINATION include
-    FILES_MATCHING PATTERN *.hpp)
+#install(EXPORT ${PROJECT_NAME}-targets 
+#  DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}"
+#  NAMESPACE ${PROJECT_NAME}::)
+#install(
+#  FILES
+#    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
+#    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+#  DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
+#install(DIRECTORY include/ DESTINATION include
+#    FILES_MATCHING PATTERN *.hpp)
 
 if(CTRE_BUILD_TESTS)
   add_subdirectory(tests)
+	add_executable(module-test module-test.cpp)
+	target_link_libraries(module-test ${PROJECT_NAME})
 endif()
 
 if (NOT CTRE_BUILD_PACKAGE)

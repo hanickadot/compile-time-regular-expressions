@@ -3,7 +3,10 @@
 
 #include "utility.hpp"
 #include "flags_and_modes.hpp"
+
+#ifndef CTRE_IN_MODULE
 #include <cstdint>
+#endif
 
 namespace ctre {
 	
