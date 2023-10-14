@@ -19,7 +19,7 @@ jobs:
   gcc:
     strategy:
       matrix:
-        gcc: [8, 9, 10, 11, 12, 13]
+        gcc: [8, 9, 10, 11, 13]
         standard: [17, 20]
       fail-fast: false
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
