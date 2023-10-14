@@ -3293,7 +3293,9 @@ struct utf8_range {
 #include <string_view>
 #include <string>
 #include <iterator>
+#ifdef _MSC_VER
 #include <memory>
+#endif
 #include <iosfwd>
 #if __has_include(<charconv>)
 #include <charconv>
@@ -3365,15 +3367,11 @@ template <size_t Id, typename Name = void> struct captured_content {
 			} else { // I'm doing this to avoid warning about dead code
 			#endif
 			
-			if constexpr (std::is_pointer_v<Iterator>) {
-				return _begin;
-			} else {
-				#if __cpp_lib_to_address >= 201711L
-				return std::to_address(_begin);
-				#else
-				return &*_begin; 
-				#endif
-			}
+			#ifdef _MSC_VER
+			return std::to_address(_begin);
+			#else
+			return &*_begin; 
+			#endif
 			
 			#if __cpp_char8_t >= 201811
 			}
