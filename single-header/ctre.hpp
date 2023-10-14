@@ -3358,7 +3358,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _matched;
 		}
 		
-        template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
+		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
 			static_assert(!is_reverse_iterator<It>, "Iterator in your capture must not be reverse!");
 			
 			#if __cpp_char8_t >= 201811
@@ -3368,7 +3368,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 			#endif
 			
 			#ifdef _MSC_VER
-			return std::to_address(_begin);
+			return std::to_address(_begin); // I'm enabling this only for MSVC for now, as some clang old versions with various libraries (random combinations) has different problems
 			#else
 			return &*_begin; 
 			#endif
