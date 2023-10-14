@@ -3296,6 +3296,7 @@ struct utf8_range {
 #include <string_view>
 #include <string>
 #include <iterator>
+#include <memory>
 #include <iosfwd>
 #if __has_include(<charconv>)
 #include <charconv>
@@ -3358,17 +3359,19 @@ template <size_t Id, typename Name = void> struct captured_content {
 			return _matched;
 		}
 		
-		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
+        template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
 			static_assert(!is_reverse_iterator<It>, "Iterator in your capture must not be reverse!");
 			
 			#if __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return _begin.ptr;
-			} else {
-				return &*_begin;
+			} else { // I'm doing this to avoid warning about dead code
+			#endif
+			
+			return std::to_address(_begin);
+			
+			#if __cpp_char8_t >= 201811
 			}
-			#else
-			return &*_begin;
 			#endif
 		}
 		
