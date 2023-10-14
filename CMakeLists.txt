@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8.0)
 # When updating to a newer version of CMake, see if we can use the following
 project(ctre
   HOMEPAGE_URL "https://compile-time.re"
-  VERSION 3.0
+  VERSION 3.8.1
   LANGUAGES CXX)
 set(PROJECT_DESCRIPTION "Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.")
 
