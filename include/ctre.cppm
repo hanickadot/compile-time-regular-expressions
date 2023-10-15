@@ -17,18 +17,16 @@ export namespace ctre {
     using ctre::multiline;
 
     // singleline niebloids
-    using ctre::match;
-    using ctre::search;
-    using ctre::starts_with;
+    using ctre::match; // whole input range must match regex
+    using ctre::search; // input subrange must match regex
+    using ctre::starts_with; // prefix of input must match regex
     
     // singleline range niebloids
-    using ctre::search_all;
-    using ctre::range;
-    using ctre::split;
-    using ctre::tokenize;
-    using ctre::iterator;
-    using ctre::sentinel;
-    
+    using ctre::search_all; // will look for each occurence of regex
+    using ctre::range; // alias to search_all
+    using ctre::split; // will split input range by the regex
+    using ctre::tokenize; // will split input to pieces matching regex
+
     // multiline niebloids
     using ctre::multiline_match;
     using ctre::multiline_search;
@@ -39,6 +37,4 @@ export namespace ctre {
     using ctre::multiline_range;
     using ctre::multiline_split;
     using ctre::multiline_tokenize;
-    using ctre::multiline_iterator;
-    using ctre::multiline_sentinel;
 }
