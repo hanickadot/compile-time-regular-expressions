@@ -121,10 +121,6 @@ template <typename Id, typename Storage> struct capture_tuple_item {
 	}
 };
 
-template <typename> struct foo { };
-
-template <typename...> struct identify;
-
 template <bool Value, typename T> constexpr decltype(auto) select_if(T && arg) {
 	if constexpr (Value) {
 		return std::forward<T>(arg);
@@ -137,12 +133,8 @@ template <size_t I, typename... Ts> constexpr auto & select_nth(Ts && ... args) 
 	static_assert(I < sizeof...(Ts));
 
 	const auto lmb = [&]<size_t... Idx>(std::index_sequence<Idx...>) -> decltype(auto) {
-		//identify<decltype(select_if<I == Idx>(std::forward<Ts>(args)))...> i;
-		
 		return (no_capture_selected{} + ... + select_if<I == Idx>(std::forward<Ts>(args)));
 	};
-
-	//identify<decltype(lmb(std::make_index_sequence<sizeof...(Ts)>()))> i;
 
 	return lmb(std::make_index_sequence<sizeof...(Ts)>());
 }
@@ -225,8 +217,7 @@ public:
 	template <typename CharT, typename Traits> friend auto & operator<<(std::basic_ostream<CharT, Traits> & str, const tuple & tpl) {
 		if constexpr (size()) {
 			tpl.storage([&](const auto & first, const auto & ... tail) {
-				(str << first);
-				((void)(str << ';' << tail), ...);
+				((str << first), ((void)(str << ' ' << tail), ...));
 			});
 		}
 		
