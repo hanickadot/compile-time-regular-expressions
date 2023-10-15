@@ -1,9 +1,12 @@
 import ctre;
 
-bool match(std::string_view subject) {
-    return ctre::match<"[0-9]+">(subject);
-}
+#include <string_view>
+#include <iostream>
 
 int main() {
-    return !match("12345");
+    for (auto item: "123456 2313 23132" | ctre::search_all<"[0-9]++">) {
+        std::cout << item << "\n";
+    }
+    
+    return 0;
 }

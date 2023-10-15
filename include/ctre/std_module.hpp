@@ -1,5 +1,9 @@
-#ifndef CTRE_STD_INCLUDES_HPP
-#define CTRE_STD_INCLUDES_HPP
+#ifndef CTRE_STD_MODULE_HPP
+#define CTRE_STD_MODULE_HPP
+
+#if __cpp_lib_modules >= 202207L
+import std;
+#else
 
 #include <array>
 #include <cstddef>
@@ -14,5 +18,10 @@
 #if __has_include(<charconv>)
 #include <charconv>
 #endif
+
+#endif
+
+#define CTRE_IN_MODULE
+#define CTLL_IN_MODULE
 
 #endif

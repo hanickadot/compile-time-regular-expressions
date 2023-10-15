@@ -3,12 +3,6 @@
 
 #include "../ctll/utilities.hpp"
 
-#ifdef CTRE_IN_MODULE
-#define CTRE_EXPORT export
-#else
-#define CTRE_EXPORT
-#endif
-
 #define CTRE_CNTTP_COMPILER_CHECK CTLL_CNTTP_COMPILER_CHECK
 
 #if __GNUC__ > 9
