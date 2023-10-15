@@ -84,10 +84,18 @@ public:
 	constexpr tuple & operator=(tuple && orig) noexcept requires(std::is_move_assignable_v<Ts> && ...) {
 		storage([&](auto & ... lhs){
 			orig.storage([&](auto & ... rhs){
-				((void)std::swap(lhs, rhs), ...);
+				((void)(lhs = std::move(rhs)), ...);
 			});
 		});
 		return *this;
+	}
+	
+	constexpr void swap(tuple & other) noexcept {
+		storage([&](auto & ... lhs){
+			other.storage([&](auto & ... rhs){
+				((void)std::swap(lhs, rhs), ...);
+			});
+		});
 	}
 	
 	constexpr ~tuple() noexcept = default;
