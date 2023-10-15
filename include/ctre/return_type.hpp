@@ -14,6 +14,9 @@
 #if __has_include(<charconv>)
 #include <charconv>
 #endif
+#if __has_include(<format>)
+#include <format>
+#endif
 #endif
 
 namespace ctre {
@@ -40,7 +43,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 	public:
 		using char_type = typename std::iterator_traits<Iterator>::value_type;
 		
-		using name = Name;
+		//using name = Name;
 	
 		constexpr CTRE_FORCE_INLINE storage() noexcept {}
 	
@@ -120,8 +123,6 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 #endif
 		
-		template <typename T> struct identify;
-
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			// random access, because C++ (waving hands around)
 			constexpr bool must_be_nonreverse_contiguous_iterator = is_random_accessible<typename std::iterator_traits<std::remove_const_t<It>>::iterator_category> && !is_reverse_iterator<It>;
@@ -423,7 +424,6 @@ template <typename ResultIterator, typename Pattern> using return_type = decltyp
 
 }
 
-// support for structured bindings
 
 #ifndef __EDG__
 #ifdef __clang__
@@ -431,16 +431,33 @@ template <typename ResultIterator, typename Pattern> using return_type = decltyp
 #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
 
+// support for std::format
+
 namespace std {
-	template <typename... Captures> struct tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::count()> { };
+
+#if __has_include(<format>)
+	//template <typename T, typename CharT> struct formatter;	
 	
-	template <size_t N, typename... Captures> struct tuple_element<N, ctre::regex_results<Captures...>> {
-	public:
-		using type = decltype(
-			std::declval<const ctre::regex_results<Captures...> &>().template get<N>()
-		);
-	};
-}
+template <size_t Id, typename Name, typename Iterator, typename CharT>
+struct formatter<typename ctre::captured_content<Id, Name>::template storage<Iterator>, CharT>
+{
+
+};
+	
+#endif
+
+// support for structured bindings
+
+template <typename... Captures> struct tuple_size<ctre::regex_results<Captures...>> : public std::integral_constant<size_t, ctre::regex_results<Captures...>::count()> { };
+
+template <size_t N, typename... Captures> struct tuple_element<N, ctre::regex_results<Captures...>> {
+public:
+	using type = decltype(
+		std::declval<const ctre::regex_results<Captures...> &>().template get<N>()
+	);
+};
+
+} // end of namespace std::
 
 #ifdef __clang__
 #pragma clang diagnostic pop

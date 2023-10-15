@@ -4,7 +4,7 @@
 #include "atoms_characters.hpp"
 #include "atoms_unicode.hpp"
 #include "utility.hpp"
-#include "return_type.hpp"
+#include "capture_tuple.hpp"
 
 namespace ctre {
 
@@ -112,12 +112,12 @@ template <typename... Content, typename... Tail, typename Output> constexpr auto
 
 
 template <size_t Id, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<capture<Id,Content...>, Tail...>, ctll::list<Output...>) noexcept {
-	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., captured_content<Id>>());
+	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., capture_identifier<Id>>());
 }
 
 
 template <size_t Id, typename Name, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<capture_with_name<Id,Name,Content...>, Tail...>, ctll::list<Output...>) noexcept {
-	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., captured_content<Id, Name>>());
+	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., capture_identifier<Id, Name>>());
 }
 
 

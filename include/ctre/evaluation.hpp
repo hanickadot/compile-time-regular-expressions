@@ -6,7 +6,7 @@
 #include "atoms_unicode.hpp"
 #include "starts_with_anchor.hpp"
 #include "utility.hpp"
-#include "return_type.hpp"
+#include "capture_tuple.hpp"
 #include "find_captures.hpp"
 #include "first.hpp"
 
@@ -22,6 +22,10 @@
 #endif
 
 namespace ctre {
+	
+struct not_matched_tag_t { };
+
+constexpr inline auto not_matched = not_matched_tag_t{};
 
 template <size_t Limit> constexpr CTRE_FORCE_INLINE bool less_than_or_infinite([[maybe_unused]] size_t i) noexcept {
 	if constexpr (Limit == 0) {
