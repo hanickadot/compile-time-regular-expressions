@@ -9,7 +9,7 @@ export module ctre;
 
 // this won't export everything in ctre namespace, but only things I take here...
 export namespace ctre {
-    // so you can pipe a range into a regex wrapper (for split)
+    // so you can pipe a range into a regex wrapper
     using ctre::operator|;
     
     // modifiers
