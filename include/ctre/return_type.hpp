@@ -118,10 +118,10 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 #if __has_include(<charconv>)
-		template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
+		template <typename R = int, typename... Ts> constexpr CTRE_FORCE_INLINE auto to_number(Ts && ... args) const noexcept -> R {
 			R result{0};
 			const auto view = to_view();
-			std::from_chars(view.data(), view.data() + view.size(), result, base);
+			std::from_chars(view.data(), view.data() + view.size(), result, std::forward<Ts>(args)...);
 			return result;
 		}
 #endif
@@ -348,8 +348,8 @@ public:
 	}
 	
 #if __has_include(<charconv>)
-	template <typename R = int> constexpr CTRE_FORCE_INLINE auto to_number(int base = 10) const noexcept -> R {
-		return _captures.template select<0>().template to_number<R>(base);
+	template <typename R = int, typename... Ts> constexpr CTRE_FORCE_INLINE auto to_number(Ts && ... args) const noexcept -> R {
+		return _captures.template select<0>().template to_number<R>(std::forward<Ts>(args)...);
 	}
 #endif
 	
