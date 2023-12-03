@@ -446,6 +446,16 @@ template <size_t Id, typename Iterator, typename... Captures> constexpr auto get
 
 template <typename Iterator, typename... Captures> regex_results(Iterator, ctll::list<Captures...>) -> regex_results<Iterator, Captures...>;
 
+template <typename> struct is_regex_results_t: std::false_type { };
+
+template <typename Iterator, typename... Captures> struct is_regex_results_t<regex_results<Iterator, Captures...>>: std::true_type { };
+
+template <typename T> constexpr bool is_regex_results_v = is_regex_results_t<T>();
+
+#if __cpp_concepts >= 202002L
+template <typename T> concept regex_captures = is_regex_results_v<T>;
+#endif
+
 template <typename ResultIterator, typename Pattern> using return_type = decltype(regex_results(std::declval<ResultIterator>(), find_captures(Pattern{})));
 
 }

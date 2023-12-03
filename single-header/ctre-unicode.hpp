@@ -3599,18 +3599,39 @@ public:
 	// special constructor for deducting
 	constexpr CTRE_FORCE_INLINE regex_results(Iterator, ctll::list<Captures...>) noexcept { }
 	
-	template <size_t Id, typename = std::enable_if_t<decltype(_captures)::template exists<Id>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-		return _captures.template select<Id>();
+	template <size_t Id> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+		constexpr bool capture_of_provided_id_must_exists = decltype(_captures)::template exists<Id>();
+		static_assert(capture_of_provided_id_must_exists);
+		
+		if constexpr (capture_of_provided_id_must_exists) {
+			return _captures.template select<Id>();
+		} else {
+			return false;
+		}
 	}
-	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-		return _captures.template select<Name>();
+	template <typename Name> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+		constexpr bool capture_of_provided_name_must_exists = decltype(_captures)::template exists<Name>();
+		static_assert(capture_of_provided_name_must_exists);
+	
+		if constexpr (capture_of_provided_name_must_exists) {
+			return _captures.template select<Name>();
+		} else {
+			return false;
+		}
 	}
 #if CTRE_CNTTP_COMPILER_CHECK
-	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+	template <ctll::fixed_string Name> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 #else
-	template <const auto & Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+	template <const auto & Name> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 #endif
-		return _captures.template select<Name>();
+		constexpr bool capture_of_provided_name_must_exists = decltype(_captures)::template exists<Name>();
+		static_assert(capture_of_provided_name_must_exists);
+	
+		if constexpr (capture_of_provided_name_must_exists) {
+			return _captures.template select<Name>();
+		} else {
+			return false;
+		}
 	}
 	static constexpr size_t count() noexcept {
 		return sizeof...(Captures) + 1;
@@ -3712,6 +3733,16 @@ template <size_t Id, typename Iterator, typename... Captures> constexpr auto get
 }
 
 template <typename Iterator, typename... Captures> regex_results(Iterator, ctll::list<Captures...>) -> regex_results<Iterator, Captures...>;
+
+template <typename> struct is_regex_results_t: std::false_type { };
+
+template <typename Iterator, typename... Captures> struct is_regex_results_t<regex_results<Iterator, Captures...>>: std::true_type { };
+
+template <typename T> constexpr bool is_regex_results_v = is_regex_results_t<T>();
+
+#if __cpp_concepts >= 202002L
+template <typename T> concept regex_captures = is_regex_results_v<T>;
+#endif
 
 template <typename ResultIterator, typename Pattern> using return_type = decltype(regex_results(std::declval<ResultIterator>(), find_captures(Pattern{})));
 
