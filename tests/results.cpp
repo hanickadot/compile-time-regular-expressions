@@ -7,7 +7,7 @@ int main() {
 	using namespace std::string_view_literals;
 	auto input = "123,456,768"sv;
 	
-	for (auto match: ctre::range<pattern>(input)) {
+	for (auto match: ctre::search_all<pattern>(input)) {
 		
 		if (match == "456") std::cout << "bingo: ";
 		if (match != "768") std::cout << "bad: ";

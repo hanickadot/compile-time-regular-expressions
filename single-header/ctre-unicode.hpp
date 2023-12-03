@@ -3303,6 +3303,9 @@ struct utf8_range {
 #if __has_include(<charconv>)
 #include <charconv>
 #endif
+#if __cpp_concepts >= 202002L
+#include <concepts>
+#endif
 
 namespace ctre {
 
@@ -3414,8 +3417,6 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 #endif
 		
-		template <typename T> struct identify;
-
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE auto to_view() const noexcept {
 			// random access, because C++ (waving hands around)
 			constexpr bool must_be_nonreverse_contiguous_iterator = is_random_accessible<typename std::iterator_traits<std::remove_const_t<It>>::iterator_category> && !is_reverse_iterator<It>;
@@ -3474,6 +3475,23 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 	};
 };
+
+#if __cpp_concepts >= 202002L
+template <typename T> concept capture_group = requires(const T & cap) {
+	{ T::get_id() } -> std::same_as<size_t>;
+	{ cap.view() };
+	{ cap.str() };
+	{ cap.to_string() };
+	{ cap.to_view() };
+	{ cap.unit_size() } -> std::same_as<size_t>;
+	{ cap.size() } -> std::same_as<size_t>;
+	{ static_cast<bool>(cap) };
+	{ cap.data() };
+	{ cap.data_unsafe() };
+	{ cap.begin() };
+	{ cap.end() };
+};
+#endif
 
 struct capture_not_exists_tag { };
 
@@ -3741,7 +3759,7 @@ template <typename Iterator, typename... Captures> struct is_regex_results_t<reg
 template <typename T> constexpr bool is_regex_results_v = is_regex_results_t<T>();
 
 #if __cpp_concepts >= 202002L
-template <typename T> concept regex_captures = is_regex_results_v<T>;
+template <typename T> concept capture_groups = is_regex_results_v<T>;
 #endif
 
 template <typename ResultIterator, typename Pattern> using return_type = decltype(regex_results(std::declval<ResultIterator>(), find_captures(Pattern{})));

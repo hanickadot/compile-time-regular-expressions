@@ -16,11 +16,11 @@ int main() {
 	#endif
 
 	#if CTRE_CNTTP_COMPILER_CHECK
-	    for (auto match: ctre::range<"(?<first>[0-9])[0-9]++">(input)) {
+	    for (auto match: ctre::search_all<"(?<first>[0-9])[0-9]++">(input)) {
 	#else
 		using namespace ctre::literals;
 		
-		for (auto match: ctre::range<pattern>(input)) {
+		for (auto match: ctre::search_all<pattern>(input)) {
 	#endif
 			
 	#if CTRE_CNTTP_COMPILER_CHECK
