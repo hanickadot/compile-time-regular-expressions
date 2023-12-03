@@ -309,7 +309,9 @@ template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr i
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, ctll::list<singleline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<singleline, Modifiers...>>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto search_all = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<singleline, Modifiers...>>();
+
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> [[deprecated("use search_all")]] static constexpr inline auto range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<singleline, Modifiers...>>();
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<singleline, Modifiers...>>();
 
@@ -327,7 +329,9 @@ template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr i
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_starts_with = regular_expression<typename regex_builder<input>::type, starts_with_method, ctll::list<multiline, Modifiers...>>();
 
-template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<multiline, Modifiers...>>();
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_search_all = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<multiline, Modifiers...>>();
+
+template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> [[deprecated("use multiline_search_all")]] static constexpr inline auto multiline_range = regular_expression<typename regex_builder<input>::type, range_method, ctll::list<multiline, Modifiers...>>();
 
 template <CTRE_REGEX_INPUT_TYPE input, typename... Modifiers> static constexpr inline auto multiline_split = regular_expression<typename regex_builder<input>::type, split_method, ctll::list<multiline, Modifiers...>>();
 
