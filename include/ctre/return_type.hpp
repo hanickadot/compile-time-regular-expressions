@@ -311,18 +311,39 @@ public:
 	// special constructor for deducting
 	constexpr CTRE_FORCE_INLINE regex_results(Iterator, ctll::list<Captures...>) noexcept { }
 	
-	template <size_t Id, typename = std::enable_if_t<decltype(_captures)::template exists<Id>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-		return _captures.template select<Id>();
+	template <size_t Id> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+		constexpr bool capture_of_provided_id_must_exists = decltype(_captures)::template exists<Id>();
+		static_assert(capture_of_provided_id_must_exists);
+		
+		if constexpr (capture_of_provided_id_must_exists) {
+			return _captures.template select<Id>();
+		} else {
+			return false;
+		}
 	}
-	template <typename Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
-		return _captures.template select<Name>();
+	template <typename Name> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+		constexpr bool capture_of_provided_name_must_exists = decltype(_captures)::template exists<Name>();
+		static_assert(capture_of_provided_name_must_exists);
+	
+		if constexpr (capture_of_provided_name_must_exists) {
+			return _captures.template select<Name>();
+		} else {
+			return false;
+		}
 	}
 #if CTRE_CNTTP_COMPILER_CHECK
-	template <ctll::fixed_string Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+	template <ctll::fixed_string Name> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 #else
-	template <const auto & Name, typename = std::enable_if_t<decltype(_captures)::template exists<Name>()>> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
+	template <const auto & Name> CTRE_FORCE_INLINE constexpr auto get() const noexcept {
 #endif
-		return _captures.template select<Name>();
+		constexpr bool capture_of_provided_name_must_exists = decltype(_captures)::template exists<Name>();
+		static_assert(capture_of_provided_name_must_exists);
+	
+		if constexpr (capture_of_provided_name_must_exists) {
+			return _captures.template select<Name>();
+		} else {
+			return false;
+		}
 	}
 	static constexpr size_t count() noexcept {
 		return sizeof...(Captures) + 1;
