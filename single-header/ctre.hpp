@@ -3755,7 +3755,7 @@ template <typename Iterator, typename... Captures> struct is_regex_results_t<reg
 
 template <typename T> constexpr bool is_regex_results_v = is_regex_results_t<T>();
 
-#if __cpp_concepts >= 202002L
+#if __cpp_concepts >= 201907L
 template <typename T> concept capture_groups = is_regex_results_v<T>;
 #endif
 
