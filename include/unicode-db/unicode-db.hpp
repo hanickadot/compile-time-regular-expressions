@@ -7326,10 +7326,10 @@ constexpr auto script_extensions_view::iterator::operator++(int) -> iterator& {
 }
 
 constexpr auto script_extensions_view::iterator::operator++() -> iterator {
-    auto c = *this;
+    auto it = *this;
     idx++;
     m_script = detail::tables::get_cp_script(m_c, idx);
-    return c;
+    return it;
 }
 
 constexpr bool script_extensions_view::iterator::operator==(sentinel) const {
