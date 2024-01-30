@@ -4,6 +4,9 @@
 #include "../ctll/utilities.hpp"
 
 #define CTRE_CNTTP_COMPILER_CHECK CTLL_CNTTP_COMPILER_CHECK
+#ifdef CTLL_NO_WCHAR_T
+#define CTRE_NO_WCHAR_T
+#endif
 
 #if __GNUC__ > 9
 #if __has_cpp_attribute(likely)

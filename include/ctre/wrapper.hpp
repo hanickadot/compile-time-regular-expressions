@@ -32,27 +32,29 @@ struct zero_terminated_string_end_iterator {
 	constexpr CTRE_FORCE_INLINE friend bool operator==(const char * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr == '\0';
 	} 
-	constexpr CTRE_FORCE_INLINE friend bool operator==(const wchar_t * ptr, zero_terminated_string_end_iterator) noexcept {
+    constexpr CTRE_FORCE_INLINE friend bool operator!=(const char * ptr, zero_terminated_string_end_iterator) noexcept {
+        return *ptr != '\0';
+    }
+    constexpr CTRE_FORCE_INLINE friend bool operator==(zero_terminated_string_end_iterator, const char * ptr) noexcept {
+        return *ptr == '\0';
+    }
+    constexpr CTRE_FORCE_INLINE friend bool operator!=(zero_terminated_string_end_iterator, const char * ptr) noexcept {
+        return *ptr != '\0';
+    }
+#ifndef CTLL_NO_WCHAR_T
+    constexpr CTRE_FORCE_INLINE friend bool operator==(const wchar_t * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr == 0;
-	} 
-	constexpr CTRE_FORCE_INLINE friend bool operator!=(const char * ptr, zero_terminated_string_end_iterator) noexcept {
-		return *ptr != '\0';
 	} 
 	constexpr CTRE_FORCE_INLINE friend bool operator!=(const wchar_t * ptr, zero_terminated_string_end_iterator) noexcept {
 		return *ptr != 0;
-	} 
-	constexpr CTRE_FORCE_INLINE friend bool operator==(zero_terminated_string_end_iterator, const char * ptr) noexcept {
-		return *ptr == '\0';
-	} 
-	constexpr CTRE_FORCE_INLINE friend bool operator==(zero_terminated_string_end_iterator, const wchar_t * ptr) noexcept {
-		return *ptr == 0;
-	} 
-	constexpr CTRE_FORCE_INLINE friend bool operator!=(zero_terminated_string_end_iterator, const char * ptr) noexcept {
-		return *ptr != '\0';
-	} 
-	constexpr CTRE_FORCE_INLINE friend bool operator!=(zero_terminated_string_end_iterator, const wchar_t * ptr) noexcept {
-		return *ptr != 0;
-	} 
+	}
+    constexpr CTRE_FORCE_INLINE friend bool operator==(zero_terminated_string_end_iterator, const wchar_t * ptr) noexcept {
+        return *ptr == 0;
+    }
+    constexpr CTRE_FORCE_INLINE friend bool operator!=(zero_terminated_string_end_iterator, const wchar_t * ptr) noexcept {
+        return *ptr != 0;
+    }
+#endif
 };
 
 template <typename T> class RangeLikeType {
@@ -181,9 +183,11 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 	static constexpr CTRE_FORCE_INLINE auto exec(std::string_view sv) noexcept {
 		return exec(sv.begin(), sv.end());
 	}
+#ifndef CTRE_NO_WCHAR_T
 	static constexpr CTRE_FORCE_INLINE auto exec(std::wstring_view sv) noexcept {
 		return exec(sv.begin(), sv.end());
 	}
+#endif
 #ifdef CTRE_ENABLE_UTF8_RANGE
 	static constexpr CTRE_FORCE_INLINE auto exec(std::u8string_view sv) noexcept {
 		return exec_with_result_iterator<const char8_t *>(utf8_range(sv).begin(), utf8_range(sv).end());

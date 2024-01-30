@@ -40,6 +40,13 @@
 #define CTLL_FORCE_INLINE __attribute__((always_inline))
 #endif
 
+#ifdef _LIBCPP_VERSION
+#ifdef _LIBCPP_HAS_NO_WIDE_CHARACTERS
+#define CTLL_NO_WCHAR_T
+#else
+#endif
+#endif
+
 namespace ctll {
 	
 template <bool> struct conditional_helper;
