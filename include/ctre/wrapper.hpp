@@ -78,7 +78,7 @@ struct search_method {
 	template <typename Modifier = singleline, typename ResultIterator = void, typename RE, typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin orig_begin, IteratorBegin begin, IteratorEnd end, RE) noexcept {
 		using result_iterator = std::conditional_t<std::is_same_v<ResultIterator, void>, IteratorBegin, ResultIterator>;
 		
-		constexpr bool fixed = starts_with_anchor(Modifier{}, ctll::list<RE>{});
+		constexpr bool fixed = starts_with_anchor(Modifier{}, ctll::list<RE>{}) || has_implicit_anchor(ctll::list<RE>{});
 	
 		auto it = begin;
 	
