@@ -13,13 +13,33 @@ template <typename Parameters> static constexpr auto apply(pcre::push_empty, ctl
 
 // make_alternate (A|B)
 template <auto V, typename A, typename B, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_alternate, ctll::term<V>, pcre_context<ctll::list<B, A, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(select<A,B>(), ctll::list<Ts...>()), subject.parameters};
-}
-// make_alternate (As..)|B => (As..|B)
-template <auto V, typename A, typename... Bs, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_alternate, ctll::term<V>, pcre_context<ctll::list<ctre::select<Bs...>, A, Ts...>, Parameters> subject) {
-	return pcre_context{ctll::push_front(select<A,Bs...>(), ctll::list<Ts...>()), subject.parameters};
+	if constexpr (MatchesCharacter<A>::template value<char32_t> && MatchesCharacter<B>::template value<char32_t>) {
+		auto new_set = push_front_into_set(A{}, B{});
+		return pcre_context{ ctll::push_front(new_set, ctll::list<Ts...>()), subject.parameters };
+	} else {
+		return pcre_context{ ctll::push_front(select<A,B>(), ctll::list<Ts...>()), subject.parameters };
+	}
 }
 
+// make_alternate (As..)|B => (As..|B)
+template <auto V, typename A, typename B, typename... Bs, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_alternate, ctll::term<V>, pcre_context<ctll::list<ctre::select<B, Bs...>, A, Ts...>, Parameters> subject) {
+	if constexpr (MatchesCharacter<A>::template value<char32_t> && MatchesCharacter<B>::template value<char32_t>) {
+		auto new_set = push_front_into_set(A{}, B{});
+		return pcre_context{ ctll::push_front(select<decltype(new_set),Bs...>(), ctll::list<Ts...>()), subject.parameters };
+	} else {
+		return pcre_context{ ctll::push_front(select<A,B,Bs...>(), ctll::list<Ts...>()), subject.parameters };
+	}
+}
+
+// make_alternate [As..]|B => ([As..]|B)
+template <auto V, typename A, typename... Bs, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_alternate, ctll::term<V>, pcre_context<ctll::list<ctre::set<Bs...>, A, Ts...>, Parameters> subject) {
+	if constexpr (MatchesCharacter<A>::template value<char32_t>) {
+		auto new_set = push_front_into_set(A{}, ctre::set<Bs...>{});
+		return pcre_context{ ctll::push_front(new_set, ctll::list<Ts...>()), subject.parameters };
+	} else {
+		return pcre_context{ ctll::push_front(select<A, ctre::set<Bs...>>(), ctll::list<Ts...>()), subject.parameters };
+	}
+}
 
 // make_optional
 template <auto V, typename A, typename... Ts, typename Parameters> static constexpr auto apply(pcre::make_optional, ctll::term<V>, pcre_context<ctll::list<A, Ts...>, Parameters> subject) {
