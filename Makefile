@@ -9,6 +9,8 @@ DESATOMAT := /bin/false
 
 CXX_STANDARD := 20
 
+PYTHON := python3.9
+
 PEDANTIC:=-pedantic
 
 override CXXFLAGS := $(CXXFLAGS) -std=c++$(CXX_STANDARD) -Iinclude -O3 $(PEDANTIC) -Wall -Wextra -Werror -Wconversion
@@ -67,7 +69,7 @@ single-header/unicode-db.hpp: include/unicode-db/unicode-db.hpp
 	cp $+ $@
 
 single-header/ctre.hpp:
-	python3 -m quom include/ctre.hpp ctre.hpp.tmp
+	${PYTHON} -m quom include/ctre.hpp ctre.hpp.tmp
 	echo "/*" > single-header/ctre.hpp
 	cat LICENSE >> single-header/ctre.hpp
 	echo "*/" >> single-header/ctre.hpp
@@ -75,7 +77,7 @@ single-header/ctre.hpp:
 	rm ctre.hpp.tmp
 
 single-header/ctre-unicode.hpp:
-	python3 -m quom include/ctre-unicode.hpp ctre-unicode.hpp.tmp
+	${PYTHON} -m quom include/ctre-unicode.hpp ctre-unicode.hpp.tmp
 	echo "/*" > single-header/ctre-unicode.hpp
 	cat LICENSE >> single-header/ctre-unicode.hpp
 	echo "*/" >> single-header/ctre-unicode.hpp
