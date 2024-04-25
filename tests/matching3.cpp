@@ -1,4 +1,4 @@
-#include <ctre.hpp>
+#include <ctre-unicode.hpp>
 #include <string_view>
 
 void empty_symbol() { }
@@ -230,5 +230,7 @@ TEST_NOT_SEARCH(222, u8"(?<=ě)b", u8"čb");
 TEST_MATCH(223, "(?>abc)?", "abc");
 TEST_MATCH(224, "(?>abc)?", "");
 
-
+TEST_MATCH(225, R"( ?[\p{N}])", " 1");
+TEST_MATCH(226, R"( ?\p{N})", " 1");
+TEST_MATCH(227, R"( ?\p{N}+)", " 1234");
 
