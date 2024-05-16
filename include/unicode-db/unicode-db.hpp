@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef UNICODE_DB_IN_A_MODULE
 #include <string_view>
+#endif
 
 #ifndef CTRE_UNICODE_SYNOPSYS_WAS_INCLUDED
 namespace uni {
@@ -94,9 +96,11 @@ namespace detail {
 }    // namespace uni
 #endif
 
+#ifndef UNICODE_DB_IN_A_MODULE
 #include <cstdint>
 #include <algorithm>
 #include <string_view>
+#endif
 
 namespace uni::detail {
 
@@ -7241,7 +7245,9 @@ constexpr bool cp_property_is<property::xids>(char32_t c) {
 }
 }    // namespace uni
 
+#ifndef UNICODE_DB_IN_A_MODULE
 #include <iterator>
+#endif
 
 namespace uni {
 

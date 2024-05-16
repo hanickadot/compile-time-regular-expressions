@@ -2,7 +2,9 @@
 #define CTRE__ATOMS__HPP
 
 #include "atoms_characters.hpp"
+#ifndef CTRE_IN_A_MODULE
 #include <cstdint>
+#endif
 
 namespace ctre {
 	

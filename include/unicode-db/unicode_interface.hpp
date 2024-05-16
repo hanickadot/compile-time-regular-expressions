@@ -1,7 +1,9 @@
 #ifndef H_COR3NTIN_UNICODE_SYNOPSYS
 #define H_COR3NTIN_UNICODE_SYNOPSYS
 
+#ifndef UNICODE_DB_IN_A_MODULE
 #include <string_view>
+#endif
 
 namespace uni
 {

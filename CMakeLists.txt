@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.8.0)
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.29.20240416") 
+	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
+	set(CMAKE_CXX_MODULE_STD 1)
+endif()
+
 # When updating to a newer version of CMake, see if we can use the following
 project(ctre
   HOMEPAGE_URL "https://compile-time.re"
@@ -36,7 +42,25 @@ if (NOT CTRE_CXX_STANDARD)
   set(CTRE_CXX_STANDARD 20)
 endif()
 
-target_compile_features(ctre INTERFACE cxx_std_${CTRE_CXX_STANDARD})
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_${CTRE_CXX_STANDARD})
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.29.20240416") 
+	add_library(${PROJECT_NAME}_module)
+	add_library(${PROJECT_NAME}::module ALIAS ${PROJECT_NAME}_module)
+
+	target_sources(${PROJECT_NAME}_module PUBLIC FILE_SET CXX_MODULES FILES ctre.cppm)
+	
+	if (NOT CTRE_CXX_MODULE_STANDARD)
+		set(CTRE_CXX_MODULE_STANDARD ${CTRE_CXX_STANDARD})
+	endif()
+	
+	if (CTRE_CXX_MODULE_STANDARD LESS 23)
+		set(CTRE_CXX_MODULE_STANDARD 23)
+	endif()
+
+	target_compile_features(${PROJECT_NAME}_module PUBLIC cxx_std_${CTRE_CXX_MODULE_STANDARD})
+	target_link_libraries(${PROJECT_NAME}_module PRIVATE ${PROJECT_NAME})
+endif()
 
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 

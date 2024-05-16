@@ -4,8 +4,10 @@
 #include "pcre.hpp"
 #include "rotate.hpp"
 #include "id.hpp"
+#ifndef CTRE_IN_A_MODULE
 #include <cstdint>
 #include <limits>
+#endif
 
 namespace ctre {
 	

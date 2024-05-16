@@ -9,7 +9,9 @@
 #include "return_type.hpp"
 #include "find_captures.hpp"
 #include "first.hpp"
+#ifndef CTRE_IN_A_MODULE
 #include <iterator>
+#endif
 
 // remove me when MSVC fix the constexpr bug
 #ifdef _MSC_VER
