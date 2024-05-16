@@ -515,8 +515,13 @@ public:
 		return bool(rhs) ? lhs != rhs.view() : true;
 	}
 	friend CTRE_FORCE_INLINE std::ostream & operator<<(std::ostream & str, const regex_results & rhs) {
-		const auto view = rhs.view();
-		return str.write(view.data(), view.size());
+#ifdef CTRE_IN_A_MODULE
+		auto view = rhs.view();
+		str.write(view.data(), view.size());
+		return str;
+#else
+		return str << rhs.view();
+#endif
 	}
 };
 
