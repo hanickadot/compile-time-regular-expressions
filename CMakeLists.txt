@@ -1,8 +1,14 @@
-cmake_minimum_required(VERSION 3.8.0)
+cmake_minimum_required(VERSION 3.14.0)
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.29.20240416") 
+	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
+	set(CMAKE_CXX_MODULE_STD 1)
+endif()
+
 # When updating to a newer version of CMake, see if we can use the following
 project(ctre
   HOMEPAGE_URL "https://compile-time.re"
-  VERSION 3.8.1
+  VERSION 3.9.0
   LANGUAGES CXX)
 set(PROJECT_DESCRIPTION "Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.")
 
@@ -25,20 +31,95 @@ cmake_dependent_option(CTRE_BUILD_PACKAGE_RPM
   "Create RPM Package (${PROJECT_NAME})" ON
   "CTRE_BUILD_PACKAGE;CTRE_RPMBUILD_FOUND" OFF)
 
-add_library(${PROJECT_NAME} INTERFACE)
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+option(CTRE_MODULE "build C++ module" OFF)
 
-target_include_directories(${PROJECT_NAME} INTERFACE
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+if(CTRE_MODULE)
+	if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.29.20240416") 
+		add_library(${PROJECT_NAME})
+		
+		target_sources(${PROJECT_NAME} PUBLIC FILE_SET CXX_MODULES TYPE CXX_MODULES FILES ctre.cppm)
+		target_sources(${PROJECT_NAME} PUBLIC FILE_SET HEADERS TYPE HEADERS FILES 
+			include/ctll.hpp
+			include/ctre/functions.hpp
+			include/ctre/utility.hpp
+			include/ctre/utf8.hpp
+			include/ctre/evaluation.hpp
+			include/ctre/starts_with_anchor.hpp
+			include/ctre/pcre_actions.hpp
+			include/ctre/rotate.hpp
+			include/ctre/iterators.hpp
+			include/ctre/literals.hpp
+			include/ctre/return_type.hpp
+			include/ctre/find_captures.hpp
+			include/ctre/id.hpp
+			include/ctre/atoms_characters.hpp
+			include/ctre/actions/mode.inc.hpp
+			include/ctre/actions/characters.inc.hpp
+			include/ctre/actions/class.inc.hpp
+			include/ctre/actions/look.inc.hpp
+			include/ctre/actions/sequence.inc.hpp
+			include/ctre/actions/fusion.inc.hpp
+			include/ctre/actions/asserts.inc.hpp
+			include/ctre/actions/capture.inc.hpp
+			include/ctre/actions/named_class.inc.hpp
+			include/ctre/actions/backreference.inc.hpp
+			include/ctre/actions/options.inc.hpp
+			include/ctre/actions/atomic_group.inc.hpp
+			include/ctre/actions/set.inc.hpp
+			include/ctre/actions/hexdec.inc.hpp
+			include/ctre/actions/repeat.inc.hpp
+			include/ctre/actions/properties.inc.hpp
+			include/ctre/actions/boundaries.inc.hpp
+			include/ctre/operators.hpp
+			include/ctre/pcre.hpp
+			include/ctre/atoms_unicode.hpp
+			include/ctre/range.hpp
+			include/ctre/wrapper.hpp
+			include/ctre/first.hpp
+			include/ctre/flags_and_modes.hpp
+			include/ctre/atoms.hpp
+			include/unicode-db.hpp
+			include/unicode-db/unicode_interface.hpp
+			include/unicode-db/unicode-db.hpp
+			include/ctll/parser.hpp
+			include/ctll/actions.hpp
+			include/ctll/fixed_string.hpp
+			include/ctll/list.hpp
+			include/ctll/utilities.hpp
+			include/ctll/grammars.hpp
+			include/ctre.hpp
+			include/ctre-unicode.hpp
+		)
+		
+		# we are using `import std;`
+		if (CTRE_CXX_STANDARD LESS 23)
+			set(CTRE_CXX_STANDARD 23)
+		endif()
 
-if (NOT CTRE_CXX_STANDARD)
-  set(CTRE_CXX_STANDARD 20)
+		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+		target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_${CTRE_CXX_STANDARD})
+	else()
+		message(FATAL_ERROR "unsupported cmake for c++ modules")
+	endif()
+else()
+	add_library(${PROJECT_NAME} INTERFACE)
+	
+	target_include_directories(${PROJECT_NAME} INTERFACE
+	  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+	  $<INSTALL_INTERFACE:include>)
+
+	if (NOT CTRE_CXX_STANDARD)
+	  set(CTRE_CXX_STANDARD 20)
+	endif()
+
+	target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_${CTRE_CXX_STANDARD})
+	
+	install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 endif()
 
-target_compile_features(ctre INTERFACE cxx_std_${CTRE_CXX_STANDARD})
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+if (NOT CTRE_MODULE)
 
 if (NOT EXISTS "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in")
   file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in [[
@@ -108,3 +189,5 @@ install(FILES "${PKG_CONFIG_FILE_NAME}"
 list(APPEND CPACK_SOURCE_IGNORE_FILES /.git/ /build/ .gitignore .DS_Store)
 
 include(CPack)
+
+endif()

@@ -1,7 +1,9 @@
 #ifndef CTRE__ID__HPP
 #define CTRE__ID__HPP
 
+#ifndef CTRE_IN_A_MODULE
 #include <type_traits>
+#endif
 
 namespace ctre {
 	

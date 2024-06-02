@@ -1,11 +1,13 @@
 #ifndef CTLL__FIXED_STRING__GPP
 #define CTLL__FIXED_STRING__GPP
 
+#ifndef CTLL_IN_A_MODULE
 #include <utility>
 #include <cstddef>
 #include <string_view>
 #include <array>
 #include <cstdint>
+#endif
 
 namespace ctll {
 

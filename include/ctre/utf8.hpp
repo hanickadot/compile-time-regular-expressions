@@ -4,8 +4,10 @@
 #if __cpp_char8_t >= 201811
 
 #include "utility.hpp"
+#ifndef CTRE_IN_A_MODULE
 #include <string_view>
 #include <iterator>
+#endif
 
 #if __cpp_lib_char8_t >= 201811L
 #define CTRE_ENABLE_UTF8_RANGE
