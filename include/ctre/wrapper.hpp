@@ -170,7 +170,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 		return multi_subject_range<Range, regular_expression>{std::forward<Range>(range)};
 	}
 	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
-		return Method::template exec();
+		return Method::exec();
 	}
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end) noexcept {
 		return Method::template exec<Modifier>(begin, end, RE{});
