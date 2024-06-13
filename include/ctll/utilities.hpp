@@ -42,7 +42,9 @@
     #define CTLL_CNTTP_COMPILER_CHECK 0
 #endif
 
-#ifdef _MSC_VER
+#if defined(__clang__) || defined(__GNUC__)
+#define CTLL_FORCE_INLINE __attribute__((always_inline))
+#elif defined(_MSC_VER)
 #define CTLL_FORCE_INLINE __forceinline
 #else
 #define CTLL_FORCE_INLINE __attribute__((always_inline))
