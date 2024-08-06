@@ -38,7 +38,8 @@ S-><content> | epsilon,[push_empty] | pipe,[push_empty],<content>,[make_alternat
 
 content-><string>,<content2>
 content_in_capture-><string_in_capture>,<content2> | epsilon,[push_empty] 
-content_in_capture->pipe,[push_empty],<content>,[make_alternate]
+content_in_capture->pipe,[push_empty],<content_or_empty>,[make_alternate]
+content_or_empty-><content> | epsilon,[push_empty]
 
 content2->pipe,<content>,[make_alternate] |pipe,[push_empty],[make_alternate] | epsilon
 

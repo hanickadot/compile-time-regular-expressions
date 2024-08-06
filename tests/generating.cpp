@@ -101,6 +101,13 @@ static_assert(same_f(CTRE_GEN("(?:abc|def)"), ctre::select<ctre::string<'a','b',
 static_assert(same_f(CTRE_GEN("(?:abc|def|ghi)"), ctre::select<ctre::string<'a','b','c'>,ctre::string<'d','e','f'>,ctre::string<'g','h','i'>>()));
 static_assert(same_f(CTRE_GEN("(?:a|b|c|d)"), ctre::select<ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>,ctre::character<'d'>>()));
 static_assert(same_f(CTRE_GEN("(?:a|b|c|)"), ctre::select<ctre::character<'a'>,ctre::character<'b'>,ctre::character<'c'>,ctre::empty>()));
+static_assert(same_f(CTRE_GEN("(?:a|)"), ctre::select<ctre::character<'a'>, ctre::empty>()));
+static_assert(same_f(CTRE_GEN("(?:|a)"), ctre::select<ctre::empty, ctre::character<'a'>>()));
+static_assert(same_f(CTRE_GEN("(?:|)"), ctre::select<ctre::empty, ctre::empty>()));
+static_assert(same_f(CTRE_GEN("(x|)"), ctre::capture<1, ctre::select<ctre::character<'x'>, ctre::empty>>()));
+static_assert(same_f(CTRE_GEN("(|x)"), ctre::capture<1, ctre::select<ctre::empty, ctre::character<'x'>>>()));
+static_assert(same_f(CTRE_GEN("(|)"), ctre::capture<1, ctre::select<ctre::empty, ctre::empty>>()));
+
 
 // optional
 static_assert(same_f(CTRE_GEN("xx?"), ctre::sequence<ctre::character<'x'>,ctre::optional<ctre::character<'x'>>>()));
