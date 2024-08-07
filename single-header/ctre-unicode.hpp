@@ -4467,7 +4467,7 @@ public:
 		//insert_point(high, low);
 	}
 	constexpr bool check(int64_t low, int64_t high) {
-		for (auto r: *this) {
+		for (const auto & r: *this) {
 			if (r.low <= low && low <= r.high) {
 				return true;
 			} else if (r.low <= high && high <= r.high) {
