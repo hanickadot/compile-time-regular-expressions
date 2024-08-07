@@ -28,7 +28,10 @@
 #define CTRE_UNLIKELY
 #endif
 
-#ifdef _MSC_VER
+#if defined(__clang__) || defined(__GNUC__)
+#define CTRE_FORCE_INLINE inline __attribute__((always_inline))
+#define CTRE_FLATTEN __attribute__((flatten))
+#elif defined(_MSC_VER)
 #define CTRE_FORCE_INLINE __forceinline
 #if __has_cpp_attribute(msvc::flatten)
 #define CTRE_FLATTEN [[msvc::flatten]]
