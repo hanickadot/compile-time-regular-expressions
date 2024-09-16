@@ -100,6 +100,10 @@ if(CTRE_MODULE)
 		endif()
 
 		target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_${CTRE_CXX_STANDARD})
+
+		install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets
+			FILE_SET CXX_MODULES DESTINATION "${CMAKE_INSTALL_LIBDIR}/cxx/${PROJECT_NAME}"
+			FILE_SET HEADERS DESTINATION "include")
 	else()
 		message(FATAL_ERROR "unsupported cmake for c++ modules")
 	endif()
@@ -118,11 +122,11 @@ else()
 	set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_SCAN_FOR_MODULES 0)
 	
 	install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+	install(DIRECTORY include/ DESTINATION include
+	    FILES_MATCHING PATTERN *.hpp)
 endif()
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-
-if (NOT CTRE_MODULE)
 
 if (NOT EXISTS "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in")
   file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in [[
@@ -150,8 +154,6 @@ install(
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
-install(DIRECTORY include/ DESTINATION include
-    FILES_MATCHING PATTERN *.hpp)
 
 if(CTRE_BUILD_TESTS)
   add_subdirectory(tests)
@@ -192,5 +194,3 @@ install(FILES "${PKG_CONFIG_FILE_NAME}"
 list(APPEND CPACK_SOURCE_IGNORE_FILES /.git/ /build/ .gitignore .DS_Store)
 
 include(CPack)
-
-endif()
