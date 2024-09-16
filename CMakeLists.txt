@@ -92,7 +92,7 @@ if(CTRE_MODULE)
 		)
 		
 		# we are using `import std;`
-		if (CTRE_CXX_STANDARD LESS 23)
+		if (NOT DEFINED CTRE_CXX_STANDARD OR CTRE_CXX_STANDARD LESS 23)
 			set(CTRE_CXX_STANDARD 23)
 		endif()
 
