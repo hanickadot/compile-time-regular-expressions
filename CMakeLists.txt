@@ -38,7 +38,10 @@ if(CTRE_MODULE)
 		add_library(${PROJECT_NAME})
 		
 		target_sources(${PROJECT_NAME} PUBLIC FILE_SET CXX_MODULES TYPE CXX_MODULES FILES ctre.cppm)
-		target_sources(${PROJECT_NAME} PUBLIC FILE_SET HEADERS TYPE HEADERS FILES 
+		target_sources(${PROJECT_NAME} PUBLIC FILE_SET HEADERS TYPE HEADERS
+		    BASE_DIRS
+			"${CMAKE_CURRENT_SOURCE_DIR}/include"
+		    FILES 
 			include/ctll.hpp
 			include/ctre/functions.hpp
 			include/ctre/utility.hpp
@@ -96,7 +99,6 @@ if(CTRE_MODULE)
 			set(CTRE_CXX_STANDARD 23)
 		endif()
 
-		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 		target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_${CTRE_CXX_STANDARD})
 	else()
 		message(FATAL_ERROR "unsupported cmake for c++ modules")
