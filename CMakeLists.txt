@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.0)
+cmake_minimum_required(VERSION 3.14...3.29)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.29.20240416") 
 	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
@@ -92,7 +92,7 @@ if(CTRE_MODULE)
 		)
 		
 		# we are using `import std;`
-		if (CTRE_CXX_STANDARD LESS 23)
+		if (NOT DEFINED CTRE_CXX_STANDARD OR CTRE_CXX_STANDARD LESS 23)
 			set(CTRE_CXX_STANDARD 23)
 		endif()
 
@@ -113,6 +113,7 @@ else()
 	endif()
 
 	target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_${CTRE_CXX_STANDARD})
+	set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_SCAN_FOR_MODULES 0)
 	
 	install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 endif()
