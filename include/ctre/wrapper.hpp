@@ -12,7 +12,7 @@
 
 namespace ctre {
 
-template <typename RE, typename Method = void, typename Modifier = singleline> struct regular_expression;
+CTRE_EXPORT template <typename RE, typename Method = void, typename Modifier = singleline> struct regular_expression;
 
 struct zero_terminated_string_end_iterator {
 	// this is here only because I want to support std::make_reverse_iterator
