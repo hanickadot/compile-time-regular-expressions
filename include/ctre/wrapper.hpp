@@ -156,7 +156,7 @@ struct iterator_method {
 	}
 };
 
-template <typename RE, typename Method, typename Modifier> struct regular_expression {
+CTRE_EXPORT template <typename RE, typename Method, typename Modifier> struct regular_expression {
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 

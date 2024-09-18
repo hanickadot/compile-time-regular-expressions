@@ -9,6 +9,8 @@
 #include <cstdint>
 #endif
 
+#include "utilities.hpp"
+
 namespace ctll {
 
 struct length_value_t {
@@ -43,7 +45,7 @@ struct construct_from_pointer_t { };
 
 constexpr auto construct_from_pointer = construct_from_pointer_t{};
 
-template <size_t N> struct fixed_string {
+CTLL_EXPORT template <size_t N> struct fixed_string {
 	char32_t content[N] = {};
 	size_t real_size{0};
 	bool correct_flag{true};

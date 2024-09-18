@@ -244,6 +244,74 @@ Software.
 #include <cstdint>
 #endif
 
+#ifndef CTLL__UTILITIES__HPP
+#define CTLL__UTILITIES__HPP
+
+#ifndef CTLL_IN_A_MODULE
+#include <type_traits>
+#endif
+
+#ifdef CTLL_IN_A_MODULE
+#define CTLL_EXPORT export
+#else
+#define CTLL_EXPORT 
+#endif
+
+#if defined __cpp_nontype_template_parameter_class
+    #define CTLL_CNTTP_COMPILER_CHECK 1
+#elif defined __cpp_nontype_template_args
+// compiler which defines correctly feature test macro (not you clang)
+    #if __cpp_nontype_template_args >= 201911L
+        #define CTLL_CNTTP_COMPILER_CHECK 1
+    #elif __cpp_nontype_template_args >= 201411L
+// appleclang 13+
+      #if defined __apple_build_version__
+        #if defined __clang_major__ && __clang_major__ >= 13
+// but only in c++20 and more
+          #if __cplusplus > 201703L
+              #define CTLL_CNTTP_COMPILER_CHECK 1
+          #endif
+        #endif
+      #else 
+// clang 12+
+        #if defined __clang_major__ && __clang_major__ >= 12
+// but only in c++20 and more
+          #if __cplusplus > 201703L
+              #define CTLL_CNTTP_COMPILER_CHECK 1
+          #endif
+        #endif
+      #endif
+    #endif
+#endif
+
+#ifndef CTLL_CNTTP_COMPILER_CHECK
+    #define CTLL_CNTTP_COMPILER_CHECK 0
+#endif
+
+#ifdef _MSC_VER
+#define CTLL_FORCE_INLINE __forceinline
+#else
+#define CTLL_FORCE_INLINE __attribute__((always_inline))
+#endif
+
+namespace ctll {
+	
+template <bool> struct conditional_helper;
+	
+template <> struct conditional_helper<true> {
+	template <typename A, typename> using type = A;
+};
+
+template <> struct conditional_helper<false> {
+	template <typename, typename B> using type = B;
+};
+
+template <bool V, typename A, typename B> using conditional = typename conditional_helper<V>::template type<A,B>;
+	
+}
+
+#endif
+
 namespace ctll {
 
 struct length_value_t {
@@ -278,7 +346,7 @@ struct construct_from_pointer_t { };
 
 constexpr auto construct_from_pointer = construct_from_pointer_t{};
 
-template <size_t N> struct fixed_string {
+CTLL_EXPORT template <size_t N> struct fixed_string {
 	char32_t content[N] = {};
 	size_t real_size{0};
 	bool correct_flag{true};
@@ -462,74 +530,6 @@ template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 #ifndef CTLL__TYPE_STACK__HPP
 #define CTLL__TYPE_STACK__HPP
-
-#ifndef CTLL__UTILITIES__HPP
-#define CTLL__UTILITIES__HPP
-
-#ifndef CTLL_IN_A_MODULE
-#include <type_traits>
-#endif
-
-#ifdef CTLL_IN_A_MODULE
-#define CTLL_EXPORT
-#else
-#define CTLL_EXPORT export
-#endif
-
-#if defined __cpp_nontype_template_parameter_class
-    #define CTLL_CNTTP_COMPILER_CHECK 1
-#elif defined __cpp_nontype_template_args
-// compiler which defines correctly feature test macro (not you clang)
-    #if __cpp_nontype_template_args >= 201911L
-        #define CTLL_CNTTP_COMPILER_CHECK 1
-    #elif __cpp_nontype_template_args >= 201411L
-// appleclang 13+
-      #if defined __apple_build_version__
-        #if defined __clang_major__ && __clang_major__ >= 13
-// but only in c++20 and more
-          #if __cplusplus > 201703L
-              #define CTLL_CNTTP_COMPILER_CHECK 1
-          #endif
-        #endif
-      #else 
-// clang 12+
-        #if defined __clang_major__ && __clang_major__ >= 12
-// but only in c++20 and more
-          #if __cplusplus > 201703L
-              #define CTLL_CNTTP_COMPILER_CHECK 1
-          #endif
-        #endif
-      #endif
-    #endif
-#endif
-
-#ifndef CTLL_CNTTP_COMPILER_CHECK
-    #define CTLL_CNTTP_COMPILER_CHECK 0
-#endif
-
-#ifdef _MSC_VER
-#define CTLL_FORCE_INLINE __forceinline
-#else
-#define CTLL_FORCE_INLINE __attribute__((always_inline))
-#endif
-
-namespace ctll {
-	
-template <bool> struct conditional_helper;
-	
-template <> struct conditional_helper<true> {
-	template <typename A, typename> using type = A;
-};
-
-template <> struct conditional_helper<false> {
-	template <typename, typename B> using type = B;
-};
-
-template <bool V, typename A, typename B> using conditional = typename conditional_helper<V>::template type<A,B>;
-	
-}
-
-#endif
 
 namespace ctll {
 
@@ -3910,100 +3910,100 @@ namespace std {
 
 namespace ctre {
 
-template <typename Pattern> constexpr auto find_captures(Pattern) noexcept {
+CTRE_EXPORT template <typename Pattern> constexpr auto find_captures(Pattern) noexcept {
 	return find_captures(ctll::list<Pattern>(), ctll::list<>());
 }
 
-template <typename... Output> constexpr auto find_captures(ctll::list<>, ctll::list<Output...> output) noexcept {
+CTRE_EXPORT template <typename... Output> constexpr auto find_captures(ctll::list<>, ctll::list<Output...> output) noexcept {
 	return output;
 }
 
-template <auto... String, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<string<String...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <auto... String, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<string<String...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
-template <typename... Options, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<select<Options...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Options, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<select<Options...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Options..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<optional<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<optional<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_optional<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_optional<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<sequence<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<sequence<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<empty, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<empty, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
-template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_begin, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_begin, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
-template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_end, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Tail, typename Output> constexpr auto find_captures(ctll::list<assert_subject_end, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
 // , typename = std::enable_if_t<(MatchesCharacter<CharacterLike>::template value<char>)
-template <typename CharacterLike, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<CharacterLike, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename CharacterLike, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<CharacterLike, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<plus<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<plus<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<star<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<star<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <size_t A, size_t B, typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<repeat<A,B,Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <size_t A, size_t B, typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<repeat<A,B,Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_plus<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_plus<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_star<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_star<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <size_t A, size_t B, typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_repeat<A,B,Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <size_t A, size_t B, typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lazy_repeat<A,B,Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<possessive_plus<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<possessive_plus<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<possessive_star<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<possessive_star<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <size_t A, size_t B, typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<possessive_repeat<A,B,Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <size_t A, size_t B, typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<possessive_repeat<A,B,Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lookahead_positive<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lookahead_positive<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lookahead_negative<Content...>, Tail...>, Output output) noexcept {
+CTRE_EXPORT template <typename... Content, typename... Tail, typename Output> constexpr auto find_captures(ctll::list<lookahead_negative<Content...>, Tail...>, Output output) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), output);
 }
 
-template <size_t Id, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<capture<Id,Content...>, Tail...>, ctll::list<Output...>) noexcept {
+CTRE_EXPORT template <size_t Id, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<capture<Id,Content...>, Tail...>, ctll::list<Output...>) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., captured_content<Id>>());
 }
 
-template <size_t Id, typename Name, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<capture_with_name<Id,Name,Content...>, Tail...>, ctll::list<Output...>) noexcept {
+CTRE_EXPORT template <size_t Id, typename Name, typename... Content, typename... Tail, typename... Output> constexpr auto find_captures(ctll::list<capture_with_name<Id,Name,Content...>, Tail...>, ctll::list<Output...>) noexcept {
 	return find_captures(ctll::list<Content..., Tail...>(), ctll::list<Output..., captured_content<Id, Name>>());
 }
 
@@ -5607,7 +5607,7 @@ struct iterator_method {
 	}
 };
 
-template <typename RE, typename Method, typename Modifier> struct regular_expression {
+CTRE_EXPORT template <typename RE, typename Method, typename Modifier> struct regular_expression {
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 
