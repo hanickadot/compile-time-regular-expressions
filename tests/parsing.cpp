@@ -23,6 +23,9 @@ static_assert(CTRE_TEST("."));
 static_assert(CTRE_TEST("a"));
 static_assert(CTRE_TEST("ab"));
 static_assert(CTRE_TEST("a|b"));
+static_assert(CTRE_TEST("a|"));
+static_assert(CTRE_TEST("|b"));
+static_assert(CTRE_TEST("|"));
 static_assert(CTRE_TEST("n"));
 
 // repetation

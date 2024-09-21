@@ -17,7 +17,7 @@ ctre::match<"REGEX">(subject); // C++20
 
 * Matching
 * Searching (`search` or `starts_with`)
-* Capturing content (named captures are supported too)
+* Capturing content (named captures are supported too, but only with syntax `(?<name>...)`)
 * Back-Reference (\g{N} syntax, and \1...\9 syntax too)
 * Multiline support (with `multi_`) functions
 * Unicode properties and UTF-8 support
