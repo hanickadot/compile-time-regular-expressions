@@ -55,7 +55,6 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 			#ifdef CTRE_STRING_IS_UTF8
 				size_t out{0};
 				for (size_t i{0}; i < N; ++i) {
-					if ((i == (N-1)) && (input[i] == 0)) break;
 					length_value_t info = length_and_value_of_utf8_code_point(input[i]);
 					switch (info.length) {
 						case 6:
@@ -85,7 +84,6 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 			#else
 				for (size_t i{0}; i < N; ++i) {
 					content[i] = static_cast<uint8_t>(input[i]);
-					if ((i == (N-1)) && (input[i] == 0)) break;
 					real_size++;
 				}
 			#endif
@@ -93,7 +91,6 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 		} else if constexpr (std::is_same_v<T, char8_t>) {
 			size_t out{0};
 			for (size_t i{0}; i < N; ++i) {
-				if ((i == (N-1)) && (input[i] == 0)) break;
 				length_value_t info = length_and_value_of_utf8_code_point(input[i]);
 				switch (info.length) {
 					case 6:
@@ -135,7 +132,6 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 						}
 					}
 				} else {
-					if ((i == (N-1)) && (input[i] == 0)) break;
 					content[out++] = info.value;
 				}
 			}
@@ -143,7 +139,6 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 		} else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
 			for (size_t i{0}; i < N; ++i) {
 				content[i] = static_cast<char32_t>(input[i]);
-				if ((i == (N-1)) && (input[i] == 0)) break;
 				real_size++;
 			}
 		}
