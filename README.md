@@ -208,11 +208,11 @@ return date{result.get<"year">(), result.get<"month">, result.get<"day">};
 static constexpr ctll::fixed_string year = "year";
 static constexpr ctll::fixed_string month = "month";
 static constexpr ctll::fixed_string day = "day";
-return date{result.get<year>(), result.get<month>, result.get<day>};
+return date{result.get<year>(), result.get<month>(), result.get<day>()};
 
 // or use numbered access
 // capture 0 is the whole match
-return date{result.get<1>(), result.get<2>, result.get<3>};
+return date{result.get<1>(), result.get<2>(), result.get<3>()};
 ```
 
 ### Lexer
