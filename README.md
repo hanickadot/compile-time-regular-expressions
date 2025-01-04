@@ -1,4 +1,4 @@
-# Compile time regular expressions v3
+# Compile Time Regular Expressions v3
 
 [![Build Status](https://travis-ci.org/hanickadot/compile-time-regular-expressions.svg?branch=master)](https://travis-ci.org/hanickadot/compile-time-regular-expressions)
 
@@ -18,7 +18,7 @@ ctre::match<"REGEX">(subject); // C++20
 * Matching
 * Searching (`search` or `starts_with`)
 * Capturing content (named captures are supported too, but only with syntax `(?<name>...)`)
-* Back-Reference (\g{N} syntax, and \1...\9 syntax too)
+* Back-Reference (`\g{N}` syntax, and `\1...\9` syntax too)
 * Multiline support (with `multiline_`) functions
 * Unicode properties and UTF-8 support
 
@@ -76,10 +76,10 @@ template <...> struct regex_results {
 };
 ```
 
-### Range outputing API
+### Range outputting API
 
 ```c++
-// search for regex in input and return each occurence, ignoring rest:
+// search for regex in input and return each occurrence, ignoring rest:
 template <fixed_string regex> auto ctre::range(auto Range &&) -> range of regex_result;
 template <fixed_string regex> auto ctre::range(auto First &&, auto Last &&) -> range of regex_result;
 
@@ -87,7 +87,7 @@ template <fixed_string regex> auto ctre::range(auto First &&, auto Last &&) -> r
 template <fixed_string regex> auto ctre::tokenize(auto Range &&) -> range of regex_result;
 template <fixed_string regex> auto ctre::tokenize(auto First &&, auto Last &&) -> range of regex_result;
 
-// return parts of the input splited by the regex, returning it as part of content of the implicit zero capture (other captures are not changed, you can use it to access how the values were splitted):
+// return parts of the input split by the regex, returning it as part of content of the implicit zero capture (other captures are not changed, you can use it to access how the values were split):
 template <fixed_string regex> auto ctre::split(auto Range &&) -> regex_result;
 template <fixed_string regex> auto ctre::split(auto First &&, auto Last &&) -> range of regex_result;
 ```
@@ -109,6 +109,7 @@ if (matcher(input)) ...
 ### Unicode support
 
 To enable you need to include:
+
 * `<ctre-unicode.hpp>`
 * or `<ctre.hpp>` and `<unicode-db.hpp>`
 
@@ -190,10 +191,10 @@ std::optional<date> extract_date(std::string_view s) noexcept {
     }
 }
 
-//static_assert(extract_date("2018/08/27"sv).has_value());
-//static_assert((*extract_date("2018/08/27"sv)).year == "2018"sv);
-//static_assert((*extract_date("2018/08/27"sv)).month == "08"sv);
-//static_assert((*extract_date("2018/08/27"sv)).day == "27"sv);
+// static_assert(extract_date("2018/08/27"sv).has_value());
+// static_assert((*extract_date("2018/08/27"sv)).year == "2018"sv);
+// static_assert((*extract_date("2018/08/27"sv)).month == "08"sv);
+// static_assert((*extract_date("2018/08/27"sv)).day == "27"sv);
 ```
 
 [link to compiler explorer](https://gcc.godbolt.org/z/x64CVp)
