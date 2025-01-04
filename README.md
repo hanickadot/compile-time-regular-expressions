@@ -19,7 +19,7 @@ ctre::match<"REGEX">(subject); // C++20
 * Searching (`search` or `starts_with`)
 * Capturing content (named captures are supported too, but only with syntax `(?<name>...)`)
 * Back-Reference (\g{N} syntax, and \1...\9 syntax too)
-* Multiline support (with `multi_`) functions
+* Multiline support (with `multiline_`) functions
 * Unicode properties and UTF-8 support
 
 The library is implementing most of the PCRE syntax with a few exceptions:
@@ -248,9 +248,8 @@ This support is preliminary, probably the API will be changed.
 ```c++
 auto input = "123,456,768"sv;
 
-for (auto match: ctre::range<"([0-9]+),?">(input)) {
+for (auto match: ctre::search_all<"([0-9]+),?">(input))
     std::cout << std::string_view{match.get<0>()} << "\n";
-}
 ```
 
 ### Unicode
@@ -258,16 +257,17 @@ for (auto match: ctre::range<"([0-9]+),?">(input)) {
 ```c++
 #include <ctre-unicode.hpp>
 #include <iostream>
+
 // needed if you want to output to the terminal
 std::string_view cast_from_unicode(std::u8string_view input) noexcept {
     return std::string_view(reinterpret_cast<const char *>(input.data()), input.size());
 }
-int main()
-{
+
+int main() {
     using namespace std::literals;
     std::u8string_view original = u8"Tu es un génie"sv;
 
-    for (auto match : ctre::range<"\\p{Letter}+">(original))
+    for (auto match : ctre::search_all<"\\p{Letter}+">(original))
         std::cout << cast_from_unicode(match) << std::endl;
     return 0;
 }
