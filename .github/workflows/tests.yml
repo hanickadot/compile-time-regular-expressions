@@ -4,7 +4,7 @@ jobs:
   appleclang:
     strategy:
       matrix:
-        macos: [12, 13]
+        macos: [13, 14, 15]
         standard: [17, 20]
       fail-fast: false
     name: "AppleClang (MacOS ${{ matrix.macos }}, C++${{ matrix.standard }})"
