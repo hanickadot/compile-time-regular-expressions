@@ -1,6 +1,6 @@
 # Compile Time Regular Expressions v3
 
-[![Build Status](https://travis-ci.org/hanickadot/compile-time-regular-expressions.svg?branch=master)](https://travis-ci.org/hanickadot/compile-time-regular-expressions)
+[![Build Status](https://github.com/hanickadot/compile-time-regular-expressions/actions/workflows/tests.yml/badge.svg)](https://github.com/hanickadot/compile-time-regular-expressions/actions/workflows/tests.yml)
 
 Fast compile-time regular expressions with support for matching/searching/capturing during compile-time or runtime.
 
@@ -268,7 +268,7 @@ int main() {
     using namespace std::literals;
     std::u8string_view original = u8"Tu es un génie"sv;
 
-    for (auto match : ctre::search_all<"\\p{Letter}+">(original))
+    for (auto match: ctre::search_all<"\\p{Letter}+">(original))
         std::cout << cast_from_unicode(match) << std::endl;
     return 0;
 }
