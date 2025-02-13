@@ -34,18 +34,6 @@ constexpr bool starts_with_anchor(const flags & f, ctll::list<select<Options...>
 	return (starts_with_anchor(f, ctll::list<Options, Content...>{}) && ... && true);
 }
 
-template <typename... Optional, typename... Content> 
-constexpr bool starts_with_anchor(const flags & f, ctll::list<optional<Optional...>, Content...>) noexcept {
-	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(f, ctll::list<Optional..., Content...>{}) && starts_with_anchor(f, ctll::list<Content...>{});
-}
-
-template <typename... Optional, typename... Content> 
-constexpr bool starts_with_anchor(const flags & f, ctll::list<lazy_optional<Optional...>, Content...>) noexcept {
-	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(f, ctll::list<Optional..., Content...>{}) && starts_with_anchor(f, ctll::list<Content...>{});
-}
-
 template <typename... Seq, typename... Content> 
 constexpr bool starts_with_anchor(const flags & f, ctll::list<sequence<Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
@@ -55,19 +43,28 @@ constexpr bool starts_with_anchor(const flags & f, ctll::list<sequence<Seq...>, 
 template <size_t A, size_t B, typename... Seq, typename... Content> 
 constexpr bool starts_with_anchor(const flags & f, ctll::list<repeat<A, B, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
+	if constexpr (A > 0)
+		return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
+	else
+		return starts_with_anchor(f, ctll::list<Seq..., Content...>{}) && starts_with_anchor(f, ctll::list<Content...>{});
 }
 
 template <size_t A, size_t B, typename... Seq, typename... Content> 
 constexpr bool starts_with_anchor(const flags & f, ctll::list<lazy_repeat<A, B, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
+	if constexpr (A > 0)
+		return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
+	else
+		return starts_with_anchor(f, ctll::list<Seq..., Content...>{}) && starts_with_anchor(f, ctll::list<Content...>{});
 }
 
 template <size_t A, size_t B, typename... Seq, typename... Content> 
 constexpr bool starts_with_anchor(const flags & f, ctll::list<possessive_repeat<A, B, Seq...>, Content...>) noexcept {
 	// check if all options starts with anchor or if they are empty, there is an anchor behind them
-	return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
+	if constexpr (A > 0)
+		return starts_with_anchor(f, ctll::list<Seq..., Content...>{});
+	else
+		return starts_with_anchor(f, ctll::list<Seq..., Content...>{}) && starts_with_anchor(f, ctll::list<Content...>{});
 }
 
 template <size_t Index, typename... Seq, typename... Content> 
