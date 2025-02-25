@@ -270,5 +270,8 @@ static_assert(same_f(CTRE_GEN("(?<!a)"), ctre::lookbehind_negative<ctre::charact
 static_assert(same_f(CTRE_GEN("(?<=ab)"), ctre::lookbehind_positive<ctre::string<'b','a'>>()));
 static_assert(same_f(CTRE_GEN("(?<!ab)"), ctre::lookbehind_negative<ctre::string<'b','a'>>()));
 
+static_assert(same_f(CTRE_GEN("(?<=ab|cd)"), ctre::lookbehind_positive<ctre::select<ctre::string<'b','a'>, ctre::string<'d','c'>>>()));
+static_assert(same_f(CTRE_GEN("(?<!ab|cd)"), ctre::lookbehind_negative<ctre::select<ctre::string<'b','a'>, ctre::string<'d','c'>>>()));
+
 static_assert(same_f(CTRE_GEN("(?<=(ab))"), ctre::lookbehind_positive<ctre::capture<1, ctre::string<'b','a'>>>()));
 static_assert(same_f(CTRE_GEN("(?<!(ab))"), ctre::lookbehind_negative<ctre::capture<1, ctre::string<'b','a'>>>()));

@@ -44,7 +44,6 @@ static auto rotate(end_lookbehind_mark) -> end_lookbehind_mark;
 template <size_t Id> static auto rotate(numeric_mark<Id>) -> numeric_mark<Id>;
 static auto rotate(any) -> any;
 
-template <typename... Content> static auto rotate(select<Content...>) -> select<Content...>;
 static auto rotate(empty) -> empty;
 
 
@@ -91,6 +90,10 @@ static auto rotate(assert_subject_end) -> assert_subject_end;
 static auto rotate(assert_subject_end_line) -> assert_subject_end_line;
 static auto rotate(assert_line_begin) -> assert_line_begin;
 static auto rotate(assert_line_end) -> assert_line_end;
+
+// select rotates only insides of selection, not select itself
+template <typename... Content> static auto rotate(select<Content...>) -> select<decltype(rotate(Content{}))...>;
+
 
 };
 

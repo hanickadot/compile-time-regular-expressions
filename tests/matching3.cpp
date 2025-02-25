@@ -234,3 +234,8 @@ TEST_MATCH(225, R"( ?[\p{N}])", " 1");
 TEST_MATCH(226, R"( ?\p{N})", " 1");
 TEST_MATCH(227, R"( ?\p{N}+)", " 1234");
 
+// issue #339 (rotate didn't rotate inside of selection)
+TEST_SEARCH(228, "(?<=ba|cd)s", "bas"); 
+TEST_NOT_SEARCH(229, "(?<!ba|cd)s", "bas"); // negative means both "ba|cd most not be there"
+TEST_SEARCH(230, "(?<=ba|cd)s", "cds"); 
+TEST_NOT_SEARCH(231, "(?<!ba|cd)s", "cds"); // negative means both "ba|cd most not be there"
