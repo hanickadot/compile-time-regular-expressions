@@ -6,9 +6,9 @@
 #endif
 
 #ifdef CTLL_IN_A_MODULE
-#define CTLL_EXPORT
-#else
 #define CTLL_EXPORT export
+#else
+#define CTLL_EXPORT 
 #endif
 
 #if defined __cpp_nontype_template_parameter_class

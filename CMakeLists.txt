@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.0)
+cmake_minimum_required(VERSION 3.14...3.29)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.29.20240416") 
 	set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
@@ -38,7 +38,10 @@ if(CTRE_MODULE)
 		add_library(${PROJECT_NAME})
 		
 		target_sources(${PROJECT_NAME} PUBLIC FILE_SET CXX_MODULES TYPE CXX_MODULES FILES ctre.cppm)
-		target_sources(${PROJECT_NAME} PUBLIC FILE_SET HEADERS TYPE HEADERS FILES 
+		target_sources(${PROJECT_NAME} PUBLIC FILE_SET HEADERS TYPE HEADERS
+		    BASE_DIRS
+			"${CMAKE_CURRENT_SOURCE_DIR}/include"
+		    FILES 
 			include/ctll.hpp
 			include/ctre/functions.hpp
 			include/ctre/utility.hpp
@@ -92,12 +95,15 @@ if(CTRE_MODULE)
 		)
 		
 		# we are using `import std;`
-		if (CTRE_CXX_STANDARD LESS 23)
+		if (NOT DEFINED CTRE_CXX_STANDARD OR CTRE_CXX_STANDARD LESS 23)
 			set(CTRE_CXX_STANDARD 23)
 		endif()
 
-		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 		target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_${CTRE_CXX_STANDARD})
+
+		install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets
+			FILE_SET CXX_MODULES DESTINATION "${CMAKE_INSTALL_LIBDIR}/cxx/${PROJECT_NAME}"
+			FILE_SET HEADERS DESTINATION "include")
 	else()
 		message(FATAL_ERROR "unsupported cmake for c++ modules")
 	endif()
@@ -113,13 +119,14 @@ else()
 	endif()
 
 	target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_${CTRE_CXX_STANDARD})
+	set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_SCAN_FOR_MODULES 0)
 	
 	install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+	install(DIRECTORY include/ DESTINATION include
+	    FILES_MATCHING PATTERN *.hpp)
 endif()
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-
-if (NOT CTRE_MODULE)
 
 if (NOT EXISTS "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in")
   file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in [[
@@ -131,7 +138,7 @@ endif()
 configure_package_config_file(
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake.in"
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  INSTALL_DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
   NO_SET_AND_CHECK_MACRO
   NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
@@ -140,15 +147,13 @@ write_basic_package_version_file(ctre-config-version.cmake
   COMPATIBILITY SameMajorVersion)
 
 install(EXPORT ${PROJECT_NAME}-targets 
-  DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
   NAMESPACE ${PROJECT_NAME}::)
 install(
   FILES
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME})
-install(DIRECTORY include/ DESTINATION include
-    FILES_MATCHING PATTERN *.hpp)
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
 if(CTRE_BUILD_TESTS)
   add_subdirectory(tests)
@@ -183,11 +188,9 @@ set(CPACK_RPM_PACKAGE_NAME "lib${PROJECT_NAME}-devel")
 set(PKG_CONFIG_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/packaging/pkgconfig.pc.in" "${PKG_CONFIG_FILE_NAME}" @ONLY)
 install(FILES "${PKG_CONFIG_FILE_NAME}"
-	DESTINATION "${CMAKE_INSTALL_DATADIR}/pkgconfig"
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
 )
 
 list(APPEND CPACK_SOURCE_IGNORE_FILES /.git/ /build/ .gitignore .DS_Store)
 
 include(CPack)
-
-endif()

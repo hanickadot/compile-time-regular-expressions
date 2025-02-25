@@ -1,5 +1,9 @@
 module;
 
+#ifdef _MSVC_LANG
+#pragma warning( disable : 5202 )
+#endif
+
 import std;
 
 export module ctre;

@@ -12,7 +12,7 @@
 
 namespace ctre {
 
-template <typename RE, typename Method = void, typename Modifier = singleline> struct regular_expression;
+CTRE_EXPORT template <typename RE, typename Method = void, typename Modifier = singleline> struct regular_expression;
 
 struct zero_terminated_string_end_iterator {
 	// this is here only because I want to support std::make_reverse_iterator
@@ -156,7 +156,7 @@ struct iterator_method {
 	}
 };
 
-template <typename RE, typename Method, typename Modifier> struct regular_expression {
+CTRE_EXPORT template <typename RE, typename Method, typename Modifier> struct regular_expression {
 	constexpr CTRE_FORCE_INLINE regular_expression() noexcept { }
 	constexpr CTRE_FORCE_INLINE regular_expression(RE) noexcept { }
 
@@ -170,7 +170,7 @@ template <typename RE, typename Method, typename Modifier> struct regular_expres
 		return multi_subject_range<Range, regular_expression>{std::forward<Range>(range)};
 	}
 	constexpr CTRE_FORCE_INLINE static auto exec() noexcept {
-		return Method::template exec();
+		return Method::exec();
 	}
 	template <typename IteratorBegin, typename IteratorEnd> constexpr CTRE_FORCE_INLINE static auto exec(IteratorBegin begin, IteratorEnd end) noexcept {
 		return Method::template exec<Modifier>(begin, end, RE{});

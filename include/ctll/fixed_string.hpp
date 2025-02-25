@@ -9,6 +9,8 @@
 #include <cstdint>
 #endif
 
+#include "utilities.hpp"
+
 namespace ctll {
 
 struct length_value_t {
@@ -43,7 +45,7 @@ struct construct_from_pointer_t { };
 
 constexpr auto construct_from_pointer = construct_from_pointer_t{};
 
-template <size_t N> struct fixed_string {
+CTLL_EXPORT template <size_t N> struct fixed_string {
 	char32_t content[N] = {};
 	size_t real_size{0};
 	bool correct_flag{true};
@@ -53,7 +55,6 @@ template <size_t N> struct fixed_string {
 			#ifdef CTRE_STRING_IS_UTF8
 				size_t out{0};
 				for (size_t i{0}; i < N; ++i) {
-					if ((i == (N-1)) && (input[i] == 0)) break;
 					length_value_t info = length_and_value_of_utf8_code_point(input[i]);
 					switch (info.length) {
 						case 6:
@@ -83,7 +84,6 @@ template <size_t N> struct fixed_string {
 			#else
 				for (size_t i{0}; i < N; ++i) {
 					content[i] = static_cast<uint8_t>(input[i]);
-					if ((i == (N-1)) && (input[i] == 0)) break;
 					real_size++;
 				}
 			#endif
@@ -91,7 +91,6 @@ template <size_t N> struct fixed_string {
 		} else if constexpr (std::is_same_v<T, char8_t>) {
 			size_t out{0};
 			for (size_t i{0}; i < N; ++i) {
-				if ((i == (N-1)) && (input[i] == 0)) break;
 				length_value_t info = length_and_value_of_utf8_code_point(input[i]);
 				switch (info.length) {
 					case 6:
@@ -133,7 +132,6 @@ template <size_t N> struct fixed_string {
 						}
 					}
 				} else {
-					if ((i == (N-1)) && (input[i] == 0)) break;
 					content[out++] = info.value;
 				}
 			}
@@ -141,7 +139,6 @@ template <size_t N> struct fixed_string {
 		} else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
 			for (size_t i{0}; i < N; ++i) {
 				content[i] = static_cast<char32_t>(input[i]);
-				if ((i == (N-1)) && (input[i] == 0)) break;
 				real_size++;
 			}
 		}

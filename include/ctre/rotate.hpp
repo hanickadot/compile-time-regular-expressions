@@ -44,8 +44,12 @@ static auto rotate(end_lookbehind_mark) -> end_lookbehind_mark;
 template <size_t Id> static auto rotate(numeric_mark<Id>) -> numeric_mark<Id>;
 static auto rotate(any) -> any;
 
-template <typename... Content> static auto rotate(select<Content...>) -> select<Content...>;
 static auto rotate(empty) -> empty;
+
+// select rotates only insides of selection, not select itself
+template <typename... Content> static auto rotate(select<Content...>) {
+  return select<decltype(rotate(Content{}))...>{};
+}
 
 
 template <size_t a, size_t b, typename... Content> static auto rotate(repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));

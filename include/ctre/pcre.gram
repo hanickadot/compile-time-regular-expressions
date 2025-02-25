@@ -34,11 +34,13 @@ alphanum_characters={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D
 set_control_chars={:,],-}
 capture_control_chars={<}
 
-S-><content> | epsilon,[push_empty] | pipe,[push_empty],<content>,[make_alternate]
+S-><content> | epsilon,[push_empty] | pipe,[push_empty],<opt_content>,[make_alternate]
 
+opt_content->epsilon,[push_empty]|<content>
 content-><string>,<content2>
 content_in_capture-><string_in_capture>,<content2> | epsilon,[push_empty] 
-content_in_capture->pipe,[push_empty],<content>,[make_alternate]
+content_in_capture->pipe,[push_empty],<content_or_empty>,[make_alternate]
+content_or_empty-><content> | epsilon,[push_empty]
 
 content2->pipe,<content>,[make_alternate] |pipe,[push_empty],[make_alternate] | epsilon
 
