@@ -2064,6 +2064,11 @@ static auto rotate(any) -> any;
 
 static auto rotate(empty) -> empty;
 
+// select rotates only insides of selection, not select itself
+template <typename... Content> static auto rotate(select<Content...>) {
+  return select<decltype(rotate(Content{}))...>{};
+}
+
 template <size_t a, size_t b, typename... Content> static auto rotate(repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
 template <size_t a, size_t b, typename... Content> static auto rotate(lazy_repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<lazy_repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
 template <size_t a, size_t b, typename... Content> static auto rotate(possessive_repeat<a,b,Content...>) -> decltype(ctre::convert_to_repeat<possessive_repeat, a, b>(ctll::rotate(ctll::list<decltype(rotate(Content{}))...>{})));
@@ -2107,9 +2112,6 @@ static auto rotate(assert_subject_end) -> assert_subject_end;
 static auto rotate(assert_subject_end_line) -> assert_subject_end_line;
 static auto rotate(assert_line_begin) -> assert_line_begin;
 static auto rotate(assert_line_end) -> assert_line_end;
-
-// select rotates only insides of selection, not select itself
-template <typename... Content> static auto rotate(select<Content...>) -> select<decltype(rotate(Content{}))...>;
 
 };
 
