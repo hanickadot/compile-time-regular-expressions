@@ -1,3 +1,4 @@
+#include <climits>
 #include <ctre.hpp>
 
 void empty_symbol() { }
@@ -52,10 +53,16 @@ static_assert(same_f(CTRE_GEN("(?:abc)"), ctre::string<'a','b','c'>()));
 // support for hexdec
 static_assert(same_f(CTRE_GEN("\\x40"), ctre::character<char{0x40}>()));
 static_assert(same_f(CTRE_GEN("\\x7F"), ctre::character<char{0x7F}>()));
+#if CHAR_MAX < 128
 // only characters with value < 128 are char otherwise they are internally char32_t
 static_assert(same_f(CTRE_GEN("\\x80"), ctre::character<char32_t{0x80}>()));
 static_assert(same_f(CTRE_GEN("\\xFF"), ctre::character<char32_t{0xFF}>()));
 static_assert(same_f(CTRE_GEN("\\x{FF}"), ctre::character<char32_t{0xFF}>()));
+#else
+static_assert(same_f(CTRE_GEN("\\x80"), ctre::character<char{0x80}>()));
+static_assert(same_f(CTRE_GEN("\\xFF"), ctre::character<char{0xFF}>()));
+static_assert(same_f(CTRE_GEN("\\x{FF}"), ctre::character<char{0xFF}>()));
+#endif
 static_assert(same_f(CTRE_GEN("\\x{FFF}"), ctre::character<char32_t{0xFFF}>()));
 static_assert(same_f(CTRE_GEN("\\x{ABCD}"), ctre::character<char32_t{0xABCD}>()));
 
