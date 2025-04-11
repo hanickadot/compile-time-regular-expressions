@@ -385,7 +385,7 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 					real_size++;
 				}
 			#endif
-#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811
+#if defined(__cpp_char8_t)
 		} else if constexpr (std::is_same_v<T, char8_t>) {
 			size_t out{0};
 			for (size_t i{0}; i < N; ++i) {
