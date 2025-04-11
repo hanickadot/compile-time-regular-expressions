@@ -130,6 +130,7 @@ struct pcre {
 	struct repeat_star: ctll::action {};
 	struct reset_capture: ctll::action {};
 	struct set_combine: ctll::action {};
+	struct set_empty: ctll::action {};
 	struct set_make: ctll::action {};
 	struct set_make_negative: ctll::action {};
 	struct set_start: ctll::action {};
@@ -433,11 +434,11 @@ struct pcre {
 	static constexpr auto rule(repeat, ctll::term<'*'>) -> ctll::push<ctll::anything, repeat_star, mod>;
 	static constexpr auto rule(repeat, ctll::term<'\x7D'>) -> ctll::reject;
 
-	static constexpr auto rule(set2a, ctll::term<']'>) -> ctll::epsilon;
 	static constexpr auto rule(set2a, ctll::term<'['>) -> ctll::push<ctll::anything, ctll::term<':'>, i, range, set_start, set2b>;
 	static constexpr auto rule(set2a, ctll::term<'\\'>) -> ctll::push<ctll::anything, f, set_start, set2b>;
 	static constexpr auto rule(set2a, ctll::set<'!','$','\x28','\x29','*','+',',','.','/','0','1','2','3','4','5','6','7','8','9',':','<','=','>','?','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','\"','^','_','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','\x7B','|','\x7D'>) -> ctll::push<ctll::anything, push_character, range, set_start, set2b>;
 	static constexpr auto rule(set2a, _others) -> ctll::push<ctll::anything, push_character, range, set_start, set2b>;
+	static constexpr auto rule(set2a, ctll::term<']'>) -> ctll::push<set_empty>;
 	static constexpr auto rule(set2a, ctll::term<'-'>) -> ctll::reject;
 
 	static constexpr auto rule(set2b, ctll::term<']'>) -> ctll::epsilon;

@@ -22,6 +22,12 @@ template <template <typename...> typename SetType, typename T, typename... As, b
 template <auto V, typename A,typename... Ts, typename Parameters> static constexpr auto apply(pcre::set_start, ctll::term<V>, pcre_context<ctll::list<A,Ts...>, Parameters> subject) {
 	return pcre_context{ctll::push_front(set<A>(), ctll::list<Ts...>()), subject.parameters};
 }
+
+// set_empty
+template <auto V, typename... Ts, typename Parameters> static constexpr auto apply(pcre::set_empty, ctll::term<V>, pcre_context<ctll::list<Ts...>, Parameters> subject) {
+	return pcre_context{ctll::push_front(set<>(), ctll::list<Ts...>()), subject.parameters};
+}
+
 // set_make
 template <auto V, typename... Content, typename... Ts, typename Parameters> static constexpr auto apply(pcre::set_make, ctll::term<V>, pcre_context<ctll::list<set<Content...>, Ts...>, Parameters> subject) {
 	return pcre_context{ctll::push_front(set<Content...>(), ctll::list<Ts...>()), subject.parameters};

@@ -89,7 +89,7 @@ mode_switch2->close | <mode_switch>
 
 character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set2a>,[set_make_negative],sclose
 set-><setitem>,[set_start],<set2b>
-set2a-><setitem2>,[set_start],<set2b>|epsilon
+set2a-><setitem2>,[set_start],<set2b>|epsilon,[set_empty]
 set2b-><setitem2>,[set_combine],<set2b>|epsilon
 
 class_named->sopen,colon,<class_named_name>,colon,sclose | sopen,colon,caret,<class_named_name>,[negate_class_named],colon,sclose 
