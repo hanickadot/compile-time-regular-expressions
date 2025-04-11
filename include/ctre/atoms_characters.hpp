@@ -40,7 +40,7 @@ template <auto V> struct character {
 				}
 			}	
 		}
-		return value == V;
+		return (std::make_unsigned_t<CharT>)value == V;
 	}
 };
 
