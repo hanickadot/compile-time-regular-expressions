@@ -3136,7 +3136,7 @@ struct utf8_iterator {
 		friend constexpr auto operator==(self_type, const char8_t * other_ptr) noexcept {
 			return *other_ptr == char8_t{0};
 		}
-#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison < 201907L		
+#if !defined(__cpp_impl_three_way_comparison) || __cpp_impl_three_way_comparison < 201907L		
 		friend constexpr auto operator!=(self_type, const char8_t * other_ptr) noexcept {
 			return *other_ptr != char8_t{0};
 		}
@@ -3153,7 +3153,7 @@ struct utf8_iterator {
 	
 	const char8_t * ptr{nullptr};
 	const char8_t * end{nullptr};
-#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison < 201907L
+#if !defined(__cpp_impl_three_way_comparison) || __cpp_impl_three_way_comparison < 201907L
 	constexpr friend bool operator!=(const utf8_iterator & lhs, sentinel) {
 		return lhs.ptr < lhs.end;
 	}
@@ -3178,7 +3178,7 @@ struct utf8_iterator {
 		return lhs.ptr == rhs.ptr;
 	}
 	
-#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison < 201907L
+#if !defined(__cpp_impl_three_way_comparison) || __cpp_impl_three_way_comparison < 201907L
 	constexpr friend bool operator!=(sentinel, const utf8_iterator & rhs) {
 		return rhs.ptr < rhs.end;
 	}
