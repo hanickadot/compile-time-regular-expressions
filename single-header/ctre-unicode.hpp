@@ -1603,13 +1603,13 @@ template <auto V> struct character {
 };
 
 template <typename... Content> struct negative_set {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char([[maybe_unused]] CharT value, const flags & f) noexcept {
 		return !(Content::match_char(value, f) || ... || false);
 	}
 };
 
 template <typename... Content> struct set {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(C[[maybe_unused]] harT value, const flags & f) noexcept {
 		return (Content::match_char(value, f) || ... || false);
 	}
 };
@@ -1617,7 +1617,7 @@ template <typename... Content> struct set {
 template <auto... Cs> struct enumeration : set<character<Cs>...> { };
 
 template <typename... Content> struct negate {
-	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char(CharT value, const flags & f) noexcept {
+	template <typename CharT> CTRE_FORCE_INLINE static constexpr bool match_char([[maybe_unused]] CharT value, const flags & f) noexcept {
 		return !(Content::match_char(value, f) || ... || false);
 	}
 };
