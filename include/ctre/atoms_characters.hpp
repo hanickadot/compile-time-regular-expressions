@@ -79,7 +79,7 @@ template <auto A, auto B> struct char_range {
 				}
 			}	
 		}
-		return (value >= A) && (value <= B);
+		return (value >= (CharT)A) && (value <= (CharT)B);
 	}
 };
 using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> >;
