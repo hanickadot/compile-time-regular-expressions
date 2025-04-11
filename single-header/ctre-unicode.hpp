@@ -388,7 +388,7 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 					real_size++;
 				}
 			#endif
-		#if __cpp_char8_t
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811
 		} else if constexpr (std::is_same_v<T, char8_t>) {
 			size_t out{0};
 			for (size_t i{0}; i < N; ++i) {
@@ -418,7 +418,7 @@ CTLL_EXPORT template <size_t N> struct fixed_string {
 						return;
 				}
 			}
-		#endif
+#endif
 		} else if constexpr (std::is_same_v<T, char16_t>) {
 			size_t out{0};
 			for (size_t i{0}; i < N; ++i) {
@@ -3088,14 +3088,14 @@ constexpr bool starts_with_anchor(const flags & f, ctll::list<capture_with_name<
 #ifndef CTRE__UTF8__HPP
 #define CTRE__UTF8__HPP
 
-#if __cpp_char8_t >= 201811
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811
 
 #ifndef CTRE_IN_A_MODULE
 #include <string_view>
 #include <iterator>
 #endif
 
-#if __cpp_lib_char8_t >= 201811L
+#if defined(__cpp_char8_t) &&__cpp_lib_char8_t >= 201811L
 #define CTRE_ENABLE_UTF8_RANGE
 #endif
 
@@ -3129,7 +3129,7 @@ struct utf8_iterator {
 		friend constexpr auto operator==(self_type, const char8_t * other_ptr) noexcept {
 			return *other_ptr == char8_t{0};
 		}
-#if __cpp_impl_three_way_comparison < 201907L		
+#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison < 201907L		
 		friend constexpr auto operator!=(self_type, const char8_t * other_ptr) noexcept {
 			return *other_ptr != char8_t{0};
 		}
@@ -3146,7 +3146,7 @@ struct utf8_iterator {
 	
 	const char8_t * ptr{nullptr};
 	const char8_t * end{nullptr};
-#if __cpp_impl_three_way_comparison < 201907L
+#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison < 201907L
 	constexpr friend bool operator!=(const utf8_iterator & lhs, sentinel) {
 		return lhs.ptr < lhs.end;
 	}
@@ -3171,7 +3171,7 @@ struct utf8_iterator {
 		return lhs.ptr == rhs.ptr;
 	}
 	
-#if __cpp_impl_three_way_comparison < 201907L
+#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison < 201907L
 	constexpr friend bool operator!=(sentinel, const utf8_iterator & rhs) {
 		return rhs.ptr < rhs.end;
 	}
@@ -3350,7 +3350,7 @@ struct utf8_range {
 #if __has_include(<charconv>)
 #include <charconv>
 #endif
-#if __cpp_concepts >= 202002L
+#if defined(__cpp_concepts) && __cpp_concepts >= 202002L
 #include <concepts>
 #endif
 #endif
@@ -3415,21 +3415,21 @@ template <size_t Id, typename Name = void> struct captured_content {
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data_unsafe() const noexcept {
 			static_assert(!is_reverse_iterator<It>, "Iterator in your capture must not be reverse!");
 			
-			#if __cpp_char8_t >= 201811
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return _begin.ptr;
 			} else { // I'm doing this to avoid warning about dead code
-			#endif
+#endif
 			
-			#ifdef _MSC_VER
+#ifdef _MSC_VER
 			return std::to_address(_begin); // I'm enabling this only for MSVC for now, as some clang old versions with various libraries (random combinations) has different problems
-			#else
+#else
 			return &*_begin; 
-			#endif
+#endif
 			
-			#if __cpp_char8_t >= 201811
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811
 			}
-			#endif
+#endif
 		}
 		
 		template <typename It = Iterator> constexpr CTRE_FORCE_INLINE const auto * data() const noexcept {
@@ -3445,15 +3445,15 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE size_t unit_size() const noexcept {
-			#if __cpp_char8_t >= 201811
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return static_cast<size_t>(std::distance(_begin.ptr, _end.ptr));
 			} else {
 				return static_cast<size_t>(std::distance(begin(), end()));
 			}
-			#else
+#else
 			return static_cast<size_t>(std::distance(begin(), end()));
-			#endif
+#endif
 		}
 		
 #if __has_include(<charconv>)
@@ -3494,15 +3494,15 @@ template <size_t Id, typename Name = void> struct captured_content {
 		}
 		
 		constexpr CTRE_FORCE_INLINE std::basic_string<char_type> to_string() const noexcept {
-			#if __cpp_char8_t >= 201811
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811
 			if constexpr (std::is_same_v<Iterator, utf8_iterator>) {
 				return std::basic_string<char_type>(data_unsafe(), static_cast<size_t>(unit_size()));
 			} else {
 				return std::basic_string<char_type>(begin(), end());
 			}
-			#else
+#else
 			return std::basic_string<char_type>(begin(), end());
-			#endif
+#endif
 		}
 		
 		constexpr CTRE_FORCE_INLINE auto str() const noexcept {
@@ -3554,7 +3554,7 @@ template <size_t Id, typename Name = void> struct captured_content {
 	};
 };
 
-#if __cpp_concepts >= 202002L
+#if defined(__cpp_concepts) && __cpp_concepts >= 202002L
 template <typename T> concept capture_group = requires(const T & cap) {
 	{ T::get_id() } -> std::same_as<size_t>;
 	{ cap.view() };
@@ -3870,7 +3870,7 @@ template <typename Iterator, typename... Captures> struct is_regex_results_t<reg
 
 template <typename T> constexpr bool is_regex_results_v = is_regex_results_t<T>();
 
-#if __cpp_concepts >= 201907L
+#if defined(__cpp_concepts) && __cpp_concepts >= 201907L
 template <typename T> concept capture_groups = is_regex_results_v<T>;
 #endif
 
