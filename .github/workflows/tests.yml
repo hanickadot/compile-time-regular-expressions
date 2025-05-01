@@ -19,7 +19,7 @@ jobs:
   gcc:
     strategy:
       matrix:
-        gcc: [8, 9, 10, 11, 13]
+        gcc: [9, 10, 11, 13]
         standard: [17, 20]
       fail-fast: false
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
@@ -33,10 +33,8 @@ jobs:
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a
         if: ${{ matrix.standard == '20' }}
-      - run: make CXX=c++ CXX_STANDARD=17
-        if: ${{ matrix.gcc < '9' && matrix.standard == '17' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
-        if: ${{ matrix.gcc >= '9' && matrix.standard == '17' }}
+        if: ${{ matrix.standard == '17' }}
   meson:
     name: "Meson package test"
     runs-on: ubuntu-latest
@@ -54,7 +52,7 @@ jobs:
   clang:
     strategy:
       matrix:
-        clang: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        clang: [11, 12, 13, 14, 15, 16, 17]
         stdlib: ["libc++", "libstdc++"]
         standard: [17, 20]
       fail-fast: false
