@@ -23,7 +23,7 @@ jobs:
         standard: [17, 20]
       fail-fast: false
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Install GCC"
         uses: egor-tensin/setup-gcc@v1
@@ -59,7 +59,7 @@ jobs:
         standard: [17, 20]
       fail-fast: false
     name: "Clang ${{ matrix.clang }} (C++${{ matrix.standard }}, ${{ matrix.stdlib }})"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Install Clang"
         uses: egor-tensin/setup-clang@v1
