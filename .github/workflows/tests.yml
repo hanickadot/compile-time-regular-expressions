@@ -10,7 +10,7 @@ jobs:
     name: "AppleClang (MacOS ${{ matrix.macos }}, C++${{ matrix.standard }})"
     runs-on: macos-${{ matrix.macos }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a
         if: ${{ matrix.standard == '20' }}
@@ -29,7 +29,7 @@ jobs:
         uses: egor-tensin/setup-gcc@v1
         with:
           version: ${{ matrix.gcc }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a
         if: ${{ matrix.standard == '20' }}
@@ -37,6 +37,20 @@ jobs:
         if: ${{ matrix.gcc < '9' && matrix.standard == '17' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
         if: ${{ matrix.gcc >= '9' && matrix.standard == '17' }}
+  meson:
+    name: "Meson package test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pipx install meson
+      - run: meson setup build --prefix=/usr
+      - run: sudo ninja -C build install
+      - name: Run compilation tests
+        run: |
+          # shellcheck disable=SC2046
+          c++ $(pkg-config --cflags ctre) -fsyntax-only -std=c++20 tests/ci.cpp
+          # shellcheck disable=SC2046
+          c++ $(pkg-config --cflags ctre) -fsyntax-only -std=c++20 tests/_unicode.cpp
   clang:
     strategy:
       matrix:
@@ -54,7 +68,7 @@ jobs:
       - name: "Install libc++"
         if: ${{ matrix.stdlib == 'libc++' }}
         run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
         if: ${{ matrix.standard == '20' }}
@@ -74,7 +88,7 @@ jobs:
           toolset: ${{ matrix.version }}
       - name: "Install Ninja & CMake"
         run: choco install ninja cmake
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: "Configure"
         run: cmake . -G Ninja -B build -DCTRE_BUILD_TESTS=ON -DCTRE_CXX_STANDARD=20
       - name: "Build"
