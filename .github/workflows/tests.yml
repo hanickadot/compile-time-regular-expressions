@@ -10,7 +10,7 @@ jobs:
     name: "AppleClang (MacOS ${{ matrix.macos }}, C++${{ matrix.standard }})"
     runs-on: macos-${{ matrix.macos }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a
         if: ${{ matrix.standard == '20' }}
@@ -19,33 +19,45 @@ jobs:
   gcc:
     strategy:
       matrix:
-        gcc: [8, 9, 10, 11, 13]
+        gcc: [9, 10, 11, 13]
         standard: [17, 20]
       fail-fast: false
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Install GCC"
         uses: egor-tensin/setup-gcc@v1
         with:
           version: ${{ matrix.gcc }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a
         if: ${{ matrix.standard == '20' }}
-      - run: make CXX=c++ CXX_STANDARD=17
-        if: ${{ matrix.gcc < '9' && matrix.standard == '17' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
-        if: ${{ matrix.gcc >= '9' && matrix.standard == '17' }}
+        if: ${{ matrix.standard == '17' }}
+  meson:
+    name: "Meson package test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pipx install meson
+      - run: meson setup build --prefix=/usr
+      - run: sudo ninja -C build install
+      - name: Run compilation tests
+        run: |
+          # shellcheck disable=SC2046
+          c++ $(pkg-config --cflags ctre) -fsyntax-only -std=c++20 tests/ci.cpp
+          # shellcheck disable=SC2046
+          c++ $(pkg-config --cflags ctre) -fsyntax-only -std=c++20 tests/_unicode.cpp
   clang:
     strategy:
       matrix:
-        clang: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        clang: [11, 12, 13, 14, 15, 16, 17]
         stdlib: ["libc++", "libstdc++"]
         standard: [17, 20]
       fail-fast: false
     name: "Clang ${{ matrix.clang }} (C++${{ matrix.standard }}, ${{ matrix.stdlib }})"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Install Clang"
         uses: egor-tensin/setup-clang@v1
@@ -54,7 +66,7 @@ jobs:
       - name: "Install libc++"
         if: ${{ matrix.stdlib == 'libc++' }}
         run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
         if: ${{ matrix.standard == '20' }}
@@ -74,7 +86,7 @@ jobs:
           toolset: ${{ matrix.version }}
       - name: "Install Ninja & CMake"
         run: choco install ninja cmake
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: "Configure"
         run: cmake . -G Ninja -B build -DCTRE_BUILD_TESTS=ON -DCTRE_CXX_STANDARD=20
       - name: "Build"
