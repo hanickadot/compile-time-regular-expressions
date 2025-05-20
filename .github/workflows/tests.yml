@@ -25,18 +25,13 @@ jobs:
     name: "GCC ${{ matrix.gcc }} (C++${{ matrix.standard }})"
     runs-on: ubuntu-latest
     steps:
-      - name: "Install GCC"
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: ${{ matrix.gcc }}
+      - run: sudo apt-get install g++-${{ matrix.gcc }}
       - uses: actions/checkout@v2
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a
         if: ${{ matrix.standard == '20' }}
-      - run: make CXX=c++ CXX_STANDARD=17
-        if: ${{ matrix.gcc < '9' && matrix.standard == '17' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-DCTRE_ENABLE_LITERALS PEDANTIC=""
-        if: ${{ matrix.gcc >= '9' && matrix.standard == '17' }}
+        if: ${{ matrix.standard == '17' }}
   clang:
     strategy:
       matrix:
