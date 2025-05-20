@@ -174,7 +174,7 @@ struct utf8_iterator {
 		
 		// quickpath
 		if (!(*ptr & 0b1000'0000u)) CTRE_LIKELY {
-			return *ptr;
+			return static_cast<char32_t>(*ptr);
 		}
  
 		// calculate length based on first 5 bits
