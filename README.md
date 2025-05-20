@@ -117,12 +117,10 @@ Otherwise you will get missing symbols if you try to use the unicode support wit
 
 ## Supported compilers
 
-* clang 7.0+ (template UDL, C++17 syntax)
-* xcode clang 10.0+ (template UDL, C++17 syntax)
-* clang 12.0+ (C++17 syntax, C++20 cNTTP syntax)
-* gcc 8.0+ (template UDL, C++17 syntax)
+* clang 14.0+ (template UDL, C++17 syntax, C++20 cNTTP syntax)
+* xcode clang 15.0+ (template UDL, C++17 syntax, C++20 cNTTP syntax)
 * gcc 9.0+ (C++17 & C++20 cNTTP syntax)
-* MSVC 14.29+ (Visual Studio 16.11+) (C++20) 
+* MSVC 14.29+ (Visual Studio 16.11+) (C++20 cNTTP syntax) 
 
 ### Template UDL syntax
 
