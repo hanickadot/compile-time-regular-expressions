@@ -35,7 +35,7 @@ jobs:
   clang:
     strategy:
       matrix:
-        clang: [14, 15, 16, 17, 18, 19, 20, 21, 22]
+        clang: [14, 15, 16, 17, 18, 19]
         stdlib: ["libc++", "libstdc++"]
         standard: [17, 20]
       fail-fast: false
@@ -49,6 +49,29 @@ jobs:
       - name: "Install libc++"
         if: ${{ matrix.stdlib == 'libc++' }}
         run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++1-${{ matrix.clang }} libc++-${{ matrix.clang }}-dev
+      - uses: actions/checkout@v2
+      - run: c++ -v
+      - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+        if: ${{ matrix.standard == '20' }}
+      - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
+        if: ${{ matrix.standard == '17' }}
+  clang:
+    strategy:
+      matrix:
+        clang: [20, 21, 22]
+        stdlib: ["libc++", "libstdc++"]
+        standard: [17, 20]
+      fail-fast: false
+    name: "Clang ${{ matrix.clang }} (C++${{ matrix.standard }}, ${{ matrix.stdlib }})"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Install Clang"
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: ${{ matrix.clang }}
+      - name: "Install libc++"
+        if: ${{ matrix.stdlib == 'libc++' }}
+        run: sudo apt-get install libc++abi-${{ matrix.clang }}-dev libc++-${{ matrix.clang }}-dev
       - uses: actions/checkout@v2
       - run: c++ -v
       - run: make CXX=c++ CXX_STANDARD=2a CXXFLAGS=-stdlib=${{ matrix.stdlib }}
