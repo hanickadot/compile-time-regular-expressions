@@ -55,7 +55,7 @@ jobs:
         if: ${{ matrix.standard == '20' }}
       - run: make CXX=c++ CXX_STANDARD=17 CXXFLAGS=-stdlib=${{ matrix.stdlib }}
         if: ${{ matrix.standard == '17' }}
-  clang:
+  clang-2:
     strategy:
       matrix:
         clang: [20, 21, 22]
