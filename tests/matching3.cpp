@@ -246,3 +246,7 @@ TEST_NOT_MATCH(233, "[^]", "");
 TEST_MATCH(234, "[^]+", "x");
 TEST_MATCH(235, "[^]?", "");
 
+// issue #346
+TEST_MATCH(236, "[-A-Z]?", "Hello-World");
+TEST_NOT_MATCH(237, "[A-Z]?", "Hello-World");
+TEST_MATCH(238, "[\\-A-Z]?", "Hello-World");

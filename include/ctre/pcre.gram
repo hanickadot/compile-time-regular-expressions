@@ -87,7 +87,7 @@ mode_switch->s,[mode_singleline],<mode_switch2>
 mode_switch->m,[mode_multiline],<mode_switch2>
 mode_switch2->close | <mode_switch>
 
-character_class->sopen,<set>,[set_make],sclose|sopen,caret,<set2a>,[set_make_negative],sclose
+character_class->sopen,<set>,[set_make],sclose|sopen,minus,<set>,[set_make],sclose|sopen,caret,<set2a>,[set_make_negative],sclose
 set-><setitem>,[set_start],<set2b>
 set2a-><setitem2>,[set_start],<set2b>|epsilon,[set_empty]
 set2b-><setitem2>,[set_combine],<set2b>|epsilon
