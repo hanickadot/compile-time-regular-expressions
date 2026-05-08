@@ -1,12 +1,7 @@
 module;
 
-#ifdef _MSVC_LANG
-#pragma warning( disable : 5202 )
-#endif
-
-import std;
-
 export module ctre;
+import std;
 
 #define CTRE_IN_A_MODULE
 #define CTLL_IN_A_MODULE
