@@ -28,7 +28,7 @@ template <auto Type, auto Value> using make_property = property<std::remove_cons
 // unicode TS#18 level 1.2 general_category
 template <uni::detail::binary_prop Property> struct binary_property<uni::detail::binary_prop, Property> {
 	template <typename CharT> inline static constexpr bool match_char(CharT c, const flags &) noexcept {
-		return uni::detail::get_binary_prop<Property>(static_cast<char32_t>(c));
+		return uni::detail::get_binary_prop<Property>(static_cast<char32_t>(static_cast<std::make_unsigned_t<CharT>>(c)));
 	}
 };
 

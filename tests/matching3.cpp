@@ -246,3 +246,7 @@ TEST_NOT_MATCH(233, "[^]", "");
 TEST_MATCH(234, "[^]+", "x");
 TEST_MATCH(235, "[^]?", "");
 
+// issue #357 (unsigned chars vs signed chars)
+TEST_MATCH(236, "«««", "«««");
+
+

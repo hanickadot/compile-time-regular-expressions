@@ -40,7 +40,7 @@ template <auto V> struct character {
 				}
 			}	
 		}
-		return value == V;
+		return static_cast<std::make_unsigned_t<CharT>>(value) == V;
 	}
 };
 
@@ -79,7 +79,7 @@ template <auto A, auto B> struct char_range {
 				}
 			}	
 		}
-		return (value >= A) && (value <= B);
+		return (static_cast<std::make_unsigned_t<CharT>>(value) >= A) && (static_cast<std::make_unsigned_t<CharT>>(value) <= B);
 	}
 };
 using word_chars = set<char_range<'A','Z'>, char_range<'a','z'>, char_range<'0','9'>, character<'_'> >;
