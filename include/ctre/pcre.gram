@@ -1,7 +1,7 @@
 backslash={\\}
 slash={/}
 dot={.}
-dolar={$}
+dollar={$}
 open={(}
 close={)}
 questionmark={?}
@@ -126,7 +126,7 @@ range->minus,caret,[push_character],[make_range]
 
 # backslash range can be used in range match
 backslash_range-><special>,[push_character]
-special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dolar|minus|slash
+special->dot|sopen|sclose|copen|cclose|open|close|backslash|star|plus|questionmark|pipe|caret|dollar|minus|slash
 
 hexdec_repeat->hexdec,[push_hexdec],<hexdec_repeat>|epsilon
 
@@ -184,6 +184,6 @@ character->other,[push_character] | nonspecial_characters,[push_character] | set
 
 character_in_capture-><character>
 
-asserts->caret,[push_assert_begin] | dolar,[push_assert_end]
+asserts->caret,[push_assert_begin] | dollar,[push_assert_end]
 
 
