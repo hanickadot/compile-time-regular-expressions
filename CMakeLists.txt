@@ -130,7 +130,9 @@ else()
 	endif()
 
 	target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_${CTRE_CXX_STANDARD})
-	set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_SCAN_FOR_MODULES 0)
+	if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+		set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_SCAN_FOR_MODULES 0)
+	endif()
 	
 	install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 	install(DIRECTORY include/ DESTINATION include
