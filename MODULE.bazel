@@ -1,0 +1,4 @@
+module(
+    name = "ctre",
+    version = "3.9.0",
+)
