@@ -17,6 +17,7 @@ Fast compile-time regular expressions with support for matching/searching/captur
    api
    examples
    regex_syntax
+   reflect
 
 Supported compilers
 ===================

@@ -97,3 +97,12 @@ jobs:
         run: cmake . -G Ninja -B build -DCTRE_BUILD_TESTS=ON -DCTRE_CXX_STANDARD=20
       - name: "Build"
         run: cmake --build build --target ctre-test --verbose
+  gcc-reflection:
+    continue-on-error: true
+    name: "GCC 16.1 with -freflection (C++26)"
+    runs-on: ubuntu-latest
+    container: gcc:16.1
+    steps:
+      - uses: actions/checkout@v2
+      - run: c++ -v
+      - run: make CXX=c++ CXX_STANDARD=26 CXXFLAGS="-freflection" CTRE_ENABLE_REFLECT_TESTS=1

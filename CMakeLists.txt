@@ -108,6 +108,8 @@ if(CTRE_MODULE)
 			include/ctll/grammars.hpp
 			include/ctre.hpp
 			include/ctre-unicode.hpp
+			include/ctre-reflect.hpp
+			include/ctre/reflect.hpp
 		)
 		
 		# we are using `import std;`

@@ -20,3 +20,4 @@ tests/benchmark-range/*
 build
 cmake-build-*/*
 .idea/*
+*.stamp

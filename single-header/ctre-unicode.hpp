@@ -3382,6 +3382,7 @@ struct not_matched_tag_t { };
 constexpr inline auto not_matched = not_matched_tag_t{};
 	
 template <size_t Id, typename Name = void> struct captured_content {
+	using name = Name;
 	template <typename Iterator> class storage {
 		Iterator _begin{};
 		Iterator _end{};
@@ -3742,6 +3743,16 @@ public:
 	}
 	static constexpr size_t count() noexcept {
 		return sizeof...(Captures) + 1;
+	}
+	static constexpr bool are_all_captures_named() noexcept {
+		return (... && (!std::is_same_v<typename Captures::name, void>));
+	}
+#if CTRE_CNTTP_COMPILER_CHECK
+	template <ctll::fixed_string Name> static constexpr bool has_capture() noexcept {
+#else
+	template <const auto & Name> static constexpr bool has_capture() noexcept {
+#endif
+		return decltype(_captures)::template exists<Name>();
 	}
 	constexpr CTRE_FORCE_INLINE regex_results & matched() noexcept {
 		_captures.template select<0>().matched();

@@ -1,0 +1,15 @@
+add_library(ctre-test-reflect STATIC EXCLUDE_FROM_ALL reflect.cpp)
+target_link_libraries(ctre-test-reflect PRIVATE ctre)
+target_compile_features(ctre-test-reflect PRIVATE cxx_std_26)
+add_dependencies(ctre-test ctre-test-reflect)
+
+target_compile_options(ctre-test-reflect PUBLIC "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+target_compile_options(ctre-test-reflect PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
+foreach(fail_test IN ITEMS reflect_fail_misalign reflect_fail_overflow reflect_fail_unmatched_capture)
+  add_library(ctre-test-${fail_test} STATIC EXCLUDE_FROM_ALL ${fail_test}.cpp)
+  target_link_libraries(ctre-test-${fail_test} PRIVATE ctre)
+  target_compile_features(ctre-test-${fail_test} PRIVATE cxx_std_26)
+  target_compile_options(ctre-test-${fail_test} PUBLIC "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+  target_compile_options(ctre-test-${fail_test} PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+endforeach()
