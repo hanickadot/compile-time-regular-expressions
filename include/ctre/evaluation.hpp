@@ -99,7 +99,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 	
 	if (multiline_mode(f)) {
 		// TODO add support for different line ending and unicode (in a future unicode mode)
-		if (*current == '\n') return not_matched;
+		if (const auto c = *current; c == '\n' || c == '\r') return not_matched;
 	}
 	return evaluate(begin, ++current, last, consumed_something(f), captures, ctll::list<Tail...>());
 }
@@ -172,7 +172,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 	if (multiline_mode(f)) {
 		if (last == current) {
 			return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
-		} else if (*current == '\n' && std::next(current) == last) {
+		} else if (const auto c = *current; (c == '\n' || c == '\r') && std::next(current) == last) {
 			return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
 		} else {
 			return not_matched;
@@ -190,7 +190,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 	if (multiline_mode(f)) {
 		if (begin == current) {
 			return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
-		} else if (*std::prev(current) == '\n') {
+		} else if (const auto c = *std::prev(current); c == '\n' || c == '\r') {
 			return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
 		} else {
 			return not_matched;
@@ -208,7 +208,7 @@ constexpr CTRE_FORCE_INLINE R evaluate(const BeginIterator begin, Iterator curre
 	if (multiline_mode(f)) {
 		if (last == current) {
 			return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
-		} else if (*current == '\n') {
+		} else if (const auto c = *current; c == '\n' || c == '\r') {
 			return evaluate(begin, current, last, f, captures, ctll::list<Tail...>());
 		} else {
 			return not_matched;
