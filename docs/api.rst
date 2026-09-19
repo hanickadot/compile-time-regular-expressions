@@ -97,4 +97,24 @@ API
 
   Searches for a match somewhere within the input.
   ``Args...`` must be either a string-like object with ``begin`` and ``end`` member functions, or a pair of forward iterators.
+
+.. function:: template<auto & RE, class... Args> constexpr auto search_all(Args&&... args)
+              template<ctll::fixed_string RE, class... Args> constexpr auto search_all(Args&&... args)
+
+  Returns a range yielding one ``ctre::regex_results`` per match of ``RE``, searching forward from the end of the previous match.
+  ``ctre::range`` is the former name of this function and is deprecated.
+
+.. function:: template<auto & RE, class... Args> constexpr auto tokenize(Args&&... args)
+              template<ctll::fixed_string RE, class... Args> constexpr auto tokenize(Args&&... args)
+
+  Returns a range yielding one ``ctre::regex_results`` per match of ``RE``, each one anchored at the end of the previous match.
+  The range ends at the first position where ``RE`` does not match, so unlike ``search_all`` it never skips over unmatched input.
+
+.. function:: template<auto & RE, class... Args> constexpr auto split(Args&&... args)
+              template<ctll::fixed_string RE, class... Args> constexpr auto split(Args&&... args)
+
+  Returns a range yielding the pieces of the input separated by matches of ``RE``.
+
+``search_all``, ``tokenize`` and ``split`` also accept the input on the left of ``operator|``, for example ``input | ctre::search_all<"[0-9]+">``.
+Each has a ``multiline_`` prefixed variant that applies the multiline modifier.
   

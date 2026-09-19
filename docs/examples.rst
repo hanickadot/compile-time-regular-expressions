@@ -63,15 +63,57 @@ Lexer
 
 `link to compiler explorer <https://gcc.godbolt.org/z/PKTiCC>`_
 
-Range over input
-----------------
+Iterating over all matches
+--------------------------
 
-This support is preliminary and probably the API will be changed.
-
-::
+``ctre::search_all`` searches forward from the end of the previous match and
+yields one result per match, skipping whatever lies between them. ::
 
   auto input = "123,456,768"sv;
-  
-  for (auto match: ctre::range<"([0-9]+),?">(input)) {
+
+  for (auto match: ctre::search_all<"[0-9]+">(input)) {
   	std::cout << std::string_view{match.get<0>()} << "\n";
   }
+
+  // 123
+  // 456
+  // 768
+
+``ctre::tokenize`` is the anchored counterpart. Every match has to start where
+the previous one ended, so the range ends at the first character the pattern
+does not accept rather than skipping over it. ::
+
+  for (auto token: ctre::tokenize<"[a-z]+">("ab!!cd"sv)) {
+  	std::cout << std::string_view{token.get<0>()} << "\n";
+  }
+
+  // ab
+
+  // "cd" is never reached, because "!!" is not part of a token and tokenize
+  // does not skip ahead. ctre::search_all with the same pattern and input
+  // yields both "ab" and "cd".
+
+``ctre::split`` yields the pieces between the matches instead of the matches
+themselves. ::
+
+  for (auto piece: ctre::split<",">("alpha,beta,gamma"sv)) {
+  	std::cout << std::string_view{piece.get<0>()} << "\n";
+  }
+
+  // alpha
+  // beta
+  // gamma
+
+All three also take the input on the left of ``operator|``. ::
+
+  for (auto match: input | ctre::search_all<"[0-9]+">) {
+  	std::cout << std::string_view{match.get<0>()} << "\n";
+  }
+
+``multiline_search_all``, ``multiline_tokenize`` and ``multiline_split`` are the
+same three with the multiline modifier applied.
+
+.. note::
+
+  ``ctre::range`` is the former name of ``ctre::search_all`` and is deprecated,
+  as is ``ctre::multiline_range`` in favour of ``ctre::multiline_search_all``.
