@@ -218,6 +218,26 @@ template <typename CharT, size_t N> fixed_string(const std::array<CharT,N> &) ->
 
 template <size_t N> fixed_string(fixed_string<N>) -> fixed_string<N>;
 
+CTLL_EXPORT template <size_t A, size_t B>
+constexpr auto operator+(const fixed_string<A> & l, const fixed_string<B> & r) noexcept {
+	if constexpr ((A + B) > 0) {
+		char32_t content[A + B]{};
+		size_t i{0};
+		for (size_t j{0}; j < l.size(); ++j) {
+			content[i++] = l[j];
+		}
+		for (size_t j{0}; j < r.size(); ++j) {
+			content[i++] = r[j];
+		}
+		fixed_string<A + B> out(construct_from_pointer, content);
+		out.real_size = l.size() + r.size();
+		out.correct_flag = l.correct() && r.correct();
+		return out;
+	} else {
+		return fixed_string<0>{""};
+	}
+}
+
 }
 
 #endif
